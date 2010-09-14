@@ -44,6 +44,7 @@ const char *zobovConf_info_help[] = {
   "  -p, --move=STRING        Move the center by (x,y,z)  (default=`(0,0,0)')",
   "      --galax              Output is galax particles  (default=off)",
   "  -o, --output=STRING      Output file  (default=`voidDesc')",
+  "      --interactive        Go in interactive mode  (default=off)",
     0
 };
 
@@ -112,6 +113,7 @@ void clear_given (struct zobovConf_info *args_info)
   args_info->move_given = 0 ;
   args_info->galax_given = 0 ;
   args_info->output_given = 0 ;
+  args_info->interactive_given = 0 ;
 }
 
 static
@@ -139,6 +141,7 @@ void clear_args (struct zobovConf_info *args_info)
   args_info->galax_flag = 0;
   args_info->output_arg = gengetopt_strdup ("voidDesc");
   args_info->output_orig = NULL;
+  args_info->interactive_flag = 0;
   
 }
 
@@ -163,6 +166,7 @@ void init_args_info(struct zobovConf_info *args_info)
   args_info->move_help = zobovConf_info_help[13] ;
   args_info->galax_help = zobovConf_info_help[14] ;
   args_info->output_help = zobovConf_info_help[15] ;
+  args_info->interactive_help = zobovConf_info_help[16] ;
   
 }
 
@@ -319,6 +323,8 @@ zobovConf_dump(FILE *outfile, struct zobovConf_info *args_info)
     write_into_file(outfile, "galax", 0, 0 );
   if (args_info->output_given)
     write_into_file(outfile, "output", args_info->output_orig, 0);
+  if (args_info->interactive_given)
+    write_into_file(outfile, "interactive", 0, 0 );
   
 
   i = EXIT_SUCCESS;
@@ -640,6 +646,7 @@ zobovConf_internal (int argc, char * const *argv, struct zobovConf_info *args_in
         { "move",	1, NULL, 'p' },
         { "galax",	0, NULL, 0 },
         { "output",	1, NULL, 'o' },
+        { "interactive",	0, NULL, 0 },
         { NULL,	0, NULL, 0 }
       };
 
@@ -819,6 +826,18 @@ zobovConf_internal (int argc, char * const *argv, struct zobovConf_info *args_in
             if (update_arg((void *)&(args_info->galax_flag), 0, &(args_info->galax_given),
                 &(local_args_info.galax_given), optarg, 0, 0, ARG_FLAG,
                 check_ambiguity, override, 1, 0, "galax", '-',
+                additional_error))
+              goto failure;
+          
+          }
+          /* Go in interactive mode.  */
+          else if (strcmp (long_options[option_index].name, "interactive") == 0)
+          {
+          
+          
+            if (update_arg((void *)&(args_info->interactive_flag), 0, &(args_info->interactive_given),
+                &(local_args_info.interactive_given), optarg, 0, 0, ARG_FLAG,
+                check_ambiguity, override, 1, 0, "interactive", '-',
                 additional_error))
               goto failure;
           

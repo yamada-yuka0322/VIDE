@@ -72,6 +72,8 @@ struct zobovConf_info
   char * output_arg;	/**< @brief Output file (default='voidDesc').  */
   char * output_orig;	/**< @brief Output file original value given at command line.  */
   const char *output_help; /**< @brief Output file help description.  */
+  int interactive_flag;	/**< @brief Go in interactive mode (default=off).  */
+  const char *interactive_help; /**< @brief Go in interactive mode help description.  */
   
   unsigned int help_given ;	/**< @brief Whether help was given.  */
   unsigned int version_given ;	/**< @brief Whether version was given.  */
@@ -89,6 +91,7 @@ struct zobovConf_info
   unsigned int move_given ;	/**< @brief Whether move was given.  */
   unsigned int galax_given ;	/**< @brief Whether galax was given.  */
   unsigned int output_given ;	/**< @brief Whether output was given.  */
+  unsigned int interactive_given ;	/**< @brief Whether interactive was given.  */
 
 } ;
 

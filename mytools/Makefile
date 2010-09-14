@@ -13,6 +13,8 @@ all: $(PROGS)
 
 showZobov: showZobov.o loadZobov.o zobovConf.o
 
+testZobov: testZobov.o loadZobov.o
+
 depend: $(SOURCES)
 	@echo "[DEPENDS] $^"
 	@$(CC) $(CPPFLAGS) -M -MM $^ > .mydepends
