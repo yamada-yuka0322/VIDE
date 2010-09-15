@@ -1,11 +1,11 @@
-PROGS= showZobov
+PROGS= showZobov buildObservedVoids
 
 CXX=g++
 CC=gcc
 
 include config.mk
 
-SOURCES= showZobov.cpp loadZobov.cpp zobovConf.c 
+SOURCES= showZobov.cpp loadZobov.cpp zobovConf.c buildObservedVoids.cpp 
 
 LIBS= $(LDFLAGS) 
 
@@ -14,6 +14,8 @@ all: $(PROGS)
 showZobov: showZobov.o loadZobov.o zobovConf.o
 
 testZobov: testZobov.o loadZobov.o
+
+buildObservedVoids: buildObservedVoids.o loadZobov.o buildObservedVoids_conf.o
 
 depend: $(SOURCES)
 	@echo "[DEPENDS] $^"
@@ -36,7 +38,11 @@ clean:
 
 zobovConf.c zobovConf.h: showZobov.ggo Makefile
 	@echo "[OPT] $@"
-	gengetopt  -i $<  -f zobovConf  -a zobovConf_info  -F zobovConf -C
+	@gengetopt  -i $<  -f zobovConf  -a zobovConf_info  -F zobovConf -C
+
+buildObservedVoids_conf.c buildObservedVoids_conf.h: buildObservedVoids.ggo Makefile
+	@echo "[OPT] $@"
+	@gengetopt -i $< -f buildObservedVoids_conf -a buildObservedVoids_info -F buildObservedVoids_conf -C
 
 %.o: %.c
 	@echo "[C] $< ..."
