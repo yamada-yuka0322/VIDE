@@ -78,7 +78,7 @@ public:
       }
 
     std::cout << "Linking voids together..." << std::endl;
-    double volMin = 4*M_PI/3*pow(4.*512/500.,3);
+    double volMin = 4*M_PI/3*pow(40.*512/500.,3);
     int inserted = 0;
     for (int i = rep.allVoids.size()-1; i>=0;i--)
       {
