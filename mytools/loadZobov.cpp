@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdlib>
 #include <sstream>
+#include <algorithm>
 #include "loadZobov.hpp"
 
 using namespace std;
@@ -70,7 +71,8 @@ bool loadZobov(const char *descName, const char *adjName, const char *volName, Z
 
       volFile.read((char *)zId, sizeof(int)*numZinV);
       for (int k = 0; k < numZinV; k++)
-	z.allVoids[v].zId[k] = &z.allZones[zId[k]];
+	z.allVoids[v].zId[k] = zId[k];
+      std::sort(&z.allVoids[v].zId[0], &z.allVoids[v].zId[numZinV]);
 
       delete[] zId;
     }
@@ -114,7 +116,10 @@ bool loadZobov(const char *descName, const char *adjName, const char *volName, Z
       // Sanity check
       int actualNumber = 0;
       for (int j = 0; j < z.allVoids[volId].zId.size(); j++)
-	actualNumber += z.allVoids[volId].zId[j]->pId.size();
+        {
+          int zzid = z.allVoids[volId].zId[j];
+	  actualNumber += z.allZones[zzid].pId.size();
+        }
       
       if (actualNumber != numInVoid)
 	{

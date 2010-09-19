@@ -10,7 +10,7 @@ struct ZobovZone
 
 struct ZobovVoid
 {
-  std::vector<ZobovZone *> zId;
+  std::vector<int> zId;
   float proba;
   int numParticles, coreParticle;
   float volume;

@@ -25,24 +25,26 @@ protected:
 public:
   typedef std::list<VoidNode *> VoidList;
 
-  int lookupParent(int voidId)
+  int lookupParent(int voidId, const std::vector<std::list<int> >& voids_for_zones)
   {
-    std::set<ZobovZone *> sref;
+    std::set<int> sref;
     sref.insert(zobov.allVoids[voidId].zId.begin(), zobov.allVoids[voidId].zId.end());
     
-    
-    std::vector<ZobovZone *> sout(sref.size());  
+    std::vector<int> sout(sref.size());  
     int lastSize = 0x7fffffff;
     int goodParent = voidId;
+    const std::list<int>& candidateList = voids_for_zones[*zobov.allVoids[voidId].zId.begin()];
+    std::list<int>::const_iterator iter_candidate = candidateList.begin();
 
-    // Voids are sorted according to volume
-    for (int i = voidId-1; i >= 0; i--) 
+    std::cout << "candidate list size is " << candidateList.size() << std::endl;
+    while (iter_candidate != candidateList.end()) 
       {
-	std::set<ZobovZone *> s1;
+        int i = *iter_candidate;
+	std::set<int> s1;
 	
 	int counter = 0;
 	s1.insert(zobov.allVoids[i].zId.begin(), zobov.allVoids[i].zId.end());
-	for (std::set<ZobovZone *>::iterator iter = s1.begin(), iter2 = sref.begin();
+	for (std::set<int>::iterator iter = s1.begin(), iter2 = sref.begin();
 	     iter != s1.end() && iter2 != sref.end();
 	     ++iter)
 	  {
@@ -59,7 +61,9 @@ public:
 	  {
 	    return i;
 	  }
+        ++iter_candidate;
       }
+    std::cout << "Failure to lookup parent" << std::endl;
     return -1;
   }
   
@@ -67,7 +71,17 @@ public:
     : zobov(rep)
   {
     totalNumNodes = rep.allVoids.size();
-    
+
+    std::vector<std::list<int> > voids_for_zones;
+
+    voids_for_zones.resize(rep.allZones.size());
+    for (int i = 0; i < rep.allVoids.size(); i++) 
+       {
+         ZobovVoid& v = rep.allVoids[i];
+         for (int j = 0; j < v.zId.size(); j++)
+           voids_for_zones[v.zId[j]].push_back(i);
+       }
+
     nodes = new VoidNode[totalNumNodes];
 
     for (int i = 0; i < rep.allVoids.size(); i++)
@@ -78,13 +92,13 @@ public:
       }
 
     std::cout << "Linking voids together..." << std::endl;
-    double volMin = 4*M_PI/3*pow(4.*512/500.,3);
+    double volMin = 4*M_PI/3*pow(50.*512/500.,3);
     int inserted = 0;
     for (int i = rep.allVoids.size()-1; i>=0;i--)
       {
         if (rep.allVoids[i].volume < volMin) continue;
 
-	int p = lookupParent(i);
+	int p = lookupParent(i, voids_for_zones);
 
 	std::cout << i << std::endl;
 	
@@ -101,7 +115,7 @@ public:
       }
 
     rootNode = 0;
-    for (int i = inserted; i < totalNumNodes; i++)
+    for (int i = 0; i < inserted; i++)
       if (nodes[i].parent == 0)
 	{
 	  if (rootNode != 0)
@@ -133,11 +147,11 @@ public:
   template<typename T>
   void walkNode(VoidNode *node, T& traverse)
   {
-    VoidList::iterator i;
-    
     if (!traverse(node))
       return;
 
+    VoidList::iterator i = node->children.begin();
+    
     while (i != node->children.end())
       {
 	walkNode(*i, traverse);

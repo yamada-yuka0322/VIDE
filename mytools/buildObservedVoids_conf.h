@@ -42,12 +42,12 @@ struct buildObservedVoids_info
   char * desc_arg;	/**< @brief The description file name for the voids (jozov generated).  */
   char * desc_orig;	/**< @brief The description file name for the voids (jozov generated) original value given at command line.  */
   const char *desc_help; /**< @brief The description file name for the voids (jozov generated) help description.  */
-  char * adj_arg;	/**< @brief Adjacent file name (jozov generated).  */
-  char * adj_orig;	/**< @brief Adjacent file name (jozov generated) original value given at command line.  */
-  const char *adj_help; /**< @brief Adjacent file name (jozov generated) help description.  */
-  char * void_arg;	/**< @brief Void/zone bind filename (jozov generated).  */
-  char * void_orig;	/**< @brief Void/zone bind filename (jozov generated) original value given at command line.  */
-  const char *void_help; /**< @brief Void/zone bind filename (jozov generated) help description.  */
+  char * partzone_arg;	/**< @brief Particles/Zones bind file.  */
+  char * partzone_orig;	/**< @brief Particles/Zones bind file original value given at command line.  */
+  const char *partzone_help; /**< @brief Particles/Zones bind file help description.  */
+  char * zonevoid_arg;	/**< @brief Void/zone bind file (jozov generated).  */
+  char * zonevoid_orig;	/**< @brief Void/zone bind file (jozov generated) original value given at command line.  */
+  const char *zonevoid_help; /**< @brief Void/zone bind file (jozov generated) help description.  */
   double minProba_arg;	/**< @brief Minimal probability to accept (default='0.0').  */
   char * minProba_orig;	/**< @brief Minimal probability to accept original value given at command line.  */
   const char *minProba_help; /**< @brief Minimal probability to accept help description.  */
@@ -75,8 +75,8 @@ struct buildObservedVoids_info
   unsigned int help_given ;	/**< @brief Whether help was given.  */
   unsigned int version_given ;	/**< @brief Whether version was given.  */
   unsigned int desc_given ;	/**< @brief Whether desc was given.  */
-  unsigned int adj_given ;	/**< @brief Whether adj was given.  */
-  unsigned int void_given ;	/**< @brief Whether void was given.  */
+  unsigned int partzone_given ;	/**< @brief Whether partzone was given.  */
+  unsigned int zonevoid_given ;	/**< @brief Whether zonevoid was given.  */
   unsigned int minProba_given ;	/**< @brief Whether minProba was given.  */
   unsigned int densityThreshold_given ;	/**< @brief Whether densityThreshold was given.  */
   unsigned int ramsesDir_given ;	/**< @brief Whether ramsesDir was given.  */

@@ -35,8 +35,8 @@ const char *buildObservedVoids_info_help[] = {
   "  -h, --help                    Print help and exit",
   "  -V, --version                 Print version and exit",
   "  -d, --desc=STRING             The description file name for the voids (jozov \n                                  generated)",
-  "  -a, --adj=STRING              Adjacent file name (jozov generated)",
-  "  -v, --void=STRING             Void/zone bind filename (jozov generated)",
+  "  -p, --partzone=STRING         Particles/Zones bind file",
+  "  -v, --zonevoid=STRING         Void/zone bind file (jozov generated)",
   "  -m, --minProba=DOUBLE         Minimal probability to accept  (default=`0.0')",
   "      --densityThreshold=DOUBLE Density threshold to consider a stable void  \n                                  (default=`-0.8')",
   "  -b, --ramsesDir=STRING        Ramses base output directory",
@@ -100,8 +100,8 @@ void clear_given (struct buildObservedVoids_info *args_info)
   args_info->help_given = 0 ;
   args_info->version_given = 0 ;
   args_info->desc_given = 0 ;
-  args_info->adj_given = 0 ;
-  args_info->void_given = 0 ;
+  args_info->partzone_given = 0 ;
+  args_info->zonevoid_given = 0 ;
   args_info->minProba_given = 0 ;
   args_info->densityThreshold_given = 0 ;
   args_info->ramsesDir_given = 0 ;
@@ -118,10 +118,10 @@ void clear_args (struct buildObservedVoids_info *args_info)
   FIX_UNUSED (args_info);
   args_info->desc_arg = NULL;
   args_info->desc_orig = NULL;
-  args_info->adj_arg = NULL;
-  args_info->adj_orig = NULL;
-  args_info->void_arg = NULL;
-  args_info->void_orig = NULL;
+  args_info->partzone_arg = NULL;
+  args_info->partzone_orig = NULL;
+  args_info->zonevoid_arg = NULL;
+  args_info->zonevoid_orig = NULL;
   args_info->minProba_arg = 0.0;
   args_info->minProba_orig = NULL;
   args_info->densityThreshold_arg = -0.8;
@@ -147,8 +147,8 @@ void init_args_info(struct buildObservedVoids_info *args_info)
   args_info->help_help = buildObservedVoids_info_help[0] ;
   args_info->version_help = buildObservedVoids_info_help[1] ;
   args_info->desc_help = buildObservedVoids_info_help[2] ;
-  args_info->adj_help = buildObservedVoids_info_help[3] ;
-  args_info->void_help = buildObservedVoids_info_help[4] ;
+  args_info->partzone_help = buildObservedVoids_info_help[3] ;
+  args_info->zonevoid_help = buildObservedVoids_info_help[4] ;
   args_info->minProba_help = buildObservedVoids_info_help[5] ;
   args_info->densityThreshold_help = buildObservedVoids_info_help[6] ;
   args_info->ramsesDir_help = buildObservedVoids_info_help[7] ;
@@ -239,10 +239,10 @@ buildObservedVoids_conf_release (struct buildObservedVoids_info *args_info)
 
   free_string_field (&(args_info->desc_arg));
   free_string_field (&(args_info->desc_orig));
-  free_string_field (&(args_info->adj_arg));
-  free_string_field (&(args_info->adj_orig));
-  free_string_field (&(args_info->void_arg));
-  free_string_field (&(args_info->void_orig));
+  free_string_field (&(args_info->partzone_arg));
+  free_string_field (&(args_info->partzone_orig));
+  free_string_field (&(args_info->zonevoid_arg));
+  free_string_field (&(args_info->zonevoid_orig));
   free_string_field (&(args_info->minProba_orig));
   free_string_field (&(args_info->densityThreshold_orig));
   free_string_field (&(args_info->ramsesDir_arg));
@@ -290,10 +290,10 @@ buildObservedVoids_conf_dump(FILE *outfile, struct buildObservedVoids_info *args
     write_into_file(outfile, "version", 0, 0 );
   if (args_info->desc_given)
     write_into_file(outfile, "desc", args_info->desc_orig, 0);
-  if (args_info->adj_given)
-    write_into_file(outfile, "adj", args_info->adj_orig, 0);
-  if (args_info->void_given)
-    write_into_file(outfile, "void", args_info->void_orig, 0);
+  if (args_info->partzone_given)
+    write_into_file(outfile, "partzone", args_info->partzone_orig, 0);
+  if (args_info->zonevoid_given)
+    write_into_file(outfile, "zonevoid", args_info->zonevoid_orig, 0);
   if (args_info->minProba_given)
     write_into_file(outfile, "minProba", args_info->minProba_orig, 0);
   if (args_info->densityThreshold_given)
@@ -432,15 +432,15 @@ buildObservedVoids_conf_required2 (struct buildObservedVoids_info *args_info, co
       error = 1;
     }
   
-  if (! args_info->adj_given)
+  if (! args_info->partzone_given)
     {
-      fprintf (stderr, "%s: '--adj' ('-a') option required%s\n", prog_name, (additional_error ? additional_error : ""));
+      fprintf (stderr, "%s: '--partzone' ('-p') option required%s\n", prog_name, (additional_error ? additional_error : ""));
       error = 1;
     }
   
-  if (! args_info->void_given)
+  if (! args_info->zonevoid_given)
     {
-      fprintf (stderr, "%s: '--void' ('-v') option required%s\n", prog_name, (additional_error ? additional_error : ""));
+      fprintf (stderr, "%s: '--zonevoid' ('-v') option required%s\n", prog_name, (additional_error ? additional_error : ""));
       error = 1;
     }
   
@@ -611,8 +611,8 @@ buildObservedVoids_conf_internal (
         { "help",	0, NULL, 'h' },
         { "version",	0, NULL, 'V' },
         { "desc",	1, NULL, 'd' },
-        { "adj",	1, NULL, 'a' },
-        { "void",	1, NULL, 'v' },
+        { "partzone",	1, NULL, 'p' },
+        { "zonevoid",	1, NULL, 'v' },
         { "minProba",	1, NULL, 'm' },
         { "densityThreshold",	1, NULL, 0 },
         { "ramsesDir",	1, NULL, 'b' },
@@ -624,7 +624,7 @@ buildObservedVoids_conf_internal (
         { 0,  0, 0, 0 }
       };
 
-      c = getopt_long (argc, argv, "hVd:a:v:m:b:r:f:o:g:q", long_options, &option_index);
+      c = getopt_long (argc, argv, "hVd:p:v:m:b:r:f:o:g:q", long_options, &option_index);
 
       if (c == -1) break;	/* Exit from `while (1)' loop.  */
 
@@ -652,26 +652,26 @@ buildObservedVoids_conf_internal (
             goto failure;
         
           break;
-        case 'a':	/* Adjacent file name (jozov generated).  */
+        case 'p':	/* Particles/Zones bind file.  */
         
         
-          if (update_arg( (void *)&(args_info->adj_arg), 
-               &(args_info->adj_orig), &(args_info->adj_given),
-              &(local_args_info.adj_given), optarg, 0, 0, ARG_STRING,
+          if (update_arg( (void *)&(args_info->partzone_arg), 
+               &(args_info->partzone_orig), &(args_info->partzone_given),
+              &(local_args_info.partzone_given), optarg, 0, 0, ARG_STRING,
               check_ambiguity, override, 0, 0,
-              "adj", 'a',
+              "partzone", 'p',
               additional_error))
             goto failure;
         
           break;
-        case 'v':	/* Void/zone bind filename (jozov generated).  */
+        case 'v':	/* Void/zone bind file (jozov generated).  */
         
         
-          if (update_arg( (void *)&(args_info->void_arg), 
-               &(args_info->void_orig), &(args_info->void_given),
-              &(local_args_info.void_given), optarg, 0, 0, ARG_STRING,
+          if (update_arg( (void *)&(args_info->zonevoid_arg), 
+               &(args_info->zonevoid_orig), &(args_info->zonevoid_given),
+              &(local_args_info.zonevoid_given), optarg, 0, 0, ARG_STRING,
               check_ambiguity, override, 0, 0,
-              "void", 'v',
+              "zonevoid", 'v',
               additional_error))
             goto failure;
         
