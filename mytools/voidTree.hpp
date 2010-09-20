@@ -27,43 +27,68 @@ public:
 
   int lookupParent(int voidId, const std::vector<std::list<int> >& voids_for_zones)
   {
-    std::set<int> sref;
-    sref.insert(zobov.allVoids[voidId].zId.begin(), zobov.allVoids[voidId].zId.end());
-    
-    std::vector<int> sout(sref.size());  
     int lastSize = 0x7fffffff;
-    int goodParent = voidId;
-    const std::list<int>& candidateList = voids_for_zones[*zobov.allVoids[voidId].zId.begin()];
+    int goodParent = -1;
+    ZobovVoid &ref_void = zobov.allVoids[voidId];
+    const std::list<int>& candidateList = voids_for_zones[ref_void.zId.front()];
     std::list<int>::const_iterator iter_candidate = candidateList.begin();
 
-    std::cout << "candidate list size is " << candidateList.size() << std::endl;
-    while (iter_candidate != candidateList.end()) 
+    //std::cout << "candidate list size is " << candidateList.size() << std::endl;
+
+    while (iter_candidate != candidateList.end())
       {
-        int i = *iter_candidate;
-	std::set<int> s1;
-	
-	int counter = 0;
-	s1.insert(zobov.allVoids[i].zId.begin(), zobov.allVoids[i].zId.end());
-	for (std::set<int>::iterator iter = s1.begin(), iter2 = sref.begin();
-	     iter != s1.end() && iter2 != sref.end();
-	     ++iter)
-	  {
-	    if (*iter == *iter2)
-	      {
-		counter++;
-		++iter2;
-	      }
-	    else while (*iter > *iter2 && iter2 != sref.end())
-		   ++iter2;
-	  }
-	
-	if (counter == sref.size() && s1.size() < lastSize)
-	  {
-	    return i;
-	  }
+        int vid_candidate = *iter_candidate;
+
+        if (vid_candidate == voidId)
+          break;
         ++iter_candidate;
       }
-    std::cout << "Failure to lookup parent" << std::endl;
+    if (iter_candidate == candidateList.begin())
+      {
+        std::cout << "Failure to lookup parent" << std::endl;
+        return -1;
+      }
+
+    // voidId must be in the list.
+    assert(iter_candidate != candidateList.end());
+    // Go back
+
+    do
+      {
+        int vid_candidate;
+
+        --iter_candidate;
+
+        vid_candidate = *iter_candidate;
+        std::vector<int>& candidate_zIds = zobov.allVoids[vid_candidate].zId;
+
+        if (candidate_zIds.size() < ref_void.zId.size())
+          {
+            --iter_candidate;
+            continue;
+          }
+
+	int counter = 0;
+        // All zones id are sorted in each void. So we just have parse the 
+        // vector of zones and check whether all the zones in ref_void.zId is
+        // in iter_candidate->zId, the list is analyzed only once.
+        // THOUGHT: candidateList may contain directly the information. It would suffice to have the void ids sorted according to volume. Then we just have to jump to the indice just smaller than voidId.
+
+        int k = 0;
+        for (int j = 0; j < candidate_zIds.size() && k < ref_void.zId.size(); j++)
+          {
+            if (candidate_zIds[j] == ref_void.zId[k])
+              k++;
+            else if (candidate_zIds[j] > ref_void.zId[k])
+              break;
+          }
+        if (k==ref_void.zId.size())
+          return vid_candidate;
+	
+        // Go bigger, though I would say we should not to.
+      }
+    while (iter_candidate != candidateList.begin()) ;
+    std::cout << "Failure to lookup parent (2)" << std::endl;
     return -1;
   }
   
@@ -92,16 +117,15 @@ public:
       }
 
     std::cout << "Linking voids together..." << std::endl;
-    double volMin = 4*M_PI/3*pow(50.*512/500.,3);
+   double volMin = 0;// 4*M_PI/3*pow(4.*512/500.,3);
     int inserted = 0;
     for (int i = rep.allVoids.size()-1; i>=0;i--)
       {
         if (rep.allVoids[i].volume < volMin) continue;
 
 	int p = lookupParent(i, voids_for_zones);
+        if ((i % 1000) == 0) std::cout << i << std::endl;
 
-	std::cout << i << std::endl;
-	
 	if (p < 0)
 	  {
 	    if (i != 0)
