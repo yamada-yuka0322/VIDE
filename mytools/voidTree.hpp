@@ -15,15 +15,38 @@ struct VoidNode
   std::list<VoidNode *> children;
 };
 
+struct VoidNodeOnDisk
+{
+  int vid;
+  int parent;
+};
+
 class VoidTree
 {
 protected:
-  uint32_t totalNumNodes;
+  uint32_t totalNumNodes, activeNodes;
   VoidNode *nodes;
   VoidNode *rootNode;  
   ZobovRep& zobov;
 public:
   typedef std::list<VoidNode *> VoidList;
+
+  void dumpTree(std::ostream& o)
+  {
+    VoidNodeOnDisk data;
+
+    o.write((char*)&activeNodes, sizeof(uint32_t));
+    for (uint32_t i = 0; i < activeNodes; i++)
+      {
+	data.vid = nodes[i].vid;
+	if (nodes[i].parent == 0)
+	  data.parent = -1;
+	else
+	  data.parent = nodes[i].parent - nodes;
+	o.write((char *)&data, sizeof(VoidNodeOnDisk));
+      }
+    
+  }  
 
   int lookupParent(int voidId, const std::vector<std::list<int> >& voids_for_zones)
   {
@@ -33,7 +56,7 @@ public:
     const std::list<int>& candidateList = voids_for_zones[ref_void.zId.front()];
     std::list<int>::const_iterator iter_candidate = candidateList.begin();
 
-    //std::cout << "candidate list size is " << candidateList.size() << std::endl;
+//    std::cout << "candidate list size is " << candidateList.size() << std::endl;
 
     while (iter_candidate != candidateList.end())
       {
@@ -91,6 +114,38 @@ public:
     std::cout << "Failure to lookup parent (2)" << std::endl;
     return -1;
   }
+
+  VoidTree(ZobovRep& rep, std::istream& disk)
+    : zobov(rep)
+  {
+    totalNumNodes = rep.allVoids.size();
+
+    disk.read((char *)&activeNodes, sizeof(uint32_t));
+    nodes = new VoidNode[activeNodes];
+    rootNode = 0;
+    for (uint32_t i = 0; i < activeNodes; i++)
+      {
+	VoidNodeOnDisk data;
+
+	disk.read((char *)&data, sizeof(data));	
+	nodes[i].vid = data.vid;
+	if (data.parent < 0)
+	  {
+	    if (rootNode != 0)
+	      {
+		std::cerr << "Multiple root to the tree !!!" << std::endl;
+		abort();
+	      }
+	    nodes[i].parent = 0;
+	    rootNode = &nodes[i];
+	  }
+	else
+	  {
+	    nodes[i].parent = nodes + data.parent;
+	    nodes[i].parent->children.push_back(&nodes[i]);
+	  }
+      }
+  }
   
   VoidTree(ZobovRep& rep)
     : zobov(rep)
@@ -113,7 +168,6 @@ public:
       {
 	nodes[i].vid = i;
 	nodes[i].parent = 0;
-	nodes[i].children.clear();
       }
 
     std::cout << "Linking voids together..." << std::endl;
@@ -149,6 +203,7 @@ public:
 	    }
 	  rootNode = &nodes[i];
 	}
+    activeNodes = inserted;
   }
 
   ~VoidTree()
