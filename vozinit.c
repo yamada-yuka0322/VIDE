@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
     }
    }
   }
-  fprintf(scr,"voztie %d %s\n",numdiv,suffix);
+  fprintf(scr,"./voztie %d %s\n",numdiv,suffix);
   fclose(scr);
 
   sprintf(systemstr,"chmod u+x %s",scrfile);
