@@ -243,7 +243,29 @@ public:
   {
     walkNode(rootNode, traverse);
   }
-  
+
+  template<typename T, typename T2>
+  void walkNodeWithMark(VoidNode *node, T& traverse, const T2& mark)
+  {
+    T2 new_mark = mark;
+
+    if (!traverse(node, new_mark))
+      return;
+
+    VoidList::iterator i = node->children.begin();
+    
+    while (i != node->children.end())
+      {
+	walkNodeWithMark(*i, traverse, new_mark);
+	++i;
+      }    
+  }
+
+  template<typename T,typename T2>
+  void walkWithMark(T& traverse, T2 mark)
+  {
+    walkNodeWithMark(rootNode, traverse, mark);
+  }
 };
 
 #endif
