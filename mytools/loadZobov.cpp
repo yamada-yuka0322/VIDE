@@ -9,11 +9,12 @@
 
 using namespace std;
 
-bool loadZobov(const char *descName, const char *adjName, const char *volName, ZobovRep& z)
+bool loadZobov(const char *descName, const char *adjName, const char *voidsName, 
+	       const char *volName, ZobovRep& z)
 {
   ifstream descFile(descName);
   ifstream adjFile(adjName);
-  ifstream volFile(volName);
+  ifstream volFile(voidsName);
   int32_t numParticles, numZones, numPinZone;
   int32_t totalParticles;
   int32_t numVoids;
@@ -75,6 +76,23 @@ bool loadZobov(const char *descName, const char *adjName, const char *volName, Z
       std::sort(&z.allVoids[v].zId[0], &z.allVoids[v].zId[numZinV]);
 
       delete[] zId;
+    }
+
+  if (volName != 0)
+    {
+      cout << "Loading particle volumes (requested)" << endl;
+      ifstream f(volName);
+      int numParticles;
+
+      if (!f)
+	{
+	  cerr << "No such file " << volName << endl;
+	  abort();
+	}
+
+      f.read((char *)&numParticles, sizeof(int));
+      z.particleVolume.resize(numParticles);
+      f.read((char *)&z.particleVolume[0], sizeof(float)*numParticles);
     }
 
   cout << "Loading description" << endl;

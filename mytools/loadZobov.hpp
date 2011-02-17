@@ -20,9 +20,11 @@ struct ZobovRep
 {
   std::vector<ZobovZone> allZones;
   std::vector<ZobovVoid> allVoids;
+  std::vector<float> particleVolume;
 };
 
 bool loadZobov(const char *descName,
-	       const char *adjName, const char *volName, ZobovRep& z);
+	       const char *adjName, const char *voidName,
+	       const char *volName, ZobovRep& z);
 
 #endif
