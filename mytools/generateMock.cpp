@@ -1,12 +1,19 @@
+#include <cmath>
 #include <cassert>
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <CosmoTool/loadSimu.hpp>
 #include <CosmoTool/loadRamses.hpp>
+#include <CosmoTool/interpolate.hpp>
+#include <CosmoTool/fortran.hpp>
 #include "generateMock_conf.h"
+#include "gslIntegrate.hpp"
 
 using namespace std;
 using namespace CosmoTool;
+
+#define LIGHT_SPEED 299792.458
 
 SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRedshift)
 {
@@ -19,6 +26,8 @@ SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRed
   outd->BoxSize = d->BoxSize;
   outd->TotalNumPart = outd->NumPart;
   outd->Hubble = d->Hubble;
+  outd->Omega_Lambda = d->Omega_Lambda;
+
   for (int k = 0; k < 3; k++)
     outd->Pos[k] = new float[outd->NumPart];
   outd->Vel[2] = new float[outd->NumPart];
@@ -47,6 +56,144 @@ SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRed
     }
 
   return outd;
+}
+
+static double cubic(double a)
+{
+  return a*a*a;
+}
+
+struct TotalExpansion
+{
+  double Omega_M, Omega_L;
+
+  double operator()(double z)
+  {
+    return 1/sqrt(Omega_M*cubic(1+z) + Omega_L);
+  }
+};
+
+Interpolate make_cosmological_redshift(double OM, double OL, double z0, double z1)
+{
+  TotalExpansion e_computer;
+  double D_tilde, Q, Qprime;
+  InterpolatePairs pairs;
+  
+  e_computer.Omega_M = OM;
+  e_computer.Omega_L = OL;
+  
+  pairs.resize(100);
+  ofstream f("comoving_distance.txt");
+
+  for (int i = 0; i < 100; i++)
+    {      
+      double z = z0 + (z1-z0)/100*i;
+
+      pairs[i].second = z;
+      pairs[i].first = gslIntegrate(e_computer, 0, z, 1e-3);
+      f << z << " " <<  pairs[i].first << endl;
+    }
+
+  return buildFromVector(pairs);
+}
+
+void metricTransform(SimuData *data, int axis)
+{
+  int x0, x1, x2;
+
+  switch (axis) {
+  case 0:
+    x0 = 1; x1 = 2; x2 = 0;
+    break;
+  case 1:
+    x0 = 0; x1 = 2; x2 = 1;
+    break;
+  case 2:
+    x0 = 0; x1 = 1; x2 = 2;
+    break;
+  default:
+    abort();
+  }
+
+  Interpolate z_vs_D = make_cosmological_redshift(data->Omega_M, data->Omega_Lambda, 0., 2.0); // Redshift 2 should be sufficient ?
+    
+  double z0 = 1/data->time - 1;
+  TotalExpansion e_computer;
+  double baseComovingDistance;
+
+  cout << "Using base redshift z=" << z0 << endl;
+
+  e_computer.Omega_M = data->Omega_M;
+  e_computer.Omega_L = data->Omega_Lambda;
+  baseComovingDistance = LIGHT_SPEED/100.* gslIntegrate(e_computer, 0, z0, 1e-3);
+  cout << "Comoving distance = " << baseComovingDistance << " Mpc/h" << endl;
+
+  for (uint32_t i = 0; i < data->NumPart; i++)
+    {
+      float& x = data->Pos[x0][i];
+      float& y = data->Pos[x1][i];
+      float& z = data->Pos[x2][i];
+      float& v = data->Vel[2][i];
+      
+      double reduced_red = (z + baseComovingDistance)*100./LIGHT_SPEED;
+
+      // Distorted redshift
+      z = z_vs_D.compute(reduced_red)*LIGHT_SPEED/100.;
+      // Add peculiar velocity
+      z += v;
+    }
+}
+
+void generateOutput(SimuData *data, int axis, 
+		    const std::string& fname)
+{
+  UnformattedWrite f(fname);
+
+  cout << "Generating output particles to " << fname << endl;
+ 
+  int x0, x1, x2;
+  
+  switch (axis) {
+  case 0:
+    x0 = 1; x1 = 2; x2 = 0;
+    break;
+  case 1:
+    x0 = 0; x1 = 2; x2 = 1;
+    break;
+  case 2:
+    x0 = 0; x1 = 1; x2 = 2;
+    break;
+  default:
+    abort();
+  }
+
+  f.beginCheckpoint();
+  f.writeInt32(data->NumPart);
+  f.endCheckpoint();
+
+  cout << "Writing X components..." << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < data->NumPart; i++)
+    {
+      f.writeReal32(data->Pos[x0][i]);
+    }
+  f.endCheckpoint();
+
+  cout << "Writing Y components..." << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < data->NumPart; i++)
+    {
+      f.writeReal32(data->Pos[x1][i]);
+    }
+  f.endCheckpoint();
+  
+  cout << "Writing Z components..." << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < data->NumPart; i++)
+    {
+      f.writeReal32(data->Pos[x2][i]);
+    }
+  f.endCheckpoint();
 }
 
 int main(int argc, char **argv)
@@ -81,10 +228,16 @@ int main(int argc, char **argv)
   
   simu = doLoadRamses(args_info.ramsesBase_arg, 
 		      args_info.ramsesId_arg, 
-		      args_info.axis_arg, true);
+		      args_info.axis_arg, false);
 
   cout << "Hubble = " << simu->Hubble << endl;
   cout << "Boxsize = " << simu->BoxSize << endl;
+  cout << "Omega_M = " << simu->Omega_M << endl;
+  cout << "Omega_Lambda = " << simu->Omega_Lambda << endl;
+
+  metricTransform(simu, args_info.axis_arg);
+
+  generateOutput(simu, args_info.axis_arg, args_info.output_arg);
   
   return 0;
 }
