@@ -1,0 +1,14 @@
+package "generateMock"
+version "0"
+
+option "configFile"	 -	"Configuration file path"	string optional
+
+# Ramses data
+option "ramsesBase" -	"Base directory for ramses" string required
+option "ramsesId"   -   "Ramses snapshot id" int required
+
+option "axis"	    -	"Redshift axis (X=0, Y=1, Z=2)" int optional default="2"
+option "bufferSize" -	"Size of the buffer regions in unit of X-Y size" double optional default="0.1"
+
+option "divisions"  - 	"number of divisions" int optional default="2"
+option "suffix"	    -	"suffix for the run" string optional default="run"
