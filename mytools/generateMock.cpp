@@ -27,6 +27,8 @@ SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRed
   outd->TotalNumPart = outd->NumPart;
   outd->Hubble = d->Hubble;
   outd->Omega_Lambda = d->Omega_Lambda;
+  outd->Omega_M = d->Omega_M;
+  outd->time = d->time;
 
   for (int k = 0; k < 3; k++)
     outd->Pos[k] = new float[outd->NumPart];
