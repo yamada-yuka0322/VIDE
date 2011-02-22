@@ -75,7 +75,7 @@ struct TotalExpansion
   }
 };
 
-Interpolate make_cosmological_redshift(double OM, double OL, double z0, double z1)
+Interpolate make_cosmological_redshift(double OM, double OL, double z0, double z1, int N = 1000)
 {
   TotalExpansion e_computer;
   double D_tilde, Q, Qprime;
@@ -84,12 +84,12 @@ Interpolate make_cosmological_redshift(double OM, double OL, double z0, double z
   e_computer.Omega_M = OM;
   e_computer.Omega_L = OL;
   
-  pairs.resize(100);
+  pairs.resize(N);
   ofstream f("comoving_distance.txt");
 
-  for (int i = 0; i < 100; i++)
+  for (int i = 0; i < N; i++)
     {      
-      double z = z0 + (z1-z0)/100*i;
+      double z = z0 + (z1-z0)/N*i;
 
       pairs[i].second = z;
       pairs[i].first = gslIntegrate(e_computer, 0, z, 1e-3);
