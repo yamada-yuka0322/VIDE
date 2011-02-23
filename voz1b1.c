@@ -4,6 +4,8 @@
 #define DL for (d=0;d<3;d++)
 #define BF 1e30
 
+#define MAX(a,b) ( ((a) < (b)) ? (a) : (b) )
+
 int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs);
 int vorvol (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, float *vol);
 int posread(char *posfile, float ***p, float fact);
@@ -35,7 +37,7 @@ int main(int argc, char *argv[]) {
     printf("Wrong number of arguments.\n");
     printf("arg1: position file\n");
     printf("arg2: border size\n");
-    printf("arg3: box size\n");
+    printf("arg3: boxsize\n");
     printf("arg4: suffix\n");
     printf("arg5: number of divisions\n");
     printf("arg6-8: b[0-2]\n\n");
@@ -78,6 +80,7 @@ int main(int argc, char *argv[]) {
   /* Boxsize should be the range in r, yielding a range 0-1 */
   np = posread(posfile,&r,1./boxsize);
   printf("%d particles\n",np);fflush(stdout);
+
   xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
   for (i=0; i<np;i++) {
     if (r[i][0]<xmin) xmin = r[i][0]; if (r[i][0]>xmax) xmax = r[i][0];

@@ -141,8 +141,8 @@ int main(int argc, char *argv[]) {
   for (b[0]=0;b[0]<numdiv; b[0]++) {
    for (b[1] = 0; b[1] < numdiv; b[1]++) {
     for (b[2] = 0; b[2] < numdiv; b[2]++) {
-      fprintf(scr,"./voz1b1 %s %f %f %s %d %d %d %d &\n",
-	     posfile,border,boxsize,suffix,numdiv,b[0],b[1],b[2]);
+      fprintf(scr,"./voz1b1 %s %f %f,%f,%f %s %d %d %d %d &\n",
+	      posfile,border,boxsize,boxsize,boxsize,suffix,numdiv,b[0],b[1],b[2]);
       p++;
       if ((p == NUMCPU)) { fprintf(scr, "wait\n"); p = 0; }
     }

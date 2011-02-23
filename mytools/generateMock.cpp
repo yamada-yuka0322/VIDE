@@ -9,6 +9,7 @@
 #include <CosmoTool/fortran.hpp>
 #include "generateMock_conf.h"
 #include "gslIntegrate.hpp"
+#include <netcdfcpp.h>
 
 using namespace std;
 using namespace CosmoTool;
@@ -198,11 +199,93 @@ void generateOutput(SimuData *data, int axis,
   f.endCheckpoint();
 }
 
+void makeBox(SimuData *simu, SimuData *&boxed, generateMock_info& args_info)
+{
+  uint32_t goodParticles = 0;
+  double ranges[3][2] = {
+    { args_info.rangeX_min_arg, args_info.rangeX_max_arg },
+    { args_info.rangeY_min_arg, args_info.rangeY_max_arg },
+    { args_info.rangeZ_min_arg, args_info.rangeZ_max_arg }
+  };
+  double mul[3];
+  int *particle_id;
+
+  boxed = new SimuData;
+  boxed->Hubble = simu->Hubble;
+  boxed->Omega_M = simu->Omega_M;
+  boxed->Omega_Lambda = simu->Omega_Lambda;
+  boxed->time = simu->time;
+  boxed->BoxSize = simu->BoxSize;
+
+  for (uint32_t i = 0; i < simu->NumPart; i++)
+    {
+      bool acceptance = true;
+
+      for (int j = 0; j < 3; j++)
+	acceptance = 
+	  acceptance &&
+	  (simu->Pos[j][i] > ranges[j][0]) && 
+	  (simu->Pos[j][i] < ranges[j][1]);
+      
+      if (acceptance)
+	goodParticles++;
+    }
+  
+  for (int j = 0; j < 3; j++)
+    {
+      boxed->Pos[j] = new float[goodParticles];
+      boxed->Vel[j] = 0;
+      mul[j] = 1.0/(ranges[j][1] - ranges[j][0]);
+    }
+
+  boxed->NumPart = goodParticles;
+
+  particle_id = new int[goodParticles];
+
+  uint32_t k = 0;
+  for (uint32_t i = 0; i < simu->NumPart; i++)
+    {
+      bool acceptance = true;
+
+      for (int j = 0; j < 3; j++)
+	acceptance = 
+	  acceptance &&
+	  (simu->Pos[j][i] > ranges[j][0]) && 
+	  (simu->Pos[j][i] < ranges[j][1]);
+      
+      if (acceptance)
+	{
+	  for (int j = 0; j < 3; j++)
+	    {
+	      boxed->Pos[j][k] = (simu->Pos[j][i]-ranges[j][0])*mul[j];
+	      assert(boxed->Pos[j][k] > 0);
+	      assert(boxed->Pos[j][k] < 1);
+	    }
+	  particle_id[k] = i;
+	  k++;
+	}
+    }
+
+  NcFile f(args_info.outputParameter_arg);
+
+  f.add_att("range_x_min", ranges[0][0]);
+  f.add_att("range_x_max", ranges[0][1]);
+  f.add_att("range_y_min", ranges[1][0]);
+  f.add_att("range_y_max", ranges[1][1]);
+  f.add_att("range_z_min", ranges[2][0]);
+  f.add_att("range_z_max", ranges[2][1]);
+
+  NcDim *NumPart_dim = f.add_dim("numpart_dim", boxed->NumPart);
+  NcVar *v = f.add_var("particle_ids", ncInt, NumPart_dim);
+
+  v->put(particle_id, boxed->NumPart);
+}
+
 int main(int argc, char **argv)
 {
   generateMock_info args_info;
   generateMock_conf_params args_params;
-  SimuData *simu;
+  SimuData *simu, *simuOut;
  
   generateMock_conf_init(&args_info);
   generateMock_conf_params_init(&args_params);
@@ -239,7 +322,12 @@ int main(int argc, char **argv)
 
   metricTransform(simu, args_info.axis_arg);
 
-  generateOutput(simu, args_info.axis_arg, args_info.output_arg);
+  makeBox(simu, simuOut, args_info);
+  delete simu;
+
+  generateOutput(simuOut, args_info.axis_arg, args_info.output_arg);
+
+  delete simuOut;
   
   return 0;
 }

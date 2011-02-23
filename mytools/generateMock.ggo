@@ -10,4 +10,11 @@ option "ramsesId"   -   "Ramses snapshot id" int required
 option "axis"	    -	"Redshift axis (X=0, Y=1, Z=2)" int optional default="2"
 
 option "output"	    -   "Output filename for particles" string required
+option "outputParameter" - "Output geometry parameter file for postprocessing" string required
 
+option "rangeX_min"   -   "Minimum range in X for making the box" double required
+option "rangeX_max"   -   "Maximum range in X for making the box" double required
+option "rangeY_min"   -   "Minimum range in Y for making the box" double required
+option "rangeY_max"   -   "Maximum range in Y for making the box" double required
+option "rangeZ_min"   -   "Minimum range in Z for making the box (after distortion)" double required
+option "rangeZ_max"   -   "Maximum range in Z for making the box (after distortion)" double required
