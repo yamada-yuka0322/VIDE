@@ -143,7 +143,7 @@ void metricTransform(SimuData *data, int axis)
       // Distorted redshift
       z = z_vs_D.compute(reduced_red)*LIGHT_SPEED/100.;
       // Add peculiar velocity
-      z += v;
+      z += v/100;
     }
 }
 
@@ -266,7 +266,7 @@ void makeBox(SimuData *simu, SimuData *&boxed, generateMock_info& args_info)
 	}
     }
 
-  NcFile f(args_info.outputParameter_arg);
+  NcFile f(args_info.outputParameter_arg, NcFile::Replace);
 
   f.add_att("range_x_min", ranges[0][0]);
   f.add_att("range_x_max", ranges[0][1]);
