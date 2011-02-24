@@ -201,7 +201,7 @@ public:
 	  nodes[i].parent = rootNode;
 	  rootNode->children.push_back(&nodes[i]);
 	}
-    activeNodes = inserted;
+    activeNodes = inserted+1;
   }
 
   ~VoidTree()
