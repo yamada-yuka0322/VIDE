@@ -14,6 +14,7 @@ struct ParticleInfo
 {
   ParticleVector particles;
   float ranges[3][2];
+  float length[3];
 };
 
 bool loadParticleInfo(ParticleInfo& info,

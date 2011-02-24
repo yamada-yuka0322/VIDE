@@ -22,6 +22,9 @@ bool loadParticleInfo(ParticleInfo& info,
   info.ranges[2][0] = f_info.get_att("range_z_min")->as_double(0);
   info.ranges[2][1] = f_info.get_att("range_z_max")->as_double(0);
 
+  for (int i = 0; i < 3; i++)
+    info.length[i] = info.ranges[i][1] - info.ranges[i][0];
+
   try
     {
       UnformattedRead f(particles);
