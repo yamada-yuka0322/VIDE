@@ -162,16 +162,17 @@ public:
            voids_for_zones[v.zId[j]].push_back(i);
        }
 
-    nodes = new VoidNode[totalNumNodes];
+    // One additional for the mega-root
+    nodes = new VoidNode[totalNumNodes+1];
 
-    for (int i = 0; i < rep.allVoids.size(); i++)
+    for (int i = 0; i <= totalNumNodes; i++)
       {
 	nodes[i].vid = i;
 	nodes[i].parent = 0;
       }
 
     std::cout << "Linking voids together..." << std::endl;
-   double volMin = 0;// 4*M_PI/3*pow(4.*512/500.,3);
+    double volMin = 0;// 4*M_PI/3*pow(4.*512/500.,3);
     int inserted = 0;
     for (int i = rep.allVoids.size()-1; i>=0;i--)
       {
@@ -192,17 +193,13 @@ public:
 	inserted++;
       }
 
-    rootNode = 0;
+    rootNode = &nodes[inserted+1];
+    rootNode->vid = -1;
+    rootNode->parent = 0;
+
     for (int i = 0; i < inserted; i++)
       if (nodes[i].parent == 0)
-	{
-	  if (rootNode != 0)
-	    {
-	      std::cerr << "Multiple root to the tree !!!" << std::endl;
-	      abort();
-	    }
-	  rootNode = &nodes[i];
-	}
+	nodes[i].parent = rootNode;
     activeNodes = inserted;
   }
 
