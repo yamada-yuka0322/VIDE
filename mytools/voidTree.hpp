@@ -190,8 +190,8 @@ public:
 	inserted++;
       }
 
-    assert(inserted < totalNumNodes); 
-    rootNode = &nodes[inserted+1];
+    assert(inserted <= totalNumNodes); 
+    rootNode = &nodes[inserted];
     rootNode->vid = -1;
     rootNode->parent = 0;
 
