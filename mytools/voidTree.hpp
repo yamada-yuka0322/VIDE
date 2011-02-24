@@ -181,8 +181,11 @@ public:
 	int p = lookupParent(i, voids_for_zones);
         if ((i % 1000) == 0) std::cout << i << std::endl;
 
-	nodes[p].children.push_back(&nodes[i]);
-	nodes[i].parent = &nodes[p];
+	if (p >= 0)
+	  {
+	    nodes[p].children.push_back(&nodes[i]);
+	    nodes[i].parent = &nodes[p];
+	  }
 	inserted++;
       }
 
@@ -192,7 +195,10 @@ public:
 
     for (int i = 0; i < inserted; i++)
       if (nodes[i].parent == 0)
-	nodes[i].parent = rootNode;
+	{
+	  nodes[i].parent = rootNode;
+	  rootNode->children.push_back(&nodes[i]);
+	}
     activeNodes = inserted;
   }
 
