@@ -181,13 +181,6 @@ public:
 	int p = lookupParent(i, voids_for_zones);
         if ((i % 1000) == 0) std::cout << i << std::endl;
 
-	if (p < 0)
-	  {
-	    if (i != 0)
-	      std::cerr << "Warning ! Voids without parent and it is not the root !" << std::endl;
-	    continue;
-	  }
-
 	nodes[p].children.push_back(&nodes[i]);
 	nodes[i].parent = &nodes[p];
 	inserted++;
