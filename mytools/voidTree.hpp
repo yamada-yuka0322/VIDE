@@ -186,9 +186,11 @@ public:
 	    nodes[p].children.push_back(&nodes[i]);
 	    nodes[i].parent = &nodes[p];
 	  }
+	  
 	inserted++;
       }
 
+    assert(inserted < totalNumNodes); 
     rootNode = &nodes[inserted+1];
     rootNode->vid = -1;
     rootNode->parent = 0;
