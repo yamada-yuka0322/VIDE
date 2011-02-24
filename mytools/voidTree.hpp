@@ -68,7 +68,7 @@ public:
       }
     if (iter_candidate == candidateList.begin())
       {
-        std::cout << "Failure to lookup parent" << std::endl;
+//        std::cout << "Failure to lookup parent" << std::endl;
         return -1;
       }
 
@@ -111,7 +111,7 @@ public:
         // Go bigger, though I would say we should not to.
       }
     while (iter_candidate != candidateList.begin()) ;
-    std::cout << "Failure to lookup parent (2)" << std::endl;
+//    std::cout << "Failure to lookup parent (2)" << std::endl;
     return -1;
   }
 
