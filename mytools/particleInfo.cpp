@@ -42,21 +42,21 @@ bool loadParticleInfo(ParticleInfo& info,
       mul = info.ranges[0][1] - info.ranges[0][0];
       f.beginCheckpoint();
       for (int i = 0; i < numpart; i++)
-	info.particles[i].x = info.ranges[0][0] + mul*f.readReal32();
+	info.particles[i].x = mul*f.readReal32();
       f.endCheckpoint();
       
-      offset = info.ranges[0][0];
-      mul = info.ranges[0][1] - info.ranges[0][0];
+      offset = info.ranges[1][0];
+      mul = info.ranges[1][1] - info.ranges[1][0];
       f.beginCheckpoint();
       for (int i = 0; i < numpart; i++)
-	info.particles[i].y = f.readReal32();
+	info.particles[i].y = mul*f.readReal32();
       f.endCheckpoint();
       
-      offset = info.ranges[0][0];
-      mul = info.ranges[0][1] - info.ranges[0][0];
+      offset = info.ranges[2][0];
+      mul = info.ranges[2][1] - info.ranges[2][0];
       f.beginCheckpoint();
       for (int i = 0; i < numpart; i++)
-	info.particles[i].z = f.readReal32();
+	info.particles[i].z = mul*f.readReal32();
       f.endCheckpoint();
     }
   catch (const NoSuchFileException& e)
