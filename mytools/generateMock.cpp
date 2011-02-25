@@ -100,7 +100,7 @@ Interpolate make_cosmological_redshift(double OM, double OL, double z0, double z
   return buildFromVector(pairs);
 }
 
-void metricTransform(SimuData *data, int axis)
+void metricTransform(SimuData *data, int axis, bool reshift)
 {
   int x0, x1, x2;
 
@@ -121,6 +121,7 @@ void metricTransform(SimuData *data, int axis)
   Interpolate z_vs_D = make_cosmological_redshift(data->Omega_M, data->Omega_Lambda, 0., 2.0); // Redshift 2 should be sufficient ?
     
   double z0 = 1/data->time - 1;
+  double z_base = reshift ? z0 : 0;
   TotalExpansion e_computer;
   double baseComovingDistance;
 
@@ -141,7 +142,7 @@ void metricTransform(SimuData *data, int axis)
       double reduced_red = (z + baseComovingDistance)*100./LIGHT_SPEED;
 
       // Distorted redshift
-      z = z_vs_D.compute(reduced_red)*LIGHT_SPEED/100.;
+      z = (z_vs_D.compute(reduced_red)-z_base)*LIGHT_SPEED/100.;
       // Add peculiar velocity
       z += v/100;
     }
@@ -320,7 +321,7 @@ int main(int argc, char **argv)
   cout << "Omega_M = " << simu->Omega_M << endl;
   cout << "Omega_Lambda = " << simu->Omega_Lambda << endl;
 
-  metricTransform(simu, args_info.axis_arg);
+  metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag);
 
   makeBox(simu, simuOut, args_info);
   delete simu;

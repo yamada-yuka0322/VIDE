@@ -18,3 +18,5 @@ option "rangeY_min"   -   "Minimum range in Y for making the box" double require
 option "rangeY_max"   -   "Maximum range in Y for making the box" double required
 option "rangeZ_min"   -   "Minimum range in Z for making the box (after distortion)" double required
 option "rangeZ_max"   -   "Maximum range in Z for making the box (after distortion)" double required
+
+option "preReShift" - "Reshift the zero of the Z axis" flag off
