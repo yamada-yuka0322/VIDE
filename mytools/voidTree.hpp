@@ -87,6 +87,9 @@ public:
 
         if (candidate_zIds.size() < ref_void.zId.size())
           {
+            if (iter_candidate == candidateList.begin())
+              return -1;
+
             --iter_candidate;
             continue;
           }
