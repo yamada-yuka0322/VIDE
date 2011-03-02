@@ -20,3 +20,4 @@ option "rangeZ_min"   -   "Minimum range in Z for making the box (after distorti
 option "rangeZ_max"   -   "Maximum range in Z for making the box (after distortion)" double required
 
 option "preReShift" - "Reshift the zero of the Z axis" flag off
+option "peculiarVelocities" - "Added peculiar velocities distortion" flag off
