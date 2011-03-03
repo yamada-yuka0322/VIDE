@@ -100,7 +100,7 @@ Interpolate make_cosmological_redshift(double OM, double OL, double z0, double z
   return buildFromVector(pairs);
 }
 
-void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel)
+void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double*& expfact)
 {
   int x0, x1, x2;
 
@@ -125,6 +125,8 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel)
   TotalExpansion e_computer;
   double baseComovingDistance;
 
+  expfact = new double[data->NumPart];
+
   cout << "Using base redshift z=" << z0 << endl;
 
   e_computer.Omega_M = data->Omega_M;
@@ -138,11 +140,13 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel)
       float& y = data->Pos[x1][i];
       float& z = data->Pos[x2][i];
       float& v = data->Vel[2][i];
+      float z_old = z;
       
       double reduced_red = (z + baseComovingDistance)*100./LIGHT_SPEED;
 
       // Distorted redshift
       z = (z_vs_D.compute(reduced_red)-z_base)*LIGHT_SPEED/100.;
+      expfact[i] = z / z_old; 
       // Add peculiar velocity
       if (pecvel)
 	z += v/100;
@@ -201,7 +205,7 @@ void generateOutput(SimuData *data, int axis,
   f.endCheckpoint();
 }
 
-void makeBox(SimuData *simu, SimuData *&boxed, generateMock_info& args_info)
+void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& args_info)
 {
   uint32_t goodParticles = 0;
   double ranges[3][2] = {
@@ -243,6 +247,7 @@ void makeBox(SimuData *simu, SimuData *&boxed, generateMock_info& args_info)
   boxed->NumPart = goodParticles;
 
   particle_id = new int[goodParticles];
+  double *expansion_fac = new double[goodParticles];
 
   uint32_t k = 0;
   for (uint32_t i = 0; i < simu->NumPart; i++)
@@ -264,6 +269,7 @@ void makeBox(SimuData *simu, SimuData *&boxed, generateMock_info& args_info)
 	      assert(boxed->Pos[j][k] < 1);
 	    }
 	  particle_id[k] = i;
+          expansion_fac[k] = efac[i];
 	  k++;
 	}
     }
@@ -279,8 +285,13 @@ void makeBox(SimuData *simu, SimuData *&boxed, generateMock_info& args_info)
 
   NcDim *NumPart_dim = f.add_dim("numpart_dim", boxed->NumPart);
   NcVar *v = f.add_var("particle_ids", ncInt, NumPart_dim);
+  NcVar *v2 = f.add_var("expansion", ncDouble, NumPart_dim);
 
   v->put(particle_id, boxed->NumPart);
+  v2->put(expansion_fac, boxed->NumPart);
+
+  delete[] particle_id;
+  delete[] expansion_fac;
 }
 
 int main(int argc, char **argv)
@@ -322,9 +333,11 @@ int main(int argc, char **argv)
   cout << "Omega_M = " << simu->Omega_M << endl;
   cout << "Omega_Lambda = " << simu->Omega_Lambda << endl;
 
-  metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag, args_info.peculiarVelocities_flag);
+  double *expfact;
 
-  makeBox(simu, simuOut, args_info);
+  metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag, args_info.peculiarVelocities_flag, expfact);
+
+  makeBox(simu, expfact, simuOut, args_info);
   delete simu;
 
   generateOutput(simuOut, args_info.axis_arg, args_info.output_arg);
