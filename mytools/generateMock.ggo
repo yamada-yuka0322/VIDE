@@ -21,3 +21,5 @@ option "rangeZ_max"   -   "Maximum range in Z for making the box (after distorti
 
 option "preReShift" - "Reshift the zero of the Z axis" flag off
 option "peculiarVelocities" - "Added peculiar velocities distortion" flag off
+
+option "cosmo"	- "Apply cosmological redshift" flag on

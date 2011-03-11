@@ -9,6 +9,7 @@ bool loadParticleInfo(ParticleInfo& info,
 		      const std::string& particles, 
 		      const std::string& extra_info)
 {
+      int numpart;
 
   NcFile f_info(extra_info.c_str());
   
@@ -29,7 +30,6 @@ bool loadParticleInfo(ParticleInfo& info,
     {
       UnformattedRead f(particles);
 
-      int numpart;
       float mul, offset;
       
       f.beginCheckpoint();

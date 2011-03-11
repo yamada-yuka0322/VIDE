@@ -335,7 +335,13 @@ int main(int argc, char **argv)
 
   double *expfact;
 
-  metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag, args_info.peculiarVelocities_flag, expfact);
+  if (args_info.cosmo_flag)
+    metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag, args_info.peculiarVelocities_flag, expfact);
+  else
+    { 
+      expfact = new double[simu->NumPart];
+      for (int j = 0; j < simu->NumPart; j++) expfact[j] = 1.0;
+    }
 
   makeBox(simu, expfact, simuOut, args_info);
   delete simu;
