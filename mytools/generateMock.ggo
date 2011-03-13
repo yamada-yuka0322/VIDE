@@ -4,8 +4,10 @@ version "0"
 option "configFile"	 -	"Configuration file path"	string optional
 
 # Ramses data
-option "ramsesBase" -	"Base directory for ramses" string required
-option "ramsesId"   -   "Ramses snapshot id" int required
+option "ramsesBase" -	"Base directory for ramses" string optional
+option "ramsesId"   -   "Ramses snapshot id" int optional
+
+option "gadget"	    -	"Base name of gadget snapshot (without parallel writing extension)" string optional
 
 option "axis"	    -	"Redshift axis (X=0, Y=1, Z=2)" int optional default="2"
 
