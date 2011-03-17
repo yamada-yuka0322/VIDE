@@ -84,7 +84,7 @@ SimuData *doLoadGadget(const char *gadgetname, int velAxis, bool goRedshift)
   outd = new SimuData;
 
   outd->NumPart = d->TotalNumPart;
-  outd->BoxSize = d->BoxSize;
+  outd->BoxSize = d->BoxSize/1000;
   outd->TotalNumPart = outd->NumPart;
   outd->Hubble = d->Hubble;
   outd->Omega_Lambda = d->Omega_Lambda;
@@ -108,7 +108,7 @@ SimuData *doLoadGadget(const char *gadgetname, int velAxis, bool goRedshift)
 	      {
 		assert(d->Id[i] >= 1);
 		assert(d->Id[i] <= outd->TotalNumPart);
-		outd->Pos[k][d->Id[i]-1] = d->Pos[k][i];
+		outd->Pos[k][d->Id[i]-1] = d->Pos[k][i]/1000;
 		outd->Vel[2][d->Id[i]-1] = d->Vel[velAxis][i];
 	      }
 	  
@@ -210,13 +210,24 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
       float z_old = z;
       
       double reduced_red = (z + baseComovingDistance)*100./LIGHT_SPEED;
+      try
+        {
 
-      // Distorted redshift
-      z = (z_vs_D.compute(reduced_red)-z_base)*LIGHT_SPEED/100.;
-      expfact[i] = z / z_old; 
-      // Add peculiar velocity
-      if (pecvel)
-	z += v/100;
+          // Distorted redshift
+          if (reduced_red == 0)
+            z = 0;
+          else
+            z = (z_vs_D.compute(reduced_red)-z_base)*LIGHT_SPEED/100.;
+          expfact[i] = z / z_old; 
+         // Add peculiar velocity
+         if (pecvel)
+	  z += v/100;
+       }
+      catch(const InvalidRangeException& e) {
+       cout << "Trying to interpolate out of the tabulated range." << endl;
+       cout << "The offending value is z=" << reduced_red << endl;
+       abort();
+      }
     }
 }
 

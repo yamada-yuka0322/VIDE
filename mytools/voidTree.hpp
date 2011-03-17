@@ -224,6 +224,8 @@ public:
   }
 
 
+  VoidNode *getRoot() { return rootNode; }
+
   template<typename T>
   void walkNode(VoidNode *node, T& traverse)
   {
