@@ -5,6 +5,7 @@
 #include <string>
 #include <CosmoTool/loadSimu.hpp>
 #include <CosmoTool/loadRamses.hpp>
+#include <CosmoTool/loadGadget.hpp>
 #include <CosmoTool/interpolate.hpp>
 #include <CosmoTool/fortran.hpp>
 #include "generateMock_conf.h"
@@ -56,6 +57,72 @@ SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRed
        delete d;
        curCpu++;
        cout << "loading cpu " << curCpu  << endl;
+    }
+
+  return outd;
+}
+
+SimuData *doLoadGadget(const char *gadgetname, int velAxis, bool goRedshift)
+{
+  SimuData *d, *outd;
+
+  try
+    {
+      d = loadGadgetMulti(gadgetname, -1, 0);
+    }
+  catch (const NoSuchFileException& e)
+    {
+      try
+	{
+	  d = loadGadgetMulti(gadgetname, 0, 0);
+	}
+      catch(const NoSuchFileException& e)
+	{
+	  return 0;
+	}
+    }
+  outd = new SimuData;
+
+  outd->NumPart = d->TotalNumPart;
+  outd->BoxSize = d->BoxSize;
+  outd->TotalNumPart = outd->NumPart;
+  outd->Hubble = d->Hubble;
+  outd->Omega_Lambda = d->Omega_Lambda;
+  outd->Omega_M = d->Omega_M;
+  outd->time = d->time;
+
+  for (int k = 0; k < 3; k++)
+    outd->Pos[k] = new float[outd->NumPart];
+  outd->Vel[2] = new float[outd->NumPart];
+  delete d;
+
+  int curCpu = 0;
+  cout << "loading file 0 " << endl;
+  try
+    {
+      while (1)
+	{
+	  d = loadGadgetMulti(gadgetname, curCpu, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID);
+	  for (int k = 0; k < 3; k++)
+	    for (int i = 0; i < d->NumPart; i++)
+	      {
+		assert(d->Id[i] >= 1);
+		assert(d->Id[i] <= outd->TotalNumPart);
+		outd->Pos[k][d->Id[i]-1] = d->Pos[k][i];
+		outd->Vel[2][d->Id[i]-1] = d->Vel[velAxis][i];
+	      }
+	  
+	  if (goRedshift)
+	    for (int i = 0; i < d->NumPart; i++)
+	      outd->Pos[velAxis][d->Id[i]-1] += d->Vel[velAxis][i]/100.;
+
+	  delete d;
+	  curCpu++;
+	  cout << "loading file " << curCpu  << endl;
+	}
+    }
+  catch (const NoSuchFileException& e)
+    {
     }
 
   return outd;
@@ -323,11 +390,39 @@ int main(int argc, char **argv)
     }
   
   generateMock_conf_print_version();
-  
-  simu = doLoadRamses(args_info.ramsesBase_arg, 
-		      args_info.ramsesId_arg, 
-		      args_info.axis_arg, false);
 
+  if (args_info.ramsesBase_given || args_info.ramsesId_given)
+    {
+      if (args_info.ramsesBase_given && args_info.ramsesId_given)  
+	simu = doLoadRamses(args_info.ramsesBase_arg, 
+			    args_info.ramsesId_arg, 
+			    args_info.axis_arg, false);
+      else
+	{
+	  cerr << "Both ramsesBase and ramsesId are required to be able to load snapshots" << endl;
+	  return 1;
+	}
+
+      if (simu == 0)
+	{
+	  cerr << "Error while loading" << endl;
+	  return 1;
+	}
+    }
+  else if (args_info.gadget_given)
+    {
+      simu = doLoadGadget(args_info.gadget_arg, args_info.axis_arg, false);      
+      if (simu == 0)
+	{
+	  cerr << "Error while loading " << endl;
+	  return 1;
+	}
+    }
+  else
+    {
+      cerr << "Either a ramses snapshot or a gadget snapshot is required." << endl;
+      return 1;
+    }
   cout << "Hubble = " << simu->Hubble << endl;
   cout << "Boxsize = " << simu->BoxSize << endl;
   cout << "Omega_M = " << simu->Omega_M << endl;
@@ -335,7 +430,13 @@ int main(int argc, char **argv)
 
   double *expfact;
 
-  metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag, args_info.peculiarVelocities_flag, expfact);
+  if (args_info.cosmo_flag)
+    metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag, args_info.peculiarVelocities_flag, expfact);
+  else
+    { 
+      expfact = new double[simu->NumPart];
+      for (int j = 0; j < simu->NumPart; j++) expfact[j] = 1.0;
+    }
 
   makeBox(simu, expfact, simuOut, args_info);
   delete simu;
