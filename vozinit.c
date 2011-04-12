@@ -148,6 +148,7 @@ int main(int argc, char *argv[]) {
     }
    }
   }
+  fprintf(scr,"wait\n");
   fprintf(scr,"./voztie %d %s\n",numdiv,suffix);
   fclose(scr);
 

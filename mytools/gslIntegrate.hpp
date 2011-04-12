@@ -22,7 +22,7 @@ double gslIntegrate(FunT& v, double a, double b, double prec, int NPTS = 1024)
   f.function = &gslSpecialFunction<FunT>;
   f.params = &v;
 
-  gsl_integration_qag(&f, a, b, 0, prec, NPTS, GSL_INTEG_GAUSS61,
+  gsl_integration_qag(&f, a, b, prec, 0, NPTS, GSL_INTEG_GAUSS61,
 		      w, &result, &abserr);
   
   gsl_integration_workspace_free(w);
