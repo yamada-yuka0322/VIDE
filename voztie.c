@@ -93,8 +93,8 @@ int main(int argc, char *argv[]) {
       for (p=0;p<nvp;p++) {
 	fread(&volstemp,1,sizeof(float),part);
 	if (vols[orig[p]] > -1.)
-	  if (fabs(vols[orig[p]]-volstemp)/volstemp > 1e-3) {
-	    printf("Inconsistent volumes for p. %d: (%g,%g)!\n",
+	  if (fabs(vols[orig[p]]-volstemp)/volstemp > 1.1e-3) {
+	    printf("Inconsistent volumes for p. %d: (%10g,%10g)!\n",
 		   orig[p],vols[orig[p]],volstemp);
 	    exit(0);
 	  }
