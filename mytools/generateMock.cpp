@@ -6,6 +6,7 @@
 #include <CosmoTool/loadSimu.hpp>
 #include <CosmoTool/loadRamses.hpp>
 #include <CosmoTool/loadGadget.hpp>
+#include <CosmoTool/loadFlash.hpp>
 #include <CosmoTool/interpolate.hpp>
 #include <CosmoTool/fortran.hpp>
 #include "generateMock_conf.h"
@@ -62,19 +63,24 @@ SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRed
   return outd;
 }
 
-SimuData *doLoadGadget(const char *gadgetname, int velAxis, bool goRedshift)
+SimuData *myLoadGadget(const char *fname, int id, int flags)
+{
+  return loadGadgetMulti(fname, id, flags);
+}
+
+SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift, SimuData *(*loadFunction)(const char *fname, int id, int flags))
 {
   SimuData *d, *outd;
 
   try
     {
-      d = loadGadgetMulti(gadgetname, -1, 0);
+      d = loadFunction(gadgetname, -1, 0);
     }
   catch (const NoSuchFileException& e)
     {
       try
 	{
-	  d = loadGadgetMulti(gadgetname, 0, 0);
+	  d = loadFunction(gadgetname, 0, 0);
 	}
       catch(const NoSuchFileException& e)
 	{
@@ -102,7 +108,7 @@ SimuData *doLoadGadget(const char *gadgetname, int velAxis, bool goRedshift)
     {
       while (1)
 	{
-	  d = loadGadgetMulti(gadgetname, curCpu, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID);
+	  d = loadFunction(gadgetname, curCpu, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID);
 	  for (int k = 0; k < 3; k++)
 	    for (int i = 0; i < d->NumPart; i++)
 	      {
@@ -127,6 +133,8 @@ SimuData *doLoadGadget(const char *gadgetname, int velAxis, bool goRedshift)
 
   return outd;
 }
+
+
 
 static double cubic(double a)
 {
@@ -420,9 +428,18 @@ int main(int argc, char **argv)
 	  return 1;
 	}
     }
-  else if (args_info.gadget_given)
+  else if (args_info.gadget_given || args_info.flash_given)
     {
-      simu = doLoadGadget(args_info.gadget_arg, args_info.axis_arg, false);      
+      if (args_info.gadget_given && args_info.flash_given)
+	{
+	  cerr << "Do not know which file to use: Gadget or Flash ?" << endl;
+	  return 1;
+	}
+
+      if (args_info.gadget_given)
+	simu = doLoadSimulation(args_info.gadget_arg, args_info.axis_arg, false, myLoadGadget);      
+      else
+	simu = doLoadSimulation(args_info.flash_arg, args_info.axis_arg, false, loadFlashMulti); 
       if (simu == 0)
 	{
 	  cerr << "Error while loading " << endl;
