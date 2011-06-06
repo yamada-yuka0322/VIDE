@@ -193,9 +193,9 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
     abort();
   }
 
-  Interpolate z_vs_D = make_cosmological_redshift(data->Omega_M, data->Omega_Lambda, 0., 2.0); // Redshift 2 should be sufficient ?
     
   double z0 = 1/data->time - 1;
+  Interpolate z_vs_D = make_cosmological_redshift(data->Omega_M, data->Omega_Lambda, 0., 2*z0); // Redshift 2*z0 should be sufficient ?
   double z_base = reshift ? z0 : 0;
   TotalExpansion e_computer;
   double baseComovingDistance;
@@ -300,6 +300,7 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
     { args_info.rangeZ_min_arg, args_info.rangeZ_max_arg }
   };
   double mul[3];
+  float minmax[2][3];
   int *particle_id;
 
   boxed = new SimuData;
@@ -309,19 +310,27 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
   boxed->time = simu->time;
   boxed->BoxSize = simu->BoxSize;
 
+  for (int j = 0; j < 3; j++) minmax[1][j] = minmax[0][j] = simu->Pos[j][0];
+
   for (uint32_t i = 0; i < simu->NumPart; i++)
     {
       bool acceptance = true;
 
-      for (int j = 0; j < 3; j++)
+      for (int j = 0; j < 3; j++) {
 	acceptance = 
 	  acceptance &&
 	  (simu->Pos[j][i] > ranges[j][0]) && 
 	  (simu->Pos[j][i] < ranges[j][1]);
-      
+        minmax[0][j] = min(simu->Pos[j][i], minmax[0][j]);
+        minmax[1][j] = max(simu->Pos[j][i], minmax[1][j]);
+      }
+
       if (acceptance)
 	goodParticles++;
     }
+
+  cout << "Min position = " << minmax[0][0] << " " << minmax[0][1] << " " << minmax[0][2] << endl;
+  cout << "Max position = " << minmax[1][0] << " " << minmax[1][1] << " " << minmax[1][2] << endl;
   
   for (int j = 0; j < 3; j++)
     {
