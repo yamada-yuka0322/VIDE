@@ -6,8 +6,10 @@
 #include <sstream>
 #include <algorithm>
 #include "loadZobov.hpp"
+#include <CosmoTool/fortran.hpp>
 
 using namespace std;
+using namespace CosmoTool;
 
 bool loadZobov(const char *descName, const char *adjName, const char *voidsName, 
 	       const char *volName, ZobovRep& z)
@@ -18,6 +20,7 @@ bool loadZobov(const char *descName, const char *adjName, const char *voidsName,
   int32_t numParticles, numZones, numPinZone;
   int32_t totalParticles;
   int32_t numVoids;
+  int32_t minParticlesInZone, maxParticlesInZone;
 
   adjFile.read((char *)&numParticles, sizeof(numParticles));
   adjFile.read((char *)&numZones, sizeof(numZones));
@@ -28,6 +31,10 @@ bool loadZobov(const char *descName, const char *adjName, const char *voidsName,
   cout << "Number of zones = " << numZones << endl;
 
   totalParticles = 0;
+
+  minParticlesInZone = -1;
+  maxParticlesInZone = -1;
+
   z.allZones.resize(numZones);
   for (int zone = 0; zone < numZones; zone++)
     {
@@ -41,10 +48,19 @@ bool loadZobov(const char *descName, const char *adjName, const char *voidsName,
       z.allZones[zone].pId.resize(numPinZone);
       adjFile.read((char *)&z.allZones[zone].pId[0], sizeof(int)*numPinZone);
 
+      if (maxParticlesInZone < 0 || numPinZone > maxParticlesInZone)
+	maxParticlesInZone = numPinZone;
+
+      if (minParticlesInZone < 0 || numPinZone < minParticlesInZone)
+	minParticlesInZone = numPinZone;
+
       totalParticles += numPinZone;      
     }
   cout << "Zoned " << totalParticles << endl;
 
+  cout << "Minimum number of particles in zone = " << minParticlesInZone << endl;
+  cout << "Maximum number of particles in zone = " << maxParticlesInZone << endl;
+  
   if (totalParticles != numParticles)
     {
       cerr << "The numbers of particles are inconsistent ! (" << totalParticles << " vs " << numParticles << ")"<< endl;
@@ -154,6 +170,41 @@ bool loadZobov(const char *descName, const char *adjName, const char *voidsName,
 
 
   
+
+  return true;
+}
+
+bool loadZobovParticles(const char *fname, std::vector<ZobovParticle>& particles)
+{
+  UnformattedRead f(fname);
+  int N;
+
+  f.beginCheckpoint();
+  N = f.readInt32();
+  f.endCheckpoint();
+
+  particles.resize(N);
+
+  f.beginCheckpoint();
+  for (int i = 0; i < N; i++)
+    {
+      particles[i].x = f.readReal32();
+    }
+  f.endCheckpoint();
+
+  f.beginCheckpoint();
+  for (int i = 0; i < N; i++)
+    {
+      particles[i].y = f.readReal32();
+    }
+  f.endCheckpoint();
+
+  f.beginCheckpoint();
+  for (int i = 0; i < N; i++)
+    {
+      particles[i].z = f.readReal32();
+    }
+  f.endCheckpoint();
 
   return true;
 }

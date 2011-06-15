@@ -23,8 +23,15 @@ struct ZobovRep
   std::vector<float> particleVolume;
 };
 
+struct ZobovParticle
+{
+  float x, y, z;
+};
+
 bool loadZobov(const char *descName,
 	       const char *adjName, const char *voidName,
 	       const char *volName, ZobovRep& z);
+
+bool loadZobovParticles(const char *fname, std::vector<ZobovParticle>& particles);
 
 #endif
