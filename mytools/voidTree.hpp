@@ -56,7 +56,7 @@ public:
     const std::list<int>& candidateList = voids_for_zones[ref_void.zId.front()];
     std::list<int>::const_iterator iter_candidate = candidateList.begin();
 
-//    std::cout << "candidate list size is " << candidateList.size() << std::endl;
+    //    std::cout << "candidate list size is " << candidateList.size() << std::endl;
 
     while (iter_candidate != candidateList.end())
       {
@@ -66,15 +66,20 @@ public:
           break;
         ++iter_candidate;
       }
-    if (iter_candidate == candidateList.begin())
+    if (iter_candidate == candidateList.end())
       {
 //        std::cout << "Failure to lookup parent" << std::endl;
         return -1;
       }
 
     // voidId must be in the list.
-    assert(iter_candidate != candidateList.end());
+    //    assert(iter_candidate != candidateList.end());
     // Go back
+
+    iter_candidate = candidateList.end();
+
+    int vid_good_candidate = -1;
+    int old_good_candidate_size = zobov.allZones.size()+1;
 
     do
       {
@@ -85,12 +90,11 @@ public:
         vid_candidate = *iter_candidate;
         std::vector<int>& candidate_zIds = zobov.allVoids[vid_candidate].zId;
 
+	if (voidId == vid_candidate)
+	  continue;
+
         if (candidate_zIds.size() < ref_void.zId.size())
           {
-            if (iter_candidate == candidateList.begin())
-              return -1;
-
-            --iter_candidate;
             continue;
           }
 
@@ -109,13 +113,22 @@ public:
               break;
           }
         if (k==ref_void.zId.size())
-          return vid_candidate;
+	  {
+	    if (candidate_zIds.size() < old_good_candidate_size)
+	      {
+		vid_good_candidate = vid_candidate;
+		old_good_candidate_size = candidate_zIds.size();
+	      }
+	    //	    std::cout << "Found parent " << vid_candidate << std::endl;
+	    //	    return vid_candidate;
+	  }
 	
         // Go bigger, though I would say we should not to.
       }
     while (iter_candidate != candidateList.begin()) ;
-//    std::cout << "Failure to lookup parent (2)" << std::endl;
-    return -1;
+    if (vid_good_candidate < 0)
+      std::cout << "Failure to lookup parent (2)" << std::endl;
+    return vid_good_candidate;
   }
 
   VoidTree(ZobovRep& rep, std::istream& disk)
@@ -148,6 +161,8 @@ public:
 	    nodes[i].parent->children.push_back(&nodes[i]);
 	  }
       }
+    
+    computeMaxDepth();
   }
   
   VoidTree(ZobovRep& rep)
@@ -177,7 +192,7 @@ public:
     std::cout << "Linking voids together..." << std::endl;
     double volMin = 0;// 4*M_PI/3*pow(4.*512/500.,3);
     int inserted = 0;
-    for (int i = rep.allVoids.size()-1; i>=0;i--)
+    for (int i = 0; i < rep.allVoids.size(); i++)
       {
         if (rep.allVoids[i].volume < volMin) continue;
 
@@ -205,11 +220,32 @@ public:
 	  rootNode->children.push_back(&nodes[i]);
 	}
     activeNodes = inserted+1;
+    
+    computeMaxDepth();
   }
 
   ~VoidTree()
   {
     delete[] nodes;
+  }
+
+  int _depth_computer(VoidNode *node)
+  {
+    VoidList::iterator i = node->children.begin();
+    int d = 0;
+
+    while (i != node->children.end())
+      {
+	d = std::max(d,_depth_computer(*i));
+	++i;
+      }  
+
+    return d+1;
+  }
+
+  void computeMaxDepth()
+  {
+    std::cout << "maximum depth is " <<  _depth_computer(rootNode) << std::endl;
   }
 
   int getParent(int vid) const
