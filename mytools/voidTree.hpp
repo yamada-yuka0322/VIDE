@@ -163,6 +163,7 @@ public:
       }
     
     computeMaxDepth();
+    computeChildrenByNode();
   }
   
   VoidTree(ZobovRep& rep)
@@ -222,6 +223,7 @@ public:
     activeNodes = inserted+1;
     
     computeMaxDepth();
+    computeChildrenByNode();
   }
 
   ~VoidTree()
@@ -246,6 +248,40 @@ public:
   void computeMaxDepth()
   {
     std::cout << "maximum depth is " <<  _depth_computer(rootNode) << std::endl;
+  }
+
+  struct _children_stat {
+    int num, min_num, max_num, num_zero,num_one, num_multiple;
+  };
+
+  void _children_computer(VoidNode *node, _children_stat& s)
+  {
+    VoidList::iterator i = node->children.begin();
+    int d = 0, j = 0;
+
+    while (i != node->children.end())
+      {
+        _children_computer(*i, s);
+        ++i;
+        ++j;
+      }
+    s.num += j;
+    if (j!= 0)
+      s.min_num = std::min(s.min_num, j);
+    else s.num_zero ++;
+    if (j==1) s.num_one++;
+    if (j>1) s.num_multiple++;
+    s.max_num = std::max(s.max_num, j);
+  }
+
+  void computeChildrenByNode()
+  {
+    _children_stat s;
+   s.num = 0;
+   s.min_num = activeNodes+1;
+   s.max_num = s.num_zero = s.num_one =s.num_multiple= 0;
+   _children_computer(rootNode, s);
+    std::cout << "Average children by node " << s.num*1.0/activeNodes << " , " << s.min_num << " " << s.max_num << " " << s.num_zero << " " << s.num_one << " " << s.num_multiple << std::endl;
   }
 
   int getParent(int vid) const
