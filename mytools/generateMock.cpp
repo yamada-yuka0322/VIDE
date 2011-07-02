@@ -71,10 +71,12 @@ SimuData *myLoadGadget(const char *fname, int id, int flags)
 SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift, SimuData *(*loadFunction)(const char *fname, int id, int flags))
 {
   SimuData *d, *outd;
+  bool singleFile = false;
 
   try
     {
       d = loadFunction(gadgetname, -1, 0);
+      singleFile = true;
     }
   catch (const NoSuchFileException& e)
     {
@@ -102,7 +104,7 @@ SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift,
   outd->Vel[2] = new float[outd->NumPart];
   delete d;
 
-  int curCpu = 0;
+  int curCpu = singleFile ? -1 : 0;
   cout << "loading file 0 " << endl;
   try
     {
@@ -123,6 +125,8 @@ SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift,
 	      outd->Pos[velAxis][d->Id[i]-1] += d->Vel[velAxis][i]/100.;
 
 	  delete d;
+          if (singleFile)
+            break;
 	  curCpu++;
 	  cout << "loading file " << curCpu  << endl;
 	}
