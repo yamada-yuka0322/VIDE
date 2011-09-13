@@ -199,7 +199,7 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
 
     
   double z0 = 1/data->time - 1;
-  Interpolate z_vs_D = make_cosmological_redshift(data->Omega_M, data->Omega_Lambda, 0., 2*z0); // Redshift 2*z0 should be sufficient ?
+  Interpolate z_vs_D = make_cosmological_redshift(data->Omega_M, data->Omega_Lambda, 0., z0+2*data->BoxSize*100/LIGHT_SPEED); // Redshift 2*z0 should be sufficient ?
   double z_base = reshift ? z0 : 0;
   TotalExpansion e_computer;
   double baseComovingDistance;
@@ -297,6 +297,7 @@ void generateOutput(SimuData *data, int axis,
 
 void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& args_info)
 {
+  float subsample = args_info.subsample_given ? args_info.subsample_arg : 1.0;
   uint32_t goodParticles = 0;
   double ranges[3][2] = {
     { args_info.rangeX_min_arg, args_info.rangeX_max_arg },
@@ -306,6 +307,7 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
   double mul[3];
   float minmax[2][3];
   int *particle_id;
+  bool *random_acceptance = 0;
 
   boxed = new SimuData;
   boxed->Hubble = simu->Hubble;
@@ -313,6 +315,8 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
   boxed->Omega_Lambda = simu->Omega_Lambda;
   boxed->time = simu->time;
   boxed->BoxSize = simu->BoxSize;
+
+  random_acceptance = new bool[simu->NumPart];
 
   for (int j = 0; j < 3; j++) minmax[1][j] = minmax[0][j] = simu->Pos[j][0];
 
@@ -329,7 +333,8 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
         minmax[1][j] = max(simu->Pos[j][i], minmax[1][j]);
       }
 
-      if (acceptance)
+      random_acceptance[i] = acceptance && (drand48() <= subsample);
+      if (random_acceptance[i])
 	goodParticles++;
     }
 
@@ -351,13 +356,7 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
   uint32_t k = 0;
   for (uint32_t i = 0; i < simu->NumPart; i++)
     {
-      bool acceptance = true;
-
-      for (int j = 0; j < 3; j++)
-	acceptance = 
-	  acceptance &&
-	  (simu->Pos[j][i] > ranges[j][0]) && 
-	  (simu->Pos[j][i] < ranges[j][1]);
+      bool acceptance = random_acceptance[i]; 
       
       if (acceptance)
 	{
@@ -372,6 +371,8 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
 	  k++;
 	}
     }
+
+  delete[] random_acceptance;
 
   NcFile f(args_info.outputParameter_arg, NcFile::Replace);
 
