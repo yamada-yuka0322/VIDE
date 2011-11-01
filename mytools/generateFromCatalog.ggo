@@ -1,0 +1,11 @@
+package "generateFromCatalog"
+version "alpha"
+
+option "configFile" - "Configuration filename" string optional
+
+option "catalog" - "Input NYU-VAGC catalog" string required
+option "mask" - "Healpix mask of unobserved data (in Equatorial coordinates)" string required
+option "density_fake" - "Number density of boundary fake tracers (1 h^3/ Mpc^3)"  double optional default="1"
+
+option "output"	- "Filename of particle datafile" string required
+option "params" - "Output parameters of the datacube" string required
