@@ -7,7 +7,7 @@ using namespace std;
 
 static const bool DEBUG = true;
 
-void computeContourPixels(Healpix_Map<float>& m, vector<int> contour)
+void computeContourPixels(Healpix_Map<float>& m, vector<int>& contour)
 {
   for (int p = 0; p < m.Npix(); p++)
     {
@@ -19,7 +19,7 @@ void computeContourPixels(Healpix_Map<float>& m, vector<int> contour)
 	  if (result[q] < 0)
 	    continue;
 
-	  delta = (m[p]-0.5)*(m[result[q]]-0.5);
+	  float delta = (m[p]-0.5)*(m[result[q]]-0.5);
 	  if (delta < 0)
 	    {
 	      contour.push_back(p);
@@ -33,7 +33,7 @@ void computeContourPixels(Healpix_Map<float>& m, vector<int> contour)
     {
       Healpix_Map<int> contour_map;
 
-      contour_map.SetNside(RING, m.Nside());
+      contour_map.SetNside(m.Nside(), RING);
       contour_map.fill(0);
       for (int p = 0; p < contour.size(); p++)
 	{

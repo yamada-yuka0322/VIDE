@@ -4,6 +4,6 @@
 #include <vector>
 #include <healpix_map.h>
 
-void computeContourPixels(Healpix_Map<float>& map, std::vector<int> contour);
+void computeContourPixels(Healpix_Map<float>& map, std::vector<int>& contour);
 
 #endif
