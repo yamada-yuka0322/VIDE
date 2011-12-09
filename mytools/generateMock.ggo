@@ -28,3 +28,5 @@ option "peculiarVelocities" - "Added peculiar velocities distortion" flag off
 option "cosmo"	- "Apply cosmological redshift" flag on
 
 option "subsample" - "Subsample the input simulation by the specified amount" double optional
+
+option "inputParameter" - "Input geometry (optional, warning!)" string optional

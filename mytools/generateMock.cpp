@@ -295,6 +295,65 @@ void generateOutput(SimuData *data, int axis,
   f.endCheckpoint();
 }
 
+void makeBoxFromParameter(SimuData *simu, double *efac, SimuData* &boxed, generateMock_info& args_info)
+{
+  NcFile f(args_info.inputParameter_arg);
+  NcVar *v;
+  int *particle_id;
+  double *expansion_fac;
+
+  boxed = new SimuData;
+  boxed->Hubble = simu->Hubble;
+  boxed->Omega_M = simu->Omega_M;
+  boxed->Omega_Lambda = simu->Omega_Lambda;
+  boxed->time = simu->time;
+  boxed->BoxSize = simu->BoxSize;
+
+  NcVar *v_id = f.get_var("particle_ids");
+  long *edges1;
+  double ranges[3][2];
+  double mul[3];
+
+  edges1 = v_id->edges();
+  assert(v_id->num_dims()==1);
+
+  boxed->NumPart = edges1[0];
+  delete[] edges1;
+
+  particle_id = new int[boxed->NumPart];
+
+  v_id->get(particle_id, boxed->NumPart);
+
+  ranges[0][0] = f.get_att("range_x_min")->as_double(0);
+  ranges[0][1] = f.get_att("range_x_max")->as_double(0);
+  ranges[1][0] = f.get_att("range_y_min")->as_double(0);
+  ranges[1][1] = f.get_att("range_y_max")->as_double(0);
+  ranges[2][0] = f.get_att("range_z_min")->as_double(0);
+  ranges[2][1] = f.get_att("range_z_max")->as_double(0);
+
+  for (int j = 0; j < 3; j++)
+    {
+      boxed->Pos[j] = new float[boxed->NumPart];
+      boxed->Vel[j] = 0;
+      mul[j] = 1.0/(ranges[j][1] - ranges[j][0]);
+    }
+  
+  uint32_t k = 0;
+  for (uint32_t i = 0; i < boxed->NumPart; i++)
+    {
+      int id = particle_id[i];
+
+      for (int j = 0; j < 3; j++)
+	{
+	  boxed->Pos[j][i] = (simu->Pos[j][id]-ranges[j][0])*mul[j];
+	  assert(boxed->Pos[j][k] > 0);
+	  assert(boxed->Pos[j][k] < 1);
+	}
+    } 
+
+  delete[] particle_id;
+}
+
 void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& args_info)
 {
   float subsample = args_info.subsample_given ? args_info.subsample_arg : 1.0;
@@ -480,7 +539,11 @@ int main(int argc, char **argv)
       for (int j = 0; j < simu->NumPart; j++) expfact[j] = 1.0;
     }
 
-  makeBox(simu, expfact, simuOut, args_info);
+  if (args_info.inputParameter_given)
+    makeBoxFromParameter(simu, expfact, simuOut, args_info);
+  else
+    makeBox(simu, expfact, simuOut, args_info);
+   
   delete simu;
 
   generateOutput(simuOut, args_info.axis_arg, args_info.output_arg);
