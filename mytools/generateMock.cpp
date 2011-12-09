@@ -213,6 +213,8 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
   baseComovingDistance = LIGHT_SPEED/100.* gslIntegrate(e_computer, 0, z0, 1e-3);
   cout << "Comoving distance = " << baseComovingDistance << " Mpc/h" << endl;
 
+  cout << "Add peculiar velocities ? -> " << (pecvel ? " yes " : " no ") << endl;
+
   for (uint32_t i = 0; i < data->NumPart; i++)
     {
       float& x = data->Pos[x0][i];
@@ -346,8 +348,6 @@ void makeBoxFromParameter(SimuData *simu, double *efac, SimuData* &boxed, genera
       for (int j = 0; j < 3; j++)
 	{
 	  boxed->Pos[j][i] = (simu->Pos[j][id]-ranges[j][0])*mul[j];
-	  assert(boxed->Pos[j][k] > 0);
-	  assert(boxed->Pos[j][k] < 1);
 	}
     } 
 
