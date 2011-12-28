@@ -199,7 +199,7 @@ void saveData(ParticleData& pdata)
   
 }
 
-void saveForZobov(ParticleData& pdata, const string& fname)
+void saveForZobov(ParticleData& pdata, const string& fname, const string& paramname)
 {
   UnformattedWrite f(fname);
   static const char axis[] = { 'X', 'Y', 'Z' };
@@ -219,6 +219,29 @@ void saveForZobov(ParticleData& pdata, const string& fname)
 	}
       f.endCheckpoint();
     }
+
+  NcFile fp(paramname.c_str(), NcFile::Replace);
+
+  fp.add_att("range_x_min", -Lmax);
+  fp.add_att("range_x_max", Lmax);
+  fp.add_att("range_y_min", -Lmax);
+  fp.add_att("range_y_max", Lmax);
+  fp.add_att("range_z_min", -Lmax);
+  fp.add_att("range_z_max", Lmax);
+
+  NcDim *NumPart_dim = fp.add_dim("numpart_dim", pdata.pos.size());
+  NcVar *v = fp.add_var("particle_ids", ncInt, NumPart_dim);
+  NcVar *v2 = fp.add_var("expansion", ncDouble, NumPart_dim);
+
+  double *expansion_fac = new double[pdata.pos.size()];
+
+  for (int i = 0; i <  pdata.pos.size(); i++)
+    expansion_fac[i] = 1.0;
+
+  v->put(&pdata.id_gal[0], pdata.id_gal.size());
+  v2->put(expansion_fac, pdata.pos.size());
+
+  delete[] expansion_fac;
 }
 
 int main(int argc, char **argv)
@@ -274,7 +297,7 @@ int main(int argc, char **argv)
   generateGalaxiesInCube(data, output_data);
   generateSurfaceMask(args_info, mask, pixel_list, data, output_data);
   
-  saveForZobov(output_data, args_info.output_arg);
+  saveForZobov(output_data, args_info.output_arg, args_info.params_arg);
   //  saveData(output_data);
 
   return 0;
