@@ -9,3 +9,6 @@ option "density_fake" - "Number density of boundary fake tracers (1 h^3/ Mpc^3)"
 
 option "output"	- "Filename of particle datafile" string required
 option "params" - "Output parameters of the datacube" string required
+
+option "box_thickness"  - "Thickness of the limiting mask" double optional default="1"
+option  "box_density" - "Fake Galaxy density on the box" double optional default="1"
