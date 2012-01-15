@@ -7,17 +7,8 @@ using namespace std;
 
 static const bool DEBUG = true;
 
-void computeFilledPixels(Healpix_Map<float>& m, vector<int>& filled)
-{
-  filled.clear();
-  for (int p = 0; p < m.Npix(); p++)
-    if (m[p] > 0)
-      filled.push_back(p);
-}
-
 void computeContourPixels(Healpix_Map<float>& m, vector<int>& contour)
 {
-  contour.clear();
   for (int p = 0; p < m.Npix(); p++)
     {
       fix_arr<int, 8> result;
