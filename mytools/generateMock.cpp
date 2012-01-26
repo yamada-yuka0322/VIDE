@@ -179,7 +179,7 @@ Interpolate make_cosmological_redshift(double OM, double OL, double z0, double z
   return buildFromVector(pairs);
 }
 
-void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double*& expfact)
+void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double*& expfact, bool cosmo_flag)
 {
   int x0, x1, x2;
 
@@ -203,6 +203,7 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
   double z_base = reshift ? z0 : 0;
   TotalExpansion e_computer;
   double baseComovingDistance;
+  float vmax = 0;
 
   expfact = new double[data->NumPart];
 
@@ -230,12 +231,17 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
           // Distorted redshift
           if (reduced_red == 0)
             z = 0;
-          else
+          else if (cosmo_flag)
             z = (z_vs_D.compute(reduced_red)-z_base)*LIGHT_SPEED/100.;
+          else
+            z = reduced_red*LIGHT_SPEED/100.0;
+
           expfact[i] = z / z_old; 
          // Add peculiar velocity
-         if (pecvel)
+         if (pecvel) {
+          vmax = std::max(v,vmax);
 	  z += v/100;
+         }
        }
       catch(const InvalidRangeException& e) {
        cout << "Trying to interpolate out of the tabulated range." << endl;
@@ -243,6 +249,7 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
        abort();
       }
     }
+  cout << "vmax=" << vmax << endl;
 }
 
 void generateOutput(SimuData *data, int axis, 
@@ -531,13 +538,7 @@ int main(int argc, char **argv)
 
   double *expfact;
 
-  if (args_info.cosmo_flag)
-    metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag, args_info.peculiarVelocities_flag, expfact);
-  else
-    { 
-      expfact = new double[simu->NumPart];
-      for (int j = 0; j < simu->NumPart; j++) expfact[j] = 1.0;
-    }
+    metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag, args_info.peculiarVelocities_flag, expfact, args_info.cosmo_flag);
 
   if (args_info.inputParameter_given)
     makeBoxFromParameter(simu, expfact, simuOut, args_info);
