@@ -92,6 +92,65 @@ void generateGalaxiesInCube(NYU_VData& data, ParticleData& output_data)
   
 }
 
+static double cube(double x)
+{
+  return x*x*x;
+}
+
+void generateBoxMask(generateFromCatalog_info& args ,
+                         Healpix_Map<float>& mask,
+                         vector<int>& pixel_list,
+                         NYU_VData& data,
+                         ParticleData& output_data)
+{
+  int idx = -1;
+  int insertion = 0;
+  double volume = pixel_list.size()*1.0/mask.Npix()*4*M_PI;
+  int numToInsert;
+
+  idx = output_data.id_mask;
+
+  cout << "Generate box mask..." << endl;
+
+  double Rmax = output_data.Lmax, t = args.box_thickness_arg;
+  output_data.Lmax += args.box_thickness_arg;
+
+
+  volume *= Rmax*Rmax/1e6 * args.box_thickness_arg;
+  numToInsert = (int)floor(volume*args.box_density_arg);
+
+  for (int i = 0; i < numToInsert; i++)
+    {
+      Position p;
+      bool stop_here;
+
+      do
+        {
+
+          int p0 = (int)floor(drand48()*pixel_list.size());
+          vec3 v = mask.pix2vec(pixel_list[p0]);
+          double r = Rmax*pow(drand48()*(cube(1+t/Rmax)-1) + 1,1./3);
+
+          p.xyz[0] = v.x * r;
+          p.xyz[1] = v.y * r;
+          p.xyz[2] = v.z * r;
+
+          stop_here = true;
+          for (int j = 0; j < 3; j++)
+            {
+              if (p.xyz[j] > output_data.box[j][0] ||
+                  p.xyz[j] < output_data.box[j][1])
+                stop_here = false;
+            }
+        }
+      while (!stop_here);
+
+      output_data.pos.push_back(p);
+      output_data.id_gal.push_back(idx);
+      insertion++;
+    }
+}
+
 void generateSurfaceMask(generateFromCatalog_info& args ,
 			 Healpix_Map<float>& mask, 
 			 vector<int>& pixel_list, 
@@ -296,6 +355,8 @@ int main(int argc, char **argv)
 
   generateGalaxiesInCube(data, output_data);
   generateSurfaceMask(args_info, mask, pixel_list, data, output_data);
+  computeFilledPixels(mask,pixel_list);
+  generateBoxMask(args_info, mask, pixel_list, data, output_data);
   
   saveForZobov(output_data, args_info.output_arg, args_info.params_arg);
   //  saveData(output_data);
