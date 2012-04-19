@@ -27,12 +27,14 @@ typedef struct Zone {
   float denscontrast; /* density contrast */
   double vol; /* Total volume of all particles in the zone */
   double voljoin; /* Total volume of all particles in the joined void */
+  float smallest_saddle; /* Smallest saddle */
 } ZONE;
 
 typedef struct ZoneT {
   int nadj; /* Number of zones on border */
   int *adj; /* Each adjacent zone, with ... */
   float *slv; /* Smallest Linking Volume */
+  float smallest_saddle; /* Smallest saddle point value */
 } ZONET;
 
 void findrtop(double *a, int na, int *iord, int nb);
@@ -114,11 +116,11 @@ int main(int argc,char **argv) {
 	fread(&j,1,sizeof(int),adj);
 	if (j < np) {
 	  /* Set both halves of the pair */
-	assert(i < j);
+	  assert(i < j);
           if (p[i].ncnt == p[i].nadj)
             {
-		p[i].adj = (int *)realloc(p[i].adj, (p[i].nadj+1)*sizeof(int));
-                 p[i].nadj++;
+	      p[i].adj = (int *)realloc(p[i].adj, (p[i].nadj+1)*sizeof(int));
+	      p[i].nadj++;
             }
           if (p[j].ncnt == p[j].nadj)
             {
@@ -136,17 +138,17 @@ int main(int argc,char **argv) {
   fclose(adj);
 
   /* Check that we got all the pairs */
-//  adj = fopen(adjfile, "r");
-//  fread(&np,1, sizeof(int),adj);
+  //  adj = fopen(adjfile, "r");
+  //  fread(&np,1, sizeof(int),adj);
   for (i=0;i<np;i++) {
-//    fread(&nin,1,sizeof(int),adj); /* actually nadj */
+    //    fread(&nin,1,sizeof(int),adj); /* actually nadj */
     if (p[i].ncnt != p[i].nadj) {
       p[i].nadj = p[i].ncnt;
       printf("We didn't get all of %d's adj's; %d != %d.\n",i,nin,p[i].nadj);
       /*exit(0);*/
     }
   }
-//  fclose(adj);
+  //  fclose(adj);
 
   /* Volumes */
   vol = fopen(volfile, "r");
@@ -249,13 +251,17 @@ int main(int argc,char **argv) {
       exit(0);
     }
     zt[h].nadj = 0;
+    zt[h].smallest_saddle = BIGFLT;
   }
 
   /* Find "weakest links" */
   for (i = 0; i < np; i++) {
     h = zonenum[jumped[i]];
+
     for (j = 0; j < p[i].nadj; j++) {
+
       testpart = p[i].adj[j];
+
       if (h != zonenum[jumped[testpart]]) {
 	if (p[testpart].dens > p[i].dens) {
 	  /* there could be a weakest link through testpart */
@@ -282,8 +288,13 @@ int main(int argc,char **argv) {
 	      }
 	    }
 	  if (already == 0) {
-	    zt[h].adj[zt[h].nadj] = zonenum[jumped[testpart]];
-	    zt[h].slv[zt[h].nadj] = p[i].dens;
+	    int q = zt[h].nadj;
+
+	    zt[h].adj[q] = zonenum[jumped[testpart]];
+	    zt[h].slv[q] = p[i].dens;
+	    if (zt[h].smallest_saddle > zt[h].slv[q])
+	      zt[h].smallest_saddle = zt[h].slv[q];
+
 	    zt[h].nadj++;
 	  }
 	}
@@ -308,6 +319,7 @@ int main(int argc,char **argv) {
     free(zt[h].adj);
     free(zt[h].slv);
     z[h].np = numinh[z[h].core];
+    z[h].smallest_saddle = zt[h].smallest_saddle;
   }
   free(zt);
   free(numinh);
@@ -379,6 +391,12 @@ int main(int argc,char **argv) {
   }
   fwrite(&nzones,1,4,zon2);
 
+
+#define CORE_DENSITY(a) p[z[a].core].dens
+#define SADDLE_DENSITY(a) z[a].smallest_saddle
+#define COMPARE_ZONES_BEATEN(a,b) (CORE_DENSITY(a) < CORE_DENSITY(b))
+
+
   for (h = 0; h<nzones; h++) {
     nhlcount = 0;
     for (hl = 0; hl < nhl; hl++)
@@ -391,15 +409,25 @@ int main(int argc,char **argv) {
     do {
       /* Find the lowest-volume (highest-density) adjacency */
       lowvol = BIGFLT; nl = 0; beaten = 0;
+
+      /* Look at all zones that have been investigated in all previous iterations. */
       for (hl = 0; hl < nhl; hl++) {
+
 	h2 = zonelist[hl];
+	/* Is this zone been processed and deemed interior in this round ? */
 	if (inyet[h2] == 1) { /* If it's not already identified as 
 				 an interior zone, with inyet=2 */
+	  /* Yes. Let's have a look at the adjacents... */
 	  interior = 1;
+
 	  for (za = 0; za < z[h2].nadj; za ++) {
+	    
+	    /* This zones has not been deemed as interior */
 	    if (inyet[z[h2].adj[za]] == 0) {
 	      interior = 0;
+	      /* Just at the threshold ? */
 	      if (z[h2].slv[za] == lowvol) {
+		/* Yes. Queue it for adding the zones in bunch */
 		link[nl] = z[h2].adj[za];
 		nl ++;
 		if (nl == NLINKS) {
@@ -407,14 +435,17 @@ int main(int argc,char **argv) {
 		  exit(0);
 		}
 	      }
+	      /* Just below the threshold ? */
 	      if (z[h2].slv[za] < lowvol) {
+		/* Set the new threshold and reset the list because we may have beater */
 		lowvol = z[h2].slv[za];
 		link[0] = z[h2].adj[za];
 		nl = 1;
 	      }
 	    }
 	  }
-	  if (interior == 1) inyet[h2] = 2; /* No bordering exter. zones */
+	  if (interior == 1)
+	    inyet[h2] = 2; /* No bordering exter. zones */
 	}
       }
 
@@ -430,47 +461,74 @@ int main(int argc,char **argv) {
 	continue;
       }
 
+
+      /* Check if among the found adjacent candidates there is a beater */
       for (l=0; l < nl; l++)
-	if (p[z[link[l]].core].dens < p[z[h].core].dens)
+	if (COMPARE_ZONES_BEATEN(link[l], h))
 	  beaten = 1;
+
       if (beaten == 1) {
 	z[h].leak = lowvol;
 	continue;
       }
+
       /* Add everything linked to the link(s) */
       nhl2 = 0;
       for (l=0; l < nl; l++) {
+
 	if (inyet2[link[l]] == 0) {
 	  zonelist2[nhl2] = link[l];
 	  inyet2[link[l]] = 1;
 	  nhl2 ++;
 	  added = 1;
+
 	  while ((added == 1) && (beaten == 0)) {
+
 	    added = 0;
+
+	    /* Loop over the newly found zones */
 	    for (hl = 0; (hl < nhl2) && (beaten == 0); hl++) {
 	      h2 = zonelist2[hl];
+	      
+	      /* This hole has already been added to zonelist2 ? */
 	      if (inyet2[h2] == 1) {
+		/* No, process it */
+
 		interior = 1; /* Guilty until proven innocent */
+
+		/* Take all adjacent zones of h2 */
 		for (za = 0; za < z[h2].nadj; za ++) {
+
 		  link2 = z[h2].adj[za];
+		  
+		  /* If this zone (link2) has not been already processed, process it */
 		  if ((inyet[link2]+inyet2[link2]) == 0) {
+		    
 		    interior = 0;
+
+		    /* Does it have a low saddle point ? */
 		    if (z[h2].slv[za] <= lowvol) {
-		      if (p[z[link2].core].dens < p[z[h].core].dens) {
+		      /* Is this void beaten by the zone link2 ? */
+		      if (COMPARE_ZONES_BEATEN(link2, h)) { 
+			/* Yes. Stop here. */
 			beaten = 1;
 			break;
 		      }
+		      /* Insert it. */
 		      zonelist2[nhl2] = link2;
 		      inyet2[link2] = 1;
 		      nhl2++;
+		      /* Note that something was added so please continue */
 		      added = 1;
 		    }
 		  }
 		}
-		if (interior == 1) inyet2[h2] = 2;
+		if (interior == 1) 
+		  inyet2[h2] = 2;
 	      }
 	    }
 	  }
+
 	}
       }
       for (hl = 0; hl < nhl2; hl++)
@@ -494,7 +552,8 @@ int main(int argc,char **argv) {
     } while((lowvol < BIGFLT) && (beaten == 0));
     
     z[h].denscontrast = z[h].leak/p[z[h].core].dens;
-    if (z[h].denscontrast < 1.) z[h].denscontrast = 1.;
+    if (z[h].denscontrast < 1.) 
+      z[h].denscontrast = 1.;
     
     /* find biggest denscontrast */
     if (z[h].denscontrast > maxdenscontrast) {
