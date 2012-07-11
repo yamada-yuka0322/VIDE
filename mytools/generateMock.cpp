@@ -22,7 +22,7 @@ SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRed
 {
   SimuData *d, *outd;
 
-  d = loadRamsesSimu(basename, baseid, -1, 0);
+  d = loadRamsesSimu(basename, baseid, -1, true, 0);
   outd = new SimuData;
 
   outd->NumPart = d->TotalNumPart;
@@ -40,7 +40,7 @@ SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRed
 
   int curCpu = 0;
   cout << "loading cpu 0 " << endl;
-  while (d = loadRamsesSimu(basename, baseid, curCpu, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID))
+  while (d = loadRamsesSimu(basename, baseid, curCpu, true, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID))
     { 
        for (int k = 0; k < 3; k++)
          for (int i = 0; i < d->NumPart; i++)
