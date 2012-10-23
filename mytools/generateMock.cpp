@@ -70,9 +70,12 @@ SimuData *myLoadGadget(const char *fname, int id, int flags)
   SimuData *sim = loadGadgetMulti(fname, id, flags);
   sim->BoxSize *= gadgetUnit*1000;
   for (int j = 0; j < 3; j++)
-    for (long i = 0; i < sim->NumPart; i++)
-      sim->Pos[j][i] *= gadgetUnit*1000;
-
+  {
+    if (sim->Pos[j] != 0) {
+      for (long i = 0; i < sim->NumPart; i++)
+        sim->Pos[j][i] *= gadgetUnit*1000;
+    }
+  }
   return sim;
 }
 
