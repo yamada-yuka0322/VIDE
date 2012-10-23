@@ -30,3 +30,4 @@ option "cosmo"	- "Apply cosmological redshift" flag on
 option "subsample" - "Subsample the input simulation by the specified amount" double optional
 
 option "inputParameter" - "Input geometry (optional, warning!)" string optional
+option "gadgetUnit" - "Unit of length in gadget file in Mpc/h" double optional default="0.001"
