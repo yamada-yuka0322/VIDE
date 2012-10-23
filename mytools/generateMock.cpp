@@ -100,7 +100,7 @@ SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift,
   outd = new SimuData;
 
   outd->NumPart = d->TotalNumPart;
-  outd->BoxSize = d->BoxSize/1000;
+  outd->BoxSize = d->BoxSize;
   outd->TotalNumPart = outd->NumPart;
   outd->Hubble = d->Hubble;
   outd->Omega_Lambda = d->Omega_Lambda;
@@ -124,7 +124,7 @@ SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift,
 	      {
 		assert(d->Id[i] >= 1);
 		assert(d->Id[i] <= outd->TotalNumPart);
-		outd->Pos[k][d->Id[i]-1] = d->Pos[k][i]/1000;
+		outd->Pos[k][d->Id[i]-1] = d->Pos[k][i];
 		outd->Vel[2][d->Id[i]-1] = d->Vel[velAxis][i];
 	      }
 	  
