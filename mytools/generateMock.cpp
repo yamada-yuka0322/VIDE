@@ -68,10 +68,10 @@ SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRed
 SimuData *myLoadGadget(const char *fname, int id, int flags)
 {
   SimuData *sim = loadGadgetMulti(fname, id, flags);
-  sim->BoxSize *= gadgetUnit;
+  sim->BoxSize *= gadgetUnit*1000;
   for (int j = 0; j < 3; j++)
     for (long i = 0; i < sim->NumPart; i++)
-      sim->Pos[j][i] *= gadgetUnit;
+      sim->Pos[j][i] *= gadgetUnit*1000;
 
   return sim;
 }
@@ -100,7 +100,7 @@ SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift,
   outd = new SimuData;
 
   outd->NumPart = d->TotalNumPart;
-  outd->BoxSize = d->BoxSize;
+  outd->BoxSize = d->BoxSize/1000;
   outd->TotalNumPart = outd->NumPart;
   outd->Hubble = d->Hubble;
   outd->Omega_Lambda = d->Omega_Lambda;
@@ -124,7 +124,7 @@ SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift,
 	      {
 		assert(d->Id[i] >= 1);
 		assert(d->Id[i] <= outd->TotalNumPart);
-		outd->Pos[k][d->Id[i]-1] = d->Pos[k][i];
+		outd->Pos[k][d->Id[i]-1] = d->Pos[k][i]/1000;
 		outd->Vel[2][d->Id[i]-1] = d->Vel[velAxis][i];
 	      }
 	  
