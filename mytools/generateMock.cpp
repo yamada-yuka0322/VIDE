@@ -18,6 +18,8 @@ using namespace CosmoTool;
 
 #define LIGHT_SPEED 299792.458
 
+static double gadgetUnit=1e-3;
+
 SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRedshift)
 {
   SimuData *d, *outd;
@@ -65,7 +67,13 @@ SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRed
 
 SimuData *myLoadGadget(const char *fname, int id, int flags)
 {
-  return loadGadgetMulti(fname, id, flags);
+  SimuData *sim = loadGadgetMulti(fname, id, flags);
+  sim->BoxSize *= gadgetUnit;
+  for (int j = 0; j < 3; j++)
+    for (long i = 0; i < sim->NumPart; i++)
+      sim->Pos[j][i] *= gadgetUnit;
+
+  return sim;
 }
 
 SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift, SimuData *(*loadFunction)(const char *fname, int id, int flags))
@@ -489,6 +497,8 @@ int main(int argc, char **argv)
     }
   
   generateMock_conf_print_version();
+
+  gadgetUnit=args_info.gadgetUnit_arg;
 
   if (args_info.ramsesBase_given || args_info.ramsesId_given)
     {
