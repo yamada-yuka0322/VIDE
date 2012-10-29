@@ -2,7 +2,7 @@ SET(QHULL_BASE_PATH CACHE PATH "Qhull base path")
 
 find_path(QHULL_INCLUDE_PATH qhull_a.h HINTS ${QHULL_BASE_PATH}/src/libqhull)
 find_path(QHULL_CPP_INCLUDE_PATH Qhull.h HINTS ${QHULL_BASE_PATH}/src/libqhullcpp)
-find_library(QHULL_LIBRARY qhull HINTS ${QHULL_BASE_PATH}/lib)
+find_library(QHULL_LIBRARY qhull_p HINTS ${QHULL_BASE_PATH}/lib)
 find_library(QHULL_CPP_LIBRARY qhullcpp HINTS ${QHULL_BASE_PATH}/lib)
 find_library(QHULL_P_LIBRARY qhullstatic_p HINTS ${QHULL_BASE_PATH}/lib)
 
