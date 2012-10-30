@@ -20,6 +20,7 @@ SET(INTERNAL_BOOST ON)
 SET(INTERNAL_NETCDF ON)
 SET(INTERNAL_HDF5 ON)
 SET(INTERNAL_GENGETOPT ON)
+SET(INTERNAL_QHULL ON)
 
 IF(INTERNAL_GENGETOPT)
   SET(GENGETOPT_URL "ftp://ftp.gnu.org/gnu/gengetopt/gengetopt-2.22.5.tar.gz" CACHE STRING "URL to download gengetopt from")
@@ -43,8 +44,12 @@ IF(INTERNAL_GSL)
   SET(GSL_URL "ftp://ftp.gnu.org/gnu/gsl/gsl-1.15.tar.gz" CACHE STRING "URL to download GSL from ")
 ENDIF(INTERNAL_GSL)
 
+IF(INTERNAL_QHULL)
+  SET(QHULL_URL "http://www.qhull.org/download/qhull-2012.1-src.tgz" CACHE STRING "URL to download QHull from")
+ENDIF(INTERNAL_QHULL)
+
+
 find_library(ZLIB_LIBRARY z)
-find_program(GENGETOPT gengetopt)
 
 SET(CONFIGURE_CPP_FLAGS "${EXTRA_CPP_FLAGS}")
 SET(CONFIGURE_LD_FLAGS "${EXTRA_LD_FLAGS}")
@@ -236,8 +241,33 @@ SET(HEALPIX_LIBRARIES ${HEALPIX_LIBRARY} ${FFTPACK_LIBRARY} ${CXXSUPPORT_LIBRARY
 set(GSL_LIBRARIES ${GSL_LIBRARY} ${GSLCBLAS_LIBRARY})
 SET(NETCDF_LIBRARIES ${NETCDFCPP_LIBRARY} ${NETCDF_LIBRARY} ${HDF5HL_LIBRARY} ${HDF5_LIBRARY} ${ZLIB_LIBRARY})
 
+###############
+# Build QHull
+###############
+if (INTERNAL_QHULL)
+  ExternalProject_Add(qhull
+    URL ${QHULL_URL}
+    CMAKE_ARGS 
+      -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/ext_build/qhull
+      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+      
+  )
+  SET(QHULL_DIR ${CMAKE_BINARY_DIR}/ext_build/qhull)
+  SET(QHULL_LIBRARY ${QHULL_DIR}/lib/libqhullstatic_p.a)
+  SET(QHULL_CPP_LIBRARY ${QHULL_DIR}/lib/libqhullcpp.a)
+  SET(QHULL_INCLUDE_PATH ${QHULL_DIR}/include)
+
+  add_definitions(-Dqh_QHpointer)
+
+else(INTERNAL_QHULL)
+endif(INTERNAL_QHULL)
+
+SET(QHULL_LIBRARIES ${QHULL_CPP_LIBRARY} ${QHULL_LIBRARY} )
+
 include_directories(${CMAKE_BINARY_DIR}/src 
                     ${NETCDF_INCLUDE_PATH} ${GSL_INCLUDE_PATH} 
                     ${HDF5_INCLUDE_PATH} ${COSMOTOOL_INCLUDE_PATH} 
-                    ${Boost_INCLUDE_DIRS})
+                    ${Boost_INCLUDE_DIRS}
+		    ${QHULL_INCLUDE_PATH})
 
