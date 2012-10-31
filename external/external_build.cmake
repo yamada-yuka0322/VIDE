@@ -14,6 +14,8 @@ IF(ENABLE_OPENMP)
 
 ENDIF(ENABLE_OPENMP)
 
+SET(BUILD_PREFIX ${CMAKE_BINARY_DIR}/ep_build)
+
 SET(INTERNAL_FFTW OFF)
 SET(INTERNAL_GSL ON)
 SET(INTERNAL_BOOST ON)
@@ -60,9 +62,10 @@ SET(CONFIGURE_LD_FLAGS "${EXTRA_LD_FLAGS}")
 ##################
 
 if (INTERNAL_GENGETOPT)
-  SET(GENGETOPT_SOURCE_DIR ${CMAKE_BINARY_DIR}/gengetopt-prefix/src/gengetopt)
+  SET(GENGETOPT_SOURCE_DIR ${BUILD_PREFIX}/gengetopt-prefix/src/gengetopt)
   SET(GENGETOPT_BIN_DIR ${CMAKE_BINARY_DIR}/ext_build/gengetopt)
   ExternalProject_Add(gengetopt
+    PREFIX ${BUILD_PREFIX}/gengetopt-prefix
     URL ${GENGETOPT_URL}
     CONFIGURE_COMMAND ${GENGETOPT_SOURCE_DIR}/configure 
                 --prefix=${GENGETOPT_BIN_DIR} 
@@ -83,9 +86,10 @@ endif(INTERNAL_GENGETOPT)
 ###############
 
 if (INTERNAL_HDF5)
-  SET(HDF5_SOURCE_DIR ${CMAKE_BINARY_DIR}/hdf5-prefix/src/hdf5)
+  SET(HDF5_SOURCE_DIR ${BUILD_PREFIX}/hdf5-prefix/src/hdf5)
   SET(HDF5_BIN_DIR ${CMAKE_BINARY_DIR}/ext_build/hdf5)
   ExternalProject_Add(hdf5
+    PREFIX ${BUILD_PREFIX}/hdf5-prefix
     URL ${HDF5_URL}
     CONFIGURE_COMMAND ${HDF5_SOURCE_DIR}/configure --disable-shared --enable-cxx --prefix=${HDF5_BIN_DIR} CPPFLAGS=${CONFIGURE_CPP_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
     BUILD_IN_SOURCE 1
@@ -116,13 +120,14 @@ SET(CONFIGURE_CPP_FLAGS "${CONFIGURE_CPP_FLAGS} -I${HDF5_INCLUDE_PATH}")
 
 
 if (INTERNAL_NETCDF)
-  SET(NETCDF_SOURCE_DIR ${CMAKE_BINARY_DIR}/netcdf-prefix/src/netcdf)
+  SET(NETCDF_SOURCE_DIR ${BUILD_PREFIX}/netcdf-prefix/src/netcdf)
   SET(NETCDF_BIN_DIR ${CMAKE_BINARY_DIR}/ext_build/netcdf)
   SET(CONFIGURE_CPP_FLAGS "${CONFIGURE_CPP_FLAGS} -I${NETCDF_BIN_DIR}/include")
   SET(CONFIGURE_LDFLAGS "${CONFIGURE_LDFLAGS} -L${NETCDF_BIN_DIR}/lib")
   SET(EXTRA_NC_FLAGS CPPFLAGS=${CONFIGURE_CPP_FLAGS} LDFLAGS=${CONFIGURE_LDFLAGS})
   ExternalProject_Add(netcdf
     DEPENDS ${hdf5_built}
+    PREFIX ${BUILD_PREFIX}/netcdf-prefix
     URL ${NETCDF_URL}
     CONFIGURE_COMMAND ${NETCDF_SOURCE_DIR}/configure --prefix=${NETCDF_BIN_DIR} --enable-netcdf-4 --disable-shared --disable-dap --disable-cdmremote --disable-rpc --disable-examples ${EXTRA_NC_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
     BUILD_IN_SOURCE 1
@@ -149,9 +154,10 @@ endif (INTERNAL_NETCDF)
 ##################
 
 if (INTERNAL_BOOST)
-  SET(BOOST_SOURCE_DIR ${CMAKE_BINARY_DIR}/boost-prefix/src/boost)
+  SET(BOOST_SOURCE_DIR ${BUILD_PREFIX}/boost-prefix/src/boost)
   ExternalProject_Add(boost
     URL ${BOOST_URL}
+    PREFIX ${BUILD_PREFIX}/boost-prefix
     CONFIGURE_COMMAND ${BOOST_SOURCE_DIR}/bootstrap.sh --prefix=${CMAKE_BINARY_DIR}/ext_build/boost
     BUILD_IN_SOURCE 1
     BUILD_COMMAND ${BOOST_SOURCE_DIR}/b2 --with-exception --with-python
@@ -166,9 +172,10 @@ endif (INTERNAL_BOOST)
 ##################
 
 IF(INTERNAL_GSL)
-  SET(GSL_SOURCE_DIR ${CMAKE_BINARY_DIR}/gsl-prefix/src/gsl)
+  SET(GSL_SOURCE_DIR ${BUILD_PREFIX}/gsl-prefix/src/gsl)
   ExternalProject_Add(gsl
     URL ${GSL_URL}
+    PREFIX ${BUILD_PREFIX}/gsl-prefix
     CONFIGURE_COMMAND ${GSL_SOURCE_DIR}/configure --prefix=${CMAKE_BINARY_DIR}/ext_build/gsl --disable-shared CPPFLAGS=${CONFIGURE_CPP_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
     BUILD_IN_SOURCE 1
     BUILD_COMMAND make
@@ -192,8 +199,19 @@ ENDIF(INTERNAL_GSL)
 
 ExternalProject_Add(cosmotool
   DEPENDS ${cosmotool_DEPS}
+  PREFIX ${BUILD_PREFIX}/cosmotool-prefix
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/cosmotool
-  CMAKE_ARGS -DHDF5_DIR=${HDF5_ROOTDIR} -DHDF5_ROOTDIR=${HDF5_ROOTDIR} -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/ext_build/cosmotool -DNETCDF_INCLUDE_PATH=${NETCDF_INCLUDE_PATH} -DNETCDFCPP_INCLUDE_PATH=${NETCDFCPP_INCLUDE_PATH} -DGSL_INCLUDE_PATH=${GSL_INCLUDE_PATH} -DGSL_LIBRARY=${GSL_LIBRARY} -DGSLCBLAS_LIBRARY=${GSLCBLAS_LIBRARY} -DNETCDF_LIBRARY=${NETCDF_LIBRARY} -DNETCDFCPP_LIBRARY=${NETCDFCPP_LIBRARY}
+  CMAKE_ARGS 
+        -DHDF5_DIR=${HDF5_ROOTDIR}
+	-DHDF5_ROOTDIR=${HDF5_ROOTDIR}
+	-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/ext_build/cosmotool
+	-DNETCDF_INCLUDE_PATH=${NETCDF_INCLUDE_PATH}
+	-DNETCDFCPP_INCLUDE_PATH=${NETCDFCPP_INCLUDE_PATH}
+	-DGSL_INCLUDE_PATH=${GSL_INCLUDE_PATH} 
+	-DGSL_LIBRARY=${GSL_LIBRARY} 
+	-DGSLCBLAS_LIBRARY=${GSLCBLAS_LIBRARY}
+	-DNETCDF_LIBRARY=${NETCDF_LIBRARY}
+	-DNETCDFCPP_LIBRARY=${NETCDFCPP_LIBRARY}
 )
 SET(COSMOTOOL_LIBRARY ${CMAKE_BINARY_DIR}/ext_build/cosmotool/lib/libCosmoTool.a)
 set(COSMOTOOL_INCLUDE_PATH ${CMAKE_BINARY_DIR}/ext_build/cosmotool/include)
@@ -203,7 +221,13 @@ set(COSMOTOOL_INCLUDE_PATH ${CMAKE_BINARY_DIR}/ext_build/cosmotool/include)
 #################
 ExternalProject_Add(cfitsio
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/cfitsio
-  CONFIGURE_COMMAND ${CMAKE_SOURCE_DIR}/external/cfitsio/configure --prefix=${CMAKE_BINARY_DIR}/ext_build/cfitsio CPPFLAGS=${CONFIGURE_CPP_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
+  PREFIX ${BUILD_PREFIX}/cfitsio-prefix
+  CONFIGURE_COMMAND 
+        ${CMAKE_SOURCE_DIR}/external/cfitsio/configure 
+	    --prefix=${CMAKE_BINARY_DIR}/ext_build/cfitsio 
+	    CPPFLAGS=${CONFIGURE_CPP_FLAGS} 
+	    CC=${CMAKE_C_COMPILER} 
+	    CXX=${CMAKE_CXX_COMPILER}
   BUILD_COMMAND make
   BUILD_IN_SOURCE 1
   INSTALL_COMMAND make install
@@ -216,6 +240,7 @@ SET(CFITSIO_LIBRARY ${CMAKE_BINARY_DIR}/ext_build/cfitsio/lib/libcfitsio.a)
 
 ExternalProject_Add(healpix
   DEPENDS cfitsio
+  PREFIX ${BUILD_PREFIX}/healpix-prefix
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/healpix
   CONFIGURE_COMMAND echo No configure
   BUILD_COMMAND make
@@ -247,6 +272,7 @@ SET(NETCDF_LIBRARIES ${NETCDFCPP_LIBRARY} ${NETCDF_LIBRARY} ${HDF5HL_LIBRARY} ${
 if (INTERNAL_QHULL)
   ExternalProject_Add(qhull
     URL ${QHULL_URL}
+    PREFIX ${BUILD_PREFIX}/qhull-prefix
     CMAKE_ARGS 
       -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/ext_build/qhull
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
