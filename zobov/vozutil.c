@@ -1,4 +1,4 @@
-#include "qhull_a.h"
+#include "libqhull/qhull_a.h"
 #include "voz.h"
 
 #define FOREACHvertex2_(vertices) FOREACHsetelement_(vertexT, vertices2,vertex2)

@@ -1,4 +1,4 @@
-#include "qhull_a.h"
+#include "libqhull/qhull_a.h"
 #include "voz.h"
 
 #define NUMCPU 2

@@ -1,4 +1,4 @@
-#include "qhull_a.h"
+#include "libqhull/qhull_a.h"
 #include "voz.h"
 
 #define DL for (d=0;d<3;d++)
