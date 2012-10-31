@@ -14,6 +14,8 @@ struct ZobovVoid
   float proba;
   int numParticles, coreParticle;
   float volume;
+  float barycenter[3];
+  float nearestBoundary;
 };
 
 struct ZobovRep

@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
   int i, np;
   float **rfloat, rtemp[3];
   FILE *pos, *scr;
-  char *posfile, scrfile[80], systemstr[90], *suffix;
+  char *posfile, scrfile[200], systemstr[90], *suffix, *outDir, *vobozPath;
   float xmin,xmax,ymin,ymax,zmin,zmax;
   
   int isitinbuf;
@@ -23,14 +23,20 @@ int main(int argc, char *argv[]) {
   float border, boxsize;
   float c[3];
   int b[3];
+  int numThreads;
+  int mockIndex;
 
-  if (argc != 6) {
+  if (argc != 10) {
     printf("Wrong number of arguments.\n");
     printf("arg1: position file\n");
     printf("arg2: buffer size (default 0.1)\n");
     printf("arg3: box size\n");
     printf("arg4: number of divisions (default 2)\n");
-    printf("arg5: suffix describing this run\n\n");
+    printf("arg5: suffix describing this run\n");
+    printf("arg6: number of parallel threads\n");
+    printf("arg7: location of voboz executables\n");
+    printf("arg8: output directory\n");
+    printf("arg9: index of mock galaxies\n\n");
     exit(0);
   }
   posfile = argv[1];
@@ -55,6 +61,18 @@ int main(int argc, char *argv[]) {
   }
 
   suffix = argv[5];
+  vobozPath = argv[6];
+  if (sscanf(vobozPath,"%d",&numThreads) != 1) {
+    printf("That's no number of threads; try again.\n");
+    exit(0);
+  }
+  vobozPath = argv[7];
+  outDir = argv[8];
+  if (sscanf(argv[9],"%d",&mockIndex) != 1) {
+    printf("That's no mock galaxy index; try again.\n");
+    exit(0);
+  }
+
 
   /* Read the position file */
   np = posread(posfile,&rfloat,1./boxsize);
@@ -141,15 +159,19 @@ int main(int argc, char *argv[]) {
   for (b[0]=0;b[0]<numdiv; b[0]++) {
    for (b[1] = 0; b[1] < numdiv; b[1]++) {
     for (b[2] = 0; b[2] < numdiv; b[2]++) {
-      fprintf(scr,"./voz1b1 %s %f %f,%f,%f %s %d %d %d %d &\n",
-	      posfile,border,boxsize,boxsize,boxsize,suffix,numdiv,b[0],b[1],b[2]);
+// TEST
+      fprintf(scr,"%s/voz1b1 %s %f %f,%f,%f %s %d %d %d %d %s&\n",
+        vobozPath,
+	      posfile,border,boxsize,boxsize,boxsize,suffix,numdiv,b[0],b[1],b[2], 
+        outDir);
+// END TEST
       p++;
-      if ((p == NUMCPU)) { fprintf(scr, "wait\n"); p = 0; }
+      if ((p == numThreads)) { fprintf(scr, "wait\n"); p = 0; }
     }
    }
   }
   fprintf(scr,"wait\n");
-  fprintf(scr,"./voztie %d %s\n",numdiv,suffix);
+  fprintf(scr,"%s/voztie %d %s %s %d\n", vobozPath, numdiv,suffix, outDir, mockIndex);
   fclose(scr);
 
   sprintf(systemstr,"chmod u+x %s",scrfile);

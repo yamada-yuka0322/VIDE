@@ -5,7 +5,7 @@
 #include <math.h>
 
 #define BIGFLT 1e30 /* Biggest possible floating-point number */
-#define NLINKS 100 /* Number of possible links with the same rho_sl */
+#define NLINKS 1000 /* Number of possible links with the same rho_sl */
 #define FF fflush(stdout)
 
 typedef struct Particle {
@@ -61,16 +61,19 @@ int main(int argc,char **argv) {
   double *sorter, e1,maxdenscontrast;
   int *iord;
 
+  int mockIndex;
+
   e1 = exp(1.)-1.;
 
-  if (argc != 7) {
+  if (argc != 8) {
     printf("Wrong number of arguments.\n");
     printf("arg1: adjacency file\n");
     printf("arg2: volume file\n");
     printf("arg3: output file containing particles in each zone\n");
     printf("arg4: output file containing zones in each void\n");
     printf("arg5: output text file\n");
-    printf("arg6: Density threshold (0 for no threshold)\n\n");
+    printf("arg6: Density threshold (0 for no threshold)\n");
+    printf("arg7: Beginning index of mock galaxies\n\n");
     exit(0);
   }
   adjfile = argv[1];
@@ -82,6 +85,11 @@ int main(int argc,char **argv) {
     printf("Bad density threshold.\n");
     exit(0);
   }
+  if (sscanf(argv[7],"%f",&mockIndex) == 0) {
+    printf("Bad mock galaxy index.\n");
+    exit(0);
+  }
+  printf("TOLERANCE: %f\n", voltol);
   if (voltol <= 0.) {
     printf("Proceeding without a density threshold.\n");
     voltol = 1e30;
@@ -140,7 +148,10 @@ int main(int argc,char **argv) {
 //  fread(&np,1, sizeof(int),adj);
   for (i=0;i<np;i++) {
 //    fread(&nin,1,sizeof(int),adj); /* actually nadj */
-    if (p[i].ncnt != p[i].nadj) {
+    // PMS
+    if (p[i].ncnt != p[i].nadj && i < mockIndex) {
+    //if (p[i].ncnt != p[i].nadj) {
+    // END PMS
       p[i].nadj = p[i].ncnt;
       printf("We didn't get all of %d's adj's; %d != %d.\n",i,nin,p[i].nadj);
       /*exit(0);*/
@@ -163,7 +174,10 @@ int main(int argc,char **argv) {
   FF;
   for (i=0;i<np;i++) {
     fread(&p[i].dens,1,sizeof(float),vol);
-    if ((p[i].dens < 1e-30) || (p[i].dens > 1e30)) {
+    // PMS
+    if ((p[i].dens < 1e-30) || (p[i].dens > 1e30) && i < mockIndex) {
+    //if ((p[i].dens < 1e-30) || (p[i].dens > 1e30)) {
+    // END PMS
       printf("Whacked-out volume found, of particle %d: %f\n",i,p[i].dens);
       p[i].dens = 1.;
     }
@@ -343,6 +357,9 @@ int main(int argc,char **argv) {
   fwrite(&np,1,4,zon);
   fwrite(&nzones,1,4,zon);
   for (h=0; h<nzones; h++) {
+// PMS
+  //printf("%d %d %d", &(z[h].np), m[h], z[h].np);
+// END PMS
     fwrite(&(z[h].np),1,4,zon);
     fwrite(m[h],z[h].np,4,zon);
     free(m[h]);
@@ -540,11 +557,15 @@ int main(int argc,char **argv) {
   for (h=0; h<nzones; h++) {
     i = iord[h];
     prob = exp(-5.12*(z[i].denscontrast-1.) - 0.8*pow(z[i].denscontrast-1.,2.8));
+// PMS
+    if (z[i].np == 1) continue;
+// END PMS
     fprintf(txt,"%d %d %d %e %e %d %d %e %d %f %6.2e\n",
 	    h+1, i, z[i].core, p[z[i].core].dens, z[i].vol, z[i].np, z[i].nhl, z[i].voljoin, z[i].npjoin, z[i].denscontrast, prob);
 
   } /* h+1 to start from 1, not zero */
   fclose(txt);
 
+  printf("Done!\n");FF;
   return(0);
 }
