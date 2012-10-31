@@ -13,8 +13,10 @@ import glob
 import subprocess
 import sys
 from   pylab import figure
-from   Scientific.IO.NetCDF import NetCDFFile
-import Scientific.N as Num
+from   netCDF4 import Dataset
+
+NetCDFFile = Dataset
+ncFloat='f8' # Double precision
 
 class Stack:
   zMin = 0.0
@@ -760,7 +762,7 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         dataTemp = np.append(dataTemp, dataTemp2)
         outFile = NetCDFFile(voidDir+"/posx.nc", mode='w')
         outFile.createDimension("dim", len(dataTemp))
-        v = outFile.createVariable("array", Num.Float, ("dim",))
+        v = outFile.createVariable("array", ncFloat, ("dim",))
         v[:] = dataTemp
         outFile.close()
 
@@ -773,7 +775,7 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         dataTemp = np.append(dataTemp, dataTemp2)
         outFile = NetCDFFile(voidDir+"/posy.nc", mode='w')
         outFile.createDimension("dim", len(dataTemp))
-        v = outFile.createVariable("array", Num.Float, ("dim",))
+        v = outFile.createVariable("array", ncFloat, ("dim",))
         v[:] = dataTemp
         outFile.close()
 
@@ -786,7 +788,7 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         dataTemp = np.append(dataTemp, dataTemp2)
         outFile = NetCDFFile(voidDir+"/posz.nc", mode='w')
         outFile.createDimension("dim", len(dataTemp))
-        v = outFile.createVariable("array", Num.Float, ("dim",))
+        v = outFile.createVariable("array", ncFloat, ("dim",))
         v[:] = dataTemp
         outFile.close()
 
@@ -799,7 +801,7 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         dataTemp = np.append(dataTemp, dataTemp2)
         outFile = NetCDFFile(voidDir+"/redshifts.nc", mode='w')
         outFile.createDimension("dim", len(dataTemp))
-        v = outFile.createVariable("array", Num.Float, ("dim",))
+        v = outFile.createVariable("array", ncFloat, ("dim",))
         v[:] = dataTemp
         outFile.close()
 
@@ -812,7 +814,7 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         dataTemp = np.append(dataTemp, dataTemp2)
         outFile = NetCDFFile(voidDir+"/indexes.nc", mode='w')
         outFile.createDimension("dim", len(dataTemp))
-        v = outFile.createVariable("array", Num.Float, ("dim",))
+        v = outFile.createVariable("array", ncFloat, ("dim",))
         v[:] = dataTemp
         outFile.close()
 
