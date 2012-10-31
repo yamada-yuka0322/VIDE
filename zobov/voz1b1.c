@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
   coordT deladjs[3*MAXVERVER], points[3*MAXVERVER];
   pointT intpoints[3*MAXVERVER];
   FILE *pos, *out;
-  char *posfile, outfile[80], *suffix;
+  char *posfile, outfile[200], *suffix, *outDir;
   PARTADJ *adjs;
   float *vols;
   float predict, xmin,xmax,ymin,ymax,zmin,zmax;
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
   int b[3];
   double totalvol;
 
-  if (argc != 9) {
+  if (argc != 10) {
     printf("Wrong number of arguments.\n");
     printf("arg1: position file\n");
     printf("arg2: border size\n");
@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
     printf("arg4: suffix\n");
     printf("arg5: number of divisions\n");
     printf("arg6-8: b[0-2]\n\n");
+    printf("arg9: output directory\n");
     exit(0);
   }
   posfile = argv[1];
@@ -76,6 +77,7 @@ int main(int argc, char *argv[]) {
     printf("That's no b index; try again.\n");
     exit(0);
   }
+  outDir = argv[9];
   
   /* Boxsize should be the range in r, yielding a range 0-1 */
   np = posread(posfile,&r,1./boxsize);
@@ -106,7 +108,7 @@ int main(int argc, char *argv[]) {
   }
   g = (bf / 2.)*(1. + sqrt(1 - 2.*s*s/(bf*bf)));
   printf("s = %f, bf = %f, g = %f.\n",s,bf,g);
-  
+
   fflush(stdout);
 
   adjs = (PARTADJ *)malloc(np*sizeof(PARTADJ));
@@ -305,10 +307,10 @@ int main(int argc, char *argv[]) {
     totalvol += (double)vols[i];
   }
   printf("Average volume = %g\n",totalvol/(float)nvp);
-  
+ 
   /* Now the output!
      First number of particles */
-  sprintf(outfile,"part.%s.%02d.%02d.%02d",suffix,b[0],b[1],b[2]);
+  sprintf(outfile,"%s/part.%s.%02d.%02d.%02d",outDir,suffix,b[0],b[1],b[2]);
 
   printf("Output to %s\n\n",outfile);
   out = fopen(outfile,"w");

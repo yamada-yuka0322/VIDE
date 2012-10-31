@@ -9,6 +9,7 @@ option "ramsesId"   -   "Ramses snapshot id" int optional
 
 option "gadget"	    -	"Base name of gadget snapshot (without parallel writing extension)" string optional
 option "flash"	    -   "Base name for FLASH snapshot" string optional
+option "multidark"	    -   "Base name for multidark snapshot" string optional
 
 option "axis"	    -	"Redshift axis (X=0, Y=1, Z=2)" int optional default="2"
 
@@ -28,6 +29,3 @@ option "peculiarVelocities" - "Added peculiar velocities distortion" flag off
 option "cosmo"	- "Apply cosmological redshift" flag on
 
 option "subsample" - "Subsample the input simulation by the specified amount" double optional
-
-option "inputParameter" - "Input geometry (optional, warning!)" string optional
-option "gadgetUnit" - "Unit of length in gadget file in Mpc/h" double optional default="0.001"

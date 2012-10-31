@@ -36,6 +36,8 @@ int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs) 
   int numdiv;
   
   PARTADJ adjst;
+  
+  int errorReported = 0;
 
   adjst.adj = (int *)malloc(MAXVERVER*sizeof(int));
   if (adjst.adj == NULL) {
@@ -100,9 +102,11 @@ int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs) 
       if (adjst.nadj >= 4) {
 	qsort((void *)adjst.adj, adjst.nadj, sizeof(int), &compar);
 	count = 1;
+
 	for (i=1; i<adjst.nadj; i++)
 	  if (adjst.adj[i] != adjst.adj[i-1]) {
-	    if (adjst.adj[i] >= nvpbuf) {
+	    if (adjst.adj[i] >= nvpbuf && !errorReported) {
+        errorReported = 1;
 	      printf("Guard point encountered.  Increase border and/or nguard.\n");
 	      printf("P:(%f,%f,%f), G: (%f,%f,%f)\n",points[3*ver],points[3*ver+1],points[3*ver+2],
 		     points[3*adjst.adj[i]],points[3*adjst.adj[i]+1],points[3*adjst.adj[i]+2]);

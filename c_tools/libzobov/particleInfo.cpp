@@ -12,7 +12,7 @@ bool loadParticleInfo(ParticleInfo& info,
       int numpart;
 
   NcFile f_info(extra_info.c_str());
-  
+ 
   if (!f_info.is_valid())
     return false;
 
@@ -22,6 +22,7 @@ bool loadParticleInfo(ParticleInfo& info,
   info.ranges[1][1] = f_info.get_att("range_y_max")->as_double(0);
   info.ranges[2][0] = f_info.get_att("range_z_min")->as_double(0);
   info.ranges[2][1] = f_info.get_att("range_z_max")->as_double(0);
+  info.mask_index = f_info.get_att("mask_index")->as_int(0); //PMS
 
   for (int i = 0; i < 3; i++)
     info.length[i] = info.ranges[i][1] - info.ranges[i][0];

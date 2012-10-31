@@ -18,65 +18,9 @@ using namespace CosmoTool;
 
 #define LIGHT_SPEED 299792.458
 
-static double gadgetUnit=1e-3;
-
-SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRedshift)
-{
-  SimuData *d, *outd;
-
-  d = loadRamsesSimu(basename, baseid, -1, true, 0);
-  outd = new SimuData;
-
-  outd->NumPart = d->TotalNumPart;
-  outd->BoxSize = d->BoxSize;
-  outd->TotalNumPart = outd->NumPart;
-  outd->Hubble = d->Hubble;
-  outd->Omega_Lambda = d->Omega_Lambda;
-  outd->Omega_M = d->Omega_M;
-  outd->time = d->time;
-
-  for (int k = 0; k < 3; k++)
-    outd->Pos[k] = new float[outd->NumPart];
-  outd->Vel[2] = new float[outd->NumPart];
-  delete d;
-
-  int curCpu = 0;
-  cout << "loading cpu 0 " << endl;
-  while (d = loadRamsesSimu(basename, baseid, curCpu, true, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID))
-    { 
-       for (int k = 0; k < 3; k++)
-         for (int i = 0; i < d->NumPart; i++)
-           {
-             assert(d->Id[i] >= 1);
-             assert(d->Id[i] <= outd->TotalNumPart);
-             outd->Pos[k][d->Id[i]-1] = d->Pos[k][i];
-             outd->Vel[2][d->Id[i]-1] = d->Vel[velAxis][i];
-           }
-
-       if (goRedshift)
-         for (int i = 0; i < d->NumPart; i++)
-            outd->Pos[velAxis][d->Id[i]-1] += d->Vel[velAxis][i]/100.;
-
-       delete d;
-       curCpu++;
-       cout << "loading cpu " << curCpu  << endl;
-    }
-
-  return outd;
-}
-
 SimuData *myLoadGadget(const char *fname, int id, int flags)
 {
-  SimuData *sim = loadGadgetMulti(fname, id, flags);
-  sim->BoxSize *= gadgetUnit*1000;
-  for (int j = 0; j < 3; j++)
-  {
-    if (sim->Pos[j] != 0) {
-      for (long i = 0; i < sim->NumPart; i++)
-        sim->Pos[j][i] *= gadgetUnit*1000;
-    }
-  }
-  return sim;
+  return loadGadgetMulti(fname, id, flags);
 }
 
 SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift, SimuData *(*loadFunction)(const char *fname, int id, int flags))
@@ -150,6 +94,53 @@ SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift,
 }
 
 
+SimuData *doLoadMultidark(const char *multidarkname)
+{
+  SimuData *outd;
+  FILE *fp;
+  int actualNumPart;
+
+  outd = new SimuData;
+  cout << "opening multidark file " << multidarkname << endl;
+  fp = fopen(multidarkname, "r");
+  if (fp == NULL) {
+    cout << "could not open file!" << endl;
+    return 0;
+  }
+  fscanf(fp, "%f\n", &outd->BoxSize);
+  fscanf(fp, "%f\n", &outd->Omega_M);
+  fscanf(fp, "%f\n", &outd->Hubble);
+  fscanf(fp, "%f\n", &outd->time);
+  fscanf(fp, "%d\n", &outd->NumPart);
+
+  outd->time = 1./(1.+outd->time); // convert to scale factor
+  outd->TotalNumPart = outd->NumPart;
+  outd->Omega_Lambda = 1.0 - outd->Omega_M;
+
+  for (int k = 0; k < 3; k++)
+    outd->Pos[k] = new float[outd->NumPart];
+  outd->Vel[2] = new float[outd->NumPart];
+
+  cout << "loading multidark particles" << endl;
+  actualNumPart = 0;
+	for (int i = 0; i < outd->NumPart; i++) {
+    fscanf(fp, "%f %f %f %f\n", &outd->Pos[0][i], &outd->Pos[1][i], 
+                                &outd->Pos[2][i], &outd->Vel[2][i]);
+
+    if (outd->Pos[0][i] == -99 && outd->Pos[1][i] == -99 && 
+        outd->Pos[2][i] == -99 && outd->Vel[2][i] == -99) {
+      break;
+    } else {
+      actualNumPart++;
+    }
+  }
+  fclose(fp);
+
+  outd->NumPart = actualNumPart;
+  outd->TotalNumPart = actualNumPart;
+  return outd;
+}
+
 
 static double cubic(double a)
 {
@@ -166,7 +157,7 @@ struct TotalExpansion
   }
 };
 
-Interpolate make_cosmological_redshift(double OM, double OL, double z0, double z1, int N = 1000)
+Interpolate make_cosmological_redshift(double OM, double OL, double z0, double z1, int N = 5000)
 {
   TotalExpansion e_computer;
   double D_tilde, Q, Qprime;
@@ -190,7 +181,7 @@ Interpolate make_cosmological_redshift(double OM, double OL, double z0, double z
   return buildFromVector(pairs);
 }
 
-void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double*& expfact, bool cosmo_flag)
+void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double*& expfact)
 {
   int x0, x1, x2;
 
@@ -208,24 +199,20 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
     abort();
   }
 
-    
   double z0 = 1/data->time - 1;
-  Interpolate z_vs_D = make_cosmological_redshift(data->Omega_M, data->Omega_Lambda, 0., z0+2*data->BoxSize*100/LIGHT_SPEED); // Redshift 2*z0 should be sufficient ?
+  Interpolate z_vs_D = make_cosmological_redshift(data->Omega_M, data->Omega_Lambda, 0., z0+8*data->BoxSize*100/LIGHT_SPEED); // Redshift 2*z0 should be sufficient ?
   double z_base = reshift ? z0 : 0;
   TotalExpansion e_computer;
   double baseComovingDistance;
-  float vmax = 0;
 
   expfact = new double[data->NumPart];
 
-  cout << "Using base redshift z=" << z0 << endl;
+  cout << "Using base redshift z=" << z0 << " " << z0+8*data->BoxSize*100/LIGHT_SPEED << endl;
 
   e_computer.Omega_M = data->Omega_M;
   e_computer.Omega_L = data->Omega_Lambda;
   baseComovingDistance = LIGHT_SPEED/100.* gslIntegrate(e_computer, 0, z0, 1e-3);
   cout << "Comoving distance = " << baseComovingDistance << " Mpc/h" << endl;
-
-  cout << "Add peculiar velocities ? -> " << (pecvel ? " yes " : " no ") << endl;
 
   for (uint32_t i = 0; i < data->NumPart; i++)
     {
@@ -234,7 +221,7 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
       float& z = data->Pos[x2][i];
       float& v = data->Vel[2][i];
       float z_old = z;
-      
+
       double reduced_red = (z + baseComovingDistance)*100./LIGHT_SPEED;
       try
         {
@@ -242,17 +229,13 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
           // Distorted redshift
           if (reduced_red == 0)
             z = 0;
-          else if (cosmo_flag)
+          else {
             z = (z_vs_D.compute(reduced_red)-z_base)*LIGHT_SPEED/100.;
-          else
-            z = reduced_red*LIGHT_SPEED/100.0;
-
+          }
           expfact[i] = z / z_old; 
          // Add peculiar velocity
-         if (pecvel) {
-          vmax = std::max(v,vmax);
+         if (pecvel)
 	  z += v/100;
-         }
        }
       catch(const InvalidRangeException& e) {
        cout << "Trying to interpolate out of the tabulated range." << endl;
@@ -260,7 +243,7 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
        abort();
       }
     }
-  cout << "vmax=" << vmax << endl;
+
 }
 
 void generateOutput(SimuData *data, int axis, 
@@ -315,63 +298,6 @@ void generateOutput(SimuData *data, int axis,
   f.endCheckpoint();
 }
 
-void makeBoxFromParameter(SimuData *simu, double *efac, SimuData* &boxed, generateMock_info& args_info)
-{
-  NcFile f(args_info.inputParameter_arg);
-  NcVar *v;
-  int *particle_id;
-  double *expansion_fac;
-
-  boxed = new SimuData;
-  boxed->Hubble = simu->Hubble;
-  boxed->Omega_M = simu->Omega_M;
-  boxed->Omega_Lambda = simu->Omega_Lambda;
-  boxed->time = simu->time;
-  boxed->BoxSize = simu->BoxSize;
-
-  NcVar *v_id = f.get_var("particle_ids");
-  long *edges1;
-  double ranges[3][2];
-  double mul[3];
-
-  edges1 = v_id->edges();
-  assert(v_id->num_dims()==1);
-
-  boxed->NumPart = edges1[0];
-  delete[] edges1;
-
-  particle_id = new int[boxed->NumPart];
-
-  v_id->get(particle_id, boxed->NumPart);
-
-  ranges[0][0] = f.get_att("range_x_min")->as_double(0);
-  ranges[0][1] = f.get_att("range_x_max")->as_double(0);
-  ranges[1][0] = f.get_att("range_y_min")->as_double(0);
-  ranges[1][1] = f.get_att("range_y_max")->as_double(0);
-  ranges[2][0] = f.get_att("range_z_min")->as_double(0);
-  ranges[2][1] = f.get_att("range_z_max")->as_double(0);
-
-  for (int j = 0; j < 3; j++)
-    {
-      boxed->Pos[j] = new float[boxed->NumPart];
-      boxed->Vel[j] = 0;
-      mul[j] = 1.0/(ranges[j][1] - ranges[j][0]);
-    }
-  
-  uint32_t k = 0;
-  for (uint32_t i = 0; i < boxed->NumPart; i++)
-    {
-      int id = particle_id[i];
-
-      for (int j = 0; j < 3; j++)
-	{
-	  boxed->Pos[j][i] = (simu->Pos[j][id]-ranges[j][0])*mul[j];
-	}
-    } 
-
-  delete[] particle_id;
-}
-
 void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& args_info)
 {
   float subsample = args_info.subsample_given ? args_info.subsample_arg : 1.0;
@@ -409,15 +335,20 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
         minmax[0][j] = min(simu->Pos[j][i], minmax[0][j]);
         minmax[1][j] = max(simu->Pos[j][i], minmax[1][j]);
       }
-
       random_acceptance[i] = acceptance && (drand48() <= subsample);
       if (random_acceptance[i])
 	goodParticles++;
     }
 
+  cout << "Subsample fraction: " << subsample << endl;
+  cout << "Min range = " << ranges[0][0] << " " << ranges[1][0] << " " << ranges[2][0] << endl;
+  cout << "Max range = " << ranges[0][1] << " " << ranges[1][1] << " " << ranges[2][1] << endl;
+
   cout << "Min position = " << minmax[0][0] << " " << minmax[0][1] << " " << minmax[0][2] << endl;
   cout << "Max position = " << minmax[1][0] << " " << minmax[1][1] << " " << minmax[1][2] << endl;
-  
+ 
+  cout << "Number of accepted particles: " << goodParticles << endl; 
+
   for (int j = 0; j < 3; j++)
     {
       boxed->Pos[j] = new float[goodParticles];
@@ -425,6 +356,7 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
       mul[j] = 1.0/(ranges[j][1] - ranges[j][0]);
     }
 
+  cout << "Rescaling factors = " << mul[0] << " " << mul[1] << " " << mul[2] << endl;
   boxed->NumPart = goodParticles;
 
   particle_id = new int[goodParticles];
@@ -501,14 +433,13 @@ int main(int argc, char **argv)
   
   generateMock_conf_print_version();
 
-  gadgetUnit=args_info.gadgetUnit_arg;
-
   if (args_info.ramsesBase_given || args_info.ramsesId_given)
     {
-      if (args_info.ramsesBase_given && args_info.ramsesId_given)  
-	simu = doLoadRamses(args_info.ramsesBase_arg, 
-			    args_info.ramsesId_arg, 
-			    args_info.axis_arg, false);
+      if (args_info.ramsesBase_given && args_info.ramsesId_given)   {
+	//simu = doLoadRamses(args_info.ramsesBase_arg, 
+	//		    args_info.ramsesId_arg, 
+	//		    args_info.axis_arg, false);
+  }
       else
 	{
 	  cerr << "Both ramsesBase and ramsesId are required to be able to load snapshots" << endl;
@@ -521,7 +452,7 @@ int main(int argc, char **argv)
 	  return 1;
 	}
     }
-  else if (args_info.gadget_given || args_info.flash_given)
+  else if (args_info.gadget_given || args_info.flash_given || args_info.multidark_given)
     {
       if (args_info.gadget_given && args_info.flash_given)
 	{
@@ -529,10 +460,17 @@ int main(int argc, char **argv)
 	  return 1;
 	}
 
-      if (args_info.gadget_given)
+      if (args_info.multidark_given) {
+        simu = doLoadMultidark(args_info.multidark_arg);      
+      }
+
+      if (args_info.gadget_given) {
 	simu = doLoadSimulation(args_info.gadget_arg, args_info.axis_arg, false, myLoadGadget);      
-      else
+      }
+      if (args_info.flash_given) {
 	simu = doLoadSimulation(args_info.flash_arg, args_info.axis_arg, false, loadFlashMulti); 
+      }
+
       if (simu == 0)
 	{
 	  cerr << "Error while loading " << endl;
@@ -551,18 +489,20 @@ int main(int argc, char **argv)
 
   double *expfact;
 
-    metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag, args_info.peculiarVelocities_flag, expfact, args_info.cosmo_flag);
+  if (args_info.cosmo_flag){
+    metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag, args_info.peculiarVelocities_flag, expfact);
+  } else {
+      expfact = new double[simu->NumPart];
+      for (int j = 0; j < simu->NumPart; j++) expfact[j] = 1.0;
+    }
 
-  if (args_info.inputParameter_given)
-    makeBoxFromParameter(simu, expfact, simuOut, args_info);
-  else
-    makeBox(simu, expfact, simuOut, args_info);
-   
+  makeBox(simu, expfact, simuOut, args_info);
   delete simu;
 
   generateOutput(simuOut, args_info.axis_arg, args_info.output_arg);
 
   delete simuOut;
-  
+ 
+  printf("Done!\n"); 
   return 0;
 }

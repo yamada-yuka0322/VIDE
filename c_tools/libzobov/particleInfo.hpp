@@ -15,6 +15,7 @@ struct ParticleInfo
   ParticleVector particles;
   float ranges[3][2];
   float length[3];
+  int   mask_index; // PMS
 };
 
 bool loadParticleInfo(ParticleInfo& info,
