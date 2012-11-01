@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-# prepares input catalogs based on multidark simulations
-#   (borrows heavily from generateMock, but doesn't hold much in memory)
-# also creates necessary analyzeVoids input files
+# script which prepares inputs for gadget-based void run
 
 import numpy as np
 import os
@@ -11,36 +9,63 @@ from Scientific.IO.NetCDF import NetCDFFile
 import void_python_tools as vp
 import argparse
 
-catalogDir = os.getenv("HOME")+"/workspace/Voids/catalogs/multidark/"
-hodPath = os.getenv("HOME")+"/projects/Voids/hod/HOD.x"
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# CONFIGURATION
 
-voidOutputDir = os.getenv("HOME")+"/workspace/Voids/multidark/"
-scriptDir = os.getenv("HOME")+"/projects/Voids/scripts/multidark/"
-figDir = os.getenv("HOME")+"/projects/Voids/figs/multidark/"
-logDir = os.getenv("HOME")+"/projects/Voids/logs/multidark/"
+# directory for the input simulation/observational particle files
+catalogDir = os.getenv("HOME")+"/workspace/Voids/catalogs/gadget/"
 
+# where to put the final void catalog, figures, and output logs
+voidOutputDir = os.getenv("HOME")+"/workspace/Voids/gadget/"
+figDir = os.getenv("PWD")+"/../figs/gadget/"
+logDir = os.getenv("PWD")+"/../logs/gadget/"
+
+# where to place the pipeline scripts
+scriptDir = os.getenv("PWD")+"/gadget/"
+
+# simulation or observation?
 dataType = "simulation"
+
+# available formats for simulation: gadget, multidark
 dataFormat = "gadget"
-useLightCone = False # place particles on a light cone?
 
-redshiftFileBase = "mdr1_particles_z" # common filename of particle files
-redshifts = (("0.0", "0.53", "1.0")) # list of redshift particle files
+# place particles on the lightcone?
+useLightCone = False 
 
-numSlices = 4 # how many slices along the z-axis?
-numSubvolumes = 1 # how many subdivisions along the x- and y-axes?
+# common filename of particle files
+redshiftFileBase = "mdr1_particles_z"
 
-prefix = "testrun_" # prefix to give all outputs
-subSamples = [ 0.01 ] # list of desired subsamples
+# list of redshifts for the particle files
+# to get particle file name, we take redshiftFileBase+redshift
+redshifts = (("0.0", "0.53", "1.0")) 
 
-numPart = 1024*1024*1024 # number of particles in base catalog
+# how many independent slices along the z-axis?
+numSlices = 4 
+
+# how many subdivisions along the x- and y- axis?
+#   ( = 2 will make 4 subvolumes for each slice, = 3 will make 9, etc.)
+numSubvolumes = 1 
+
+# prefix to give all outputs
+prefix = "gadget_"
+
+# list of desired subsamples
+subSamples = [ 1.0, 0.1 ]
+
+# simulation information
+numPart = 1024*1024*1024 
 lbox = 1000 # Mpc/h
 omegaM = 0.27
 hubble = 0.70
 
+# END CONFIGURATION
 # -----------------------------------------------------------------------------
-LIGHT_SPEED = 299792.458
+# -----------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------
+LIGHT_SPEED = 299792.458
+
 def getSampleName(setName, redshift, useVel, iSlice=-1, iVol=-1):
 
   sampleName = setName
