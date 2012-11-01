@@ -52,3 +52,15 @@ IF(INTERNAL_NETCDF4_PYTHON)
     INSTALL_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_install.cmake
   )
 ENDIF(INTERNAL_NETCDF4_PYTHON)
+
+
+execute_process(
+   COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/external/detect_site.py ${CMAKE_BINARY_DIR}/ext_build/python
+   RESULT_VARIABLE RET_VALUE
+   OUTPUT_VARIABLE PYTHON_LOCAL_SITE_PACKAGE
+)
+IF(RET_VALUE)
+  MESSAGE(FATAL_ERROR "Could not detect the location of site-package in the build directory")
+ENDIF(RET_VALUE)
+
+MESSAGE(STATUS "Python is installing its packages in ${PYTHON_LOCAL_SITE_PACKAGE}") 
