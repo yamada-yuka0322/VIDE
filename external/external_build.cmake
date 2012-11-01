@@ -91,7 +91,7 @@ if (INTERNAL_HDF5)
   ExternalProject_Add(hdf5
     PREFIX ${BUILD_PREFIX}/hdf5-prefix
     URL ${HDF5_URL}
-    CONFIGURE_COMMAND ${HDF5_SOURCE_DIR}/configure --disable-shared --enable-cxx --prefix=${HDF5_BIN_DIR} CPPFLAGS=${CONFIGURE_CPP_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
+    CONFIGURE_COMMAND ${HDF5_SOURCE_DIR}/configure --disable-shared --enable-cxx --with-pic --prefix=${HDF5_BIN_DIR} CPPFLAGS=${CONFIGURE_CPP_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
     BUILD_IN_SOURCE 1
     INSTALL_COMMAND make install
   )
@@ -129,7 +129,7 @@ if (INTERNAL_NETCDF)
     DEPENDS ${hdf5_built}
     PREFIX ${BUILD_PREFIX}/netcdf-prefix
     URL ${NETCDF_URL}
-    CONFIGURE_COMMAND ${NETCDF_SOURCE_DIR}/configure --prefix=${NETCDF_BIN_DIR} --enable-netcdf-4 --disable-shared --disable-dap --disable-cdmremote --disable-rpc --disable-examples ${EXTRA_NC_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
+    CONFIGURE_COMMAND ${NETCDF_SOURCE_DIR}/configure --prefix=${NETCDF_BIN_DIR} --enable-netcdf-4  --with-pic --disable-shared --disable-dap --disable-cdmremote --disable-rpc --disable-examples ${EXTRA_NC_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
     BUILD_IN_SOURCE 1
     INSTALL_COMMAND make install
   )
