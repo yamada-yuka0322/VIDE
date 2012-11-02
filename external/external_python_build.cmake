@@ -12,7 +12,17 @@ IF(INTERNAL_NETCDF4_PYTHON)
   SET(NETCDF4_PYTHON_URL "http://netcdf4-python.googlecode.com/files/netCDF4-1.0.1.tar.gz" CACHE STRING "URL to download NetCDF4-python from")
 ENDIF(INTERNAL_NETCDF4_PYTHON)
 
+execute_process(
+   COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/external/detect_site.py ${CMAKE_BINARY_DIR}/ext_build/python
+   RESULT_VARIABLE RET_VALUE
+   OUTPUT_VARIABLE PYTHON_LOCAL_SITE_PACKAGE
+)
+IF(RET_VALUE)
+  MESSAGE(FATAL_ERROR "Could not detect the location of site-package in the build directory")
+ENDIF(RET_VALUE)
 
+STRING(REGEX REPLACE "(\r?\n)+$" "" PYTHON_LOCAL_SITE_PACKAGE "${PYTHON_LOCAL_SITE_PACKAGE}")
+MESSAGE(STATUS "Python is installing its packages in ${PYTHON_LOCAL_SITE_PACKAGE}") 
 
 
 
@@ -40,10 +50,11 @@ IF(INTERNAL_NETCDF4_PYTHON)
            "-DHDF5_DIR=${HDF5_BIN_DIR}"
            "-DNETCDF4_DIR=${NETCDF_BIN_DIR}"
            "-DPYTHON_LDFLAGS:STRING=${PYTHON_LDFLAGS}"
+           "-DPYTHON_LOCAL_SITE_PACKAGE=${PYTHON_LOCAL_SITE_PACKAGE}"
            "-DTARGET_PATH=${CMAKE_BINARY_DIR}/ext_build/python" "-P") 
 
   ExternalProject_Add(netcdf4-python
-    DEPENDS ${PREV_PYTHON_BUILD}
+    DEPENDS ${PREV_PYTHON_BUILD} netcdf
     URL ${NETCDF4_PYTHON_URL}
     PREFIX ${BUILD_PREFIX}/netcdf4-python-prefix
     CONFIGURE_COMMAND echo "No configure" 
@@ -54,13 +65,3 @@ IF(INTERNAL_NETCDF4_PYTHON)
 ENDIF(INTERNAL_NETCDF4_PYTHON)
 
 
-execute_process(
-   COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/external/detect_site.py ${CMAKE_BINARY_DIR}/ext_build/python
-   RESULT_VARIABLE RET_VALUE
-   OUTPUT_VARIABLE PYTHON_LOCAL_SITE_PACKAGE
-)
-IF(RET_VALUE)
-  MESSAGE(FATAL_ERROR "Could not detect the location of site-package in the build directory")
-ENDIF(RET_VALUE)
-
-MESSAGE(STATUS "Python is installing its packages in ${PYTHON_LOCAL_SITE_PACKAGE}") 

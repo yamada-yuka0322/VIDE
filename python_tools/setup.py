@@ -2,6 +2,9 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
 import numpy as np
+import os
+
+VOID_GSL=os.environ.get('VOID_GSL')
 
 setup(
     name='void_python_tools',
@@ -15,6 +18,6 @@ setup(
     ext_modules = [
        Extension("void_python_tools.apTools.chi2.velocityProfileFitNative", 
                  ["void_python_tools/apTools/chi2/velocityProfileFitNative.pyx"],
-       libraries=["gsl", "gslcblas"])
+       libraries=["gsl", "gslcblas"], library_dirs=[VOID_GSL+"/lib"], include_dirs=[VOID_GSL+"/include"])
     ]
 )

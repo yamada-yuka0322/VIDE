@@ -172,7 +172,7 @@ IF(INTERNAL_GSL)
   ExternalProject_Add(gsl
     URL ${GSL_URL}
     PREFIX ${BUILD_PREFIX}/gsl-prefix
-    CONFIGURE_COMMAND ${GSL_SOURCE_DIR}/configure --prefix=${CMAKE_BINARY_DIR}/ext_build/gsl --disable-shared CPPFLAGS=${CONFIGURE_CPP_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
+    CONFIGURE_COMMAND ${GSL_SOURCE_DIR}/configure --prefix=${CMAKE_BINARY_DIR}/ext_build/gsl --disable-shared --with-pic CPPFLAGS=${CONFIGURE_CPP_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
     BUILD_IN_SOURCE 1
     BUILD_COMMAND make
     INSTALL_COMMAND make install
