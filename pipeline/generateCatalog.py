@@ -23,9 +23,8 @@ if (len(sys.argv) > 1):
   filename = sys.argv[1]
   print " Loading parameters from", filename
   if not os.access(filename, os.F_OK):
-    print "  Cannot find parameter file!"
+    print "  Cannot find parameter file %s!" % filename
     exit(-1)
-  #parms = __import__(filename[:-3], globals(), locals(), ['*'])
   parms = imp.load_source("name", filename)
   globals().update(vars(parms))
 else:

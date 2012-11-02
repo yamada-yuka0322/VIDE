@@ -196,8 +196,10 @@ newSample.addStack({zMin}, {zMax}, {minRadius}+18, {minRadius}+24, True, False)
   
           mySubvolume = "%d%d" % (iX, iY)
 
-          sampleName = getSampleName(prefix, base, redshift, useVel, 
-                                     iSlice=iSlice, iVol=mySubvolume)
+          sampleName = getSampleName(prefix, base, sliceMin, useVel, 
+                                     iSlice=-1, iVol=mySubvolume)
+          #sampleName = getSampleName(prefix, base, redshift, useVel, 
+          #                           iSlice=iSlice, iVol=mySubvolume)
 
           scriptFile.write(sampleInfo.format(dataFile=dataFileName, 
                                          dataFormat=dataFormat,
