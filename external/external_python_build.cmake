@@ -27,14 +27,19 @@ MESSAGE(STATUS "Python is installing its packages in ${PYTHON_LOCAL_SITE_PACKAGE
 
 
 IF(INTERNAL_CYTHON)
+  SET(BUILD_ENVIRONMENT 
+          ${CMAKE_COMMAND}
+           "-DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}"
+           "-DPYTHON_LOCAL_SITE_PACKAGE=${PYTHON_LOCAL_SITE_PACKAGE}"
+           "-DTARGET_PATH=${CMAKE_BINARY_DIR}/ext_build/python" "-P") 
   ExternalProject_Add(cython
     DEPENDS ${PREV_PYTHON_BUILD}
     URL ${CYTHON_URL}
     PREFIX ${BUILD_PREFIX}/cython-prefix
     CONFIGURE_COMMAND echo "No configure"
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND ${PYTHON_EXECUTABLE} setup.py build
-    INSTALL_COMMAND ${PYTHON_EXECUTABLE} setup.py install --prefix=${CMAKE_BINARY_DIR}/ext_build/python
+    BUILD_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_build.cmake
+    INSTALL_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_install.cmake
   ) 
   SET(PREV_PYTHON_BUILD ${PREV_PYTHON_BUILD} cython)
 ENDIF(INTERNAL_CYTHON)
