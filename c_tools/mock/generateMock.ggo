@@ -1,0 +1,31 @@
+package "generateMock"
+version "0"
+
+option "configFile"	 -	"Configuration file path"	string optional
+
+# Ramses data
+option "ramsesBase" -	"Base directory for ramses" string optional
+option "ramsesId"   -   "Ramses snapshot id" int optional
+
+option "gadget"	    -	"Base name of gadget snapshot (without parallel writing extension)" string optional
+option "flash"	    -   "Base name for FLASH snapshot" string optional
+option "multidark"	    -   "Base name for multidark snapshot" string optional
+
+option "axis"	    -	"Redshift axis (X=0, Y=1, Z=2)" int optional default="2"
+
+option "output"	    -   "Output filename for particles" string required
+option "outputParameter" - "Output geometry parameter file for postprocessing" string required
+
+option "rangeX_min"   -   "Minimum range in X for making the box" double required
+option "rangeX_max"   -   "Maximum range in X for making the box" double required
+option "rangeY_min"   -   "Minimum range in Y for making the box" double required
+option "rangeY_max"   -   "Maximum range in Y for making the box" double required
+option "rangeZ_min"   -   "Minimum range in Z for making the box (after distortion)" double required
+option "rangeZ_max"   -   "Maximum range in Z for making the box (after distortion)" double required
+
+option "preReShift" - "Reshift the zero of the Z axis" flag off
+option "peculiarVelocities" - "Added peculiar velocities distortion" flag off
+
+option "cosmo"	- "Apply cosmological redshift" flag on
+
+option "subsample" - "Subsample the input simulation by the specified amount" double optional

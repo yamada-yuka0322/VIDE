@@ -1,0 +1,47 @@
+package "removeEdgeVoids"
+version "alpha"
+
+
+option "configFile" - "Configuration filename" string optional
+
+option "partFile" - "Particle file from generateFromCatalog" string required
+
+option "extraInfo" - "Extra particle file from generateFromCatalog" string required
+
+option "voidDesc" - "Void list from ZOBOV" string required
+
+option "void2Zone" - "Zone file from ZOBOV" string required
+
+option "partVol" - "Particle volume file from ZOBOV" string required
+
+option "zone2Part" - "Particle file from ZOBOV" string required
+option "mockIndex" - "Beginning index of mock particles" int required
+
+option "numVoids" - "Number of voids" int required
+
+option "isObservation" - "We are working with observational data" flag off
+
+option "zMin" - "Minimum redshift of sample" double optional default="0.0"
+option "zMax" - "Maximum redshift of sample" double optional default="10.0"
+
+option "rMin" - "Minimum allowable void radius" double optional default="0.0"
+
+
+option "output" - "Output void file" string required
+option "outDistances" - "output of distances from centers to nearest mock particle" string required
+
+option "outCenters" - "output barycenters of voids" string required
+
+option "outInfo" - "output info of voids" string required
+
+option "outNoCutInfo" - "output info of voids" string required
+
+option "outSkyPositions" - "output sky positions of voids" string required
+
+option "dataPortion" - "all, central, or edge" string required
+
+option "tolerance" - "Fraction of void width to consider edge" double optional default="1.0"
+
+option "centralRadFrac" - "Fraction of void radii to consider central region" double optional default="4"
+
+option "maxCentralDen" - "Maximum central density to accept as a void" double optional default="0.2" 
