@@ -3,19 +3,28 @@ INCLUDE(FindPythonInterp)
 SET(INTERNAL_NETCDF4_PYTHON ON)
 SET(INTERNAL_CYTHON ON)
 SET(INTERNAL_HEALPY ON)
-
+SET(INTERNAL_ARGPARSE ON)
 
 IF(INTERNAL_CYTHON)
   SET(CYTHON_URL "http://cython.org/release/Cython-0.17.1.tar.gz" CACHE STRING "URL to download Cython from")
+  mark_as_advanced(CYTHON_URL)
 ENDIF(INTERNAL_CYTHON)
 
 IF(INTERNAL_NETCDF4_PYTHON)
   SET(NETCDF4_PYTHON_URL "http://netcdf4-python.googlecode.com/files/netCDF4-1.0.1.tar.gz" CACHE STRING "URL to download NetCDF4-python from")
+  mark_as_advanced(NETCDF4_PYTHON_URL)
 ENDIF(INTERNAL_NETCDF4_PYTHON)
 
 IF (INTERNAL_HEALPY)
   SET(HEALPY_URL "http://github.com/healpy/healpy/archive/1.4.1.tar.gz" CACHE STRING "URL to download Healpy from")
+  mark_as_advanced(HEALPY_URL)
 ENDIF(INTERNAL_HEALPY)
+
+IF(INTERNAL_ARGPARSE)
+  SET(SETUPTOOLS_URL "http://pypi.python.org/packages/source/s/setuptools/setuptools-0.6c11.tar.gz" CACHE STRING "URL to download setuptools from")
+  SET(ARGPARSE_URL "http://argparse.googlecode.com/files/argparse-1.2.1.tar.gz" CACHE STRING "URL to download argparse from")
+  mark_as_advanced(ARGPARSE_URL SETUPTOOLS_URL)
+ENDIF(INTERNAL_ARGPARSE)
 
 execute_process(
    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/external/detect_site.py ${CMAKE_BINARY_DIR}/ext_build/python
@@ -97,3 +106,31 @@ IF(INTERNAL_HEALPY)
     INSTALL_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_install.cmake
   )
 ENDIF(INTERNAL_HEALPY)
+
+IF(INTERNAL_ARGPARSE)
+  SET(BUILD_ENVIRONMENT 
+          ${CMAKE_COMMAND}
+           "-DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}"
+           "-DPYTHON_LOCAL_SITE_PACKAGE=${PYTHON_LOCAL_SITE_PACKAGE}"
+           "-DTARGET_PATH=${CMAKE_BINARY_DIR}/ext_build/python" "-P")
+
+  ExternalProject_Add(setuptools
+    URL ${SETUPTOOLS_URL}
+    PREFIX ${BUILD_PREFIX}/setuptools-prefix
+    CONFIGURE_COMMAND echo "No configure"
+    BUILD_IN_SOURCE 1
+    BUILD_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_build.cmake
+    INSTALL_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_install.cmake
+  )
+
+  ExternalProject_Add(argparse
+    DEPENDS setuptools
+    URL ${ARGPARSE_URL}
+    PREFIX ${BUILD_PREFIX}/argparse-prefix
+    CONFIGURE_COMMAND echo "No configure"
+    BUILD_IN_SOURCE 1
+    BUILD_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_build.cmake
+    INSTALL_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_install.cmake
+   )
+  SET(AUXILIARY_PYTHON_DEPEND ${AUXILIARY_PYTHON_DEPEND} argparse)
+ENDIF(INTERNAL_ARGPARSE)
