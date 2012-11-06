@@ -243,6 +243,7 @@ ExternalProject_Add(cfitsio
   INSTALL_COMMAND make install
 )
 SET(CFITSIO_LIBRARY ${CMAKE_BINARY_DIR}/ext_build/cfitsio/lib/libcfitsio.a)
+SET(CFITSIO_INCLUDE_PATH ${CMAKE_BINARY_DIR}/ext_build/cfitsio/include)
 
 #################
 # Build Healpix 
