@@ -7,7 +7,6 @@
 import numpy as np
 import os
 import sys
-from Scientific.IO.NetCDF import NetCDFFile
 import void_python_tools as vp
 import argparse
 
@@ -95,10 +94,10 @@ from void_python_tools.backend.classes import *
 
 continueRun = False
 startCatalogStage = 1
-endCatalogStage   = 3
+endCatalogStage   = 4
                
 startAPStage = 1
-endAPStage = 6
+endAPStage = 7
 
 ZOBOV_PATH = os.getenv("PWD")+"/../zobov/"
 CTOOLS_PATH = os.getenv("PWD")+"/../c_tools/"
@@ -297,7 +296,7 @@ if args.script or args.all:
   for line in inFile: numPart += 1
   inFile.close()
 
-  minRadius = int(np.ceil(lbox/numPart**(1./3.)))
+  minRadius = 2*int(np.ceil(lbox/numPart**(1./3.)))
 
   if dataFormat == "multidark":
     writeScript(prefix, "halos", scriptDir, catalogDir, redshifts, 

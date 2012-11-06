@@ -107,6 +107,9 @@ if (startCatalogStage <= 4) and (endCatalogStage >= 4):
   sys.stdout.flush()
 
   for thisDataPortion in dataPortions:
-    plotNumberCounts(workDir, dataSampleList, figDir, showPlot=True, dataPortion=thisDataPortion, setName=setName)
+    plotRedshiftDistribution(workDir, dataSampleList, figDir, showPlot=False, 
+                             dataPortion=thisDataPortion, setName=catalogName)
+    plotSizeDistribution(workDir, dataSampleList, figDir, showPlot=False, 
+                             dataPortion=thisDataPortion, setName=catalogName)
 
 print "\n Done!"

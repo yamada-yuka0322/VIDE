@@ -76,7 +76,6 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
     if os.access("contour_map.fits", os.F_OK):
       os.system("mv %s %s" % ("contour_map.fits", zobovDir))
-      os.system("mv %s %s" % ("mask_map.fits", zobovDir))
 
     if os.access("comoving_distance.txt", os.F_OK):
       os.system("mv %s %s" % ("comoving_distance.txt", zobovDir))
@@ -815,7 +814,7 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     maxtries = 5
     while badChain:
       Rexpect = (stack.rMin+stack.rMax)/2
-      Rtruncate = stack.rMax*3. + 1 # TEST
+      Rtruncate = stack.rMin*3. + 1 # TEST
       ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
                                     Niter=300000,
                                     Nburn=100000,

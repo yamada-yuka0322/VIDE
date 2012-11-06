@@ -5,7 +5,6 @@
 import numpy as np
 import os
 import sys
-from Scientific.IO.NetCDF import NetCDFFile
 import void_python_tools as vp
 import argparse
 
@@ -96,10 +95,10 @@ from void_python_tools.backend.classes import *
 
 continueRun = False
 startCatalogStage = 1
-endCatalogStage   = 3
+endCatalogStage   = 4
                
 startAPStage = 1
-endAPStage = 6
+endAPStage = 7
 
 ZOBOV_PATH = os.getenv("PWD")+"/../zobov/"
 CTOOLS_PATH = os.getenv("PWD")+"/../c_tools/"
