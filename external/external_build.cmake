@@ -22,28 +22,34 @@ SET(INTERNAL_QHULL ON)
 
 IF(INTERNAL_GENGETOPT)
   SET(GENGETOPT_URL "ftp://ftp.gnu.org/gnu/gengetopt/gengetopt-2.22.5.tar.gz" CACHE STRING "URL to download gengetopt from")
+  mark_as_advanced(GENGETOPT_URL)
 ENDIF(INTERNAL_GENGETOPT)
 
 IF(INTERNAL_HDF5)
   SET(HDF5_URL "http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.9.tar.gz" CACHE STRING "URL to download HDF5 from")
+  mark_as_advanced(HDF5_URL)
 ENDIF(INTERNAL_HDF5)
 
 IF(INTERNAL_NETCDF)
   SET(NETCDF_URL "http://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-4.1.3.tar.gz" CACHE STRING "URL to download NetCDF from")
+  mark_as_advanced(NETCDF_URL)
 ENDIF(INTERNAL_NETCDF)
 
 IF(INTERNAL_BOOST)
   SET(BOOST_URL "http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz/download" CACHE STRING "URL to download Boost from")
+  mark_as_advanced(BOOST_URL)
 ELSE(INTERNAL_BOOST)
   find_package(Boost 1.49.0 COMPONENTS format spirit phoenix python FATAL_ERROR)
 ENDIF(INTERNAL_BOOST)
 
 IF(INTERNAL_GSL)
   SET(GSL_URL "ftp://ftp.gnu.org/gnu/gsl/gsl-1.15.tar.gz" CACHE STRING "URL to download GSL from ")
+  mark_as_advanced(GSL_URL)
 ENDIF(INTERNAL_GSL)
 
 IF(INTERNAL_QHULL)
   SET(QHULL_URL "http://www.qhull.org/download/qhull-2012.1-src.tgz" CACHE STRING "URL to download QHull from")
+  mark_as_advanced(QHULL_URL)
 ENDIF(INTERNAL_QHULL)
 
 
@@ -72,10 +78,11 @@ if (INTERNAL_GENGETOPT)
     BUILD_IN_SOURCE 1
     INSTALL_COMMAND make install
   )
-  SET(GENGETOPT ${GENGETOPT_BIN_DIR}/bin/gengetopt)
+  SET(GENGETOPT ${GENGETOPT_BIN_DIR}/bin/gengetopt CACHE FILEPATH "Path GenGetOpt binary")
 else(INTERNAL_GENGETOPT)
   find_program(GENGETOPT gengetopt)
 endif(INTERNAL_GENGETOPT)
+mark_as_advanced(GENGETOPT)
 
 ###############
 # Build HDF5
@@ -113,6 +120,7 @@ else(INTERNAL_HDF5)
   find_library(HDF5HL_LIBRARY hdf5_hl)
 endif (INTERNAL_HDF5)
 SET(CONFIGURE_CPP_FLAGS "${CONFIGURE_CPP_FLAGS} -I${HDF5_INCLUDE_PATH}")
+mark_as_advanced(HDF5_INCLUDE_PATH HDF5_LIBRARY HDF5_CPP_LIBRARY HDF5HL_LIBRARY HDF5HL_CPP_LIBRARY)
 
 ###############
 # Build NetCDF
@@ -154,6 +162,7 @@ ELSE(INTERNAL_NETCDF)
   SET(CONFIGURE_CPP_FLAGS ${CONFIGURE_CPP_FLAGS} 
           -I${NETCDF_INCLUDE_PATH} -I${NETCDFCPP_INCLUDE_PATH})
 endif (INTERNAL_NETCDF)
+mark_as_advanced(NETCDF_LIBRARY NETCDFCPP_LIBRARY NETCDF_INCLUDE_PATH NETCDFCPP_INCLUDE_PATH)
 
 ##################
 # Build BOOST
@@ -171,8 +180,9 @@ if (INTERNAL_BOOST)
     INSTALL_COMMAND echo "No install"
   )
   set(Boost_INCLUDE_DIRS ${BOOST_SOURCE_DIR} CACHE STRING "Boost path" FORCE)
-  set(Boost_LIBRARIES ${BOOST_SOURCE_DIR}/stage/lib/libboost_python.a)
+  set(Boost_LIBRARIES ${BOOST_SOURCE_DIR}/stage/lib/libboost_python.a CACHE STRING "Boost libraries" FORCE)
 endif (INTERNAL_BOOST)
+mark_as_advanced(Boost_INCLUDE_DIRS Boost_LIBRARIES)
 
 ##################
 # Build GSl
@@ -201,6 +211,7 @@ ELSE(INTERNAL_GSL)
   find_library(GSLCBLAS_LIBRARY gslcblas)
   find_path(GSL_INCLUDE_PATH NAMES gsl/gsl_blas.h)
 ENDIF(INTERNAL_GSL)
+mark_as_advanced(GSL_LIBRARY GSLCBLAS_LIBRARY GSL_INCLUDE_PATH)
 
 ##################
 # Build CosmoTool
@@ -298,6 +309,7 @@ if (INTERNAL_QHULL)
   add_definitions(-Dqh_QHpointer)
 
 else(INTERNAL_QHULL)
+  message(FATAL_ERROR "Only packaged QHull is supported")
 endif(INTERNAL_QHULL)
 
 SET(QHULL_LIBRARIES ${QHULL_CPP_LIBRARY} ${QHULL_LIBRARY} )
