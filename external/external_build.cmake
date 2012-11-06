@@ -5,12 +5,8 @@ OPTION(ENABLE_OPENMP "Set to Yes if Healpix and/or you need openMP" OFF)
 IF(ENABLE_OPENMP)
 
   IF (NOT OPENMP_FOUND)
-    MESSAGE(ERROR "No known compiler option for enabling OpenMP")
+    MESSAGE(FATAL_ERROR "No known compiler option for enabling OpenMP")
   ENDIF(NOT OPENMP_FOUND)
-
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKED_FLAGS} ${OpenMP_C_FLAGS}")
 
 ENDIF(ENABLE_OPENMP)
 
@@ -91,7 +87,11 @@ if (INTERNAL_HDF5)
   ExternalProject_Add(hdf5
     PREFIX ${BUILD_PREFIX}/hdf5-prefix
     URL ${HDF5_URL}
-    CONFIGURE_COMMAND ${HDF5_SOURCE_DIR}/configure --disable-shared --enable-cxx --with-pic --prefix=${HDF5_BIN_DIR} CPPFLAGS=${CONFIGURE_CPP_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
+    CONFIGURE_COMMAND ${HDF5_SOURCE_DIR}/configure
+           --disable-shared --enable-cxx --with-pic
+	   --prefix=${HDF5_BIN_DIR} --libdir=${HDF5_BIN_DIR}/lib 
+	   CPPFLAGS=${CONFIGURE_CPP_FLAGS} CC=${CMAKE_C_COMPILER} 
+	   CXX=${CMAKE_CXX_COMPILER}
     BUILD_IN_SOURCE 1
     INSTALL_COMMAND make install
   )
@@ -129,7 +129,12 @@ if (INTERNAL_NETCDF)
     DEPENDS ${hdf5_built}
     PREFIX ${BUILD_PREFIX}/netcdf-prefix
     URL ${NETCDF_URL}
-    CONFIGURE_COMMAND ${NETCDF_SOURCE_DIR}/configure --prefix=${NETCDF_BIN_DIR} --enable-netcdf-4  --with-pic --disable-shared --disable-dap --disable-cdmremote --disable-rpc --disable-examples ${EXTRA_NC_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
+    CONFIGURE_COMMAND ${NETCDF_SOURCE_DIR}/configure
+         --prefix=${NETCDF_BIN_DIR} --libdir=${NETCDF_BIN_DIR}/lib
+         --enable-netcdf-4  --with-pic --disable-shared --disable-dap 
+         --disable-cdmremote --disable-rpc 
+         --disable-examples ${EXTRA_NC_FLAGS} CC=${CMAKE_C_COMPILER}
+         CXX=${CMAKE_CXX_COMPILER}
     BUILD_IN_SOURCE 1
     INSTALL_COMMAND make install
   )
@@ -146,7 +151,8 @@ ELSE(INTERNAL_NETCDF)
   find_library(NETCDFCPP_LIBRARY netcdf_c++)
   find_path(NETCDF_INCLUDE_PATH NAMES netcdf.h)
   find_path(NETCDFCPP_INCLUDE_PATH NAMES netcdf)
-  SET(CONFIGURE_CPP_FLAGS ${CONFIGURE_CPP_FLAGS} -I${NETCDF_INCLUDE_PATH} -I${NETCDFCPP_INCLUDE_PATH})
+  SET(CONFIGURE_CPP_FLAGS ${CONFIGURE_CPP_FLAGS} 
+          -I${NETCDF_INCLUDE_PATH} -I${NETCDFCPP_INCLUDE_PATH})
 endif (INTERNAL_NETCDF)
 
 ##################
@@ -158,7 +164,8 @@ if (INTERNAL_BOOST)
   ExternalProject_Add(boost
     URL ${BOOST_URL}
     PREFIX ${BUILD_PREFIX}/boost-prefix
-    CONFIGURE_COMMAND ${BOOST_SOURCE_DIR}/bootstrap.sh --prefix=${CMAKE_BINARY_DIR}/ext_build/boost
+    CONFIGURE_COMMAND 
+           ${BOOST_SOURCE_DIR}/bootstrap.sh --prefix=${CMAKE_BINARY_DIR}/ext_build/boost
     BUILD_IN_SOURCE 1
     BUILD_COMMAND ${BOOST_SOURCE_DIR}/b2 --with-exception --with-python
     INSTALL_COMMAND echo "No install"
@@ -176,7 +183,10 @@ IF(INTERNAL_GSL)
   ExternalProject_Add(gsl
     URL ${GSL_URL}
     PREFIX ${BUILD_PREFIX}/gsl-prefix
-    CONFIGURE_COMMAND ${GSL_SOURCE_DIR}/configure --prefix=${CMAKE_BINARY_DIR}/ext_build/gsl --disable-shared CPPFLAGS=${CONFIGURE_CPP_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
+    CONFIGURE_COMMAND ${GSL_SOURCE_DIR}/configure
+           --prefix=${CMAKE_BINARY_DIR}/ext_build/gsl --disable-shared
+           --with-pic --libdir=${CMAKE_BINARY_DIR}/ext_build/gsl/lib
+           CPPFLAGS=${CONFIGURE_CPP_FLAGS} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER}
     BUILD_IN_SOURCE 1
     BUILD_COMMAND make
     INSTALL_COMMAND make install
@@ -224,7 +234,7 @@ ExternalProject_Add(cfitsio
   PREFIX ${BUILD_PREFIX}/cfitsio-prefix
   CONFIGURE_COMMAND 
         ${CMAKE_SOURCE_DIR}/external/cfitsio/configure 
-	    --prefix=${CMAKE_BINARY_DIR}/ext_build/cfitsio 
+	    --prefix=${CMAKE_BINARY_DIR}/ext_build/cfitsio --libdir=${CMAKE_BINARY_DIR}/ext_build/cfitsio/lib
 	    CPPFLAGS=${CONFIGURE_CPP_FLAGS} 
 	    CC=${CMAKE_C_COMPILER} 
 	    CXX=${CMAKE_CXX_COMPILER}
@@ -233,6 +243,7 @@ ExternalProject_Add(cfitsio
   INSTALL_COMMAND make install
 )
 SET(CFITSIO_LIBRARY ${CMAKE_BINARY_DIR}/ext_build/cfitsio/lib/libcfitsio.a)
+SET(CFITSIO_INCLUDE_PATH ${CMAKE_BINARY_DIR}/ext_build/cfitsio/include)
 
 #################
 # Build Healpix 

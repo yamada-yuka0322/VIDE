@@ -219,7 +219,7 @@ if not os.access(scriptDir, os.F_OK): os.mkdir(scriptDir)
 # first the directly downsampled runs
 # Note: ss0.002   ~ SDSS DR7 dim2
 #       ss0.0004 ~ SDSS DR9 mid 
-baseResolution = numPart/lbox/lbox/lbox # particles/Mpc^3
+baseResolution = float(numPart)/lbox/lbox/lbox # particles/Mpc^3
 for thisSubSample in subSamples:
 
   keepFraction = float(thisSubSample) / baseResolution
