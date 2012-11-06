@@ -254,8 +254,9 @@ int main(int argc, char **argv) {
   for (iVoid = 0; iVoid < numVoids; iVoid++) {
 
     voidID = voids[iVoid].voidID;
-    //printf("  DOING %d (of %d) %d %d\n", iVoid, numVoids, voidID, 
-     //                                    voids[iVoid].numPart);
+      printf("  DOING %d (of %d) %d %d %f\n", iVoid, numVoids, voidID, 
+                                           voids[iVoid].numPart, 
+                                           voids[iVoid].radius);
 
     voids[iVoid].center[0] = part[voids[iVoid].coreParticle].x;
     voids[iVoid].center[1] = part[voids[iVoid].coreParticle].y;
@@ -411,30 +412,36 @@ int main(int argc, char **argv) {
   } // iVoid
 
   printf(" Picking winners and losers...\n");
-  numKept = numVoids;
+  for (iVoid = 0; iVoid < numVoids; iVoid++) {
+    voids[iVoid].accepted = 1;
+  }
+
   for (iVoid = 0; iVoid < numVoids; iVoid++) {
     if (strcmp(args_info.dataPortion_arg, "edge")  == 0 &&
         tolerance*voids[iVoid].maxRadius < voids[iVoid].nearestMock) {
-      numKept--;
       voids[iVoid].accepted = 0;
     }
 
     if (strcmp(args_info.dataPortion_arg, "central") == 0 && 
         tolerance*voids[iVoid].maxRadius > voids[iVoid].nearestMock) {
-      numKept--;
+      voids[iVoid].accepted = 0;
+    }
+
+    if (voids[iVoid].radius < args_info.rMin_arg) {
       voids[iVoid].accepted = 0;
     }
 
     if (voids[iVoid].centralDen > args_info.maxCentralDen_arg) {
-      numKept--;
       voids[iVoid].accepted = -1;
     }
 
-    if (voids[iVoid].radius < args_info.rMin_arg) {
-      numKept--;
-      voids[iVoid].accepted = 0;
-    }
   }
+
+  numKept = 0;
+  for (iVoid = 0; iVoid < numVoids; iVoid++) {
+    if (voids[iVoid].accepted == 1) numKept++;
+  }
+
   printf(" Number kept: %d (out of %d)\n", numKept, numVoids);
   
   printf(" Output...\n");
@@ -452,7 +459,7 @@ int main(int argc, char **argv) {
     if (voids[iVoid].accepted != 1) continue;
 
      fprintf(fp, "%d %d %d %f %f %d %d %f %d %f %f\n", 
-             i, 
+             iVoid, 
              voids[iVoid].voidID, 
              voids[iVoid].coreParticle, 
              voids[iVoid].coreDens, 

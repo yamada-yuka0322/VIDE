@@ -391,6 +391,7 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
   f.add_att("range_y_max", ranges[1][1]);
   f.add_att("range_z_min", ranges[2][0]);
   f.add_att("range_z_max", ranges[2][1]);
+  f.add_att("mask_index", -1);
 
   NcDim *NumPart_dim = f.add_dim("numpart_dim", boxed->NumPart);
   NcVar *v = f.add_var("particle_ids", ncInt, NumPart_dim);

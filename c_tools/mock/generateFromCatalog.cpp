@@ -414,6 +414,7 @@ void saveForZobov(ParticleData& pdata, const string& fname, const string& paramn
       for (uint32_t i = 0; i < pdata.pos.size(); i++)
 	{
 	  f.writeReal32((pdata.pos[i].xyz[j]+Lmax)/(2*Lmax));
+if (i < 10) printf("TEST WRITE %d %e\n", (pdata.pos[i].xyz[j]+Lmax)/(2*Lmax));
 	}
       f.endCheckpoint();
     }
