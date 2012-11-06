@@ -7,7 +7,6 @@
 import numpy as np
 import os
 import sys
-from Scientific.IO.NetCDF import NetCDFFile
 import void_python_tools as vp
 import argparse
 
