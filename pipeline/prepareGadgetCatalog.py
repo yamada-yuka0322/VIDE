@@ -33,10 +33,13 @@ dataFormat = "gadget"
 useLightCone = False 
 
 # common filename of particle files
-redshiftFileBase = "mdr1_particles_z"
+particleFileBase = "mdr1_particles_z"
 
-# list of redshifts for the particle files
-# to get particle file name, we take redshiftFileBase+redshift
+# list of file numbers for the particle files
+# to get particle file name, we take particleFileBase+fileNum
+fileNums = (("0.0", "0.53", "1.0")) 
+
+# redshift of each file in the above list
 redshifts = (("0.0", "0.53", "1.0")) 
 
 # how many independent slices along the z-axis?
@@ -80,7 +83,7 @@ def getSampleName(setName, redshift, useVel, iSlice=-1, iVol=-1):
 #------------------------------------------------------------------------------
 # for given dataset parameters, outputs a script for use with analyzeVoids
 def writeScript(setName, dataFileNameBase, 
-                scriptDir, catalogDir, redshifts, numSubvolumes,
+                scriptDir, catalogDir, fileNums, redshifts, numSubvolumes,
                 numSlices, useVel, lbox, minRadius, omegaM, subsample=1.0, 
                 suffix=".dat"):
 
@@ -149,7 +152,8 @@ newSample = Sample(dataFile = "{dataFile}",
 dataSampleList.append(newSample)
                """
 
-  for redshift in redshifts:
+  for (iFile, redshift) in enumerate(redshifts):
+    fileNum = fileNums[iFile]
     zBox = float(redshift)
     Om = float(omegaM)
     zBoxMpc = LIGHT_SPEED/100.*vp.angularDiameter(zBox, Om=Om)
@@ -181,7 +185,7 @@ dataSampleList.append(newSample)
       sliceMinMpc = "%0.1f" % sliceMinMpc
       sliceMaxMpc = "%0.1f" % sliceMaxMpc
 
-      dataFileName = dataFileNameBase + redshift + suffix
+      dataFileName = dataFileNameBase + fileNum + suffix
 
       for iX in xrange(numSubvolumes):
         for iY in xrange(numSubvolumes):
@@ -228,10 +232,12 @@ for thisSubSample in subSamples:
 
   print " Doing subsample", thisSubSample, " scripts"
   setName = prefix+"ss"+str(thisSubSample)
-  writeScript(setName, redshiftFileBase, scriptDir, catalogDir, redshifts, 
+  writeScript(setName, particleFileBase, scriptDir, catalogDir, fileNums, 
+                 redshifts, 
                  numSubvolumes, numSlices, True, lbox, minRadius, omegaM,
                  subsample=thisSubSample, suffix="")
-  writeScript(setName, redshiftFileBase, scriptDir, catalogDir, redshifts, 
+  writeScript(setName, particleFileBase, scriptDir, catalogDir, fileNums, 
+                 redshifts, 
                  numSubvolumes, numSlices, False, lbox, minRadius, omegaM,
                  subsample=thisSubSample, suffix="")
   
