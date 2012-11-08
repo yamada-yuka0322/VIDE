@@ -28,6 +28,7 @@ dataType = "simulation"
 
 # available formats for simulation: gadget, multidark
 dataFormat = "gadget"
+dataUnit = 1 # as multiple of Mpc/h
 
 # place particles on the lightcone?
 useLightCone = False 
@@ -131,6 +132,7 @@ logDir = "{logDir}/{setName}/"
   sampleInfo = """
 newSample = Sample(dataFile = "{dataFile}",
                    dataFormat = "{dataFormat}",
+                   dataUnit = {dataUnit},
                    fullName = "{sampleName}",
                    nickName = "{sampleName}",
                    dataType = "simulation",
@@ -197,6 +199,7 @@ dataSampleList.append(newSample)
 
           scriptFile.write(sampleInfo.format(dataFile=dataFileName, 
                                          dataFormat=dataFormat,
+                                         dataUnit=dataUnit,
                                          sampleName=sampleName,
                                          zMin=sliceMin,
                                          zMax=sliceMax,
