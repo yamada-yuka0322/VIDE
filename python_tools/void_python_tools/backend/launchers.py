@@ -110,7 +110,8 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       dataFileLine = "multidark " + datafile
     elif sample.dataFormat == "gadget":
       dataFileLine = "gadget " + datafile
-    
+      useGadgetUnit = "gadgetUnit=1"
+      
     iX = float(sample.mySubvolume[0])
     iY = float(sample.mySubvolume[1])
 
@@ -125,6 +126,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       outputParameter %s
       %s
       %s
+      %s
       rangeX_min %g
       rangeX_max %g
       rangeY_min %g
@@ -136,6 +138,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
              zobovDir+"/zobov_slice_"+sampleName+".par",
              includePecVelString,
              useLightConeString,
+             useGadgetUnit,
              xMin, xMax, yMin, yMax,
              sample.zBoundaryMpc[0], sample.zBoundaryMpc[1],
              sample.subsample)
