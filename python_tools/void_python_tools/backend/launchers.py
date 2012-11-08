@@ -101,6 +101,11 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     else:
       includePecVelString = ""
 
+    if sample.useLightCone:
+      useLightConeString = "cosmo"
+    else:
+      useLightConeString = ""
+
     if sample.dataFormat == "multidark":
       dataFileLine = "multidark " + datafile
     elif sample.dataFormat == "gadget":
@@ -119,6 +124,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       output %s
       outputParameter %s
       %s
+      %s
       rangeX_min %g
       rangeX_max %g
       rangeY_min %g
@@ -129,6 +135,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       """ % (dataFileLine, zobovDir+"/zobov_slice_"+sampleName,
              zobovDir+"/zobov_slice_"+sampleName+".par",
              includePecVelString,
+             useLightConeString,
              xMin, xMax, yMin, yMax,
              sample.zBoundaryMpc[0], sample.zBoundaryMpc[1],
              sample.subsample)
