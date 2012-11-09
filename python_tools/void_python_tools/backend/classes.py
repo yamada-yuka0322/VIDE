@@ -78,7 +78,7 @@ class Sample:
                dataType="observation", numSubDivisions=2, 
                boxLen=1024, usePecVel=False, omegaM=0.27, 
                numSubvolumes=1, mySubvolume=1, dataFormat="sdss",
-               subsample="1.0", useLightCone=True):
+               subsample=1.0, useLightCone=True):
     self.dataFile = dataFile
     self.fullName = fullName
     self.nickName = nickName

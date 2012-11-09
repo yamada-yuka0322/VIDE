@@ -19,11 +19,12 @@ figDir = os.getenv("PWD")+"/../figs/multidark/"
 logDir = os.getenv("PWD")+"/../logs/multidark/"
 
 dataFormat = "multidark"
+dataUnit = 1
 dataType = "simulation"
 useLightCone = True
 
-redshifts = (("0.0", "0.53", "1.0"))
 redshiftFileBase = "mdr1_particles_z"
+redshifts = (("0.0", "0.53", "1.0"))
 numSlices = 4
 numSubvolumes = 1
 
@@ -128,6 +129,7 @@ logDir = "{logDir}/{sampleName}/"
   sampleInfo = """
 newSample = Sample(dataFile = "{dataFile}",
                    dataFormat = "{dataFormat}",
+                   dataUnit = {dataUnit},
                    fullName = "{sampleName}",
                    nickName = "{sampleName}",
                    dataType = "simulation",
@@ -202,6 +204,7 @@ newSample.addStack({zMin}, {zMax}, {minRadius}+18, {minRadius}+24, True, False)
 
           scriptFile.write(sampleInfo.format(dataFile=dataFileName, 
                                          dataFormat=dataFormat,
+                                         dataUnit=dataUnit,
                                          sampleName=sampleName,
                                          zMin=sliceMin,
                                          zMax=sliceMax,

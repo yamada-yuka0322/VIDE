@@ -132,12 +132,12 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       rangeY_max %g
       rangeZ_min %g
       rangeZ_max %g
-      subsample %g
+      subsample %s
       """ % (dataFileLine, zobovDir+"/zobov_slice_"+sampleName,
              zobovDir+"/zobov_slice_"+sampleName+".par",
              includePecVelString,
              useLightConeString,
-             sample.gadgetUnit,
+             sample.dataUnit,
              xMin, xMax, yMin, yMax,
              sample.zBoundaryMpc[0], sample.zBoundaryMpc[1],
              sample.subsample)
