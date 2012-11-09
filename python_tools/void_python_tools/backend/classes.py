@@ -38,6 +38,7 @@ class Sample:
   dataType = "observation"
   dataFormat = "sdss"
   dataFile = "lss.dr72dim.dat"
+  dataUNit = 1
   fullName = "lss.dr72dim.dat"
   nickName = "dim"
   zobovDir = ""
@@ -68,7 +69,7 @@ class Sample:
 
   stacks = []
 
-  def __init__(self, dataFile="", fullName="", 
+  def __init__(self, dataFile="", fullName="", dataUnit=1,
                nickName="", maskFile="", selFunFile="",
                zBoundary=(), zRange=(), zBoundaryMpc=(),
                minVoidRadius=0, fakeDensity=0.01, volumeLimited=True,
@@ -106,6 +107,7 @@ class Sample:
     self.dataFormat = dataFormat
     self.subsample = subsample
     self.useLightCone = useLightCone
+    self.dataUnit = dataUnit
 
     self.stacks = []
 
