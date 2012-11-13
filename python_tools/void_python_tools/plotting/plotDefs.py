@@ -1,3 +1,5 @@
+LIGHT_SPEED = 299792.458 
+
 colorList = ['r', 'b', 'g', 'y', 'c', 'm', 'y', 
              'brown', 'grey',
                           'darkred', 'orange', 'pink', 'darkblue',

@@ -1,11 +1,12 @@
 __all__=['plotRedshiftDistribution', 'plotSizeDistribution', 'plot1dProfiles',
-         'plotMarg1d']
+         'plotMarg1d', 'plotNumberDistribution']
 
 from void_python_tools.backend.classes import *
 from plotDefs import *
 import numpy as np
 import os
 import pylab as plt
+import void_python_tools.apTools as vp
 
 # -----------------------------------------------------------------------------
 def plotRedshiftDistribution(workDir=None, sampleList=None, figDir=None, 
@@ -43,7 +44,7 @@ def plotRedshiftDistribution(workDir=None, sampleList=None, figDir=None,
     zMax = sample.zRange[1]
 
     range = (zMin, zMax)
-    nbins = np.ceil((zMax-zMin)/0.1)
+    nbins = np.ceil((zMax-zMin)/0.02)
 
     thisMax = np.max(data[:,5])
     thisMin = np.min(data[:,5])
@@ -212,6 +213,66 @@ def plotMarg1d(workDir=None, sampleList=None, figDir=None,
 
       if showPlot:
         os.system("display %s" % figDir+"/fig_"+plotName+".png")
+
+
+
+# -----------------------------------------------------------------------------
+def plotNumberDistribution(workDir=None, sampleList=None, figDir=None, 
+                     plotNameBase="numberdist", 
+                     showPlot=False, dataPortion=None, setName=None):
+
+  plt.clf()
+  plt.xlabel("Void Radius (Mpc/h)")
+  plt.ylabel(r"N > R [h^3 Mpc^{-3}]")
+
+  plotTitle = setName
+
+  plotName = plotNameBase
+
+  plt.yscale('log')
+
+  for (iSample,sample) in enumerate(sampleList):
+
+    sampleName = sample.fullName
+    lineTitle = sampleName
+
+    if sample.dataType == "observation":
+      boxVol = vp.getSurveyProps(sample.maskFile, stack.zMin, stack.zMax, 
+                                 sample.zRange[0], sample.zRange[1], "all",
+                                 selectionFuncFile=sample.selFunFile)[0]
+    else:
+      boxVol = sample.boxLen*sample.boxLen*(zBoundaryMpc[1]-zBoundaryMpc[0])
+
+    filename = workDir+"/sample_"+sampleName+"/centers_"+dataPortion+"_"+\
+               sampleName+".out"
+    if not os.access(filename, os.F_OK):
+      print "File not found: ", filename
+      continue
+
+    data = np.loadtxt(filename, comments="#")
+    if data.ndim == 1:
+      print " Too few!"
+      continue
+    data = data[:,4]
+    indices = np.arange(0, len(data), 1)
+    sorted = np.sort(data)
+
+    plt.plot(sorted, indices[::-1]/boxVol, '-',
+             label=lineTitle, color=colorList[iSample],
+             linewidth=linewidth)
+
+  plt.legend(title = "Samples", loc = "upper right")
+  plt.title(plotTitle)
+
+  plt.xlim(xMin, xMax)
+  #plt.xlim(xMin, xMax*1.4) # make room for legend
+
+  plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
+  plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
+  plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")
+
+  if showPlot:
+    os.system("display %s" % figDir+"/fig_"+plotName+".png")
 
 
 

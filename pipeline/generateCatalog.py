@@ -111,5 +111,7 @@ if (startCatalogStage <= 4) and (endCatalogStage >= 4):
                              dataPortion=thisDataPortion, setName=catalogName)
     plotSizeDistribution(workDir, dataSampleList, figDir, showPlot=False, 
                              dataPortion=thisDataPortion, setName=catalogName)
+    plotNumberDistribution(workDir, dataSampleList, figDir, showPlot=False, 
+                             dataPortion=thisDataPortion, setName=catalogName)
 
 print "\n Done!"
