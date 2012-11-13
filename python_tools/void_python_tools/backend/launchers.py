@@ -160,6 +160,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
     if os.access("comoving_distance.txt", os.F_OK):
       os.system("mv %s %s" % ("comoving_distance.txt", zobovDir))
+      os.system("mv %s %s" % ("sample_info.txt", zobovDir))
 
     if os.access(parmFile, os.F_OK):
       os.unlink(parmFile)

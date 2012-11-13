@@ -451,6 +451,19 @@ if (i < 10) printf("TEST WRITE %d %e\n", (pdata.pos[i].xyz[j]+Lmax)/(2*Lmax));
   //v2->put(expansion_fac, pdata.pos.size());
 
   //delete[] expansion_fac;
+
+  FILE *infoFile = fopen("sample_info.txt", "w");
+  fprintf(infoFile, "x_min = %f\n", -Lmax/100.);  
+  fprintf(infoFile, "x_max = %f\n", Lmax/100.);
+  fprintf(infoFile, "y_min = %f\n", -Lmax/100.);  
+  fprintf(infoFile, "y_max = %f\n", Lmax/100.);  
+  fprintf(infoFile, "z_min = %f\n", -Lmax/100.);
+  fprintf(infoFile, "z_max = %f\n", Lmax/100.);
+  fprintf(infoFile, "mask_index = %d\n", pdata.mask_index);
+  fprintf(infoFile, "total_particles = %d\n", pdata.pos.size());
+  fclose(infoFile);
+
+
 }
 
 int main(int argc, char **argv)
@@ -515,12 +528,6 @@ int main(int argc, char **argv)
   // PMS
   FILE *fp = fopen("mask_index.txt", "w");
   fprintf(fp, "%d", output_data.mask_index);
-  fclose(fp);
-
-  fp = fopen("sample_info.txt", "w");
-  fprintf(fp, "Lmax = %f\n", output_data.Lmax);
-  fprintf(fp, "mask_index = %d\n", output_data.mask_index);
-  fprintf(fp, "total_particles = %d\n", output_data.pos.size());
   fclose(fp);
 
   fp = fopen("total_particles.txt", "w");

@@ -360,6 +360,7 @@ void generateOutput(SimuData *data, int axis,
       f.writeReal32(data->Pos[x2][i]);
     }
   f.endCheckpoint();
+
 }
 
 void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& args_info)
@@ -466,6 +467,18 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
 
   delete[] particle_id;
   delete[] expansion_fac;
+
+
+  FILE *fp = fopen("sample_info.txt", "w");
+  fprintf(fp, "x_min = %f\n", ranges[0][0]);
+  fprintf(fp, "x_max = %f\n", ranges[0][1]);
+  fprintf(fp, "y_min = %f\n", ranges[1][0]);
+  fprintf(fp, "y_max = %f\n", ranges[1][1]);
+  fprintf(fp, "z_min = %f\n", ranges[2][0]);
+  fprintf(fp, "z_max = %f\n", ranges[2][1]);
+  fprintf(fp, "mask_index = -1\n");
+  fprintf(fp, "total_particles = %d\n", boxed->NumPart);
+  fclose(fp);
 }
 
 void makeBoxFromParameter(SimuData *simu, double *efac, SimuData* &boxed, generateMock_info& args_info)
