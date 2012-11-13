@@ -241,7 +241,8 @@ def plotNumberDistribution(workDir=None, sampleList=None, figDir=None,
                                  sample.zRange[0], sample.zRange[1], "all",
                                  selectionFuncFile=sample.selFunFile)[0]
     else:
-      boxVol = sample.boxLen*sample.boxLen*(zBoundaryMpc[1]-zBoundaryMpc[0])
+      boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1] - 
+                                            sample.zBoundaryMpc[0])
 
     filename = workDir+"/sample_"+sampleName+"/centers_"+dataPortion+"_"+\
                sampleName+".out"
