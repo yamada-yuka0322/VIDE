@@ -8,7 +8,8 @@ import void_python_tools.apTools as vp
 import imp
 import pickle
 import os
-import pylab as plt
+import matplotlib.pyplot as plt
+import numpy as np
 import argparse
 
 # ------------------------------------------------------------------------------
@@ -17,7 +18,9 @@ workDir = "/home/psutter2/workspace/Voids/"
 figDir  = "./figs"
 
 sampleDirList = [ "multidark/md_halos/sample_md_halos_z0.03_d00/",
-                  "multidark/md_ss0.1_pv/sample_md_ss0.1_pv_z0.03_d00/" ]
+                  "multidark/md_ss0.1/sample_md_ss0.1_z0.03_d00/",
+                  "multidark/md_hod_dr9mid/sample_md_hod_dr9mid_z0.03_d00/",
+                  "sdss_dr9/sample_lss.dr9cmassmid.dat/" ]
 
 plotNameBase = "compdist"
 
@@ -42,7 +45,7 @@ for sampleDir in sampleDirList:
 
 plt.clf()
 plt.xlabel("Void Radius (Mpc/h)")
-plt.ylabel(r"N > R [h^3 Mpc^{-3}]")
+plt.ylabel(r"N > R [$h^3$ Gpc$^{-3}$]")
 plt.yscale('log')
 
 plotName = plotNameBase
@@ -53,11 +56,15 @@ for (iSample,sample) in enumerate(dataSampleList):
   lineTitle = sampleName
 
   if sample.dataType == "observation":
-    boxVol = vp.getSurveyProps(sample.maskFile, stack.zMin, stack.zMax, 
+    boxVol = vp.getSurveyProps(sample.maskFile, 
+                               sample.zBoundary[0], sample.zBoundary[1], 
                                sample.zRange[0], sample.zRange[1], "all",
                                selectionFuncFile=sample.selFunFile)[0]
   else:
-    boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1]-sample.zBoundaryMpc[0])
+    boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1] - 
+                                          sample.zBoundaryMpc[0])
+
+  boxVol *= 1.e-9 # Mpc->Gpc
 
   filename = workDir+"/"+sampleDirList[iSample]+"/centers_"+dataPortion+"_"+\
              sampleName+".out"

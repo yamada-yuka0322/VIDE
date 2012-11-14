@@ -223,7 +223,7 @@ def plotNumberDistribution(workDir=None, sampleList=None, figDir=None,
 
   plt.clf()
   plt.xlabel("Void Radius (Mpc/h)")
-  plt.ylabel(r"N > R [h^3 Mpc^{-3}]")
+  plt.ylabel(r"N > R [$h^3$ Mpc$^{-3}$]")
 
   plotTitle = setName
 
@@ -237,12 +237,15 @@ def plotNumberDistribution(workDir=None, sampleList=None, figDir=None,
     lineTitle = sampleName
 
     if sample.dataType == "observation":
-      boxVol = vp.getSurveyProps(sample.maskFile, stack.zMin, stack.zMax, 
+      boxVol = vp.getSurveyProps(sample.maskFile, 
+                                 sample.zBoundary[0], sample.zBoundary[1],
                                  sample.zRange[0], sample.zRange[1], "all",
                                  selectionFuncFile=sample.selFunFile)[0]
     else:
       boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1] - 
                                             sample.zBoundaryMpc[0])
+
+    boxVol *= 1.e-9
 
     filename = workDir+"/sample_"+sampleName+"/centers_"+dataPortion+"_"+\
                sampleName+".out"
@@ -264,9 +267,6 @@ def plotNumberDistribution(workDir=None, sampleList=None, figDir=None,
 
   plt.legend(title = "Samples", loc = "upper right")
   plt.title(plotTitle)
-
-  plt.xlim(xMin, xMax)
-  #plt.xlim(xMin, xMax*1.4) # make room for legend
 
   plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
   plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")

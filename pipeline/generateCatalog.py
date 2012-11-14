@@ -5,6 +5,7 @@
 from void_python_tools.backend import *
 from void_python_tools.plotting import *
 import imp
+import pickle
 
 # ------------------------------------------------------------------------------
 
@@ -59,6 +60,10 @@ for sample in dataSampleList:
 
   if not os.access(zobovDir, os.F_OK):
     os.makedirs(zobovDir)
+
+  # save this sample's information
+  with open(zobovDir+"/sample_info.dat", 'wb') as output:
+    pickle.dump(sample, output, pickle.HIGHEST_PROTOCOL)
 
 # ---------------------------------------------------------------------------
   if (startCatalogStage <= 1) and (endCatalogStage >= 1) and not sample.isCombo:
