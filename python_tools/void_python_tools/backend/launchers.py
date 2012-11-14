@@ -244,10 +244,17 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     totalPart = open(zobovDir+"/total_particles.txt", "r").read()
     maxDen = 0.2*float(mockIndex)/float(totalPart)
     observationLine = " --isObservation"
+    periodicLine = "--periodic=''"
   else:
     mockIndex = -1
     maxDen = 0.2
     observationLine = ""
+
+    periodicLine = " --periodic='"
+    if sample.numSubvolumes == 1: periodicLine += "xy"
+    if sample.zBoundaryMpc[0] == 0 and \
+       sample.zBoundaryMpc[1] == sample.boxLen : periodicLine += "z"
+    periodicLine += "' "
 
   if not (continueRun and jobSuccessful(logFile, "NetCDF: Not a valid ID\n")):
     cmd = binPath
@@ -267,6 +274,7 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     cmd += " --rMin=" + str(sample.minVoidRadius)
     cmd += " --numVoids=" + str(numVoids)
     cmd += observationLine
+    cmd += periodicLine
     cmd += " --output=" + zobovDir+"/voidDesc_"+\
                           str(thisDataPortion)+"_"+\
                           str(sampleName)+".out"

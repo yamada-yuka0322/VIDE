@@ -39,7 +39,7 @@ typedef struct voidZoneStruct {
 typedef struct voidStruct {
   float vol, coreDens, zoneVol, densCon, voidProb, radius;
   int voidID, numPart, numZones, coreParticle, zoneNumPart;
-  float maxRadius, nearestMock, centralDen, redshift;
+  float maxRadius, nearestMock, centralDen, redshift, redshiftInMpc;
   float center[3], barycenter[3];
   int accepted;
 } VOID;
@@ -89,16 +89,34 @@ int main(int argc, char **argv) {
   double ranges[2][3], boxLen[3], mul; 
   double volNorm, radius;
   int clock1, clock2;
+  int periodicX=0, periodicY=0, periodicZ=0;
 
   numVoids = args_info.numVoids_arg;
   mockIndex = args_info.mockIndex_arg;
   tolerance = args_info.tolerance_arg;
 
   clock1 = clock();
-  printf("Pruning parameters: %f %f %f\n", args_info.zMin_arg, 
-                                           args_info.zMax_arg,
-                                           args_info.rMin_arg);
- 
+  printf("Pruning parameters: %f %f %f %s\n", args_info.zMin_arg, 
+                                             args_info.zMax_arg,
+                                             args_info.rMin_arg,
+                                             args_info.periodic_arg);
+
+  // check for periodic box
+  if (!args_info.isObservation_flag) {
+    if ( strchr(args_info.periodic_arg, 'x') != NULL) {
+      periodicX = 1;
+      printf("Will assume x-direction is periodic.\n");
+    }
+    if ( strchr(args_info.periodic_arg, 'y') != NULL) {
+      periodicY = 1;
+      printf("Will assume y-direction is periodic.\n");
+    }
+    if ( strchr(args_info.periodic_arg, 'z') != NULL) {
+      periodicZ = 1;
+      printf("Will assume z-direction is periodic.\n");
+    }
+  }
+
   // load box size
   printf("\n Getting info...\n");
   NcFile f_info(args_info.extraInfo_arg);
@@ -291,17 +309,14 @@ int main(int argc, char **argv) {
     voids[iVoid].barycenter[1] = 0.;
     voids[iVoid].barycenter[2] = 0.;
 
-// TODO handle periodic boundaries?
     for (p = 0; p < voids[iVoid].numPart; p++) {
       dist[0] = voidPart[p].x - voids[iVoid].center[0];
       dist[1] = voidPart[p].y - voids[iVoid].center[1];
       dist[2] = voidPart[p].z - voids[iVoid].center[2];
 
-      //if (!args_info.isObservation_flag) {
-      //  dist[0] = fmin(dist[0], abs(boxLen[0]-dist[0]));
-      //  dist[1] = fmin(dist[1], abs(boxLen[1]-dist[1]));
-      //  dist[2] = fmin(dist[2], abs(boxLen[2]-dist[2]));
-      //}
+      if (periodicX) dist[0] = fmin(dist[0], abs(boxLen[0]-dist[0]));
+      if (periodicY) dist[1] = fmin(dist[1], abs(boxLen[1]-dist[1]));
+      if (periodicZ) dist[2] = fmin(dist[2], abs(boxLen[2]-dist[2]));
 
       voids[iVoid].barycenter[0] += voidPart[p].vol*(dist[0]);
       voids[iVoid].barycenter[1] += voidPart[p].vol*(dist[1]);
@@ -324,11 +339,9 @@ int main(int argc, char **argv) {
       dist[1] = voidPart[p].y - voids[iVoid].barycenter[1];
       dist[2] = voidPart[p].z - voids[iVoid].barycenter[2];
 
-      //if (!args_info.isObservation_flag) {
-      //  dist[0] = fmin(dist[0], abs(boxLen[0]-dist[0]));
-      //  dist[1] = fmin(dist[1], abs(boxLen[1]-dist[1]));
-      //  dist[2] = fmin(dist[2], abs(boxLen[2]-dist[2]));
-      //}
+      if (periodicX) dist[0] = fmin(dist[0], abs(boxLen[0]-dist[0]));
+      if (periodicY) dist[1] = fmin(dist[1], abs(boxLen[1]-dist[1]));
+      if (periodicZ) dist[2] = fmin(dist[2], abs(boxLen[2]-dist[2]));
 
       dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
       if (dist2 < centralRad) centralDen += 1;
@@ -336,21 +349,21 @@ int main(int argc, char **argv) {
     voids[iVoid].centralDen = centralDen / (4./3. * M_PI * pow(centralRad, 3./2.));
 
     // compute maximum extent
-    if (args_info.isObservation_flag) {
-      maxDist = 0.;
-      for (p = 0; p < voids[iVoid].numPart; p++) {
-      for (p2 = p; p2 < voids[iVoid].numPart; p2++) {
+    //if (args_info.isObservation_flag) {
+   //   maxDist = 0.;
+   //   for (p = 0; p < voids[iVoid].numPart; p++) {
+   //   for (p2 = p; p2 < voids[iVoid].numPart; p2++) {
   
-        dist[0] = voidPart[p].x - voidPart[p2].x;
-        dist[1] = voidPart[p].y - voidPart[p2].y;
-        dist[2] = voidPart[p].z - voidPart[p2].z;
+//        dist[0] = voidPart[p].x - voidPart[p2].x;
+//        dist[1] = voidPart[p].y - voidPart[p2].y;
+//        dist[2] = voidPart[p].z - voidPart[p2].z;
 
-        dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
-        if (dist2 > maxDist) maxDist = dist2;
-      }
-      }
-      voids[iVoid].maxRadius = sqrt(maxDist)/2.;
-    } else {
+//        dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
+//        if (dist2 > maxDist) maxDist = dist2;
+//      }
+//      }
+//      voids[iVoid].maxRadius = sqrt(maxDist)/2.;
+//    } else {
      maxDist = 0.;
       for (p = 0; p < voids[iVoid].numPart; p++) {
   
@@ -358,11 +371,15 @@ int main(int argc, char **argv) {
         dist[0] = voidPart[p].y - voids[iVoid].barycenter[1];
         dist[0] = voidPart[p].z - voids[iVoid].barycenter[2];
 
+        if (periodicX) dist[0] = fmin(dist[0], abs(boxLen[0]-dist[0]));
+        if (periodicY) dist[1] = fmin(dist[1], abs(boxLen[1]-dist[1]));
+        if (periodicZ) dist[2] = fmin(dist[2], abs(boxLen[2]-dist[2]));
+
         dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
         if (dist2 > maxDist) maxDist = dist2;
       }
       voids[iVoid].maxRadius = sqrt(maxDist);
-    }
+//    }
     
     if (args_info.isObservation_flag) {
       // compute distance from center to nearest mock
@@ -382,28 +399,41 @@ int main(int argc, char **argv) {
     }
  
     if (args_info.isObservation_flag) {
-      voids[iVoid].redshift = 
+      voids[iVoid].redshiftInMpc = 
                         sqrt(pow(voids[iVoid].barycenter[0] - boxLen[0]/2.,2) + 
                              pow(voids[iVoid].barycenter[1] - boxLen[1]/2.,2) + 
                              pow(voids[iVoid].barycenter[2] - boxLen[2]/2.,2));
-      voids[iVoid].redshift = voids[iVoid].redshift;
-      redshift = voids[iVoid].redshift;
-      nearestEdge = fmin(fabs(redshift-args_info.zMin_arg*LIGHT_SPEED), 
-                         fabs(redshift-args_info.zMax_arg*LIGHT_SPEED));    
+      voids[iVoid].redshiftInMpc = voids[iVoid].redshiftInMpc;
+      redshift = voids[iVoid].redshiftInMpc;
+      nearestEdge = fmin(fabs(redshift-args_info.zMin_arg*LIGHT_SPEED/100.), 
+                         fabs(redshift-args_info.zMax_arg*LIGHT_SPEED/100.)); 
+      voids[iVoid].redshift = voids[iVoid].redshiftInMpc/LIGHT_SPEED*100.;
+
     } else {
+
+      voids[iVoid].redshiftInMpc = voids[iVoid].barycenter[2];
       voids[iVoid].redshift = voids[iVoid].barycenter[2]/LIGHT_SPEED*100.;
+
+      nearestEdge = 1.e99;
      
-      nearestEdge = fmin( 
-           fabs(voids[iVoid].barycenter[0] - ranges[0][0]),
-           fabs(voids[iVoid].barycenter[0] - ranges[0][1]));
-      nearestEdge = fmin(nearestEdge,
-           fabs(voids[iVoid].barycenter[1] - ranges[1][0]));
-      nearestEdge = fmin(nearestEdge,
-           fabs(voids[iVoid].barycenter[1] - ranges[1][1]));
-      nearestEdge = fmin(nearestEdge,
-           fabs(voids[iVoid].barycenter[2] - ranges[2][0]));
-      nearestEdge = fmin(nearestEdge,
-           fabs(voids[iVoid].barycenter[2] - ranges[2][1]));
+      if (!periodicX) {
+        nearestEdge = fmin(nearestEdge,
+                           fabs(voids[iVoid].barycenter[0] - ranges[0][0]));
+        nearestEdge = fmin(nearestEdge,
+                           fabs(voids[iVoid].barycenter[0] - ranges[0][1]));
+      }
+      if (!periodicY) {
+        nearestEdge = fmin(nearestEdge,
+                           fabs(voids[iVoid].barycenter[1] - ranges[1][0]));
+        nearestEdge = fmin(nearestEdge,
+                           fabs(voids[iVoid].barycenter[1] - ranges[1][1]));
+      }
+      if (!periodicZ) {
+        nearestEdge = fmin(nearestEdge,
+                           fabs(voids[iVoid].barycenter[2] - ranges[2][0]));
+        nearestEdge = fmin(nearestEdge,
+                           fabs(voids[iVoid].barycenter[2] - ranges[2][1]));
+      }
     }
 
     if (nearestEdge < voids[iVoid].nearestMock) {
@@ -505,7 +535,7 @@ int main(int argc, char **argv) {
 
      fprintf(fpSkyPositions, "%.2f %.2f %.5f %.2f %d\n",
              atan((voids[iVoid].barycenter[1]-boxLen[1]/2.)/(voids[iVoid].barycenter[0]-boxLen[0]/2.)) * 180/M_PI + 180,  
-             asin((voids[iVoid].barycenter[2]-boxLen[2]/2.)/voids[iVoid].redshift) * 180/M_PI,  
+             asin((voids[iVoid].barycenter[2]-boxLen[2]/2.)/voids[iVoid].redshiftInMpc) * 180/M_PI,  
              voids[iVoid].redshift,
              voids[iVoid].radius,
              voids[iVoid].voidID);
