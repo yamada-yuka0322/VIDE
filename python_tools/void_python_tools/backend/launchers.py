@@ -200,8 +200,8 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None):
     numThreads = 2
    
     cmd = "%s/vozinit %s 0.1 1.0 %g %s %g %s %s %s >& %s" % \
-          (binPath, datafile,  numThreads, \
-                      "_"+sampleName, sample.numSubDivisions, \
+          (binPath, datafile,  sample.numSubDivisions, \
+                      "_"+sampleName, numThreads, \
                       binPath, zobovDir, maskIndex, logFile)
     os.system(cmd)
 
