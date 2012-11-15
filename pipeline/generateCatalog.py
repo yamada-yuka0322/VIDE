@@ -113,10 +113,10 @@ if (startCatalogStage <= 4) and (endCatalogStage >= 4):
 
   for thisDataPortion in dataPortions:
     plotRedshiftDistribution(workDir, dataSampleList, figDir, showPlot=False, 
-                             dataPortion=thisDataPortion, setName=catalogName)
+                             dataPortion=thisDataPortion, setName=setName)
     plotSizeDistribution(workDir, dataSampleList, figDir, showPlot=False, 
-                             dataPortion=thisDataPortion, setName=catalogName)
+                             dataPortion=thisDataPortion, setName=setName)
     plotNumberDistribution(workDir, dataSampleList, figDir, showPlot=False, 
-                             dataPortion=thisDataPortion, setName=catalogName)
+                             dataPortion=thisDataPortion, setName=setName)
 
 print "\n Done!"

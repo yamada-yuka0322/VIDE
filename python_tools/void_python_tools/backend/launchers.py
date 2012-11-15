@@ -106,7 +106,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     else:
       useLightConeString = ""
 
-    if sample.dataFormat == "multidark":
+    if sample.dataFormat == "multidark" or sample.dataFormat == "random":
       dataFileLine = "multidark " + datafile
     elif sample.dataFormat == "gadget":
       dataFileLine = "gadget " + datafile
@@ -197,8 +197,10 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None):
     if os.access(zobovDir+"/voidDesc_"+sampleName+".out", os.F_OK):
       os.unlink(zobovDir+"/voidDesc_"+sampleName+".out")
 
-    cmd = "%s/vozinit %s 0.1 1.0 2 %s %g %s %s %s >& %s" % \
-          (binPath, datafile,  \
+    numThreads = 2
+   
+    cmd = "%s/vozinit %s 0.1 1.0 %g %s %g %s %s %s >& %s" % \
+          (binPath, datafile,  numThreads, \
                       "_"+sampleName, sample.numSubDivisions, \
                       binPath, zobovDir, maskIndex, logFile)
     os.system(cmd)
