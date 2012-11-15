@@ -166,7 +166,8 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       os.unlink(parmFile)
 
 # -----------------------------------------------------------------------------
-def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None):
+def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
+                 numZobovDivisions=None, numZobovThreads=None):
 
   sampleName = sample.fullName
 
@@ -197,11 +198,9 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None):
     if os.access(zobovDir+"/voidDesc_"+sampleName+".out", os.F_OK):
       os.unlink(zobovDir+"/voidDesc_"+sampleName+".out")
 
-    numThreads = 2
-   
     cmd = "%s/vozinit %s 0.1 1.0 %g %s %g %s %s %s >& %s" % \
-          (binPath, datafile,  sample.numSubDivisions, \
-                      "_"+sampleName, numThreads, \
+          (binPath, datafile,  numZobovDivisions, \
+                      "_"+sampleName, numZobovThreads, \
                       binPath, zobovDir, maskIndex, logFile)
     os.system(cmd)
 

@@ -48,8 +48,15 @@ numSubvolumes = 1
 # prefix to give all outputs
 prefix = "md_"
 
-# list of desired subsamples
+# list of desired subsamples - these are in unts of h Mpc^-3!
+#subSamples = [ 1.0 ]
 subSamples = ((0.1, 0.05, 0.01, 0.002, 0.001, 0.0004, 0.0002))
+
+# adjust these two parameters given the memory contraints on your system:
+#   numZobovDivisions: how many sub-volumes per dimension will zobov process
+#   numZobovThreads: how many sub-volumes to process at once?   
+numZobovDivisions = 4
+numZobovThreads = 2
 
 # simulation information
 numPart = 1024*1024*1024

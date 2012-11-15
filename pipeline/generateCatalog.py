@@ -88,7 +88,8 @@ for sample in dataSampleList:
     sys.stdout.flush()
 
     launchZobov(sample, ZOBOV_PATH, zobovDir=zobovDir, logDir=logDir, 
-                continueRun=continueRun)
+                continueRun=continueRun, numZobovDivisions=numZobovDivisions,
+                 numZobovThreads=numZobovThreads)
 
   # -------------------------------------------------------------------------
   if (startCatalogStage <= 3) and (endCatalogStage >= 3) and not sample.isCombo:

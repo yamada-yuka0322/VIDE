@@ -115,10 +115,15 @@ workDir = "{voidOutputDir}/{setName}/"
 inputDataDir = "{inputDataDir}"
 figDir = "{figDir}/{setName}/"
 logDir = "{logDir}/{setName}/"
+
+numZobovDivisions = {numZobovDivisions}
+numZobovThreads = {numZobovThreads}
                """
   scriptFile.write(dataInfo.format(setName=setName, figDir=figDir,
                                    logDir=logDir, voidOutputDir=voidOutputDir,
-                                   inputDataDir=catalogDir))
+                                   inputDataDir=catalogDir, 
+                                   numZobovDivisions=numZobovDivisions,
+                                   numZobovThreads=numZobovThreads))
 
   sampleInfo = """
 newSample = Sample(dataFile = "{dataFile}",
@@ -139,7 +144,6 @@ newSample = Sample(dataFile = "{dataFile}",
                    usePecVel = {usePecVel},
                    numSubvolumes = {numSubvolumes},
                    mySubvolume = "{mySubvolume}",
-                   numSubDivisions = 4,
                    useLightCone = {useLightCone},
                    subsample = {subsample})
 dataSampleList.append(newSample)
