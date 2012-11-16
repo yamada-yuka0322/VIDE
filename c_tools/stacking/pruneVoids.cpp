@@ -447,6 +447,13 @@ int main(int argc, char **argv) {
   }
 
   for (iVoid = 0; iVoid < numVoids; iVoid++) {
+// TEST
+    //if (voids[iVoid].densCon > 1.5) {
+    //  voids[iVoid].accepted = 0;
+    //}
+// END TEST
+
+
     if (strcmp(args_info.dataPortion_arg, "edge")  == 0 &&
         tolerance*voids[iVoid].maxRadius < voids[iVoid].nearestMock) {
       voids[iVoid].accepted = 0;
@@ -582,6 +589,6 @@ int main(int argc, char **argv) {
   clock1 = clock();
 
 
-  printf("Done!\n");
+  printf("Done!");
   return 0;
 } // end main

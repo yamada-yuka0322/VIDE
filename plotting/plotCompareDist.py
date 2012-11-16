@@ -17,14 +17,19 @@ import argparse
 workDir = "/home/psutter2/workspace/Voids/"
 figDir  = "./figs"
 
-sampleDirList = [ "multidark/md_halos/sample_md_halos_z0.03_d00/",
-                  "multidark/md_ss0.1/sample_md_ss0.1_z0.03_d00/",
-                  "multidark/md_hod_dr9mid/sample_md_hod_dr9mid_z0.03_d00/",
+sampleDirList = [ "multidark/md_ss0.1_pv/sample_md_ss0.1_pv_z0.56_d00/",
+                  "multidark/md_halos_pv/sample_md_halos_pv_z0.56_d00/",
+                  "random/ran_ss0.0004/sample_ran_ss0.0004_z0.56_d00/",
+                  "random/ran_ss0.1/sample_ran_ss0.1_z0.56_d00/",
+                  "multidark/md_hod_dr9mid_pv/sample_md_hod_dr9mid_pv_z0.56_d00/",
+                  "multidark/md_ss0.0004_pv/sample_md_ss0.0004_pv_z0.56_d00/",
                   "sdss_dr9/sample_lss.dr9cmassmid.dat/" ]
 
 plotNameBase = "compdist"
 
 dataPortion = "central"
+
+obsFudgeFactor = .66 # what fraction of the volume are we *reall* capturing?
 
 parser = argparse.ArgumentParser(description='Plot.')
 parser.add_argument('--show', dest='showPlot', action='store_const',
@@ -47,6 +52,7 @@ plt.clf()
 plt.xlabel("Void Radius (Mpc/h)")
 plt.ylabel(r"N > R [$h^3$ Gpc$^{-3}$]")
 plt.yscale('log')
+plt.xlim(xmax=80.)
 
 plotName = plotNameBase
 
@@ -60,6 +66,7 @@ for (iSample,sample) in enumerate(dataSampleList):
                                sample.zBoundary[0], sample.zBoundary[1], 
                                sample.zRange[0], sample.zRange[1], "all",
                                selectionFuncFile=sample.selFunFile)[0]
+    boxVol *= obsFudgeFactor
   else:
     boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1] - 
                                           sample.zBoundaryMpc[0])
@@ -84,7 +91,7 @@ for (iSample,sample) in enumerate(dataSampleList):
            label=lineTitle, color=colorList[iSample],
            linewidth=linewidth)
 
-plt.legend(title = "Samples", loc = "upper right")
+plt.legend(title = "Samples", loc = "upper right", prop={'size':8})
 #plt.title(plotTitle)
 
 plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")

@@ -480,6 +480,7 @@ if args.hod or args.all:
   for (iRedshift, redshift) in enumerate(redshifts):
     print "  z = ", redshift
 
+    # these parameters come from Manera et al 2012, eq. 26
     parFileName = "./hod.par"
     parFile = open(parFileName, 'w')
     haloFile = catalogDir+"/mdr1_halos_z"+fileNums[iRedshift]

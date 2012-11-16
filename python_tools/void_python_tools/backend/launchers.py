@@ -245,7 +245,7 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     totalPart = open(zobovDir+"/total_particles.txt", "r").read()
     maxDen = 0.2*float(mockIndex)/float(totalPart)
     observationLine = " --isObservation"
-    periodicLine = "--periodic=''"
+    periodicLine = " --periodic=''"
   else:
     mockIndex = -1
     maxDen = 0.2
@@ -297,7 +297,8 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     cmd += " >& " + logFile
     os.system(cmd)
 
-    if jobSuccessful(logFile, "NetCDF: Not a valid ID\n") or jobSuccessful(logFile, "Done!") or jobSuccessful(logFile, ""):
+    if jobSuccessful(logFile, "NetCDF: Not a valid ID\n") or \
+       jobSuccessful(logFile, "Done!"):
       print "done"
     else:
       print "FAILED!"
