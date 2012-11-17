@@ -40,6 +40,7 @@ struct ParticleData
   vector<double> ra;
   vector<double> dec;
   vector<double> redshift;
+  vector<double> catalogID;
   int id_mask;
   // PMS
   int mask_index;
@@ -85,6 +86,7 @@ void loadData(const string& fname, NYU_VData & data)
     {
       NYU_Data d;
       f >> d.index >> d.sector >> d.region >> d.ra >> d.dec >> d.cz >> d.fgotten >> d.phi_z;
+      d.uniqueID = d.index;
       data.push_back(d);
     }
 }
@@ -125,6 +127,7 @@ void generateGalaxiesInCube(NYU_VData& data, ParticleData& output_data,
   output_data.ra.resize(data.size());
   output_data.dec.resize(data.size());
   output_data.redshift.resize(data.size());
+  output_data.uniqueID.resize(data.size());
 
   for (int j = 0; j < 3; j++)
     {
@@ -143,7 +146,6 @@ void generateGalaxiesInCube(NYU_VData& data, ParticleData& output_data,
                                         1.e-6, 
                                         1.e-6, &result, &error, &nEval);
         double Dc = result*LIGHT_SPEED;
-        cout << "HELLO " << data[i].cz << " " << Dc << endl;
         p.xyz[0] = Dc*cos(ra)*cos(dec);
         p.xyz[1] = Dc*sin(ra)*cos(dec);
         p.xyz[2] = Dc*sin(dec);
@@ -157,6 +159,7 @@ void generateGalaxiesInCube(NYU_VData& data, ParticleData& output_data,
       output_data.ra[i] = ra;
       output_data.dec[i] = dec;
       output_data.redshift[i] = data[i].cz;
+      output_data.uniqueID[i] = data[i].uniqueID;
 
       for (int j = 0; j < 3; j++)
 	{
@@ -273,6 +276,7 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
     output_data.ra.push_back(-1);
     output_data.dec.push_back(-1);
     output_data.redshift.push_back(-1);
+    output_data.uniqueID.push_back(-1);
 //printf("INSERT MOCK %d %e %e %e\n", idx, p.xyz[0], p.xyz[1], p.xyz[2]);
     insertion++;
   }
@@ -310,6 +314,7 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
       output_data.ra.push_back(-1);
       output_data.dec.push_back(-1);
       output_data.redshift.push_back(-1);
+      output_data.uniqueID.push_back(-1);
       insertion++;
 
       fprintf(fp, "%e %e %e\n", 
@@ -341,6 +346,7 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
       output_data.ra.push_back(-1);
       output_data.dec.push_back(-1);
       output_data.redshift.push_back(-1);
+      output_data.uniqueID.push_back(-1);
       insertion++;
       fprintf(fp, "%e %e %e\n", 
               (p.xyz[0]),
@@ -357,6 +363,7 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
     output_data.ra.push_back(-1);
     output_data.dec.push_back(-1);
     output_data.redshift.push_back(-1);
+    output_data.uniqueID.push_back(-1);
     insertion++;
     fprintf(fp, "%e %e %e\n", 
             (p.xyz[0]),
@@ -414,11 +421,40 @@ void saveForZobov(ParticleData& pdata, const string& fname, const string& paramn
       for (uint32_t i = 0; i < pdata.pos.size(); i++)
 	{
 	  f.writeReal32((pdata.pos[i].xyz[j]+Lmax)/(2*Lmax));
-if (i < 10) printf("TEST WRITE %d %e\n", (pdata.pos[i].xyz[j]+Lmax)/(2*Lmax));
 	}
       f.endCheckpoint();
     }
 
+  cout << format("Writing RA...")  << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < pdata.pos.size(); i++) {
+	  f.writeReal32(pdata.pos[i].ra);
+	}
+  f.endCheckpoint();
+   
+  cout << format("Writing Dec...")  << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < pdata.pos.size(); i++) {
+	  f.writeReal32(pdata.pos[i].Dec);
+	}
+  f.endCheckpoint();
+    
+  cout << format("Writing Redshift...")  << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < pdata.pos.size(); i++) {
+	  f.writeReal32(pdata.pos[i].cz);
+	}
+  f.endCheckpoint();
+   
+  cout << format("Writing Unique ID...")  << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < pdata.pos.size(); i++) {
+	  f.writeReal32(pdata.pos[i].uniqueID);
+	}
+  f.endCheckpoint();
+   
+  NcFile fp(paramname.c_str(), NcFile::Replace);
+  NcFile fp(paramname.c_str(), NcFile::Replace);
   NcFile fp(paramname.c_str(), NcFile::Replace);
 
   fp.add_att("range_x_min", -Lmax/100.);
@@ -434,9 +470,6 @@ if (i < 10) printf("TEST WRITE %d %e\n", (pdata.pos[i].xyz[j]+Lmax)/(2*Lmax));
 
   NcDim *NumPart_dim = fp.add_dim("numpart_dim", nOutputPart);
   NcVar *v = fp.add_var("particle_ids", ncInt, NumPart_dim);
-  NcVar *vra = fp.add_var("RA", ncInt, NumPart_dim);
-  NcVar *vdec = fp.add_var("DEC", ncInt, NumPart_dim);
-  NcVar *vredshift = fp.add_var("z", ncInt, NumPart_dim);
   //NcVar *v2 = fp.add_var("expansion", ncDouble, NumPart_dim);
 
   //double *expansion_fac = new double[pdata.pos.size()];
@@ -445,9 +478,6 @@ if (i < 10) printf("TEST WRITE %d %e\n", (pdata.pos[i].xyz[j]+Lmax)/(2*Lmax));
   //  expansion_fac[i] = 1.0;
 
   v->put(&pdata.id_gal[0], nOutputPart);
-  vra->put(&pdata.ra[0], nOutputPart);
-  vdec->put(&pdata.dec[0], nOutputPart);
-  vredshift->put(&pdata.redshift[0], nOutputPart);
   //v2->put(expansion_fac, pdata.pos.size());
 
   //delete[] expansion_fac;

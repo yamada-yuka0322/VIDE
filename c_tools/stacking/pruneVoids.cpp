@@ -529,7 +529,7 @@ int main(int argc, char **argv) {
        outCenter[2] = (voids[iVoid].barycenter[2]-boxLen[2]/2.)*100.;
      }
 
-     fprintf(fpInfo, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d\n",
+     fprintf(fpInfo, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f\n",
              outCenter[0],
              outCenter[1],
              outCenter[2],
@@ -537,7 +537,8 @@ int main(int argc, char **argv) {
              voids[iVoid].radius,
              voids[iVoid].redshift, 
              4./3.*M_PI*pow(voids[iVoid].radius, 3),
-             voids[iVoid].voidID
+             voids[iVoid].voidID,
+             voids[iVoid].densCon,
              );
 
      fprintf(fpSkyPositions, "%.2f %.2f %.5f %.2f %d\n",
@@ -572,7 +573,7 @@ int main(int argc, char **argv) {
      }
 
 
-     fprintf(fpInfo, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d\n",
+     fprintf(fpInfo, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f\n",
              outCenter[0],
              outCenter[1],
              outCenter[2],
@@ -580,7 +581,8 @@ int main(int argc, char **argv) {
              voids[iVoid].radius,
              voids[iVoid].redshift, 
              4./3.*M_PI*pow(voids[iVoid].radius, 3),
-             voids[iVoid].voidID);
+             voids[iVoid].voidID,
+             voids[iVoid].densCon);
   }
   fclose(fpInfo);
 

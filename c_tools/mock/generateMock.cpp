@@ -178,14 +178,17 @@ SimuData *doLoadMultidark(const char *multidarkname)
   for (int k = 0; k < 3; k++)
     outd->Pos[k] = new float[outd->NumPart];
   outd->Vel[2] = new float[outd->NumPart];
+  outd->uniqueID = new float[outd->NumPart];
 
   cout << "loading multidark particles" << endl;
   actualNumPart = 0;
 	for (int i = 0; i < outd->NumPart; i++) {
-    fscanf(fp, "%f %f %f %f\n", &outd->Pos[0][i], &outd->Pos[1][i], 
+    fscanf(fp, "%d %f %f %f %f\n", &outd->uniqueID[i], 
+                                &outd->Pos[0][i], &outd->Pos[1][i], 
                                 &outd->Pos[2][i], &outd->Vel[2][i]);
 
-    if (outd->Pos[0][i] == -99 && outd->Pos[1][i] == -99 && 
+    if (outd->uniqueID[i] == -99 && 
+        outd->Pos[0][i] == -99 && outd->Pos[1][i] == -99 && 
         outd->Pos[2][i] == -99 && outd->Vel[2][i] == -99) {
       break;
     } else {
@@ -360,6 +363,39 @@ void generateOutput(SimuData *data, int axis,
       f.writeReal32(data->Pos[x2][i]);
     }
   f.endCheckpoint();
+
+  cout << "Writing RA..." << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < data->NumPart; i++)
+    {
+      f.writeReal32(data->uniqueID[i]);
+    }
+  f.endCheckpoint();
+
+  cout << "Writing Dec..." << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < data->NumPart; i++)
+    {
+      f.writeReal32(data->uniqueID[i]);
+    }
+  f.endCheckpoint();
+
+  cout << "Writing redshift..." << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < data->NumPart; i++)
+    {
+      f.writeReal32(data->uniqueID[i]);
+    }
+  f.endCheckpoint();
+
+  cout << "Writing unique ID..." << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < data->NumPart; i++)
+    {
+      f.writeReal32(data->uniqueID[i]);
+    }
+  f.endCheckpoint();
+
 
 }
 

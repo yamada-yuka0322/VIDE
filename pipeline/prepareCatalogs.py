@@ -284,7 +284,7 @@ for thisSubSample in subSamples:
         outFile.write("%d\n" %(maxKeep))
 
         numKept = 0
-        for line in inFile:
+        for (i,line) in enumerate(inFile):
           if np.random.uniform() > keepFraction: continue
           numKept += 1
           if numKept > maxKeep: break
@@ -294,9 +294,9 @@ for thisSubSample in subSamples:
           z  = float(line[2])
           vz = float(line[3])
 
-          outFile.write("%e %e %e %e\n" %(x,y,z,vz))
+          outFile.write("%d %e %e %e %e\n" %(i,x,y,z,vz))
 
-        outFile.write("-99 -99 -99 -99\n")
+        outFile.write("-99 -99 -99 -99 -99\n")
         inFile.close()
         outFile.close()
 
@@ -315,9 +315,9 @@ for thisSubSample in subSamples:
           y  = np.random.uniform()*lbox
           z  = np.random.uniform()*lbox
 
-          outFile.write("%e %e %e %e\n" %(x,y,z, 0.))
+          outFile.write("%d %e %e %e %e\n" % (i, x,y,z, 0.))
 
-        outFile.write("-99 -99 -99 -99\n")
+        outFile.write("-99 -99 -99 -99 -99\n")
         outFile.close()
 
 
@@ -375,7 +375,7 @@ if args.halos or args.all:
       vz = float(line[5])
 
       # write to output file
-      outFile.write("%e %e %e %e\n" %(x,y,z,vz))
+      outFile.write("%d %e %e %e %e\n" %(numKept,x,y,z,vz))
 
     inFile.close()
     outFile.close()
