@@ -297,12 +297,8 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     cmd += " >& " + logFile
     os.system(cmd)
 
-<<<<<<< HEAD
     if jobSuccessful(logFile, "NetCDF: Not a valid ID\n") or \
-       jobSuccessful(logFile, "Done!"):
-=======
-    if jobSuccessful(logFile, "NetCDF: Not a valid ID\n") or jobSuccessful(logFile, "Done!\n"):
->>>>>>> 3d6fae9882fde44515a59e1144646d77bbd1a124
+       jobSuccessful(logFile, "Done!\n"):
       print "done"
     else:
       print "FAILED!"

@@ -27,6 +27,7 @@ struct NYU_Data
   double cz;
   double fgotten;
   double phi_z;
+  double uniqueID;
 };
 
 struct Position
@@ -41,6 +42,7 @@ struct ParticleData
   vector<double> dec;
   vector<double> redshift;
   vector<double> catalogID;
+  vector<double> uniqueID;
   int id_mask;
   // PMS
   int mask_index;
@@ -408,6 +410,7 @@ void saveForZobov(ParticleData& pdata, const string& fname, const string& paramn
   UnformattedWrite f(fname);
   static const char axis[] = { 'X', 'Y', 'Z' };
   double Lmax = pdata.Lmax;
+  double r2d = 180./M_PI;
 
   f.beginCheckpoint();
   f.writeInt32(pdata.pos.size());
@@ -428,33 +431,31 @@ void saveForZobov(ParticleData& pdata, const string& fname, const string& paramn
   cout << format("Writing RA...")  << endl;
   f.beginCheckpoint();
   for (uint32_t i = 0; i < pdata.pos.size(); i++) {
-	  f.writeReal32(pdata.pos[i].ra);
+	  f.writeReal32(pdata.ra[i]*r2d);
 	}
   f.endCheckpoint();
    
   cout << format("Writing Dec...")  << endl;
   f.beginCheckpoint();
   for (uint32_t i = 0; i < pdata.pos.size(); i++) {
-	  f.writeReal32(pdata.pos[i].Dec);
+	  f.writeReal32(pdata.dec[i]*r2d);
 	}
   f.endCheckpoint();
     
   cout << format("Writing Redshift...")  << endl;
   f.beginCheckpoint();
   for (uint32_t i = 0; i < pdata.pos.size(); i++) {
-	  f.writeReal32(pdata.pos[i].cz);
+	  f.writeReal32(pdata.redshift[i]);
 	}
   f.endCheckpoint();
    
   cout << format("Writing Unique ID...")  << endl;
   f.beginCheckpoint();
   for (uint32_t i = 0; i < pdata.pos.size(); i++) {
-	  f.writeReal32(pdata.pos[i].uniqueID);
+	  f.writeReal32(pdata.uniqueID[i]);
 	}
   f.endCheckpoint();
    
-  NcFile fp(paramname.c_str(), NcFile::Replace);
-  NcFile fp(paramname.c_str(), NcFile::Replace);
   NcFile fp(paramname.c_str(), NcFile::Replace);
 
   fp.add_att("range_x_min", -Lmax/100.);

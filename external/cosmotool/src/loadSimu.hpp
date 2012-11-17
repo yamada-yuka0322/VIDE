@@ -41,6 +41,8 @@ namespace CosmoTool
 	delete[] type;
       if (Id)
 	delete[] Id;
+      if (uniqueID)
+  delete[] uniqueID;
     }    
   };
 

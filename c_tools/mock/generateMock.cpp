@@ -178,16 +178,16 @@ SimuData *doLoadMultidark(const char *multidarkname)
   for (int k = 0; k < 3; k++)
     outd->Pos[k] = new float[outd->NumPart];
   outd->Vel[2] = new float[outd->NumPart];
-  outd->uniqueID = new float[outd->NumPart];
+  outd->Id = new int[outd->NumPart];
 
   cout << "loading multidark particles" << endl;
   actualNumPart = 0;
 	for (int i = 0; i < outd->NumPart; i++) {
-    fscanf(fp, "%d %f %f %f %f\n", &outd->uniqueID[i], 
+    fscanf(fp, "%d %d %f %f %f\n", &outd->Id[i], 
                                 &outd->Pos[0][i], &outd->Pos[1][i], 
                                 &outd->Pos[2][i], &outd->Vel[2][i]);
 
-    if (outd->uniqueID[i] == -99 && 
+    if (outd->Id[i] == -99 && 
         outd->Pos[0][i] == -99 && outd->Pos[1][i] == -99 && 
         outd->Pos[2][i] == -99 && outd->Vel[2][i] == -99) {
       break;
@@ -368,7 +368,7 @@ void generateOutput(SimuData *data, int axis,
   f.beginCheckpoint();
   for (uint32_t i = 0; i < data->NumPart; i++)
     {
-      f.writeReal32(data->uniqueID[i]);
+      f.writeReal32(data->Id[i]);
     }
   f.endCheckpoint();
 
@@ -376,7 +376,7 @@ void generateOutput(SimuData *data, int axis,
   f.beginCheckpoint();
   for (uint32_t i = 0; i < data->NumPart; i++)
     {
-      f.writeReal32(data->uniqueID[i]);
+      f.writeReal32(data->Id[i]);
     }
   f.endCheckpoint();
 
@@ -384,7 +384,7 @@ void generateOutput(SimuData *data, int axis,
   f.beginCheckpoint();
   for (uint32_t i = 0; i < data->NumPart; i++)
     {
-      f.writeReal32(data->uniqueID[i]);
+      f.writeReal32(data->Id[i]);
     }
   f.endCheckpoint();
 
@@ -392,7 +392,7 @@ void generateOutput(SimuData *data, int axis,
   f.beginCheckpoint();
   for (uint32_t i = 0; i < data->NumPart; i++)
     {
-      f.writeReal32(data->uniqueID[i]);
+      f.writeReal32(data->Id[i]);
     }
   f.endCheckpoint();
 

@@ -538,8 +538,7 @@ int main(int argc, char **argv) {
              voids[iVoid].redshift, 
              4./3.*M_PI*pow(voids[iVoid].radius, 3),
              voids[iVoid].voidID,
-             voids[iVoid].densCon,
-             );
+             voids[iVoid].densCon);
 
      fprintf(fpSkyPositions, "%.2f %.2f %.5f %.2f %d\n",
              atan((voids[iVoid].barycenter[1]-boxLen[1]/2.)/(voids[iVoid].barycenter[0]-boxLen[0]/2.)) * 180/M_PI + 180,  
@@ -591,6 +590,6 @@ int main(int argc, char **argv) {
   clock1 = clock();
 
 
-  printf("Done!");
+  printf("Done!\n");
   return 0;
 } // end main
