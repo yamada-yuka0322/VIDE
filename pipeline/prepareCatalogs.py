@@ -60,11 +60,7 @@ def getSampleName(setName, redshift, useVel, iSlice=-1, iVol=-1):
 
   sampleName = setName
 
-  #if useVel: sampleName += "_pv"
-
   sampleName += "_z" + redshift
-
-  #if iSlice != -1: sampleName += "_s" + str(iSlice)
 
   if iVol != -1: sampleName += "_d" + iVol
 
@@ -87,7 +83,7 @@ def writeScript(setName, dataFileNameBase,
 import os
 from void_python_tools.backend.classes import *
 
-continueRun = False
+continueRun = True # set to True to enable restarting aborted jobs
 startCatalogStage = 1
 endCatalogStage   = 4
                
@@ -326,59 +322,69 @@ for thisSubSample in subSamples:
 if (args.script or args.all) and dataFormat == "multidark":
   print " Doing halo scripts"
 
-  dataFile = catalogDir+"/mdr1_halos_z"+fileNums[0]
-  inFile = open(dataFile, 'r')
-  numPart = 0
-  for line in inFile: numPart += 1
-  inFile.close()
+  for minHaloMass in minHaloMasses:
+    dataFile = catalogDir+haloFileBase+fileNums[0]
+    inFile = open(dataFile, 'r')
+    numPart = 0
+    for line in inFile: 
+      line = line.split(',')
+      if numHaloMass == "none" or float(line[6]) > minHaloMass:
+       numPart += 1
+    inFile.close()
 
-  minRadius = 2*int(np.ceil(lbox/numPart**(1./3.)))
-
-  if dataFormat == "multidark":
-    setName = prefix+"halos"
-    writeScript(setName, "md.halos_z", scriptDir, catalogDir, fileNums, 
-              redshifts, 
-              numSubvolumes, numSlices, False, lbox, minRadius, omegaM)
-    writeScript(setName, "md.halos_z", scriptDir, catalogDir, fileNums, 
-                redshifts, numSubvolumes, 
+    minRadius = 2*int(np.ceil(lbox/numPart**(1./3.)))
+  
+    if dataFormat == "multidark":
+      setName = prefix+"halos_min"str(minHaloMass)
+      writeScript(setName, "md.halos_min"+str(minHaloMass)+"_z", 
+                scriptDir, catalogDir, fileNums, 
+                redshifts, 
+                numSubvolumes, numSlices, False, lbox, minRadius, omegaM)
+      writeScript(setName, "md.halos_min"+str(minHaloMass)+"_z", 
+                scriptDir, catalogDir, fileNums, 
                 numSlices, True, lbox, minRadius, omegaM)
 
 if args.halos or args.all: 
   print " Doing halos"
 
-  for (iRedshift, redshift) in enumerate(redshifts):
-    print "  z = ", redshift
+  for minHaloMass in minHaloMasses:
+    print "  min halo mass = ", minHaloMass
 
-    dataFile = catalogDir+"/mdr1_halos_z"+fileNums[iRedshift]
-    inFile = open(dataFile, 'r')
-    numPart = 0
-    for line in inFile: numPart += 1
-    inFile.close()
+    for (iRedshift, redshift) in enumerate(redshifts):
+      print "   z = ", redshift
 
-    sampleName = "md.halos_z"+redshift
-    outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
+      dataFile = catalogDir+haloFileBase+fileNums[iRedshift]
+      inFile = open(dataFile, 'r')
+      for line in inFile: 
+        line = line.split(',')
+        if numHaloMass == "none" or float(line[6]) > minHaloMass:
+      inFile.close()
 
-    outFile.write("%f\n" %(lbox))
-    outFile.write("%s\n" %(omegaM))
-    outFile.write("%s\n" %(hubble))
-    outFile.write("%s\n" %(redshift))
-    outFile.write("%d\n" %(numPart))
+      sampleName = "md.halos_z"+redshift
+      outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
 
-    inFile = open(dataFile, 'r')
-    numKept = 0
-    for line in inFile:
-      numKept += 1
-      line = line.split(',')
-      x  = float(line[0])
-      y  = float(line[1])
-      z  = float(line[2])
-      vz = float(line[5])
+      outFile.write("%f\n" %(lbox))
+      outFile.write("%s\n" %(omegaM))
+      outFile.write("%s\n" %(hubble))
+      outFile.write("%s\n" %(redshift))
+      outFile.write("%d\n" %(numPart))
 
-      # write to output file
-      outFile.write("%d %e %e %e %e\n" %(numKept,x,y,z,vz))
+      inFile = open(dataFile, 'r')
+      numKept = 0
+      for line in inFile:
+        if numHaloMass == "none" or float(line[6]) > minHaloMass:
+          numKept += 1
+          line = line.split(',')
+          x  = float(line[0])
+          y  = float(line[1])
+          z  = float(line[2])
+          vz = float(line[5])
 
-    inFile.close()
-    outFile.close()
+          # write to output file
+          outFile.write("%d %e %e %e %e\n" %(numKept,x,y,z,vz))
+
+      inFile.close()
+      outFile.close()
 
 # -----------------------------------------------------------------------------
 # now the SDSS HOD

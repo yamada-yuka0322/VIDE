@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# plots cumulative distributions of number counts
+# plots cumulative distributions of number counts versus density contrast
 
 from void_python_tools.backend import *
 from void_python_tools.plotting import *
@@ -16,7 +16,7 @@ import argparse
 
 from datasetsToPlot import *
 
-plotNameBase = "compdist"
+plotNameBase = "compdenscon"
 
 obsFudgeFactor = .66 # what fraction of the volume are we *reall* capturing?
 
@@ -72,7 +72,7 @@ for (iSample,sample) in enumerate(dataSampleList):
   if data.ndim == 1:
     print " Too few!"
     continue
-  data = data[:,4]
+  data = data[:,8]
   indices = np.arange(0, len(data), 1)
   sorted = np.sort(data)
 

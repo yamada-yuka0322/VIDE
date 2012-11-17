@@ -64,6 +64,9 @@ for sample in dataSampleList:
   # save this sample's information
   with open(zobovDir+"/sample_info.dat", 'wb') as output:
     pickle.dump(sample, output, pickle.HIGHEST_PROTOCOL)
+  fp = open(zobovDir+"/sample_info.txt", 'w') 
+  fp.write("Redshift range: %f - %f" %(sample.zBoundary[0], sample.zBoundary[1])
+  fp.close()
 
 # ---------------------------------------------------------------------------
   if (startCatalogStage <= 1) and (endCatalogStage >= 1) and not sample.isCombo:
