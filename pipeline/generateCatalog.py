@@ -64,9 +64,23 @@ for sample in dataSampleList:
   # save this sample's information
   with open(zobovDir+"/sample_info.dat", 'w') as output:
     pickle.dump(sample, output, pickle.HIGHEST_PROTOCOL)
-  #fp = open(zobovDir+"/sample_info.txt", 'w') 
-  #fp.write("Redshift range: %f - %f" %(sample.zBoundary[0], sample.zBoundary[1])
-  #fp.close()
+
+  fp = open(zobovDir+"/sample_info.txt", 'w')
+  fp.write("Sample name: %s\n" % sample.fullName)
+  fp.write("Sample nickname: %s\n" % sample.nickName)
+  fp.write("Data type: %s\n" % sample.dataType)
+  fp.write("Redshift range: %f - %f\n" %(sample.zBoundary[0],sample.zBoundary[1]))
+  fp.write("Estimated mean particle separation: %g\n" % sample.minVoidRadius)
+
+  if (sample.dataType == "simulation"):
+    fp.write("Particles placed on lightcone: %g\n" % sample.useLightCone)
+    fp.write("Peculiar velocities included: %g\n" % sample.usePecVel)
+    fp.write("Additional subsampling fraction: %g\n" % sample.subsample)
+    fp.write("Simulation box length (Mpc/h): %g\n" % sample.boxLen)
+    fp.write("Simulation Omega_M: %g\n" % sample.omegaM)
+    fp.write("Number of simulation subvolumes: %g\n", sample.numSubvolumes)
+    fp.write("My subvolume index: %g\n", sample.mySubvolume)
+  fp.close()
 
 # ---------------------------------------------------------------------------
   if (startCatalogStage <= 1) and (endCatalogStage >= 1) and not sample.isCombo:

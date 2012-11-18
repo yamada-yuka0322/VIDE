@@ -323,26 +323,28 @@ if (args.script or args.all) and dataFormat == "multidark":
   print " Doing halo scripts"
 
   for minHaloMass in minHaloMasses:
+    # estimate number of halos to get density
     dataFile = catalogDir+haloFileBase+fileNums[0]
     inFile = open(dataFile, 'r')
     numPart = 0
     for line in inFile: 
       line = line.split(',')
-      if numHaloMass == "none" or float(line[6]) > minHaloMass:
-       numPart += 1
+      if minHaloMass == "none" or float(line[6]) > minHaloMass:
+        numPart += 1
     inFile.close()
 
     minRadius = 2*int(np.ceil(lbox/numPart**(1./3.)))
   
     if dataFormat == "multidark":
-      setName = prefix+"halos_min"str(minHaloMass)
+      setName = prefix+"halos_min"+str(minHaloMass)
       writeScript(setName, "md.halos_min"+str(minHaloMass)+"_z", 
                 scriptDir, catalogDir, fileNums, 
                 redshifts, 
                 numSubvolumes, numSlices, False, lbox, minRadius, omegaM)
       writeScript(setName, "md.halos_min"+str(minHaloMass)+"_z", 
                 scriptDir, catalogDir, fileNums, 
-                numSlices, True, lbox, minRadius, omegaM)
+                redshifts, 
+                numSubvolumes, numSlices, True, lbox, minRadius, omegaM)
 
 if args.halos or args.all: 
   print " Doing halos"
@@ -355,9 +357,11 @@ if args.halos or args.all:
 
       dataFile = catalogDir+haloFileBase+fileNums[iRedshift]
       inFile = open(dataFile, 'r')
+      numPart = 0
       for line in inFile: 
         line = line.split(',')
-        if numHaloMass == "none" or float(line[6]) > minHaloMass:
+        if minHaloMass == "none" or float(line[6]) > minHaloMass:
+          numPart += 1
       inFile.close()
 
       sampleName = "md.halos_z"+redshift
@@ -370,18 +374,16 @@ if args.halos or args.all:
       outFile.write("%d\n" %(numPart))
 
       inFile = open(dataFile, 'r')
-      numKept = 0
-      for line in inFile:
-        if numHaloMass == "none" or float(line[6]) > minHaloMass:
-          numKept += 1
-          line = line.split(',')
+      for (iHalo,line) in enumerate(inFile):
+        line = line.split(',')
+        if minHaloMass == "none" or float(line[6]) > minHaloMass:
           x  = float(line[0])
           y  = float(line[1])
           z  = float(line[2])
           vz = float(line[5])
 
           # write to output file
-          outFile.write("%d %e %e %e %e\n" %(numKept,x,y,z,vz))
+          outFile.write("%d %e %e %e %e\n" %(iHalo,x,y,z,vz))
 
       inFile.close()
       outFile.close()

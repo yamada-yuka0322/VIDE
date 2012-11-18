@@ -7,5 +7,6 @@
 
 void computeContourPixels(Healpix_Map<float>& map, std::vector<int>& contour);
 void computeFilledPixels(Healpix_Map<float>& map, std::vector<int>& contour);
+void computeMaskPixels(Healpix_Map<float>& map, std::vector<int>& contour);
 
 #endif

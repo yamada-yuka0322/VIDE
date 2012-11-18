@@ -505,6 +505,7 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
   delete[] expansion_fac;
 
 
+/*
   FILE *fp = fopen("sample_info.txt", "w");
   fprintf(fp, "x_min = %f\n", ranges[0][0]);
   fprintf(fp, "x_max = %f\n", ranges[0][1]);
@@ -515,6 +516,7 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
   fprintf(fp, "mask_index = -1\n");
   fprintf(fp, "total_particles = %d\n", boxed->NumPart);
   fclose(fp);
+*/
 }
 
 void makeBoxFromParameter(SimuData *simu, double *efac, SimuData* &boxed, generateMock_info& args_info)

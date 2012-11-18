@@ -54,3 +54,33 @@ void computeContourPixels(Healpix_Map<float>& m, vector<int>& contour)
       write_Healpix_map_to_fits(h, contour_map, planckType<int>());
     }
 }
+
+void computeMaskPixels(Healpix_Map<float>& m, vector<int>& contour)
+{
+  for (int p = 0; p < m.Npix(); p++)
+    {
+
+    if (m[p]>0)
+      {
+        contour.push_back(p);
+        // This is boundary go to next pixel
+      }
+    }
+
+  if (DEBUG)
+    {
+      Healpix_Map<int> contour_map;
+
+      contour_map.SetNside(m.Nside(), RING);
+      contour_map.fill(0);
+      for (int p = 0; p < contour.size(); p++)
+  {
+    contour_map[contour[p]]=1;
+  }
+
+      fitshandle h;
+      h.create("!mask_map.fits");
+      write_Healpix_map_to_fits(h, contour_map, planckType<int>());
+    }
+}
+

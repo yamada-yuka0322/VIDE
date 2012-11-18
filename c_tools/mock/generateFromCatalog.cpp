@@ -295,10 +295,10 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
 
   int nPart = 100;
 // TEST
-  for (int iDir = 0; iDir < 0; iDir++) {
-  for (int iFace = 0; iFace < 0; iFace++) {
-  //for (int iDir = 0; iDir < 3; iDir++) {
-  //for (int iFace = 0; iFace < 2; iFace++) {
+  //for (int iDir = 0; iDir < 0; iDir++) {
+  //for (int iFace = 0; iFace < 0; iFace++) {
+  for (int iDir = 0; iDir < 3; iDir++) {
+  for (int iFace = 0; iFace < 2; iFace++) {
 
     int iy = (iDir + 1) % 3;
     int iz = (iDir + 2) % 3;
@@ -483,6 +483,7 @@ void saveForZobov(ParticleData& pdata, const string& fname, const string& paramn
 
   //delete[] expansion_fac;
 
+/*
   FILE *infoFile = fopen("sample_info.txt", "w");
   fprintf(infoFile, "x_min = %f\n", -Lmax/100.);  
   fprintf(infoFile, "x_max = %f\n", Lmax/100.);
@@ -493,7 +494,7 @@ void saveForZobov(ParticleData& pdata, const string& fname, const string& paramn
   fprintf(infoFile, "mask_index = %d\n", pdata.mask_index);
   fprintf(infoFile, "total_particles = %d\n", pdata.pos.size());
   fclose(infoFile);
-
+*/
 
 }
 
@@ -545,6 +546,7 @@ int main(int argc, char **argv)
   mask.Import(o_mask);
 
   computeContourPixels(mask,pixel_list);
+  computeMaskPixels(mask,full_mask_list);
 
   // We compute a cube holding all the galaxies + the survey surface mask
 

@@ -83,7 +83,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     if os.access("mask_index.txt", os.F_OK):
       os.system("mv %s %s" % ("mask_index.txt", zobovDir))
       os.system("mv %s %s" % ("total_particles.txt", zobovDir))
-      os.system("mv %s %s" % ("sample_info.txt", zobovDir))
+      #os.system("mv %s %s" % ("sample_info.txt", zobovDir))
 
     if os.access("galaxies.txt", os.F_OK):
       os.system("mv %s %s" % ("galaxies.txt", zobovDir))
@@ -160,7 +160,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
     if os.access("comoving_distance.txt", os.F_OK):
       os.system("mv %s %s" % ("comoving_distance.txt", zobovDir))
-      os.system("mv %s %s" % ("sample_info.txt", zobovDir))
+      #os.system("mv %s %s" % ("sample_info.txt", zobovDir))
 
     if os.access(parmFile, os.F_OK):
       os.unlink(parmFile)
