@@ -271,8 +271,8 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     cmd += " --dataPortion=" + thisDataPortion
     cmd += " --mockIndex=" + str(mockIndex)
     cmd += " --maxCentralDen=" + str(maxDen)
-    cmd += " --zMin=" + str(sample.zBoundary[0])
-    cmd += " --zMax=" + str(sample.zBoundary[1])
+    cmd += " --zMin=" + str(sample.zRange[0])
+    cmd += " --zMax=" + str(sample.zRange[1])
     cmd += " --rMin=" + str(sample.minVoidRadius)
     cmd += " --numVoids=" + str(numVoids)
     cmd += observationLine
