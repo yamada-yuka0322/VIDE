@@ -40,6 +40,8 @@ option "outSkyPositions" - "output sky positions of voids" string required
 
 option "dataPortion" - "all, central, or edge" string required
 
+option "periodic" - "Set of edges which are periodic" string optional default="xy"
+
 option "tolerance" - "Fraction of void width to consider edge" double optional default="1.0"
 
 option "centralRadFrac" - "Fraction of void radii to consider central region" double optional default="4"

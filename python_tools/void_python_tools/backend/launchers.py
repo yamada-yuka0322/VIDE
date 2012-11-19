@@ -84,7 +84,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     if os.access("mask_index.txt", os.F_OK):
       os.system("mv %s %s" % ("mask_index.txt", zobovDir))
       os.system("mv %s %s" % ("total_particles.txt", zobovDir))
-      os.system("mv %s %s" % ("sample_info.txt", zobovDir))
+      #os.system("mv %s %s" % ("sample_info.txt", zobovDir))
 
     if os.access("galaxies.txt", os.F_OK):
       os.system("mv %s %s" % ("galaxies.txt", zobovDir))
@@ -102,11 +102,16 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     else:
       includePecVelString = ""
 
-    if sample.dataFormat == "multidark":
+    if sample.useLightCone:
+      useLightConeString = "cosmo"
+    else:
+      useLightConeString = ""
+
+    if sample.dataFormat == "multidark" or sample.dataFormat == "random":
       dataFileLine = "multidark " + datafile
     elif sample.dataFormat == "gadget":
       dataFileLine = "gadget " + datafile
-    
+      
     iX = float(sample.mySubvolume[0])
     iY = float(sample.mySubvolume[1])
 
@@ -120,16 +125,20 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       output %s
       outputParameter %s
       %s
+      %s
+      gadgetUnit %g
       rangeX_min %g
       rangeX_max %g
       rangeY_min %g
       rangeY_max %g
       rangeZ_min %g
       rangeZ_max %g
-      subsample %g
+      subsample %s
       """ % (dataFileLine, zobovDir+"/zobov_slice_"+sampleName,
              zobovDir+"/zobov_slice_"+sampleName+".par",
              includePecVelString,
+             useLightConeString,
+             sample.dataUnit,
              xMin, xMax, yMin, yMax,
              sample.zBoundaryMpc[0], sample.zBoundaryMpc[1],
              sample.subsample)
@@ -150,11 +159,16 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     else:
       print "already done!"
 
+    if os.access("comoving_distance.txt", os.F_OK):
+      os.system("mv %s %s" % ("comoving_distance.txt", zobovDir))
+      #os.system("mv %s %s" % ("sample_info.txt", zobovDir))
+
     if os.access(parmFile, os.F_OK):
       os.unlink(parmFile)
 
 # -----------------------------------------------------------------------------
-def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None):
+def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
+                 numZobovDivisions=None, numZobovThreads=None):
 
   sampleName = sample.fullName
 
@@ -185,9 +199,9 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None):
     if os.access(zobovDir+"/voidDesc_"+sampleName+".out", os.F_OK):
       os.unlink(zobovDir+"/voidDesc_"+sampleName+".out")
 
-    cmd = "%s/vozinit %s 0.1 1.0 2 %s %g %s %s %s >& %s" % \
-          (binPath, datafile,  \
-                      "_"+sampleName, sample.numSubDivisions, \
+    cmd = "%s/vozinit %s 0.1 1.0 %g %s %g %s %s %s >& %s" % \
+          (binPath, datafile,  numZobovDivisions, \
+                      "_"+sampleName, numZobovThreads, \
                       binPath, zobovDir, maskIndex, logFile)
     os.system(cmd)
 
@@ -232,10 +246,17 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     totalPart = open(zobovDir+"/total_particles.txt", "r").read()
     maxDen = 0.2*float(mockIndex)/float(totalPart)
     observationLine = " --isObservation"
+    periodicLine = " --periodic=''"
   else:
     mockIndex = -1
     maxDen = 0.2
     observationLine = ""
+
+    periodicLine = " --periodic='"
+    if sample.numSubvolumes == 1: periodicLine += "xy"
+    if sample.zBoundaryMpc[0] == 0 and \
+       sample.zBoundaryMpc[1] == sample.boxLen : periodicLine += "z"
+    periodicLine += "' "
 
   if not (continueRun and jobSuccessful(logFile, "NetCDF: Not a valid ID\n")):
     cmd = binPath
@@ -255,6 +276,7 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     cmd += " --rMin=" + str(sample.minVoidRadius)
     cmd += " --numVoids=" + str(numVoids)
     cmd += observationLine
+    cmd += periodicLine
     cmd += " --output=" + zobovDir+"/voidDesc_"+\
                           str(thisDataPortion)+"_"+\
                           str(sampleName)+".out"
@@ -276,7 +298,8 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     cmd += " >& " + logFile
     os.system(cmd)
 
-    if jobSuccessful(logFile, "NetCDF: Not a valid ID\n"):
+    if jobSuccessful(logFile, "NetCDF: Not a valid ID\n") or \
+       jobSuccessful(logFile, "Done!\n"):
       print "done"
     else:
       print "FAILED!"
@@ -356,8 +379,8 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   %s
   ranSeed %d
   dataPortion %s
-  barycenters %s
-  boundaryDistances %s
+  #barycenters %s
+  #boundaryDistances %s
   %s
   """ % \
   (zobovDir+"/voidDesc_"+thisDataPortion+"_"+sampleName+".out",
@@ -460,34 +483,37 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     return
 
   # figure out box volume and average density
-  maskFile = sample.maskFile
-  sulFunFile = sample.selFunFile
+  if sample.dataType == "observation":
+    maskFile = sample.maskFile
+    sulFunFile = sample.selFunFile
 
-  if not os.access(sample.selFunFile, os.F_OK) and not volumeLimited:
-    print " Cannot find", selFunFile, "!"
-    exit(-1)
+    if not os.access(sample.selFunFile, os.F_OK) and not sample.volumeLimited:
+      print " Cannot find", selFunFile, "!"
+      exit(-1)
 
-  sys.stdout = open(logFile, 'a')
-  sys.stderr = open(logFile, 'a')
-  zMin = sample.zRange[0]
-  zMax = sample.zRange[1]
-  if not sample.volumeLimited:
-    props = vp.getSurveyProps(maskFile, stack.zMin,
-                              stack.zMax, zMin, zMax, "all",
-                              selectionFuncFile=sample.selFunFile)
+    sys.stdout = open(logFile, 'a')
+    sys.stderr = open(logFile, 'a')
+    zMin = sample.zRange[0]
+    zMax = sample.zRange[1]
+    if not sample.volumeLimited:
+      props = vp.getSurveyProps(maskFile, stack.zMin,
+                                stack.zMax, zMin, zMax, "all",
+                                selectionFuncFile=sample.selFunFile)
+    else:
+      zMinForVol = sample.zBoundary[0]
+      zMaxForVol = sample.zBoundary[1]
+      props = vp.getSurveyProps(maskFile, zMinForVol,
+                                zMaxForVol, zMin, zMax, "all")
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
+  
+    boxVol = props[0]
+    nbar   = props[1]
+    if sample.volumeLimited:
+      nbar = 1.0
   else:
-    zMinForVol = sample.zBoundary[0]
-    zMaxForVol = sample.zBoundary[1]
-    props = vp.getSurveyProps(maskFile, zMinForVol,
-                              zMaxForVol, zMin, zMax, "all")
-  sys.stdout = sys.__stdout__
-  sys.stderr = sys.__stderr__
-
-  boxVol = props[0]
-  nbar   = props[1]
-
-  if sample.volumeLimited:
     nbar = 1.0
+    boxVol = sample.boxLen**3
 
   summaryLine = runSuffix + " " + \
                 thisDataPortion + " " + \
@@ -809,7 +835,7 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     maxtries = 5
     while badChain:
       Rexpect = (stack.rMin+stack.rMax)/2
-      Rtruncate = stack.rMax*3. + 1 # TEST
+      Rtruncate = stack.rMin*3. + 1 # TEST
       ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
                                     Niter=300000,
                                     Nburn=100000,
@@ -1173,7 +1199,11 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
             voidDir = sample.zobovDir+"/stacks_" + runSuffix
             centersFile = voidDir+"/centers.txt"
             if os.access(centersFile, os.F_OK):
-              voidRedshifts = np.loadtxt(centersFile)[:,5]
+              voidRedshifts = np.loadtxt(centersFile)
+              if voidRedshifts.ndim > 1:
+                voidRedshifts = voidRedshifts[:,5]
+              else:
+                voidRedshifts = voidRedshifts[5]
               #fp.write(str(len(voidRedshifts))+" ")
               np.savetxt(fp, voidRedshifts[None])
             else:

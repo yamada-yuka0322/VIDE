@@ -38,6 +38,7 @@ class Sample:
   dataType = "observation"
   dataFormat = "sdss"
   dataFile = "lss.dr72dim.dat"
+  dataUNit = 1
   fullName = "lss.dr72dim.dat"
   nickName = "dim"
   zobovDir = ""
@@ -62,22 +63,21 @@ class Sample:
   usePecVel = False
   subsample = 1.0
   useLightCone = True
-  numSubDivisions = 1
   numSubvolumes = 1
   mySubvolume = 1
 
   stacks = []
 
-  def __init__(self, dataFile="", fullName="", 
+  def __init__(self, dataFile="", fullName="", dataUnit=1,
                nickName="", maskFile="", selFunFile="",
                zBoundary=(), zRange=(), zBoundaryMpc=(),
                minVoidRadius=0, fakeDensity=0.01, volumeLimited=True,
                includeInHubble=True, partOfCombo=False, isCombo=False, 
                comboList=(), profileBinSize=2.0, skyFraction=0.19,
-               dataType="observation", numSubDivisions=2, 
                boxLen=1024, usePecVel=False, omegaM=0.27, 
                numSubvolumes=1, mySubvolume=1, dataFormat="sdss",
-               subsample="1.0", useLightCone=True):
+               dataType="observation",
+               subsample=1.0, useLightCone=True):
     self.dataFile = dataFile
     self.fullName = fullName
     self.nickName = nickName
@@ -97,7 +97,6 @@ class Sample:
     self.profileBinSize = profileBinSize
     self.skyFraction = skyFraction
     self.dataType = dataType
-    self.numSubDivisions = numSubDivisions
     self.boxLen = boxLen
     self.usePecVel = usePecVel
     self.omegaM = omegaM
@@ -106,6 +105,7 @@ class Sample:
     self.dataFormat = dataFormat
     self.subsample = subsample
     self.useLightCone = useLightCone
+    self.dataUnit = dataUnit
 
     self.stacks = []
 

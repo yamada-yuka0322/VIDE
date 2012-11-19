@@ -9,33 +9,19 @@ import os
 import sys
 import void_python_tools as vp
 import argparse
+import imp
 
-catalogDir = os.getenv("HOME")+"/workspace/Voids/catalogs/multidark/"
-scriptDir = os.getenv("PWD")+"/multidark/"
-hodPath = os.getenv("HOME")+"/projects/Voids/hod/HOD.x"
+# ------------------------------------------------------------------------------
 
-outputDir = os.getenv("HOME")+"/workspace/Voids/multidark/"
-figDir = os.getenv("PWD")+"/../figs/multidark/"
-logDir = os.getenv("PWD")+"/../logs/multidark/"
-
-dataFormat = "multidark"
-dataType = "simulation"
-useLightCone = True
-
-redshifts = (("0.0", "0.53", "1.0"))
-redshiftFileBase = "mdr1_particles_z"
-numSlices = 4
-numSubvolumes = 1
-
-prefix = "md_"
-subSamples = ((0.1, 0.05, 0.01, 0.002, 0.001, 0.0004, 0.0002))
-
-numPart = 1024*1024*1024 # number of particles in base catalog
-lbox = 1000
-omegaM = 0.27
-hubble = 0.70
+def my_import(name):
+    mod = __import__(name)
+    components = name.split('.')
+    for comp in components[1:]:
+        mod = getattr(mod, comp)
+    return mod
 
 # -----------------------------------------------------------------------------
+
 LIGHT_SPEED = 299792.458
 
 parser = argparse.ArgumentParser(description='options')
@@ -50,54 +36,59 @@ parser.add_argument('--halos', dest='halos', action='store_const',
                    help='write halos')
 parser.add_argument('--hod', dest='hod', action='store_const',
                    const=True, default=False,
-                   help='write hos')
+                   help='write hod')
 parser.add_argument('--all', dest='all', action='store_const',
                    const=True, default=False,
                    help='write everything')
+parser.add_argument('--parmFile', dest='parmFile',
+                   default="",
+                   help='path to parameter file')
 args = parser.parse_args()
 
+
+filename = args.parmFile
+print " Loading parameters from", filename
+if not os.access(filename, os.F_OK):
+  print "  Cannot find parameter file %s!" % filename
+  exit(-1)
+parms = imp.load_source("name", filename)
+globals().update(vars(parms))
+
+
 #------------------------------------------------------------------------------
-def getSampleName(prefix, base, redshift, useVel, iSlice=-1, iVol=-1):
-  useVelString = ""
-  if useVel: useVelString = "_pv"
+def getSampleName(setName, redshift, useVel, iSlice=-1, iVol=-1):
 
-  sampleName = prefix + base + useVelString + "_z" + redshift
+  sampleName = setName
 
-  if iSlice != -1:
-    sampleName += "_s" + str(iSlice)
+  sampleName += "_z" + redshift
 
-  if iVol != -1:
-    sampleName += "_d" + iVol
+  if iVol != -1: sampleName += "_d" + iVol
 
   return sampleName
 
 #------------------------------------------------------------------------------
 # for given dataset parameters, outputs a script for use with analyzeVoids
-def writeScript(prefix, base, scriptDir, catalogDir, redshifts, numSubvolumes,
+def writeScript(setName, dataFileNameBase,
+                scriptDir, catalogDir, fileNums, redshifts, numSubvolumes,
                 numSlices, useVel, lbox, minRadius, omegaM, subsample=1.0, 
                 suffix=".dat"):
 
-  setName = prefix + base
-
-  dataFileNameBase = setName #+ ".dat"
 
   if useVel: setName += "_pv"
 
-  scriptFileName = scriptDir + "/" + "md_" + base
-  if useVel: scriptFileName += "_pv"
-  scriptFileName += ".py"
+  scriptFileName = scriptDir + "/" + setName + ".py"
   scriptFile = open(scriptFileName, 'w')
 
   scriptFile.write("""#!/usr/bin/env/python
 import os
 from void_python_tools.backend.classes import *
 
-continueRun = False
+continueRun = True # set to True to enable restarting aborted jobs
 startCatalogStage = 1
-endCatalogStage   = 3
+endCatalogStage   = 4
                
 startAPStage = 1
-endAPStage = 6
+endAPStage = 7
 
 ZOBOV_PATH = os.getenv("PWD")+"/../zobov/"
 CTOOLS_PATH = os.getenv("PWD")+"/../c_tools/"
@@ -112,22 +103,28 @@ dataPortions = ["central"]
 dataSampleList = []
 """)
 
-  dataInfo = """
-catalogName = "{sampleName}"
 
-workDir = "{outputDir}/{sampleName}/"
-inputDataDir = "{catalogDir}"
-figDir = "{figDir}/{sampleName}/"
-logDir = "{logDir}/{sampleName}/"
+  dataInfo = """
+setName = "{setName}"
+
+workDir = "{voidOutputDir}/{setName}/"
+inputDataDir = "{inputDataDir}"
+figDir = "{figDir}/{setName}/"
+logDir = "{logDir}/{setName}/"
+
+numZobovDivisions = {numZobovDivisions}
+numZobovThreads = {numZobovThreads}
                """
-  scriptFile.write(dataInfo.format(sampleName=setName, figDir=figDir, 
-                                   logDir=logDir, outputDir=outputDir,
-                                   catalogDir=catalogDir,
-                                   inputDataDir=catalogDir))
+  scriptFile.write(dataInfo.format(setName=setName, figDir=figDir,
+                                   logDir=logDir, voidOutputDir=voidOutputDir,
+                                   inputDataDir=catalogDir, 
+                                   numZobovDivisions=numZobovDivisions,
+                                   numZobovThreads=numZobovThreads))
 
   sampleInfo = """
 newSample = Sample(dataFile = "{dataFile}",
                    dataFormat = "{dataFormat}",
+                   dataUnit = {dataUnit},
                    fullName = "{sampleName}",
                    nickName = "{sampleName}",
                    dataType = "simulation",
@@ -143,7 +140,6 @@ newSample = Sample(dataFile = "{dataFile}",
                    usePecVel = {usePecVel},
                    numSubvolumes = {numSubvolumes},
                    mySubvolume = "{mySubvolume}",
-                   numSubDivisions = 4,
                    useLightCone = {useLightCone},
                    subsample = {subsample})
 dataSampleList.append(newSample)
@@ -154,15 +150,15 @@ newSample.addStack({zMin}, {zMax}, {minRadius}+6, {minRadius}+10, True, False)
 newSample.addStack({zMin}, {zMax}, {minRadius}+10, {minRadius}+18, True, False)
 newSample.addStack({zMin}, {zMax}, {minRadius}+18, {minRadius}+24, True, False)
                """
-
-  for redshift in redshifts:
+  for (iFile, redshift) in enumerate(redshifts):
+    fileNum = fileNums[iFile]
     zBox = float(redshift)
     Om = float(omegaM)
     zBoxMpc = LIGHT_SPEED/100.*vp.angularDiameter(zBox, Om=Om)
     boxMaxMpc = zBoxMpc + lbox
 
     # converter from redshift to comoving distance   
-    zVsDY = np.linspace(0., zBox+8*lbox*100./LIGHT_SPEED, 10000)  
+    zVsDY = np.linspace(0., zBox+8*lbox*100./LIGHT_SPEED, 10000)
     zVsDX = np.zeros(len(zVsDY))
     for i in xrange(len(zVsDY)):
       zVsDX[i] = vp.angularDiameter(zVsDY[i], Om=Om)
@@ -176,30 +172,30 @@ newSample.addStack({zMin}, {zMax}, {minRadius}+18, {minRadius}+24, True, False)
       dzSafe = 0.0
 
     for iSlice in xrange(numSlices):
-      # trim off the first and last 10,000 km/s
       sliceMin = zBox + dzSafe + iSlice*(boxWidthZ-dzSafe)/numSlices
       sliceMax = zBox + dzSafe + (iSlice+1)*(boxWidthZ-dzSafe)/numSlices
 
       sliceMinMpc = sliceMin*LIGHT_SPEED/100.
       sliceMaxMpc = sliceMax*LIGHT_SPEED/100.
-  
+
       sliceMin = "%0.2f" % sliceMin
       sliceMax = "%0.2f" % sliceMax
       sliceMinMpc = "%0.1f" % sliceMinMpc
       sliceMaxMpc = "%0.1f" % sliceMaxMpc
 
-      dataFileName = dataFileNameBase + "_z" + redshift + suffix
+      dataFileName = dataFileNameBase + fileNum + suffix
 
       for iX in xrange(numSubvolumes):
         for iY in xrange(numSubvolumes):
-  
+
           mySubvolume = "%d%d" % (iX, iY)
 
-          sampleName = getSampleName(prefix, base, redshift, useVel, 
+          sampleName = getSampleName(setName, sliceMin, useVel,
                                      iSlice=iSlice, iVol=mySubvolume)
 
-          scriptFile.write(sampleInfo.format(dataFile=dataFileName, 
+          scriptFile.write(sampleInfo.format(dataFile=dataFileName,
                                          dataFormat=dataFormat,
+                                         dataUnit=dataUnit,
                                          sampleName=sampleName,
                                          zMin=sliceMin,
                                          zMax=sliceMax,
@@ -221,12 +217,13 @@ newSample.addStack({zMin}, {zMax}, {minRadius}+18, {minRadius}+24, True, False)
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 if not os.access(scriptDir, os.F_OK): os.mkdir(scriptDir)
+if not os.access(catalogDir, os.F_OK): os.mkdir(catalogDir)
 
 #------------------------------------------------------------------------------
 # first the directly downsampled runs
 # Note: ss0.002   ~ SDSS DR7 dim2
 #       ss0.0004 ~ SDSS DR9 mid 
-baseResolution = numPart/lbox/lbox/lbox # particles/Mpc^3
+baseResolution = float(numPart)/lbox/lbox/lbox # particles/Mpc^3
 for thisSubSample in subSamples:
 
   keepFraction = float(thisSubSample) / baseResolution
@@ -235,110 +232,161 @@ for thisSubSample in subSamples:
 
   if args.script or args.all:
     print " Doing subsample", thisSubSample, " scripts"
+    setName = prefix+"ss"+str(thisSubSample)
     if dataFormat == "multidark":
-      writeScript(prefix, 
-                  "ss"+str(thisSubSample), scriptDir, catalogDir, redshifts, 
+      writeScript(setName, "md.ss"+str(thisSubSample)+"_z", 
+                  scriptDir, catalogDir, fileNums, 
+                  redshifts, 
                   numSubvolumes, numSlices, False, lbox, minRadius, omegaM, 
                   subsample=1.0)
-      writeScript(prefix, "ss"+str(thisSubSample), scriptDir, catalogDir, 
+      writeScript(setName, "md.ss"+str(thisSubSample)+"_z", 
+                  scriptDir, catalogDir, 
+                  fileNums, 
                   redshifts, numSubvolumes, numSlices, True, lbox, minRadius, 
                   omegaM, subsample=1.0)
     elif dataFormat == "gadget":
-      writeScript("", redshiftFileBase, scriptDir, catalogDir, redshifts, 
+      writeScript(setName, particleFileBase, scriptDir, catalogDir, fileNums,
+                   redshifts, 
+                  numSubvolumes, numSlices, False, lbox, minRadius, omegaM,
+                  subsample=thisSubSample, suffix="")
+      writeScript(setName, particleFileBase, scriptDir, catalogDir, fileNums,
+                   redshifts, 
                   numSubvolumes, numSlices, True, lbox, minRadius, omegaM,
                   subsample=thisSubSample, suffix="")
+    elif dataFormat == "random":
+      writeScript(setName, "ran.ss"+str(thisSubSample)+"_z", 
+                  scriptDir, catalogDir, fileNums, 
+                  redshifts, 
+                  numSubvolumes, numSlices, False, lbox, minRadius, omegaM, 
+                  subsample=1.0)
   
   if args.subsample or args.all:
     print " Doing subsample", thisSubSample
 
-    for redshift in redshifts:
+    for (iRedshift, redshift) in enumerate(redshifts):
       print "   redshift", redshift
-      dataFile = catalogDir+"/"+redshiftFileBase+redshift
-      inFile = open(dataFile, 'r')
+  
+      if dataFormat == "multidark":
+        dataFile = catalogDir+"/"+particleFileBase+fileNums[iRedshift]
+        inFile = open(dataFile, 'r')
 
-      sampleName = getSampleName("ss"+str(thisSubSample), redshift, False)
-      outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
+        sampleName = "md.ss"+str(thisSubSample)+"_z"+redshift
+        outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
 
-      outFile.write("%f\n" %(lbox))
-      outFile.write("%s" %(omegaM))
-      outFile.write("%s" %(hubble))
-      outFile.write("%s\n" %(redshift))
-      outFile.write("%d\n" %(maxKeep))
+        outFile.write("%f\n" %(lbox))
+        outFile.write("%s\n" %(omegaM))
+        outFile.write("%s\n" %(hubble))
+        outFile.write("%s\n" %(redshift))
+        outFile.write("%d\n" %(maxKeep))
 
-      numKept = 0
-      for line in inFile:
-        if np.random.uniform() > keepFraction: continue
-        numKept += 1
-        if numKept > maxKeep: break
-        line = line.split(',')
-        x  = float(line[0])
-        y  = float(line[1])
-        z  = float(line[2])
-        vz = float(line[3])
+        numKept = 0
+        for (i,line) in enumerate(inFile):
+          if np.random.uniform() > keepFraction: continue
+          numKept += 1
+          if numKept > maxKeep: break
+          line = line.split(',')
+          x  = float(line[0])
+          y  = float(line[1])
+          z  = float(line[2])
+          vz = float(line[3])
 
-        outFile.write("%e %e %e %e\n" %(x,y,z,vz))
+          outFile.write("%d %e %e %e %e\n" %(i,x,y,z,vz))
 
-      outFile.write("-99 -99 -99 -99\n")
-      print "KEEPING:", numKept, "...predicted:", maxKeep
-      inFile.close()
-      outFile.close()
+        outFile.write("-99 -99 -99 -99 -99\n")
+        inFile.close()
+        outFile.close()
+
+      elif dataFormat == "random":
+        sampleName = "ran.ss"+str(thisSubSample)+"_z"+redshift
+        outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
+
+        outFile.write("%f\n" %(lbox))
+        outFile.write("%s\n" %(omegaM))
+        outFile.write("%s\n" %(hubble))
+        outFile.write("%s\n" %(redshift))
+        outFile.write("%d\n" %(maxKeep))
+
+        for i in xrange(int(maxKeep)):
+          x  = np.random.uniform()*lbox
+          y  = np.random.uniform()*lbox
+          z  = np.random.uniform()*lbox
+
+          outFile.write("%d %e %e %e %e\n" % (i, x,y,z, 0.))
+
+        outFile.write("-99 -99 -99 -99 -99\n")
+        outFile.close()
+
 
 # -----------------------------------------------------------------------------
 # now halos
-if args.script or args.all:
+if (args.script or args.all) and dataFormat == "multidark":
   print " Doing halo scripts"
 
-  dataFile = catalogDir+"/mdr1_halos_z"+redshifts[0]
-  inFile = open(dataFile, 'r')
-  numPart = 0
-  for line in inFile: numPart += 1
-  inFile.close()
+  for minHaloMass in minHaloMasses:
+    # estimate number of halos to get density
+    dataFile = catalogDir+haloFileBase+fileNums[0]
+    inFile = open(dataFile, 'r')
+    numPart = 0
+    for line in inFile: 
+      line = line.split(',')
+      if minHaloMass == "none" or float(line[6]) > minHaloMass:
+        numPart += 1
+    inFile.close()
 
-  minRadius = int(np.ceil(lbox/numPart**(1./3.)))
-
-  if dataFormat == "multidark":
-    writeScript(prefix, "halos", scriptDir, catalogDir, redshifts, 
-              numSubvolumes, numSlices, False, lbox, minRadius, omegaM)
-    writeScript(prefix, "halos", scriptDir, catalogDir, redshifts, numSubvolumes, 
-                numSlices, True, lbox, minRadius, omegaM)
+    minRadius = 2*int(np.ceil(lbox/numPart**(1./3.)))
+  
+    if dataFormat == "multidark":
+      setName = prefix+"halos_min"+str(minHaloMass)
+      writeScript(setName, "md.halos_min"+str(minHaloMass)+"_z", 
+                scriptDir, catalogDir, fileNums, 
+                redshifts, 
+                numSubvolumes, numSlices, False, lbox, minRadius, omegaM)
+      writeScript(setName, "md.halos_min"+str(minHaloMass)+"_z", 
+                scriptDir, catalogDir, fileNums, 
+                redshifts, 
+                numSubvolumes, numSlices, True, lbox, minRadius, omegaM)
 
 if args.halos or args.all: 
   print " Doing halos"
 
-  for redshift in redshifts:
-    print "  z = ", redshift
+  for minHaloMass in minHaloMasses:
+    print "  min halo mass = ", minHaloMass
 
-    dataFile = catalogDir+"/mdr1_halos_z"+redshift
-    inFile = open(dataFile, 'r')
-    numPart = 0
-    for line in inFile: numPart += 1
-    inFile.close()
+    for (iRedshift, redshift) in enumerate(redshifts):
+      print "   z = ", redshift
 
-    sampleName = getSampleName("halos", redshift, False)
+      dataFile = catalogDir+haloFileBase+fileNums[iRedshift]
+      inFile = open(dataFile, 'r')
+      numPart = 0
+      for line in inFile: 
+        line = line.split(',')
+        if minHaloMass == "none" or float(line[6]) > minHaloMass:
+          numPart += 1
+      inFile.close()
 
-    outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
+      sampleName = "md.halos_z"+redshift
+      outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
 
-    outFile.write("%f\n" %(lbox))
-    outFile.write("%s" %(omegaM))
-    outFile.write("%s" %(hubble))
-    outFile.write("%s\n" %(redshift))
-    outFile.write("%d\n" %(numPart))
+      outFile.write("%f\n" %(lbox))
+      outFile.write("%s\n" %(omegaM))
+      outFile.write("%s\n" %(hubble))
+      outFile.write("%s\n" %(redshift))
+      outFile.write("%d\n" %(numPart))
 
-    inFile = open(dataFile, 'r')
-    numKept = 0
-    for line in inFile:
-      numKept += 1
-      line = line.split(',')
-      x  = float(line[0])
-      y  = float(line[1])
-      z  = float(line[2])
-      vz = float(line[5])
+      inFile = open(dataFile, 'r')
+      for (iHalo,line) in enumerate(inFile):
+        line = line.split(',')
+        if minHaloMass == "none" or float(line[6]) > minHaloMass:
+          x  = float(line[0])
+          y  = float(line[1])
+          z  = float(line[2])
+          vz = float(line[5])
 
-      # write to output file
-      outFile.write("%e %e %e %e\n" %(x,y,z,vz))
+          # write to output file
+          outFile.write("%d %e %e %e %e\n" %(iHalo,x,y,z,vz))
 
-    inFile.close()
-    outFile.close()
+      inFile.close()
+      outFile.close()
 
 # -----------------------------------------------------------------------------
 # now the SDSS HOD
@@ -382,24 +430,25 @@ BOX_SIZE   {boxSize}
 root_filename hod
                """
 
-if args.script or args.all:
+if (args.script or args.all) and dataFormat == "multidark":
   print " Doing DR7 HOD scripts"
   if dataFormat == "multidark":
-    writeScript(prefix, 
-              "hod_dr72dim2", scriptDir, catalogDir, redshifts, 
+    setName = prefix+"hod_dr72dim2"
+    writeScript(setName, "md.hod_dr72dim2_z",
+              scriptDir, catalogDir, fileNums, redshifts, 
               numSubvolumes, numSlices, False, lbox, 5, omegaM)
-    writeScript(prefix, 
-              "hod_dr72dim2", scriptDir, catalogDir, redshifts, 
+    writeScript(setName, "md.hod_dr72dim2_z",
+              scriptDir, catalogDir, fileNums, redshifts, 
               numSubvolumes, numSlices, True, lbox, 5, omegaM)
 
 if args.hod or args.all:
   print " Doing DR7 HOD"
-  for redshift in redshifts:
+  for (iRedshift, redshift) in enumerate(redshifts):
     print "  z = ", redshift
 
     parFileName = "./hod.par"
     parFile = open(parFileName, 'w')
-    haloFile = catalogDir+"/mdr1_halos_z"+redshift
+    haloFile = catalogDir+"/mdr1_halos_z"+fileNums[iRedshift]
     parFile.write(parFileText.format(omegaM=omegaM,
                                      hubble=hubble,
                                      redshift=redshift,
@@ -415,7 +464,7 @@ if args.hod or args.all:
 
     os.system(hodPath+" "+parFileName+">& /dev/null")
 
-    sampleName = getSampleName("hod_dr72dim2", redshift, False)
+    sampleName = getSampleName("md.hod_dr72dim2", redshift, False)
     outFileName = catalogDir+"/"+sampleName+".dat"
     os.system("mv hod.mock" + " " + outFileName)
 
@@ -423,24 +472,26 @@ if args.hod or args.all:
 
 # -----------------------------------------------------------------------------
 # now the BOSS HOD
-if args.script or args.all:
+if (args.script or args.all) and dataFormat == "multidark":
   print " Doing DR9 HOD scripts"
   if dataFormat == "multidark":
-    writeScript(prefix, 
-              "hod_dr9mid", scriptDir, catalogDir, redshifts, 
-               numSubvolumes, numSlices, False, lbox, 5, omegaM)
-    writeScript(prefix, 
-              "hod_dr9mid", scriptDir, catalogDir, redshifts, 
-               numSubvolumes, numSlices, True, lbox, 5, omegaM)
+    setName = prefix+"hod_dr9mid"
+    writeScript(setName, "md.hod_dr9mid_z",
+              scriptDir, catalogDir, fileNums, redshifts, 
+               numSubvolumes, numSlices, False, lbox, 15, omegaM)
+    writeScript(setName, "md.hod_dr9mid_z",
+              scriptDir, catalogDir, fileNums, redshifts, 
+               numSubvolumes, numSlices, True, lbox, 15, omegaM)
 
 if args.hod or args.all:
   print " Doing DR9 HOD"
-  for redshift in redshifts:
+  for (iRedshift, redshift) in enumerate(redshifts):
     print "  z = ", redshift
 
+    # these parameters come from Manera et al 2012, eq. 26
     parFileName = "./hod.par"
     parFile = open(parFileName, 'w')
-    haloFile = catalogDir+"/mdr1_halos_z"+redshift
+    haloFile = catalogDir+"/mdr1_halos_z"+fileNums[iRedshift]
     parFile.write(parFileText.format(omegaM=omegaM,
                                      hubble=hubble,
                                      redshift=redshift,
@@ -456,7 +507,7 @@ if args.hod or args.all:
 
     os.system(hodPath+" "+parFileName+">& /dev/null")
 
-    sampleName = getSampleName("hod_dr9mid", redshift, False)
+    sampleName = getSampleName("md.hod_dr9mid", redshift, False)
     outFileName = catalogDir+"/"+sampleName+".dat"
     os.system("mv hod.mock" + " " + outFileName)
 

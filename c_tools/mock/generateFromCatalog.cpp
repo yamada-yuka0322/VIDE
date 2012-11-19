@@ -27,6 +27,7 @@ struct NYU_Data
   double cz;
   double fgotten;
   double phi_z;
+  double uniqueID;
 };
 
 struct Position
@@ -40,6 +41,8 @@ struct ParticleData
   vector<double> ra;
   vector<double> dec;
   vector<double> redshift;
+  vector<double> catalogID;
+  vector<double> uniqueID;
   int id_mask;
   // PMS
   int mask_index;
@@ -85,6 +88,7 @@ void loadData(const string& fname, NYU_VData & data)
     {
       NYU_Data d;
       f >> d.index >> d.sector >> d.region >> d.ra >> d.dec >> d.cz >> d.fgotten >> d.phi_z;
+      d.uniqueID = d.index;
       data.push_back(d);
     }
 }
@@ -125,6 +129,7 @@ void generateGalaxiesInCube(NYU_VData& data, ParticleData& output_data,
   output_data.ra.resize(data.size());
   output_data.dec.resize(data.size());
   output_data.redshift.resize(data.size());
+  output_data.uniqueID.resize(data.size());
 
   for (int j = 0; j < 3; j++)
     {
@@ -143,7 +148,6 @@ void generateGalaxiesInCube(NYU_VData& data, ParticleData& output_data,
                                         1.e-6, 
                                         1.e-6, &result, &error, &nEval);
         double Dc = result*LIGHT_SPEED;
-        cout << "HELLO " << data[i].cz << " " << Dc << endl;
         p.xyz[0] = Dc*cos(ra)*cos(dec);
         p.xyz[1] = Dc*sin(ra)*cos(dec);
         p.xyz[2] = Dc*sin(dec);
@@ -157,6 +161,7 @@ void generateGalaxiesInCube(NYU_VData& data, ParticleData& output_data,
       output_data.ra[i] = ra;
       output_data.dec[i] = dec;
       output_data.redshift[i] = data[i].cz;
+      output_data.uniqueID[i] = data[i].uniqueID;
 
       for (int j = 0; j < 3; j++)
 	{
@@ -273,6 +278,7 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
     output_data.ra.push_back(-1);
     output_data.dec.push_back(-1);
     output_data.redshift.push_back(-1);
+    output_data.uniqueID.push_back(-1);
 //printf("INSERT MOCK %d %e %e %e\n", idx, p.xyz[0], p.xyz[1], p.xyz[2]);
     insertion++;
   }
@@ -289,10 +295,10 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
 
   int nPart = 100;
 // TEST
-  for (int iDir = 0; iDir < 0; iDir++) {
-  for (int iFace = 0; iFace < 0; iFace++) {
-  //for (int iDir = 0; iDir < 3; iDir++) {
-  //for (int iFace = 0; iFace < 2; iFace++) {
+  //for (int iDir = 0; iDir < 0; iDir++) {
+  //for (int iFace = 0; iFace < 0; iFace++) {
+  for (int iDir = 0; iDir < 3; iDir++) {
+  for (int iFace = 0; iFace < 2; iFace++) {
 
     int iy = (iDir + 1) % 3;
     int iz = (iDir + 2) % 3;
@@ -310,6 +316,7 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
       output_data.ra.push_back(-1);
       output_data.dec.push_back(-1);
       output_data.redshift.push_back(-1);
+      output_data.uniqueID.push_back(-1);
       insertion++;
 
       fprintf(fp, "%e %e %e\n", 
@@ -341,6 +348,7 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
       output_data.ra.push_back(-1);
       output_data.dec.push_back(-1);
       output_data.redshift.push_back(-1);
+      output_data.uniqueID.push_back(-1);
       insertion++;
       fprintf(fp, "%e %e %e\n", 
               (p.xyz[0]),
@@ -357,6 +365,7 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
     output_data.ra.push_back(-1);
     output_data.dec.push_back(-1);
     output_data.redshift.push_back(-1);
+    output_data.uniqueID.push_back(-1);
     insertion++;
     fprintf(fp, "%e %e %e\n", 
             (p.xyz[0]),
@@ -401,6 +410,7 @@ void saveForZobov(ParticleData& pdata, const string& fname, const string& paramn
   UnformattedWrite f(fname);
   static const char axis[] = { 'X', 'Y', 'Z' };
   double Lmax = pdata.Lmax;
+  double r2d = 180./M_PI;
 
   f.beginCheckpoint();
   f.writeInt32(pdata.pos.size());
@@ -418,6 +428,34 @@ void saveForZobov(ParticleData& pdata, const string& fname, const string& paramn
       f.endCheckpoint();
     }
 
+  cout << format("Writing RA...")  << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < pdata.pos.size(); i++) {
+	  f.writeReal32(pdata.ra[i]*r2d);
+	}
+  f.endCheckpoint();
+   
+  cout << format("Writing Dec...")  << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < pdata.pos.size(); i++) {
+	  f.writeReal32(pdata.dec[i]*r2d);
+	}
+  f.endCheckpoint();
+    
+  cout << format("Writing Redshift...")  << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < pdata.pos.size(); i++) {
+	  f.writeReal32(pdata.redshift[i]);
+	}
+  f.endCheckpoint();
+   
+  cout << format("Writing Unique ID...")  << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < pdata.pos.size(); i++) {
+	  f.writeReal32(pdata.uniqueID[i]);
+	}
+  f.endCheckpoint();
+   
   NcFile fp(paramname.c_str(), NcFile::Replace);
 
   fp.add_att("range_x_min", -Lmax/100.);
@@ -433,9 +471,6 @@ void saveForZobov(ParticleData& pdata, const string& fname, const string& paramn
 
   NcDim *NumPart_dim = fp.add_dim("numpart_dim", nOutputPart);
   NcVar *v = fp.add_var("particle_ids", ncInt, NumPart_dim);
-  NcVar *vra = fp.add_var("RA", ncInt, NumPart_dim);
-  NcVar *vdec = fp.add_var("DEC", ncInt, NumPart_dim);
-  NcVar *vredshift = fp.add_var("z", ncInt, NumPart_dim);
   //NcVar *v2 = fp.add_var("expansion", ncDouble, NumPart_dim);
 
   //double *expansion_fac = new double[pdata.pos.size()];
@@ -444,12 +479,23 @@ void saveForZobov(ParticleData& pdata, const string& fname, const string& paramn
   //  expansion_fac[i] = 1.0;
 
   v->put(&pdata.id_gal[0], nOutputPart);
-  vra->put(&pdata.ra[0], nOutputPart);
-  vdec->put(&pdata.dec[0], nOutputPart);
-  vredshift->put(&pdata.redshift[0], nOutputPart);
   //v2->put(expansion_fac, pdata.pos.size());
 
   //delete[] expansion_fac;
+
+/*
+  FILE *infoFile = fopen("sample_info.txt", "w");
+  fprintf(infoFile, "x_min = %f\n", -Lmax/100.);  
+  fprintf(infoFile, "x_max = %f\n", Lmax/100.);
+  fprintf(infoFile, "y_min = %f\n", -Lmax/100.);  
+  fprintf(infoFile, "y_max = %f\n", Lmax/100.);  
+  fprintf(infoFile, "z_min = %f\n", -Lmax/100.);
+  fprintf(infoFile, "z_max = %f\n", Lmax/100.);
+  fprintf(infoFile, "mask_index = %d\n", pdata.mask_index);
+  fprintf(infoFile, "total_particles = %d\n", pdata.pos.size());
+  fclose(infoFile);
+*/
+
 }
 
 int main(int argc, char **argv)
@@ -500,6 +546,7 @@ int main(int argc, char **argv)
   mask.Import(o_mask);
 
   computeContourPixels(mask,pixel_list);
+  computeMaskPixels(mask,full_mask_list);
 
   // We compute a cube holding all the galaxies + the survey surface mask
 
@@ -514,12 +561,6 @@ int main(int argc, char **argv)
   // PMS
   FILE *fp = fopen("mask_index.txt", "w");
   fprintf(fp, "%d", output_data.mask_index);
-  fclose(fp);
-
-  fp = fopen("sample_info.txt", "w");
-  fprintf(fp, "Lmax = %f\n", output_data.Lmax);
-  fprintf(fp, "mask_index = %d\n", output_data.mask_index);
-  fprintf(fp, "total_particles = %d\n", output_data.pos.size());
   fclose(fp);
 
   fp = fopen("total_particles.txt", "w");

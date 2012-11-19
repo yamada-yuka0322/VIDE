@@ -5,6 +5,7 @@
 from void_python_tools.backend import *
 from void_python_tools.plotting import *
 import imp
+import pickle
 
 # ------------------------------------------------------------------------------
 
@@ -23,9 +24,8 @@ if (len(sys.argv) > 1):
   filename = sys.argv[1]
   print " Loading parameters from", filename
   if not os.access(filename, os.F_OK):
-    print "  Cannot find parameter file!"
+    print "  Cannot find parameter file %s!" % filename
     exit(-1)
-  #parms = __import__(filename[:-3], globals(), locals(), ['*'])
   parms = imp.load_source("name", filename)
   globals().update(vars(parms))
 else:
@@ -61,6 +61,27 @@ for sample in dataSampleList:
   if not os.access(zobovDir, os.F_OK):
     os.makedirs(zobovDir)
 
+  # save this sample's information
+  with open(zobovDir+"/sample_info.dat", 'w') as output:
+    pickle.dump(sample, output, pickle.HIGHEST_PROTOCOL)
+
+  fp = open(zobovDir+"/sample_info.txt", 'w')
+  fp.write("Sample name: %s\n" % sample.fullName)
+  fp.write("Sample nickname: %s\n" % sample.nickName)
+  fp.write("Data type: %s\n" % sample.dataType)
+  fp.write("Redshift range: %f - %f\n" %(sample.zBoundary[0],sample.zBoundary[1]))
+  fp.write("Estimated mean particle separation: %g\n" % sample.minVoidRadius)
+
+  if (sample.dataType == "simulation"):
+    fp.write("Particles placed on lightcone: %g\n" % sample.useLightCone)
+    fp.write("Peculiar velocities included: %g\n" % sample.usePecVel)
+    fp.write("Additional subsampling fraction: %g\n" % sample.subsample)
+    fp.write("Simulation box length (Mpc/h): %g\n" % sample.boxLen)
+    fp.write("Simulation Omega_M: %g\n" % sample.omegaM)
+    fp.write("Number of simulation subvolumes: %g\n", sample.numSubvolumes)
+    fp.write("My subvolume index: %g\n", sample.mySubvolume)
+  fp.close()
+
 # ---------------------------------------------------------------------------
   if (startCatalogStage <= 1) and (endCatalogStage >= 1) and not sample.isCombo:
     print "  Extracting tracers from catalog...",
@@ -84,7 +105,8 @@ for sample in dataSampleList:
     sys.stdout.flush()
 
     launchZobov(sample, ZOBOV_PATH, zobovDir=zobovDir, logDir=logDir, 
-                continueRun=continueRun)
+                continueRun=continueRun, numZobovDivisions=numZobovDivisions,
+                 numZobovThreads=numZobovThreads)
 
   # -------------------------------------------------------------------------
   if (startCatalogStage <= 3) and (endCatalogStage >= 3) and not sample.isCombo:
@@ -108,6 +130,11 @@ if (startCatalogStage <= 4) and (endCatalogStage >= 4):
   sys.stdout.flush()
 
   for thisDataPortion in dataPortions:
-    plotNumberCounts(workDir, dataSampleList, figDir, showPlot=True, dataPortion=thisDataPortion, setName=setName)
+    plotRedshiftDistribution(workDir, dataSampleList, figDir, showPlot=False, 
+                             dataPortion=thisDataPortion, setName=setName)
+    plotSizeDistribution(workDir, dataSampleList, figDir, showPlot=False, 
+                             dataPortion=thisDataPortion, setName=setName)
+    plotNumberDistribution(workDir, dataSampleList, figDir, showPlot=False, 
+                             dataPortion=thisDataPortion, setName=setName)
 
 print "\n Done!"

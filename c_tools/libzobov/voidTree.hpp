@@ -126,8 +126,8 @@ public:
         // Go bigger, though I would say we should not to.
       }
     while (iter_candidate != candidateList.begin()) ;
-    if (vid_good_candidate < 0)
-      std::cout << "Failure to lookup parent (2)" << std::endl;
+    //if (vid_good_candidate < 0)
+    //  std::cout << "Failure to lookup parent (2)" << std::endl;
     return vid_good_candidate;
   }
 
