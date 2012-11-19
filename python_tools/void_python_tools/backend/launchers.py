@@ -76,6 +76,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
     if os.access("contour_map.fits", os.F_OK):
       os.system("mv %s %s" % ("contour_map.fits", zobovDir))
+      os.system("mv %s %s" % ("mask_map.fits", zobovDir))
 
     if os.access("comoving_distance.txt", os.F_OK):
       os.system("mv %s %s" % ("comoving_distance.txt", zobovDir))
@@ -378,8 +379,8 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   %s
   ranSeed %d
   dataPortion %s
-  barycenters %s
-  boundaryDistances %s
+  #barycenters %s
+  #boundaryDistances %s
   %s
   """ % \
   (zobovDir+"/voidDesc_"+thisDataPortion+"_"+sampleName+".out",

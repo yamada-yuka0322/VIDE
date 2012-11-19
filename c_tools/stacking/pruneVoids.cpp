@@ -272,7 +272,7 @@ int main(int argc, char **argv) {
   for (iVoid = 0; iVoid < numVoids; iVoid++) {
 
     voidID = voids[iVoid].voidID;
-      printf("  DOING %d (of %d) %d %d %f\n", iVoid, numVoids, voidID, 
+    printf("  DOING %d (of %d) %d %d %f\n", iVoid, numVoids, voidID, 
                                            voids[iVoid].numPart, 
                                            voids[iVoid].radius);
 
@@ -349,22 +349,22 @@ int main(int argc, char **argv) {
     voids[iVoid].centralDen = centralDen / (4./3. * M_PI * pow(centralRad, 3./2.));
 
     // compute maximum extent
-    //if (args_info.isObservation_flag) {
-   //   maxDist = 0.;
-   //   for (p = 0; p < voids[iVoid].numPart; p++) {
-   //   for (p2 = p; p2 < voids[iVoid].numPart; p2++) {
+    if (args_info.isObservation_flag) {
+      maxDist = 0.;
+      for (p = 0; p < voids[iVoid].numPart; p++) {
+      for (p2 = p; p2 < voids[iVoid].numPart; p2++) {
   
-//        dist[0] = voidPart[p].x - voidPart[p2].x;
-//        dist[1] = voidPart[p].y - voidPart[p2].y;
-//        dist[2] = voidPart[p].z - voidPart[p2].z;
+        dist[0] = voidPart[p].x - voidPart[p2].x;
+        dist[1] = voidPart[p].y - voidPart[p2].y;
+        dist[2] = voidPart[p].z - voidPart[p2].z;
 
-//        dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
-//        if (dist2 > maxDist) maxDist = dist2;
-//      }
-//      }
-//      voids[iVoid].maxRadius = sqrt(maxDist)/2.;
-//    } else {
-     maxDist = 0.;
+        dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
+        if (dist2 > maxDist) maxDist = dist2;
+      }
+      }
+      voids[iVoid].maxRadius = sqrt(maxDist)/2.;
+    } else {
+      maxDist = 0.;
       for (p = 0; p < voids[iVoid].numPart; p++) {
   
         dist[0] = voidPart[p].x - voids[iVoid].barycenter[0];
@@ -379,7 +379,7 @@ int main(int argc, char **argv) {
         if (dist2 > maxDist) maxDist = dist2;
       }
       voids[iVoid].maxRadius = sqrt(maxDist);
-//    }
+    }
     
     if (args_info.isObservation_flag) {
       // compute distance from center to nearest mock
@@ -447,12 +447,14 @@ int main(int argc, char **argv) {
   }
 
   for (iVoid = 0; iVoid < numVoids; iVoid++) {
-// TEST
-    //if (voids[iVoid].densCon > 1.5) {
-    //  voids[iVoid].accepted = 0;
-    //}
-// END TEST
-
+    if (voids[iVoid].densCon < 1.5) {
+      //voids[iVoid].accepted = 0;
+    }
+ 
+    // toss out voids that are obviously wrong
+    if (voids[iVoid].densCon > 1.e3) {
+      voids[iVoid].accepted = 0;
+    }
 
     if (strcmp(args_info.dataPortion_arg, "edge")  == 0 &&
         tolerance*voids[iVoid].maxRadius < voids[iVoid].nearestMock) {
@@ -471,7 +473,6 @@ int main(int argc, char **argv) {
     if (voids[iVoid].centralDen > args_info.maxCentralDen_arg) {
       voids[iVoid].accepted = -1;
     }
-
   }
 
   numKept = 0;
@@ -489,7 +490,7 @@ int main(int argc, char **argv) {
   fpSkyPositions = fopen(args_info.outSkyPositions_arg, "w");
   fprintf(fp, "%d particles, %d voids.\n", mockIndex, numKept);
   fprintf(fp, "see column in master void file\n");
-  fprintf(fpInfo, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID\n");
+  fprintf(fpInfo, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast\n");
   fprintf(fpSkyPositions, "# RA, dec, redshift, radius (Mpc/h), void ID\n");
   for (iVoid = 0; iVoid < numVoids; iVoid++) {
 
