@@ -115,6 +115,7 @@ SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift,
   for (int k = 0; k < 3; k++)
     outd->Pos[k] = new float[outd->NumPart];
   outd->Vel[2] = new float[outd->NumPart];
+  outd->Id = new int[outd->NumPart];
   delete d;
 
   int curCpu = singleFile ? -1 : 0;
@@ -127,15 +128,20 @@ SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift,
 	  for (int k = 0; k < 3; k++)
 	    for (int i = 0; i < d->NumPart; i++)
 	      {
-		assert(d->Id[i] >= 1);
-		assert(d->Id[i] <= outd->TotalNumPart);
-		outd->Pos[k][d->Id[i]-1] = d->Pos[k][i]/1000;
-		outd->Vel[2][d->Id[i]-1] = d->Vel[velAxis][i];
+		int pid = d->Id[i]-1;
+		assert(pid >= 0);
+		assert(pid < outd->TotalNumPart);
+		outd->Pos[k][pid] = d->Pos[k][i]/1000;
+		outd->Vel[2][pid] = d->Vel[velAxis][i];
+		outd->Id[pid] = pid+1;
 	      }
 	  
 	  if (goRedshift)
 	    for (int i = 0; i < d->NumPart; i++)
-	      outd->Pos[velAxis][d->Id[i]-1] += d->Vel[velAxis][i]/100.;
+	      {
+		int pid = d->Id[i]-1;
+		outd->Pos[velAxis][pid] += d->Vel[velAxis][i]/100.;
+	      }
 
 	  delete d;
           if (singleFile)
@@ -182,7 +188,7 @@ SimuData *doLoadMultidark(const char *multidarkname)
 
   cout << "loading multidark particles" << endl;
   actualNumPart = 0;
-	for (int i = 0; i < outd->NumPart; i++) {
+  for (int i = 0; i < outd->NumPart; i++) {
     fscanf(fp, "%d %d %f %f %f\n", &outd->Id[i], 
                                 &outd->Pos[0][i], &outd->Pos[1][i], 
                                 &outd->Pos[2][i], &outd->Vel[2][i]);
@@ -476,7 +482,7 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
 	      assert(boxed->Pos[j][k] > 0);
 	      assert(boxed->Pos[j][k] < 1);
 	    }
-	  particle_id[k] = i;
+	  particle_id[k] = simu->Id[i]-1;
           expansion_fac[k] = efac[i];
 	  k++;
 	}
