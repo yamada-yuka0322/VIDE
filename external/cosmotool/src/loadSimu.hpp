@@ -77,7 +77,7 @@ namespace CosmoTool
       if (i == attributes.end())
 	return 0;
       
-      return reinterpret_cast<T *>(i->first);
+      return reinterpret_cast<T *>(i->second.first);
     }
 
     void new_attribute(const std::string& n, void *p, FreeFunction free_func)

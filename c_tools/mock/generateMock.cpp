@@ -21,6 +21,14 @@ using namespace CosmoTool;
 
 static double gadgetUnit=1e-3;
 
+template<typename T>
+void delete_adaptor(void *ptr)
+{
+  T *ptr_T = reinterpret_cast<T *>(ptr);
+
+  delete[] ptr_T;
+}
+
 SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRedshift)
 {
   SimuData *d, *outd;
@@ -186,7 +194,9 @@ SimuData *doLoadMultidark(const char *multidarkname)
     outd->Pos[k] = new float[outd->NumPart];
   outd->Vel[2] = new float[outd->NumPart];
   outd->Id = new int[outd->NumPart];
-  outd->uniqueID = new float[outd->NumPart];
+  long *uniqueID = new long[outd->NumPart];
+
+  outd->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
 
   cout << "loading multidark particles" << endl;
   actualNumPart = 0;
@@ -196,8 +206,8 @@ SimuData *doLoadMultidark(const char *multidarkname)
                                 &outd->Pos[0][i], &outd->Pos[1][i], 
                                 &outd->Pos[2][i], &outd->Vel[2][i]);
 
-    outd->uniqueID[i] = 1.0;
-    //outd->uniqueID[i] = 1.0 * outd->Id[i];
+    uniqueID[i] = 1;
+    //uniqueID[i] = 1 * outd->Id[i];
 
     if (outd->Id[i] == -99 && 
         outd->Pos[0][i] == -99 && outd->Pos[1][i] == -99 && 
@@ -400,15 +410,19 @@ void generateOutput(SimuData *data, int axis,
     }
   f.endCheckpoint();
 
-  cout << "Writing unique ID..." << endl;
-  f.beginCheckpoint();
-  for (uint32_t i = 0; i < data->NumPart; i++)
+  long *uniqueID = data->as<long>("uniqueID");
+  if (uniqueID != 0)
     {
-      //printf("HELLO %d %d\n", i, data->Id[i]);
-      //f.writeReal32(data->Id[i]);
-      f.writeReal32(data->uniqueID[i]);
+      cout << "Writing unique ID..." << endl;
+      f.beginCheckpoint();
+      for (uint32_t i = 0; i < data->NumPart; i++)
+	{
+	  //printf("HELLO %d %d\n", i, data->Id[i]);
+	  //f.writeReal32(data->Id[i]);
+	  f.writeInt64(uniqueID[i]);
+	}
+      f.endCheckpoint();
     }
-  f.endCheckpoint();
 }
 
 void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& args_info)
@@ -468,8 +482,10 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
       boxed->Vel[j] = 0;
       mul[j] = 1.0/(ranges[j][1] - ranges[j][0]);
     }
-  boxed->uniqueID = new float[goodParticles];
-
+  long *uniqueID = new long[goodParticles];
+  long *simu_uniqueID = simu->as<long>("uniqueID");
+  boxed->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
+  
   cout << "Rescaling factors = " << mul[0] << " " << mul[1] << " " << mul[2] << endl;
   boxed->NumPart = goodParticles;
 
@@ -490,7 +506,7 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
 	      assert(boxed->Pos[j][k] < 1);
 	    }
 	  particle_id[k] = simu->Id[i]-1;
-	  boxed->uniqueID[k] = simu->uniqueID[i];
+	  uniqueID[k] = simu_uniqueID[i];
           expansion_fac[k] = efac[i];
 	  k++;
 	}
