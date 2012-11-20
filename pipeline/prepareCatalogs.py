@@ -364,7 +364,7 @@ if args.halos or args.all:
           numPart += 1
       inFile.close()
 
-      sampleName = "md.halos_z"+redshift
+      sampleName = "md.halos_min"+str(minHaloMass)+"_z"+redshift
       outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
 
       outFile.write("%f\n" %(lbox))
@@ -385,6 +385,7 @@ if args.halos or args.all:
           # write to output file
           outFile.write("%d %e %e %e %e\n" %(iHalo,x,y,z,vz))
 
+      outFile.write("-99 -99 -99 -99 -99\n")
       inFile.close()
       outFile.close()
 

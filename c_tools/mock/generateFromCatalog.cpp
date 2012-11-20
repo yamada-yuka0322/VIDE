@@ -295,10 +295,10 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
 
   int nPart = 100;
 // TEST
-  //for (int iDir = 0; iDir < 0; iDir++) {
-  //for (int iFace = 0; iFace < 0; iFace++) {
-  for (int iDir = 0; iDir < 3; iDir++) {
-  for (int iFace = 0; iFace < 2; iFace++) {
+  for (int iDir = 0; iDir < 0; iDir++) {
+  for (int iFace = 0; iFace < 0; iFace++) {
+  //for (int iDir = 0; iDir < 3; iDir++) {
+  //for (int iFace = 0; iFace < 2; iFace++) {
 
     int iy = (iDir + 1) % 3;
     int iz = (iDir + 2) % 3;
@@ -334,7 +334,7 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
   // TEST - insert mock galaxies along spheres of survey redshift boundaries
   fp = fopen("mock_sphere.txt", "w");
 
-  for (int p = 0; p < full_mask_list.size(); p++) {
+    for (int p = 0; p < full_mask_list.size(); p++) {
 	  vec3 v = mask.pix2vec(full_mask_list[p]);
 	  
     Position p;

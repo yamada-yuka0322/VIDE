@@ -451,28 +451,29 @@ int main(int argc, char **argv) {
       //voids[iVoid].accepted = 0;
     }
  
+    if (voids[iVoid].centralDen > args_info.maxCentralDen_arg) {
+      voids[iVoid].accepted = -1;
+    }
+
     // toss out voids that are obviously wrong
     if (voids[iVoid].densCon > 1.e3) {
-      voids[iVoid].accepted = 0;
+      voids[iVoid].accepted = -4;
     }
 
     if (strcmp(args_info.dataPortion_arg, "edge")  == 0 &&
         tolerance*voids[iVoid].maxRadius < voids[iVoid].nearestMock) {
-      voids[iVoid].accepted = 0;
+      voids[iVoid].accepted = -3;
     }
 
     if (strcmp(args_info.dataPortion_arg, "central") == 0 && 
         tolerance*voids[iVoid].maxRadius > voids[iVoid].nearestMock) {
-      voids[iVoid].accepted = 0;
+      voids[iVoid].accepted = -3;
     }
 
     if (voids[iVoid].radius < args_info.rMin_arg) {
-      voids[iVoid].accepted = 0;
+      voids[iVoid].accepted = -2;
     }
 
-    if (voids[iVoid].centralDen > args_info.maxCentralDen_arg) {
-      voids[iVoid].accepted = -1;
-    }
   }
 
   numKept = 0;
@@ -559,7 +560,7 @@ int main(int argc, char **argv) {
   fprintf(fpInfo, "# center x,y,z (km/s), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID\n");
   for (iVoid = 0; iVoid < numVoids; iVoid++) {
 
-    if (voids[iVoid].accepted == 0) continue;
+    if (voids[iVoid].accepted < -1) continue;
 
      double outCenter[3];
      outCenter[0] = voids[iVoid].barycenter[0];

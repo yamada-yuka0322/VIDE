@@ -78,8 +78,8 @@ for sample in dataSampleList:
     fp.write("Additional subsampling fraction: %g\n" % sample.subsample)
     fp.write("Simulation box length (Mpc/h): %g\n" % sample.boxLen)
     fp.write("Simulation Omega_M: %g\n" % sample.omegaM)
-    fp.write("Number of simulation subvolumes: %g\n", sample.numSubvolumes)
-    fp.write("My subvolume index: %g\n", sample.mySubvolume)
+    fp.write("Number of simulation subvolumes: %s\n" % sample.numSubvolumes)
+    fp.write("My subvolume index: %s\n" % sample.mySubvolume)
   fp.close()
 
 # ---------------------------------------------------------------------------

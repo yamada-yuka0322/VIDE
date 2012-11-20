@@ -1,13 +1,10 @@
 After compiling, go to the pipeline directory.
 
-Edit the parameters at the top of prepareGadgetCatalog.py: decide
-where to put outputs, how many redshifts to do, how many slices,
-subdivisions, subsamples, etc. etc.
+Create a dataset parameter file. Look at datasets/multidark.py for 
+an example. Describe the simulation, where to put outputs, how many 
+redshift slices, subvolumes, etc. etc.
 
-Note that eventually prepareGadgetCatalog will be replaced by the more
-general and flexible prepareCatalogs.
-
-prepareGadgetCatalogs will produce a pipeline script for each
+prepareCatalogs will produce a pipeline script for each
 subsampling you choose. If you have multiple redshift particle files,
 and choose multiple slices and/or subdivisions, they will be packaged
 in the same pipeline script.
@@ -22,16 +19,10 @@ Check the logfiles for any error messages.
 See the README of the public void catalog for the format of the
 outputs.
 
-I'm also working on incorporating plotting into the pipeline script,
-so that you can immediately get some basic info about the voids.
-
 Please do not change the outputs of pruneVoids etc. without
 discussion, since further analysis relies on the current formats.
 
 If you're wondering why these scripts are rather complex, it's because
 it can also support A-P analysis, which is much more complicated :)
-
-We can talk about ways to incorporate your analysis into the pipline
-and to have your tools under this umbrella.
 
 Good luck!

@@ -55,7 +55,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
              sample.zBoundary[0], sample.zBoundary[1], sample.fakeDensity,
              useLCDMFlag)
 
-    parmFile = os.getcwd()+"/generate.par"
+    parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
 
     file(parmFile, mode="w").write(conf)
 
@@ -143,7 +143,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
              sample.zBoundaryMpc[0], sample.zBoundaryMpc[1],
              sample.subsample)
 
-    parmFile = os.getcwd()+"/generate.par"
+    parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
 
     file(parmFile, mode="w").write(conf)
 
@@ -405,7 +405,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
    zobovDir+"/boundaryDistances_"+thisDataPortion+"_"+sampleName+".out",
    rescaleFlag)
 
-  parmFile = os.getcwd()+"/stack.par"
+  parmFile = os.getcwd()+"/stack_"+sample.fullName+".par"
 
   fp = file(parmFile, mode="w")
   fp.write(conf)
