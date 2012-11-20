@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <algorithm>
 #include <CosmoTool/loadSimu.hpp>
 #include <CosmoTool/loadRamses.hpp>
 #include <CosmoTool/loadGadget.hpp>
@@ -189,7 +190,7 @@ SimuData *doLoadMultidark(const char *multidarkname)
   cout << "loading multidark particles" << endl;
   actualNumPart = 0;
   for (int i = 0; i < outd->NumPart; i++) {
-    fscanf(fp, "%d %d %f %f %f\n", &outd->Id[i], 
+    fscanf(fp, "%d %f %f %f %f\n", &outd->Id[i], 
                                 &outd->Pos[0][i], &outd->Pos[1][i], 
                                 &outd->Pos[2][i], &outd->Vel[2][i]);
 
@@ -569,16 +570,25 @@ void makeBoxFromParameter(SimuData *simu, double *efac, SimuData* &boxed, genera
     }
   
   uint32_t k = 0;
+  uint32_t max_id = *std::max_element(simu->Id, simu->Id + simu->NumPart);
+  uint32_t min_id = *std::min_element(simu->Id, simu->Id + simu->NumPart);
+  uint32_t *id_to_part = new uint32_t[max_id-min_id+1];
+  for (uint32_t i = 0; i < simu->NumPart; i++)
+    id_to_part[simu->Id[i]-min_id] = i;
+
   for (uint32_t i = 0; i < boxed->NumPart; i++)
     {
       int id = particle_id[i];
+      assert(id >= min_id && id <= max_id);
+      int pid = id_to_part[id-min_id];
 
       for (int j = 0; j < 3; j++)
 	{
-	  boxed->Pos[j][i] = (simu->Pos[j][id]-ranges[j][0])*mul[j];
+	  boxed->Pos[j][i] = (simu->Pos[j][pid]-ranges[j][0])*mul[j];
 	}
     } 
 
+  delete[] id_to_part;
   delete[] particle_id;
 }
 
