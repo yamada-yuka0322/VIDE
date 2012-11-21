@@ -506,7 +506,7 @@ void makeBox(SimuData *simu, double *efac, SimuData *&boxed, generateMock_info& 
 	      assert(boxed->Pos[j][k] < 1);
 	    }
 	  particle_id[k] = simu->Id[i]-1;
-	  uniqueID[k] = simu_uniqueID[i];
+	  uniqueID[k] = (simu_uniqueID != 0) ? simu_uniqueID[i] : 0;
           expansion_fac[k] = efac[i];
 	  k++;
 	}
