@@ -461,7 +461,8 @@ void createBox(SimuData *simu, long num_targets, std::vector<long> snapshot_spli
 {
   double *ranges = new double[6];
   double *mul = new double[3];
- 
+  long *simu_uniqueID = simu->as<long>("uniqueID");
+
   ranges[0] = args_info.rangeX_min_arg;
   ranges[1] = args_info.rangeX_max_arg;
   ranges[2] = args_info.rangeY_min_arg;
@@ -488,7 +489,6 @@ void createBox(SimuData *simu, long num_targets, std::vector<long> snapshot_spli
   cout << "Rescaling factors = " << mul[0] << " " << mul[1] << " " << mul[2] << endl;
 
   long *uniqueID = new long[num_targets];
-  long *simu_uniqueID = simu->as<long>("uniqueID");
   long *particle_id = new long[num_targets];
   double *expansion_fac = new double[num_targets];
   long *snap_split = new long[snapshot_split.size()];
@@ -522,6 +522,7 @@ void buildBox(SimuData *simu, const std::vector<long>& targets, long& loaded,
     {
       long pid = targets[i];
       
+      assert(loaded < targets.size());
       for (int j = 0; j < 3; j++)
 	{
 	  boxed->Pos[j][loaded] = (simu->Pos[j][pid]-ranges[j*2])*mul[j];
@@ -529,8 +530,8 @@ void buildBox(SimuData *simu, const std::vector<long>& targets, long& loaded,
 	  assert(boxed->Pos[j][loaded] < 1);
 	}
       particle_id[loaded] = pid;
-      uniqueID[loaded] = (simu_uniqueID != 0) ? simu_uniqueID[i] : 0;
-      expansion_fac[loaded] = efac[i];
+      uniqueID[loaded] = (simu_uniqueID != 0) ? simu_uniqueID[pid] : 0;
+      expansion_fac[loaded] = efac[pid];
       loaded++;
       k++;
     }
@@ -568,9 +569,6 @@ void saveBox(SimuData *&boxed, generateMock_info& args_info)
       NcVar *v4 = f.add_var("unique_ids", ncLong, NumPart_dim);
       v4->put(uniqueID, boxed->NumPart);
     }
-
-  delete[] particle_id;
-  delete[] expansion_fac;
 }
 
 void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& args_info)
