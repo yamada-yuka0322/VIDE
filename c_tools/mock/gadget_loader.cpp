@@ -98,6 +98,8 @@ SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLengt
     
   assert(d != 0);
   SimuData *header = d;
+
+  header->BoxSize *= Mpc_unitLength;
     
   if (!singleFile)
     {
