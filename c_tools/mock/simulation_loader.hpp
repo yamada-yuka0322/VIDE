@@ -10,7 +10,11 @@ protected:
   bool do_redshift;
   int redshift_axis;
 
-  SimulationLoader() {}
+  SimulationLoader() 
+  {
+    do_redshift = false;
+    redshift_axis = 2;
+  }
  
   void applyTransformations(CosmoTool::SimuData *s);
 

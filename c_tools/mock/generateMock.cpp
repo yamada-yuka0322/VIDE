@@ -573,7 +573,7 @@ int main(int argc, char **argv)
 	simu = doLoadSimulation(args_info.flash_arg, args_info.axis_arg, false, loadFlashMulti); 
       }
       */
-      loader = gadgetLoader(args_info.gadget_arg, args_info.gadgetUnit_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID);
+      loader = gadgetLoader(args_info.gadget_arg, 1/args_info.gadgetUnit_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID);
       if (loader == 0)
 	{
 	  cerr << "Error while loading " << endl;
