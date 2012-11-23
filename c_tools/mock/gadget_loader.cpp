@@ -88,6 +88,7 @@ SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLengt
       try
         {
           d = loadGadgetMulti(snapshot.c_str(), 0, 0);
+	  num_files = 0;
         }
       catch(const NoSuchFileException& e)
         {
@@ -100,11 +101,17 @@ SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLengt
     
   if (!singleFile)
     {
-      while ((d = loadGadgetMulti(snapshot.c_str(), num_files, 0)) != 0)
-       {
-         num_files++;
-         delete d;
-       }
+      try
+	{
+	  while ((d = loadGadgetMulti(snapshot.c_str(), num_files, 0)) != 0)
+	    {
+	      num_files++;
+	      delete d;
+	    }
+	}
+      catch(const NoSuchFileException& e)
+	{
+	}
     }
     
   return new GadgetLoader(snapshot, header, flags, singleFile, num_files, Mpc_unitLength);
