@@ -2,17 +2,18 @@
 #include <cassert>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <algorithm>
 #include <CosmoTool/loadSimu.hpp>
 #include <CosmoTool/loadRamses.hpp>
-#include <CosmoTool/loadGadget.hpp>
 #include <CosmoTool/loadFlash.hpp>
 #include <CosmoTool/interpolate.hpp>
 #include <CosmoTool/fortran.hpp>
 #include "generateMock_conf.h"
 #include "gslIntegrate.hpp"
 #include <netcdfcpp.h>
+#include "simulation_loader.hpp"
 
 using namespace std;
 using namespace CosmoTool;
@@ -20,155 +21,6 @@ using namespace CosmoTool;
 #define LIGHT_SPEED 299792.458
 
 static double gadgetUnit=1e-3;
-
-template<typename T>
-void delete_adaptor(void *ptr)
-{
-  T *ptr_T = reinterpret_cast<T *>(ptr);
-
-  delete[] ptr_T;
-}
-
-SimuData *doLoadRamses(const char *basename, int baseid, int velAxis, bool goRedshift)
-{
-  SimuData *d, *outd;
-
-  d = loadRamsesSimu(basename, baseid, -1, true, 0);
-  outd = new SimuData;
-
-  outd->NumPart = d->TotalNumPart;
-  outd->BoxSize = d->BoxSize;
-  outd->TotalNumPart = outd->NumPart;
-  outd->Hubble = d->Hubble;
-  outd->Omega_Lambda = d->Omega_Lambda;
-  outd->Omega_M = d->Omega_M;
-  outd->time = d->time;
-
-  for (int k = 0; k < 3; k++)
-    outd->Pos[k] = new float[outd->NumPart];
-  outd->Vel[2] = new float[outd->NumPart];
-  delete d;
-
-  int curCpu = 0;
-  cout << "loading cpu 0 " << endl;
-  while (d = loadRamsesSimu(basename, baseid, curCpu, true, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID))
-    {
-       for (int k = 0; k < 3; k++)
-         for (int i = 0; i < d->NumPart; i++)
-           {
-             assert(d->Id[i] >= 1);
-             assert(d->Id[i] <= outd->TotalNumPart);
-             outd->Pos[k][d->Id[i]-1] = d->Pos[k][i];
-             outd->Vel[2][d->Id[i]-1] = d->Vel[velAxis][i];
-           }
-
-       if (goRedshift)
-         for (int i = 0; i < d->NumPart; i++)
-            outd->Pos[velAxis][d->Id[i]-1] += d->Vel[velAxis][i]/100.;
-
-       delete d;
-       curCpu++;
-       cout << "loading cpu " << curCpu  << endl;
-    }
-
-  return outd;
-}
-
-
-
-SimuData *myLoadGadget(const char *fname, int id, int flags)
-{
-  SimuData *sim = loadGadgetMulti(fname, id, flags);
-  sim->BoxSize *= gadgetUnit;
-  for (int j = 0; j < 3; j++)
-  {
-    if (sim->Pos[j] != 0) {
-      for (long i = 0; i < sim->NumPart; i++)
-        sim->Pos[j][i] *= gadgetUnit;
-    }
-  }
-  return sim;
-}
-
-SimuData *doLoadSimulation(const char *gadgetname, int velAxis, bool goRedshift, SimuData *(*loadFunction)(const char *fname, int id, int flags))
-{
-  SimuData *d, *outd;
-  bool singleFile = false;
-  double redshift_gravity;
-
-  try
-    {
-      d = loadFunction(gadgetname, -1, 0);
-      singleFile = true;
-    }
-  catch (const NoSuchFileException& e)
-    {
-      try
-	{
-	  d = loadFunction(gadgetname, 0, 0);
-	}
-      catch(const NoSuchFileException& e)
-	{
-	  return 0;
-	}
-    }
-  outd = new SimuData;
-
-  outd->NumPart = d->TotalNumPart;
-  outd->BoxSize = d->BoxSize;
-  outd->TotalNumPart = outd->NumPart;
-  outd->Hubble = d->Hubble;
-  outd->Omega_Lambda = d->Omega_Lambda;
-  outd->Omega_M = d->Omega_M;
-  outd->time = d->time;
-
-  for (int k = 0; k < 3; k++)
-    outd->Pos[k] = new float[outd->NumPart];
-  outd->Vel[2] = new float[outd->NumPart];
-  outd->Id = new int[outd->NumPart];
-  delete d;
-
-  long *uniqueID = new long[outd->NumPart];
-
-  outd->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
-  
-  redshift_gravity = goRedshift ? 1 : 0;
-
-  int curCpu = singleFile ? -1 : 0;
-  cout << "loading file 0 " << endl;
-  try
-    {
-      long loaded = 0;
-      while (1)
-	{
-	  d = loadFunction(gadgetname, curCpu, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID);
-	  for (int i = 0; i < d->NumPart; i++)
-	    {
-	      for (int k = 0; k < 3; k++)
-		outd->Pos[k][loaded] = d->Pos[k][i];
-	      outd->Vel[2][loaded] = d->Vel[velAxis][i];
-	      outd->Id[loaded] = loaded;
-	      uniqueID[loaded] = d->Id[i];
-	      assert(loaded < outd->TotalNumPart);
-	      
-	      outd->Pos[velAxis][loaded] += 
-		redshift_gravity*d->Vel[velAxis][i]/100.;
-	      loaded++;
-	    }
-	  
-	  delete d;
-          if (singleFile)
-            break;
-	  curCpu++;
-	  cout << "loading file " << curCpu  << endl;
-	}
-    }
-  catch (const NoSuchFileException& e)
-    {
-    }
-
-  return outd;
-}
 
 
 SimuData *doLoadMultidark(const char *multidarkname)
@@ -537,10 +389,10 @@ void buildBox(SimuData *simu, const std::vector<long>& targets, long& loaded,
     }
 }
 
-void saveBox(SimuData *&boxed, generateMock_info& args_info)
+void saveBox(SimuData *&boxed, const std::string& outbox)
 {
   double *ranges = boxed->as<double>("ranges");
-  NcFile f(args_info.outputParameter_arg, NcFile::Replace);
+  NcFile f(outbox.c_str(), NcFile::Replace);
   long *particle_id = boxed->as<long>("particle_id");
   double *expansion_fac = boxed->as<double>("expansion_fac");
   long *snapshot_split = boxed->as<long>("snapshot_split");
@@ -641,11 +493,21 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
   v_uniq->get(uniqueID, boxed->NumPart);
 }
 
+string format_outfile(const std::string& base, int id)
+{
+  ostringstream oss;
+
+  oss << base << id;
+
+  return oss.str();
+}
+
 int main(int argc, char **argv)
 {
   generateMock_info args_info;
   generateMock_conf_params args_params;
   SimuData *simu, *simuOut;
+  SimulationLoader *loader;
  
   generateMock_conf_init(&args_info);
   generateMock_conf_params_init(&args_params);
@@ -676,9 +538,9 @@ int main(int argc, char **argv)
   if (args_info.ramsesBase_given || args_info.ramsesId_given)
     {
       if (args_info.ramsesBase_given && args_info.ramsesId_given)   {
-	simu = doLoadRamses(args_info.ramsesBase_arg, 
+	/*	simu = doLoadRamses(args_info.ramsesBase_arg, 
 			    args_info.ramsesId_arg, 
-			    args_info.axis_arg, false);
+			    args_info.axis_arg, false);*/
       }
       else
 	{
@@ -699,7 +561,7 @@ int main(int argc, char **argv)
 	  cerr << "Do not know which file to use: Gadget or Flash ?" << endl;
 	  return 1;
 	}
-
+      /*
       if (args_info.multidark_given) {
         simu = doLoadMultidark(args_info.multidark_arg);      
       }
@@ -710,48 +572,56 @@ int main(int argc, char **argv)
       if (args_info.flash_given) {
 	simu = doLoadSimulation(args_info.flash_arg, args_info.axis_arg, false, loadFlashMulti); 
       }
-
-      if (simu == 0)
+      */
+      loader = gadgetLoader(args_info.gadget_arg, args_info.gadgetUnit_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID);
+      if (loader == 0)
 	{
 	  cerr << "Error while loading " << endl;
 	  return 1;
 	}
+      simu = loader->getHeader();
     }
   else
     {
       cerr << "Either a ramses snapshot or a gadget snapshot is required." << endl;
       return 1;
     }
-  cout << "Hubble = " << simu->Hubble << endl;
-  cout << "Boxsize = " << simu->BoxSize << endl;
-  cout << "Omega_M = " << simu->Omega_M << endl;
-  cout << "Omega_Lambda = " << simu->Omega_Lambda << endl;
 
+  {
+    SimuData *header = loader->getHeader();
+    cout << "Hubble = " << header->Hubble << endl;
+    cout << "Boxsize = " << header->BoxSize << endl;
+    cout << "Omega_M = " << header->Omega_M << endl;
+    cout << "Omega_Lambda = " << header->Omega_Lambda << endl;
+  }
   double *expfact;
 
-  metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag,
-		  args_info.peculiarVelocities_flag, expfact, 
-		  args_info.cosmo_flag);
-
-  vector<long> targets, split;
-  long loaded = 0;
-
-  if (args_info.inputParameter_given)
-    makeBoxFromParameter(simu, simuOut, args_info);
-  else
+  for (int nf = 0; nf < loader->num_files(); nf++)
     {
-      selectBox(simu, targets, args_info);
-      split.push_back(targets.size());
-      createBox(simu, targets.size(), split, simuOut, args_info);
+      vector<long> targets, split;
+      long loaded = 0;
+      SimuData *simu = loader->loadFile(nf);
+      
+      metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag,
+		      args_info.peculiarVelocities_flag, expfact, 
+		      args_info.cosmo_flag);  
+
+      if (args_info.inputParameter_given)
+	makeBoxFromParameter(simu, simuOut, args_info);
+      else
+	{
+	  selectBox(simu, targets, args_info);
+	  split.push_back(targets.size());
+	  createBox(simu, targets.size(), split, simuOut, args_info);
+	}
+
+      buildBox(simu, targets, loaded, simuOut, expfact);
+      saveBox(simuOut, format_outfile(args_info.outputParameter_arg, nf));
+      generateOutput(simuOut, args_info.axis_arg, format_outfile(args_info.output_arg, nf));
+
+      delete simu;
+      delete simuOut;
     }
-
-  buildBox(simu, targets, loaded, simuOut, expfact);
-  delete simu;
-
-  saveBox(simuOut, args_info);
-  generateOutput(simuOut, args_info.axis_arg, args_info.output_arg);
-
-  delete simuOut;
  
   printf("Done!\n"); 
   return 0;
