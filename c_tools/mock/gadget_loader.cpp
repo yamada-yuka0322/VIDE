@@ -63,6 +63,7 @@ public:
           }
       }
     d->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
+    d->BoxSize *= unitMpc;
 
     applyTransformations(d);
 
@@ -99,7 +100,7 @@ SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLengt
   assert(d != 0);
   SimuData *header = d;
 
-  header->BoxSize *= Mpc_unitLength;
+  header->BoxSize /= Mpc_unitLength;
     
   if (!singleFile)
     {

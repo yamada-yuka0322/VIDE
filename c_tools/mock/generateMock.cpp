@@ -1,3 +1,6 @@
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+#include <boost/format.hpp>
 #include <cmath>
 #include <cassert>
 #include <iostream>
@@ -17,11 +20,11 @@
 
 using namespace std;
 using namespace CosmoTool;
+using boost::format;
 
 #define LIGHT_SPEED 299792.458
 
-static double gadgetUnit=1e-3;
-
+typedef boost::function2<void, SimuData*, double*> MetricFunctor;
 
 SimuData *doLoadMultidark(const char *multidarkname)
 {
@@ -120,7 +123,7 @@ Interpolate make_cosmological_redshift(double OM, double OL, double z0, double z
   return buildFromVector(pairs);
 }
 
-void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double*& expfact, bool cosmo_flag)
+void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double* expfact, bool cosmo_flag)
 {
   int x0, x1, x2;
 
@@ -147,8 +150,6 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
   double z_base = reshift ? z0 : 0;
   TotalExpansion e_computer;
   double baseComovingDistance;
-
-  expfact = new double[data->NumPart];
 
   cout << "Using base redshift z=" << z0 << " " << z0+8*data->BoxSize*100/LIGHT_SPEED << endl;
 
@@ -177,7 +178,8 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
           else
             z = reduced_red*LIGHT_SPEED/100.0;
 
-          expfact[i] = z / z_old; 
+          if (expfact)
+            expfact[i] = z / z_old; 
 	  // Add peculiar velocity
 	  if (pecvel)
 	    z += v/100;
@@ -306,10 +308,9 @@ void selectBox(SimuData *simu, std::vector<long>& targets, generateMock_info& ar
       if (acceptance && (drand48() <= subsample))
 	targets.push_back(i);
     }
-  cout << "Subsample fraction: " << subsample << endl;
 }
 
-void createBox(SimuData *simu, long num_targets, std::vector<long> snapshot_split, SimuData *& boxed, generateMock_info& args_info)
+void createBox(SimuData *simu, vector<long>& targets, vector<long>& snapshot_split, SimuData *& boxed, generateMock_info& args_info)
 {
   double *ranges = new double[6];
   double *mul = new double[3];
@@ -328,28 +329,29 @@ void createBox(SimuData *simu, long num_targets, std::vector<long> snapshot_spli
   boxed->Omega_Lambda = simu->Omega_Lambda;
   boxed->time = simu->time;
   boxed->BoxSize = simu->BoxSize;
+  boxed->NumPart = targets.size();
 
   for (int j = 0; j < 3; j++)
     {
-      boxed->Pos[j] = new float[num_targets];
+      boxed->Pos[j] = new float[boxed->NumPart];
       boxed->Vel[j] = 0;
       mul[j] = 1.0/(ranges[2*j+1] - ranges[2*j+0]);
     }
   cout << "Min range = " << ranges[0] << " " << ranges[2] << " " << ranges[4] << endl;
   cout << "Max range = " << ranges[1] << " " << ranges[3] << " " << ranges[5] << endl;
-  cout << "Number of accepted particles: " << num_targets << endl; 
+  cout << "Number of accepted particles: " << boxed->NumPart << endl; 
   cout << "Rescaling factors = " << mul[0] << " " << mul[1] << " " << mul[2] << endl;
 
-  long *uniqueID = new long[num_targets];
-  long *particle_id = new long[num_targets];
-  double *expansion_fac = new double[num_targets];
+  long *uniqueID = new long[boxed->NumPart];
+  long *particle_id = new long[boxed->NumPart];
+  double *expansion_fac = new double[boxed->NumPart];
   long *snap_split = new long[snapshot_split.size()];
   int *numsnap_info = new int[1];
 
+  copy(targets.begin(), targets.end(), particle_id);
   copy(snapshot_split.begin(), snapshot_split.end(), snap_split);
   *numsnap_info = snapshot_split.size();
 
-  boxed->NumPart = num_targets;
   boxed->new_attribute("particle_id", particle_id, delete_adaptor<long>);
   boxed->new_attribute("expansion_fac", expansion_fac, delete_adaptor<double>);
   boxed->new_attribute("uniqueID", uniqueID, delete_adaptor<long>); 
@@ -359,7 +361,7 @@ void createBox(SimuData *simu, long num_targets, std::vector<long> snapshot_spli
   boxed->new_attribute("num_snapshots", numsnap_info, delete_adaptor<int>);
 }
 
-void buildBox(SimuData *simu, const std::vector<long>& targets, long& loaded, 
+void buildBox(SimuData *simu, long num_targets, long loaded, 
 	      SimuData *boxed, double *efac)
 {
   uint32_t k = 0;
@@ -370,22 +372,18 @@ void buildBox(SimuData *simu, const std::vector<long>& targets, long& loaded,
   double *ranges = boxed->as<double>("ranges");
   long *particle_id = boxed->as<long>("particle_id");
 
-  for (uint32_t i = 0; i < targets.size(); i++)
+  for (uint32_t i = 0; i < num_targets; i++, loaded++)
     {
-      long pid = targets[i];
+      long pid = particle_id[loaded];
       
-      assert(loaded < targets.size());
       for (int j = 0; j < 3; j++)
 	{
 	  boxed->Pos[j][loaded] = (simu->Pos[j][pid]-ranges[j*2])*mul[j];
 	  assert(boxed->Pos[j][loaded] > 0);
 	  assert(boxed->Pos[j][loaded] < 1);
 	}
-      particle_id[loaded] = pid;
       uniqueID[loaded] = (simu_uniqueID != 0) ? simu_uniqueID[pid] : 0;
       expansion_fac[loaded] = efac[pid];
-      loaded++;
-      k++;
     }
 }
 
@@ -493,13 +491,27 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
   v_uniq->get(uniqueID, boxed->NumPart);
 }
 
-string format_outfile(const std::string& base, int id)
+void makeBoxFromSimulation(SimulationLoader *loader, SimuData* &boxed, MetricFunctor metric, generateMock_info& args_info)
 {
-  ostringstream oss;
+  vector<long> targets, split;
+  long previous_target_num = 0;
 
-  oss << base << id;
+  for (int nf = 0; nf < loader->num_files(); nf++)
+    {
+      SimuData *simu;
+      double *expfact;
 
-  return oss.str();
+      cout << format("Analyzing and selecting targets in file number %d / %d") % (nf+1) % loader->num_files() << endl;
+      simu = loader->loadFile(nf);      
+
+      metric(simu, 0);
+
+      selectBox(simu, targets, args_info);
+      split.push_back(targets.size() - previous_target_num);
+      previous_target_num = targets.size();
+    }
+
+  createBox(loader->getHeader(), targets, split, boxed, args_info);
 }
 
 int main(int argc, char **argv)
@@ -533,8 +545,6 @@ int main(int argc, char **argv)
   
   generateMock_conf_print_version();
 
-  gadgetUnit=args_info.gadgetUnit_arg;
-
   if (args_info.ramsesBase_given || args_info.ramsesId_given)
     {
       if (args_info.ramsesBase_given && args_info.ramsesId_given)   {
@@ -557,8 +567,8 @@ int main(int argc, char **argv)
   else if (args_info.gadget_given || args_info.flash_given || args_info.multidark_given)
     {
       if (args_info.gadget_given && args_info.flash_given)
-	{
-	  cerr << "Do not know which file to use: Gadget or Flash ?" << endl;
+        {
+          cerr << "Do not know which file to use: Gadget or Flash ?" << endl;
 	  return 1;
 	}
       /*
@@ -593,38 +603,47 @@ int main(int argc, char **argv)
     cout << "Boxsize = " << header->BoxSize << endl;
     cout << "Omega_M = " << header->Omega_M << endl;
     cout << "Omega_Lambda = " << header->Omega_Lambda << endl;
-  }
+    cout << "Subsample fraction: " << (args_info.subsample_given ? 1 : args_info.subsample_arg) << endl;
+ }
   double *expfact;
 
+  boost::function2<void, SimuData*, double*> metricOperation=
+    boost::bind(metricTransform, _1, args_info.axis_arg, args_info.preReShift_flag,
+                      args_info.peculiarVelocities_flag, _2, 
+                      args_info.cosmo_flag);
+
+  if (args_info.inputParameter_given)
+    makeBoxFromParameter(loader->getHeader(), simuOut, args_info);
+  else
+    makeBoxFromSimulation(loader, simuOut, metricOperation, args_info);
+
+  long loaded = 0;
   for (int nf = 0; nf < loader->num_files(); nf++)
     {
-      vector<long> targets, split;
-      long loaded = 0;
-      SimuData *simu;
+      long num_targets = simuOut->as<long>("snapshot_split")[nf];
+      cout << format("Building box from particles in %d / %d") % (nf+1) % loader->num_files() << endl;
+     
+      if (num_targets == 0)
+        {
+          cout << "No particles selected there. Skipping." << endl;
+          continue;
+        }
       
-      cout << "Loading file number " << nf+1 << " / " << loader->num_files() << endl;
-      simu = loader->loadFile(nf);      
+      SimuData *simu = loader->loadFile(nf);
+      double *efac = new double[simu->NumPart];
+      metricOperation(simu, efac);
+      buildBox(simu, num_targets, loaded, simuOut, efac);
+      
+      loaded += num_targets;
+      assert(loaded <= simuOut->NumPart);
 
-      metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag,
-		      args_info.peculiarVelocities_flag, expfact, 
-		      args_info.cosmo_flag);  
-
-      if (args_info.inputParameter_given)
-	makeBoxFromParameter(simu, simuOut, args_info);
-      else
-	{
-	  selectBox(simu, targets, args_info);
-	  split.push_back(targets.size());
-	  createBox(simu, targets.size(), split, simuOut, args_info);
-	}
-
-      buildBox(simu, targets, loaded, simuOut, expfact);
-      saveBox(simuOut, format_outfile(args_info.outputParameter_arg, nf));
-      generateOutput(simuOut, args_info.axis_arg, format_outfile(args_info.output_arg, nf));
-
-      delete simu;
-      delete simuOut;
+      delete[] efac;
     }
+
+  saveBox(simuOut, args_info.outputParameter_arg);
+  generateOutput(simuOut, args_info.axis_arg, 
+                 args_info.output_arg);
+  
  
   printf("Done!\n"); 
   return 0;
