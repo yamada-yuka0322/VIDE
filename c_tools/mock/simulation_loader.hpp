@@ -43,7 +43,7 @@ void delete_adaptor(void *ptr)
 SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLength, int flags);
 SimulationLoader *flashLoader(const std::string& snapshot, int flags);
 SimulationLoader *multidarkLoader(const std::string& snapshot, int flags);
-SimulationLoader *ramsesLoader(const std::string& snapshot, int flags);
+SimulationLoader *ramsesLoader(const std::string& snapshot, int baseid, bool double_precision, int flags);
 
 
 #endif
