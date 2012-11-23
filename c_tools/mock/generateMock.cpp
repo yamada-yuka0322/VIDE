@@ -600,8 +600,11 @@ int main(int argc, char **argv)
     {
       vector<long> targets, split;
       long loaded = 0;
-      SimuData *simu = loader->loadFile(nf);
+      SimuData *simu;
       
+      cout << "Loading file number " << nf+1 << " / " << loader->num_files() << endl;
+      simu = loader->loadFile(nf);      
+
       metricTransform(simu, args_info.axis_arg, args_info.preReShift_flag,
 		      args_info.peculiarVelocities_flag, expfact, 
 		      args_info.cosmo_flag);  
