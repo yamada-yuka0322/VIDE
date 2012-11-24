@@ -151,7 +151,7 @@ namespace CosmoTool {
   ProgressiveOutput<T>::saveArrayProgressive(const std::string& fname, uint32_t *dimList,
 					     uint32_t rank)
   {
-    NcFile *f = new NcFile(fname.c_str(), NcFile::Replace);
+    NcFile *f = new NcFile(fname.c_str(), NcFile::Replace, 0, 0, NcFile::Netcdf4);
     
     assert(f->is_valid());
     
@@ -202,7 +202,7 @@ namespace CosmoTool {
   void saveArray(const std::string& fname,
 		 T *array, uint32_t *dimList, uint32_t rank)
   {
-    NcFile f(fname.c_str(), NcFile::Replace);
+    NcFile f(fname.c_str(), NcFile::Replace, 0, 0, NcFile::Netcdf4);
     
     assert(f.is_valid());
     
