@@ -9,8 +9,6 @@
 #include <string>
 #include <algorithm>
 #include <CosmoTool/loadSimu.hpp>
-#include <CosmoTool/loadRamses.hpp>
-#include <CosmoTool/loadFlash.hpp>
 #include <CosmoTool/interpolate.hpp>
 #include <CosmoTool/fortran.hpp>
 #include "generateMock_conf.h"
@@ -26,62 +24,6 @@ using boost::format;
 
 typedef boost::function2<void, SimuData*, double*> MetricFunctor;
 
-SimuData *doLoadMultidark(const char *multidarkname)
-{
-  SimuData *outd;
-  FILE *fp;
-  int actualNumPart;
-
-  outd = new SimuData;
-  cout << "opening multidark file " << multidarkname << endl;
-  fp = fopen(multidarkname, "r");
-  if (fp == NULL) {
-    cout << "could not open file!" << endl;
-    return 0;
-  }
-  fscanf(fp, "%f\n", &outd->BoxSize);
-  fscanf(fp, "%f\n", &outd->Omega_M);
-  fscanf(fp, "%f\n", &outd->Hubble);
-  fscanf(fp, "%f\n", &outd->time);
-  fscanf(fp, "%ld\n", &outd->NumPart);
-
-  outd->time = 1./(1.+outd->time); // convert to scale factor
-  outd->TotalNumPart = outd->NumPart;
-  outd->Omega_Lambda = 1.0 - outd->Omega_M;
-
-  for (int k = 0; k < 3; k++)
-    outd->Pos[k] = new float[outd->NumPart];
-  outd->Vel[2] = new float[outd->NumPart];
-  outd->Id = new int[outd->NumPart];
-  long *uniqueID = new long[outd->NumPart];
-
-  outd->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
-
-  cout << "loading multidark particles" << endl;
-  actualNumPart = 0;
-  for (int i = 0; i < outd->NumPart; i++) {
-
-    fscanf(fp, "%d %f %f %f %f\n", &outd->Id[i], 
-                                &outd->Pos[0][i], &outd->Pos[1][i], 
-                                &outd->Pos[2][i], &outd->Vel[2][i]);
-
-    uniqueID[i] = 1;
-    //uniqueID[i] = 1 * outd->Id[i];
-
-    if (outd->Id[i] == -99 && 
-        outd->Pos[0][i] == -99 && outd->Pos[1][i] == -99 && 
-        outd->Pos[2][i] == -99 && outd->Vel[2][i] == -99) {
-      break;
-    } else {
-      actualNumPart++;
-    }
-  }
-  fclose(fp);
-
-  outd->NumPart = actualNumPart;
-  outd->TotalNumPart = actualNumPart;
-  return outd;
-}
 
 
 static double cubic(double a)
@@ -548,54 +490,42 @@ int main(int argc, char **argv)
   if (args_info.ramsesBase_given || args_info.ramsesId_given)
     {
       if (args_info.ramsesBase_given && args_info.ramsesId_given)   {
-	/*	simu = doLoadRamses(args_info.ramsesBase_arg, 
-			    args_info.ramsesId_arg, 
-			    args_info.axis_arg, false);*/
+	loader = ramsesLoader(args_info.ramsesBase_arg, 
+			      args_info.ramsesId_arg, 
+			      false,
+			      NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID);
       }
       else
 	{
 	  cerr << "Both ramsesBase and ramsesId are required to be able to load snapshots" << endl;
 	  return 1;
 	}
-
-      if (simu == 0)
-	{
-	  cerr << "Error while loading" << endl;
-	  return 1;
-	}
     }
-  else if (args_info.gadget_given || args_info.flash_given || args_info.multidark_given)
+  else if (args_info.gadget_given)
     {
-      if (args_info.gadget_given && args_info.flash_given)
-        {
-          cerr << "Do not know which file to use: Gadget or Flash ?" << endl;
-	  return 1;
-	}
-      /*
-      if (args_info.multidark_given) {
-        simu = doLoadMultidark(args_info.multidark_arg);      
-      }
-
-      if (args_info.gadget_given) {
-	simu = doLoadSimulation(args_info.gadget_arg, args_info.axis_arg, false, myLoadGadget);      
-      }
-      if (args_info.flash_given) {
-	simu = doLoadSimulation(args_info.flash_arg, args_info.axis_arg, false, loadFlashMulti); 
-      }
-      */
       loader = gadgetLoader(args_info.gadget_arg, 1/args_info.gadgetUnit_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID);
-      if (loader == 0)
-	{
-	  cerr << "Error while loading " << endl;
-	  return 1;
-	}
-      simu = loader->getHeader();
+    }
+  else if (args_info.flash_given)
+    {
+      //if (args_info.flash_given) {
+      //simu = doLoadSimulation(args_info.flash_arg, args_info.axis_arg, false, loadFlashMulti); 
+  }
+  else if (args_info.multidark_given)
+    {
+      loader = multidarkLoader(args_info.multidark_arg);      
     }
   else
     {
-      cerr << "Either a ramses snapshot or a gadget snapshot is required." << endl;
+      cerr << "A simulation snapshot is required to generate a mock catalog." << endl;
       return 1;
     }
+     
+  if (loader == 0)
+    {
+      cerr << "Error while loading " << endl;
+      return 1;
+    }
+  simu = loader->getHeader();
 
   {
     SimuData *header = loader->getHeader();
@@ -604,7 +534,7 @@ int main(int argc, char **argv)
     cout << "Omega_M = " << header->Omega_M << endl;
     cout << "Omega_Lambda = " << header->Omega_Lambda << endl;
     cout << "Subsample fraction: " << (args_info.subsample_given ? 1 : args_info.subsample_arg) << endl;
- }
+  }
   double *expfact;
 
   boost::function2<void, SimuData*, double*> metricOperation=

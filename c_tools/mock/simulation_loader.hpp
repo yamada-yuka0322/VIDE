@@ -42,7 +42,7 @@ void delete_adaptor(void *ptr)
 // Unit length is the size of one Mpc in the simulation units
 SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLength, int flags);
 SimulationLoader *flashLoader(const std::string& snapshot, int flags);
-SimulationLoader *multidarkLoader(const std::string& snapshot, int flags);
+SimulationLoader *multidarkLoader(const std::string& snapshot);
 SimulationLoader *ramsesLoader(const std::string& snapshot, int baseid, bool double_precision, int flags);
 
 

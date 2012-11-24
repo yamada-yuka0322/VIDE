@@ -47,11 +47,15 @@ public:
       d = loadGadgetMulti(snapshot_name.c_str(), -1, load_flags);
     else
       d = loadGadgetMulti(snapshot_name.c_str(), id, load_flags);
-      
-    long *uniqueID = new long[d->NumPart];
-    for (long i = 0; i < d->NumPart; i++)
+
+    if (d->Id != 0)
       {
-        uniqueID[i] = d->Id[i];
+	long *uniqueID = new long[d->NumPart];
+	for (long i = 0; i < d->NumPart; i++)
+	  {
+	    uniqueID[i] = d->Id[i];
+	  }
+	d->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
       }
 
     for (int k = 0; k < 3; k++)
@@ -62,7 +66,6 @@ public:
               d->Pos[k][i] *= unitMpc;
           }
       }
-    d->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
     d->BoxSize *= unitMpc;
 
     applyTransformations(d);

@@ -44,14 +44,16 @@ public:
 
     d = loadRamsesSimu(snapshot_name.c_str(), baseid, id, double_precision, load_flags);
     assert(d != 0);
-      
-    long *uniqueID = new long[d->NumPart];
-    for (long i = 0; i < d->NumPart; i++)
-      {
-        uniqueID[i] = d->Id[i];
-      }
 
-    d->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
+    if (d->Id != 0)
+      {
+	long *uniqueID = new long[d->NumPart];
+	for (long i = 0; i < d->NumPart; i++)
+	  {
+	    uniqueID[i] = d->Id[i];
+	  }
+	d->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
+      }
 
     applyTransformations(d);
 
