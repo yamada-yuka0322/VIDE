@@ -332,7 +332,7 @@ void buildBox(SimuData *simu, long num_targets, long loaded,
 void saveBox(SimuData *&boxed, const std::string& outbox)
 {
   double *ranges = boxed->as<double>("ranges");
-  NcFile f(outbox.c_str(), NcFile::Replace);
+  NcFile f(outbox.c_str(), NcFile::Replace, 0, 0, NcFile::Netcdf4);
   long *particle_id = boxed->as<long>("particle_id");
   double *expansion_fac = boxed->as<double>("expansion_fac");
   long *snapshot_split = boxed->as<long>("snapshot_split");
