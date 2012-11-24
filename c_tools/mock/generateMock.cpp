@@ -507,8 +507,7 @@ int main(int argc, char **argv)
     }
   else if (args_info.flash_given)
     {
-      //if (args_info.flash_given) {
-      //simu = doLoadSimulation(args_info.flash_arg, args_info.axis_arg, false, loadFlashMulti); 
+      loader = flashLoader(args_info.flash_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID); 
   }
   else if (args_info.multidark_given)
     {
