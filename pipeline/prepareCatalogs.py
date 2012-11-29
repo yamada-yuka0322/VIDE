@@ -11,15 +11,6 @@ import void_python_tools as vp
 import argparse
 import imp
 
-# ------------------------------------------------------------------------------
-
-def my_import(name):
-    mod = __import__(name)
-    components = name.split('.')
-    for comp in components[1:]:
-        mod = getattr(mod, comp)
-    return mod
-
 # -----------------------------------------------------------------------------
 
 LIGHT_SPEED = 299792.458
@@ -83,7 +74,7 @@ def writeScript(setName, dataFileNameBase,
 import os
 from void_python_tools.backend.classes import *
 
-continueRun = True # set to True to enable restarting aborted jobs
+continueRun = False # set to True to enable restarting aborted jobs
 startCatalogStage = 1
 endCatalogStage   = 4
                
@@ -133,6 +124,7 @@ newSample = Sample(dataFile = "{dataFile}",
                    zBoundaryMpc = ({zMinMpc}, {zMaxMpc}),
                    omegaM    = {omegaM},
                    minVoidRadius = {minRadius},
+                   profileBinSize = 1.0,
                    includeInHubble = True,
                    partOfCombo = False,
                    isCombo = False,
@@ -143,12 +135,12 @@ newSample = Sample(dataFile = "{dataFile}",
                    useLightCone = {useLightCone},
                    subsample = {subsample})
 dataSampleList.append(newSample)
-newSample.addStack({zMin}, {zMax}, {minRadius}  , {minRadius}+2, True, False)
-newSample.addStack({zMin}, {zMax}, {minRadius}  , {minRadius}+4, True, False)
-newSample.addStack({zMin}, {zMax}, {minRadius}+2, {minRadius}+6, True, False)
-newSample.addStack({zMin}, {zMax}, {minRadius}+6, {minRadius}+10, True, False)
-newSample.addStack({zMin}, {zMax}, {minRadius}+10, {minRadius}+18, True, False)
-newSample.addStack({zMin}, {zMax}, {minRadius}+18, {minRadius}+24, True, False)
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False)
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False)
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False)
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False)
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False)
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False)
                """
   for (iFile, redshift) in enumerate(redshifts):
     fileNum = fileNums[iFile]

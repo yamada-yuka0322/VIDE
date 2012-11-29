@@ -441,9 +441,6 @@ int main(int argc, char **argv) {
     }
 
     voids[iVoid].nearestEdge = nearestEdge;
-    //if (nearestEdge < voids[iVoid].nearestMock) {
-    //  voids[iVoid].nearestMock = nearestEdge;
-    //}
   } // iVoid
 
   printf(" Picking winners and losers...\n");
@@ -453,7 +450,7 @@ int main(int argc, char **argv) {
 
   for (iVoid = 0; iVoid < numVoids; iVoid++) {
     if (voids[iVoid].densCon < 1.5) {
-      //voids[iVoid].accepted = 0;
+//      voids[iVoid].accepted = -4;
     }
  
     if (voids[iVoid].centralDen > args_info.maxCentralDen_arg) {

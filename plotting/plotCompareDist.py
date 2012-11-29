@@ -14,8 +14,6 @@ import argparse
 
 # ------------------------------------------------------------------------------
 
-from datasetsToPlot import *
-
 plotNameBase = "compdist"
 
 obsFudgeFactor = .66 # what fraction of the volume are we *reall* capturing?
@@ -24,9 +22,19 @@ parser = argparse.ArgumentParser(description='Plot.')
 parser.add_argument('--show', dest='showPlot', action='store_const',
                    const=True, default=False,
                    help='display the plot (default: just write eps)')
+parser.add_argument('--parmFile', dest='parmFile', default='datasetsToPlot.py',
+                    help='path to parameter file')
 args = parser.parse_args()
 
 # ------------------------------------------------------------------------------
+
+filename = args.parmFile
+print " Loading parameters from", filename
+if not os.access(filename, os.F_OK):
+  print "  Cannot find parameter file %s!" % filename
+  exit(-1)
+parms = imp.load_source("name", filename)
+globals().update(vars(parms))
 
 if not os.access(figDir, os.F_OK):
   os.makedirs(figDir)
@@ -38,10 +46,10 @@ for sampleDir in sampleDirList:
     dataSampleList.append(pickle.load(input))
 
 plt.clf()
-plt.xlabel("Void Radius (Mpc/h)")
+plt.xlabel("Void Radius [Mpc/h]")
 plt.ylabel(r"N > R [$h^3$ Gpc$^{-3}$]")
 plt.yscale('log')
-plt.xlim(xmax=80.)
+plt.xlim(xmax=120.)
 
 plotName = plotNameBase
 

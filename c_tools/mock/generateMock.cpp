@@ -188,12 +188,13 @@ SimuData *doLoadMultidark(const char *multidarkname)
                                 &outd->Pos[0][i], &outd->Pos[1][i], 
                                 &outd->Pos[2][i], &outd->Vel[2][i]);
 
-    outd->uniqueID[i] = 1.0;
-    //outd->uniqueID[i] = 1.0 * outd->Id[i];
+    outd->uniqueID[i] = 1.0 * outd->Id[i];
 
+    if (i < 10) printf("TEST %d %d\n", i, outd->Id[i]);
     if (outd->Id[i] == -99 && 
         outd->Pos[0][i] == -99 && outd->Pos[1][i] == -99 && 
         outd->Pos[2][i] == -99 && outd->Vel[2][i] == -99) {
+   printf("FOUND END\n");
       break;
     } else {
       actualNumPart++;
@@ -396,8 +397,6 @@ void generateOutput(SimuData *data, int axis,
   f.beginCheckpoint();
   for (uint32_t i = 0; i < data->NumPart; i++)
     {
-      //printf("HELLO %d %d\n", i, data->Id[i]);
-      //f.writeReal32(data->Id[i]);
       f.writeReal32(data->uniqueID[i]);
     }
   f.endCheckpoint();

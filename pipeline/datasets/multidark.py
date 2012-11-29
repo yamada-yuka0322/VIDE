@@ -49,7 +49,7 @@ numSubvolumes = 1
 prefix = "md_"
 
 # list of desired subsamples - these are in unts of h Mpc^-3!
-#subSamples = [ 1.0 ]
+#subSamples = [0.0004]
 subSamples = ((0.1, 0.05, 0.01, 0.002, 0.001, 0.0004, 0.0002))
 
 # common filename of halo files
@@ -62,7 +62,7 @@ minHaloMasses = (("none", 2e12, 1.23e13))
 # adjust these two parameters given the memory contraints on your system:
 #   numZobovDivisions: how many sub-volumes per dimension will zobov process
 #   numZobovThreads: how many sub-volumes to process at once?   
-numZobovDivisions = 4
+numZobovDivisions = 2
 numZobovThreads = 2
 
 # simulation information
@@ -70,6 +70,9 @@ numPart = 1024*1024*1024
 lbox = 1000 # Mpc/h
 omegaM = 0.27
 hubble = 0.70
+
+# the mask file which is used by applyMaskToMock
+maskFileName = os.getenv("HOME")+"/workspace/Voids/catalogs/boss/boss_mask_final.fits"
 
 # END CONFIGURATION
 # -----------------------------------------------------------------------------

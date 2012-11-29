@@ -9,13 +9,6 @@ import pickle
 
 # ------------------------------------------------------------------------------
 
-def my_import(name):
-    mod = __import__(name)
-    components = name.split('.')
-    for comp in components[1:]:
-        mod = getattr(mod, comp)
-    return mod
-
 if (len(sys.argv) == 0):
   print "Usage: ./anylyzeVoids.py parameter_file.py"
   exit(-1)
