@@ -10,61 +10,41 @@
 using namespace CosmoTool;
 using namespace std;
 
-PurePositionData *CosmoTool::loadGadgetPosition(const char *fname)
-{
-  PurePositionData *data;
-  int p, n;
-  UnformattedRead f(fname);
-  GadgetHeader h;
-  
-  data = new PurePositionData;
-  f.beginCheckpoint();
-  for (int i = 0; i < 6; i++)
-    h.npart[i] = f.readInt32();
-  for (int i = 0; i < 6; i++)    
-    h.mass[i] = f.readReal64();
-  h.time = f.readReal64();
-  h.redshift = f.readReal64();
-  h.flag_sfr = f.readInt32();
-  h.flag_feedback = f.readInt32();
-  for (int i = 0; i < 6; i++)
-    h.npartTotal[i] = f.readInt32();
-  h.flag_cooling = f.readInt32();
-  h.num_files = f.readInt32();
-  data->BoxSize = h.BoxSize = f.readReal64();
-  h.Omega0 = f.readReal64();
-  h.OmegaLambda = f.readReal64();
-  h.HubbleParam = f.readReal64();
-  f.endCheckpoint(true);
-  
-  data->NumPart = 0;
-  for(int k=0; k<5; k++)
-    data->NumPart += h.npart[k];
-  
-  data->pos = new FCoordinates[data->NumPart];
-  
-  f.beginCheckpoint();
-  for(int k = 0, p = 0; k < 5; k++) {
-    for(int n = 0; n < h.npart[k]; n++) {
-      data->pos[p][0] = f.readReal32();
-      data->pos[p][1] = f.readReal32();
-      data->pos[p][2] = f.readReal32();
-      p++;
-    }
-  }
-  f.endCheckpoint();
-  
-  // Skip velocities
-  f.skip((long)data->NumPart*3+2*4);
-  // Skip ids
 
-  return data;
+void loadGadgetHeader(UnformattedRead *f, GadgetHeader& h, SimuData *data, int id)
+{
+  f->beginCheckpoint();
+  for (int i = 0; i < 6; i++)
+    h.npart[i] = f->readInt32();
+  for (int i = 0; i < 6; i++)    
+    h.mass[i] = f->readReal64();
+  data->time = h.time = f->readReal64();
+  h.redshift = f->readReal64();
+  h.flag_sfr = f->readInt32();
+  h.flag_feedback = f->readInt32();
+  for (int i = 0; i < 6; i++)
+    h.npartTotal[i] = f->readInt32();
+  h.flag_cooling = f->readInt32();
+  h.num_files = f->readInt32();
+  data->BoxSize = h.BoxSize = f->readReal64();
+  data->Omega_M = h.Omega0 = f->readReal64();
+  data->Omega_Lambda = h.OmegaLambda = f->readReal64();
+  data->Hubble = h.HubbleParam = f->readReal64();
+  f->endCheckpoint(true);
+  
+  long NumPart = 0, NumPartTotal = 0;
+  for(int k=0; k<6; k++)
+    {
+      NumPart += h.npart[k];
+      NumPartTotal += (id < 0) ? h.npart[k] : h.npartTotal[k];
+    }
+  data->NumPart = NumPart;
+  data->TotalNumPart = NumPartTotal;
 }
 
-
-
-
-SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id, int loadflags, int GadgetFormat)
+SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
+				     int loadflags, int GadgetFormat, 
+				     SimuFilter filter)
 {
   SimuData *data;
   int p, n;
@@ -98,35 +78,11 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id, int loadflags, i
   }
 
   long NumPart = 0, NumPartTotal = 0;
-
+  
   try
     {
-      f->beginCheckpoint();
-      for (int i = 0; i < 6; i++)
-	h.npart[i] = f->readInt32();
-      for (int i = 0; i < 6; i++)    
-	h.mass[i] = f->readReal64();
-      data->time = h.time = f->readReal64();
-      h.redshift = f->readReal64();
-      h.flag_sfr = f->readInt32();
-      h.flag_feedback = f->readInt32();
-      for (int i = 0; i < 6; i++)
-	h.npartTotal[i] = f->readInt32();
-      h.flag_cooling = f->readInt32();
-      h.num_files = f->readInt32();
-      data->BoxSize = h.BoxSize = f->readReal64();
-      data->Omega_M = h.Omega0 = f->readReal64();
-      data->Omega_Lambda = h.OmegaLambda = f->readReal64();
-      data->Hubble = h.HubbleParam = f->readReal64();
-      f->endCheckpoint(true);
-      
-      for(int k=0; k<6; k++)
-	{
-	  NumPart += h.npart[k];
-	  NumPartTotal += (id < 0) ? h.npart[k] : h.npartTotal[k];
-	}
-      data->NumPart = NumPart;
-      data->TotalNumPart = NumPartTotal;
+      loadGadgetHeader(f, h, data, id);
+
       if (GadgetFormat == 1)
         velmul = sqrt(h.time);
       else if (GadgetFormat == 2)
@@ -135,6 +91,9 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id, int loadflags, i
         cerr << "unknown gadget format" << endl;
 	abort();
       }
+
+      NumPart = data->NumPart;
+      NumPartTotal = data->TotalNumPart;
     }
   catch (const InvalidUnformattedAccess& e)
     {
@@ -256,7 +215,7 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id, int loadflags, i
       }
     catch (const InvalidUnformattedAccess& e)
       {
-	cerr << "Invalid formatted while reading ID" << endl;
+	cerr << "Invalid unformatted access while reading ID" << endl;
 	delete f;
 	delete data;
 	return 0;

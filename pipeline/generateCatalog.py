@@ -9,8 +9,8 @@ import pickle
 
 # ------------------------------------------------------------------------------
 
-if (len(sys.argv) == 0):
-  print "Usage: ./anylyzeVoids.py parameter_file.py"
+if (len(sys.argv) == 1):
+  print "Usage: ./analyzeVoids.py parameter_file.py"
   exit(-1)
 
 if (len(sys.argv) > 1):

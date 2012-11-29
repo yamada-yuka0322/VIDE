@@ -81,8 +81,8 @@ endCatalogStage   = 4
 startAPStage = 1
 endAPStage = 7
 
-ZOBOV_PATH = os.getenv("PWD")+"/../zobov/"
-CTOOLS_PATH = os.getenv("PWD")+"/../c_tools/"
+ZOBOV_PATH = "@CMAKE_BINARY_DIR@/zobov/"
+CTOOLS_PATH = "@CMAKE_BINARY_DIR@/c_tools/"
 freshStack = True
 errorBars = "CALCULATED"
 numIncoherentRuns = 100

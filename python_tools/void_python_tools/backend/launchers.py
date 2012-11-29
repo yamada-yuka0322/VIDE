@@ -60,7 +60,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     file(parmFile, mode="w").write(conf)
 
     if not (continueRun and jobSuccessful(logFile, "Done!\n")):
-      cmd = "%s --configFile=%s >& %s" % (binPath,parmFile,logFile)
+      cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
       os.system(cmd)
       if jobSuccessful(logFile, "Done!\n"):
         print "done"
@@ -148,7 +148,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     file(parmFile, mode="w").write(conf)
 
     if not (continueRun and jobSuccessful(logFile, "Done!\n")):
-      cmd = "%s --configFile=%s >& %s" % (binPath,parmFile,logFile)
+      cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
       os.system(cmd)
       if jobSuccessful(logFile, "Done!\n"):
         print "done"
@@ -199,7 +199,7 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
     if os.access(zobovDir+"/voidDesc_"+sampleName+".out", os.F_OK):
       os.unlink(zobovDir+"/voidDesc_"+sampleName+".out")
 
-    cmd = "%s/vozinit %s 0.1 1.0 %g %s %g %s %s %s >& %s" % \
+    cmd = "%s/vozinit %s 0.1 1.0 %g %s %g %s %s %s &> %s" % \
           (binPath, datafile,  numZobovDivisions, \
                       "_"+sampleName, numZobovThreads, \
                       binPath, zobovDir, maskIndex, logFile)
@@ -295,7 +295,7 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     cmd += " --outDistances=" + zobovDir+"/boundaryDistances_"+\
                           str(thisDataPortion)+"_"+\
                           str(sampleName)+".out"
-    cmd += " >& " + logFile
+    cmd += " &> " + logFile
     os.system(cmd)
 
     if jobSuccessful(logFile, "NetCDF: Not a valid ID\n") or \
@@ -423,7 +423,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   fp.close()
 
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
-    cmd = "%s --configFile=%s >& %s" % \
+    cmd = "%s --configFile=%s &> %s" % \
           (binPath, parmFile, logFile)
     os.system(cmd)
 

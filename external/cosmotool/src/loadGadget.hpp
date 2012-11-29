@@ -5,10 +5,9 @@
 #include "loadSimu.hpp"
 
 namespace CosmoTool {
-  
-  PurePositionData *loadGadgetPosition(const char *fname);
 
-  SimuData *loadGadgetMulti(const char *fname, int id, int flags, int GadgetFormat = 1);
+  SimuData *loadGadgetMulti(const char *fname, int id, int flags, 
+			    int GadgetFormat = 1, SimuFilter filter = 0);
  
   // Only single snapshot supported
   void writeGadget(const char *fname, SimuData *data, int GadgetFormat = 1);
