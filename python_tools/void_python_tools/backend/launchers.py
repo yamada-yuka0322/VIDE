@@ -271,8 +271,8 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     cmd += " --dataPortion=" + thisDataPortion
     cmd += " --mockIndex=" + str(mockIndex)
     cmd += " --maxCentralDen=" + str(maxDen)
-    cmd += " --zMin=" + str(sample.zBoundary[0])
-    cmd += " --zMax=" + str(sample.zBoundary[1])
+    cmd += " --zMin=" + str(sample.zRange[0])
+    cmd += " --zMax=" + str(sample.zRange[1])
     cmd += " --rMin=" + str(sample.minVoidRadius)
     cmd += " --numVoids=" + str(numVoids)
     cmd += observationLine
@@ -764,12 +764,10 @@ def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None):
       fp.close()
       return
 
-    # TEST
     if sample.profileBinSize == "auto":
-      density = 0.5 * 50 / Rcircular
+      density = 0.5 * 50 / Rcircular / 2
     else:
-      #density = 0.5 * 50 / 60
-      density = 0.5 * 50 / Rcircular / sample.profileBinSize
+      density = sample.profileBinSize
 
     sys.stdout = open(logFile, 'w')
     sys.stderr = open(logFile, 'a')
@@ -836,10 +834,16 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     while badChain:
       Rexpect = (stack.rMin+stack.rMax)/2
       Rtruncate = stack.rMin*3. + 1 # TEST
-      ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-                                    Niter=300000,
-                                    Nburn=100000,
-                                    Rextracut=Rtruncate)
+      if sample.dataType == "observation":
+        ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+                                      Niter=300000,
+                                      Nburn=100000,
+                                      Rextracut=Rtruncate)
+      else:
+        ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+                                      Niter=300000,
+                                      Nburn=100000,
+                                      Rextracut=Rtruncate)
       badChain = (args[0][0] > 0.5 or args[0][1] > stack.rMax or \
                   args[0][2] > stack.rMax) and \
                  (ntries < maxtries)
@@ -862,8 +866,8 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
       rescaleFactor = 1.0
 
     # TEST - plotting raw galaxy counts
-    vp.draw_fit(*args, delta_tick=50, vmax=1.0, delta_v=0.01,
-    #vp.draw_fit(*args, delta_tick=0.2, vmax=1.0, delta_v=0.01,
+    #vp.draw_fit(*args, delta_tick=50, vmax=1.0, delta_v=0.01,
+    vp.draw_fit(*args, delta_tick=0.2, vmax=1.0, delta_v=0.01,
                 nocontour=True, model_max=1.0, delta_model=0.1,
                 plotTitle=plotTitle, show_ratio=showRatio,
                 showContours=showContours,
@@ -965,8 +969,12 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
       #   (not not fully accurate) plots
       for (iZBin, stack) in enumerate(sample.getUniqueZBins()):
 
-        aveDist = vp.aveStretchCone(stack.zMin, stack.zMax, 
-                                    skyFrac = sample.skyFraction)
+        if sample.dataType == "observation":
+          aveDist = vp.aveStretchCone(stack.zMin, stack.zMax, 
+                                      skyFrac = sample.skyFraction)
+        else:
+          aveDist = vp.aveStretch(stack.zMin, stack.zMax)
+
         aveDistList[iZBin, 0] = stack.zMin
         aveDistList[iZBin, 1] = aveDist
         aveDistList[iZBin, 2] = 0.00125
@@ -1010,16 +1018,24 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
           #                            skyFrac = sample.skyFraction, 
           #                            voidRedshifts=voidRedshifts)
 
-          aveDist = vp.aveStretchCone(zBin.zMin, zBin.zMax, 
-                                      skyFrac = sample.skyFraction)
+          if sample.dataType == "observation":
+            aveDist = vp.aveStretchCone(zBin.zMin, zBin.zMax, 
+                                        skyFrac = sample.skyFraction)
+          else:
+            aveDist = vp.aveStretch(zBin.zMin, zBin.zMax)
+
           expList[0, iR, iZBin, 2] = aveDist
 
           for (iZCheck,zBinCheck) in enumerate(allZBins):
             for (iRCheck,rBinCheck) in enumerate(allRBins):
               if zBin.zMin == zBinCheck.zMin and zBin.zMax == zBinCheck.zMax:
                 if rBin.rMin == rBinCheck.rMin and rBin.rMax == rBinCheck.rMax:
-                  aveDist = vp.aveStretchCone(zBin.zMin, zBin.zMax, 
-                                              skyFrac = sample.skyFraction)
+                  if sample.dataType == "observation":
+                    aveDist = vp.aveStretchCone(zBin.zMin, zBin.zMax, 
+                                                skyFrac = sample.skyFraction)
+                  else:
+                    aveDist = vp.aveStretch(zBin.zMin, zBin.zMax)
+
                   allExpList[iSample, iRCheck, iZCheck, 0] = exp
                   allExpList[iSample, iRCheck, iZCheck, 1] = expError
 
@@ -1112,8 +1128,12 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
         if zBin.zMaxPlot > plotZmax: plotZmax = zBin.zMaxPlot
         if zBin.zMinPlot < plotZmin: plotZmin = zBin.zMinPlot
 
-        aveDist = vp.aveStretchCone(zBin.zMin, zBin.zMax, 
-                                    skyFrac = sample.skyFraction)
+        if sample.dataType == "observation":
+          aveDist = vp.aveStretchCone(zBin.zMin, zBin.zMax, 
+                                      skyFrac = sample.skyFraction)
+        else:
+          aveDist = vp.aveStretch(zBin.zMin, zBin.zMax)
+
         aveDistList[iZ, 0] = zBin.zMin
         aveDistList[iZ, 1] = aveDist
         aveDistList[iZ, 2] = 0.00125

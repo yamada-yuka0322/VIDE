@@ -40,6 +40,7 @@ typedef struct voidStruct {
   float vol, coreDens, zoneVol, densCon, voidProb, radius;
   int voidID, numPart, numZones, coreParticle, zoneNumPart;
   float maxRadius, nearestMock, centralDen, redshift, redshiftInMpc;
+  float nearestEdge;
   float center[3], barycenter[3];
   int accepted;
 } VOID;
@@ -349,6 +350,7 @@ int main(int argc, char **argv) {
     voids[iVoid].centralDen = centralDen / (4./3. * M_PI * pow(centralRad, 3./2.));
 
     // compute maximum extent
+/*
     if (args_info.isObservation_flag) {
       maxDist = 0.;
       for (p = 0; p < voids[iVoid].numPart; p++) {
@@ -364,6 +366,7 @@ int main(int argc, char **argv) {
       }
       voids[iVoid].maxRadius = sqrt(maxDist)/2.;
     } else {
+*/
       maxDist = 0.;
       for (p = 0; p < voids[iVoid].numPart; p++) {
   
@@ -379,7 +382,7 @@ int main(int argc, char **argv) {
         if (dist2 > maxDist) maxDist = dist2;
       }
       voids[iVoid].maxRadius = sqrt(maxDist);
-    }
+//    }
     
     if (args_info.isObservation_flag) {
       // compute distance from center to nearest mock
@@ -405,8 +408,9 @@ int main(int argc, char **argv) {
                              pow(voids[iVoid].barycenter[2] - boxLen[2]/2.,2));
       voids[iVoid].redshiftInMpc = voids[iVoid].redshiftInMpc;
       redshift = voids[iVoid].redshiftInMpc;
-      nearestEdge = fmin(fabs(redshift-args_info.zMin_arg*LIGHT_SPEED/100.), 
-                         fabs(redshift-args_info.zMax_arg*LIGHT_SPEED/100.)); 
+      nearestEdge = fabs(redshift-args_info.zMax_arg*LIGHT_SPEED/100.); 
+      //nearestEdge = fmin(fabs(redshift-args_info.zMin_arg*LIGHT_SPEED/100.), 
+      //                   fabs(redshift-args_info.zMax_arg*LIGHT_SPEED/100.)); 
       voids[iVoid].redshift = voids[iVoid].redshiftInMpc/LIGHT_SPEED*100.;
 
     } else {
@@ -436,9 +440,7 @@ int main(int argc, char **argv) {
       }
     }
 
-    if (nearestEdge < voids[iVoid].nearestMock) {
-      voids[iVoid].nearestMock = nearestEdge;
-    }
+    voids[iVoid].nearestEdge = nearestEdge;
   } // iVoid
 
   printf(" Picking winners and losers...\n");
@@ -448,7 +450,7 @@ int main(int argc, char **argv) {
 
   for (iVoid = 0; iVoid < numVoids; iVoid++) {
     if (voids[iVoid].densCon < 1.5) {
-      //voids[iVoid].accepted = 0;
+//      voids[iVoid].accepted = -4;
     }
  
     if (voids[iVoid].centralDen > args_info.maxCentralDen_arg) {
@@ -474,6 +476,15 @@ int main(int argc, char **argv) {
       voids[iVoid].accepted = -2;
     }
 
+    // *alwas* clean out near edges since there are no mocks there
+    if (tolerance*voids[iVoid].maxRadius > voids[iVoid].nearestEdge) {
+      voids[iVoid].accepted = -3;
+    }
+
+    // assume the lower z-boundary is "soft" in observations
+    if (voids[iVoid].redshift < args_info.zMin_arg) {
+      voids[iVoid].accepted = -3;
+    }
   }
 
   numKept = 0;

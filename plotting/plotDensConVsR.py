@@ -14,7 +14,7 @@ import argparse
 
 # ------------------------------------------------------------------------------
 
-plotNameBase = "compdenscon"
+plotNameBase = "densconvsr"
 
 obsFudgeFactor = .66 # what fraction of the volume are we *reall* capturing?
 
@@ -46,10 +46,10 @@ for sampleDir in sampleDirList:
     dataSampleList.append(pickle.load(input))
 
 plt.clf()
-plt.xlabel("Void Density Contrast")
-plt.ylabel(r"N > R [$h^3$ Gpc$^{-3}$]")
+plt.ylabel("Void Density Contrast")
+plt.xlabel("Void Radius [Mpc/h]")
+#plt.xlim(xmax=5.)
 plt.yscale('log')
-plt.xlim(xmax=5.)
 
 plotName = plotNameBase
 
@@ -81,11 +81,8 @@ for (iSample,sample) in enumerate(dataSampleList):
   if data.ndim == 1:
     print " Too few!"
     continue
-  data = data[:,8]
-  indices = np.arange(0, len(data), 1)
-  sorted = np.sort(data)
 
-  plt.plot(sorted, indices[::-1]/boxVol, '-',
+  plt.plot(data[:,4], data[:,8], '-',
            label=lineTitle, color=colorList[iSample],
            linewidth=linewidth)
 

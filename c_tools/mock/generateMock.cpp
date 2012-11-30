@@ -23,10 +23,6 @@ using boost::format;
 #define LIGHT_SPEED 299792.458
 
 typedef boost::function2<void, SimuData*, double*> MetricFunctor;
-
-
-
-static double cubic(double a)
 {
   return a*a*a;
 }
@@ -217,8 +213,6 @@ void generateOutput(SimuData *data, int axis,
       f.beginCheckpoint();
       for (uint32_t i = 0; i < data->NumPart; i++)
 	{
-	  //printf("HELLO %d %d\n", i, data->Id[i]);
-	  //f.writeReal32(data->Id[i]);
 	  f.writeInt64(uniqueID[i]);
 	}
       f.endCheckpoint();

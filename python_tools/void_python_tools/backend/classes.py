@@ -167,3 +167,10 @@ def jobSuccessful(logFile, doneString):
 def getStackSuffix(zMin, zMax, rMin, rMax, dataPortion):
   return "z"+str(zMin)+"-"+str(zMax)+"_"+str(rMin)+"-"+str(rMax)+\
          "Mpc"+"_"+dataPortion
+
+def my_import(name):
+    mod = __import__(name)
+    components = name.split('.')
+    for comp in components[1:]:
+        mod = getattr(mod, comp)
+    return mod
