@@ -327,13 +327,12 @@ if (args.script or args.all) and dataFormat == "multidark":
 
     minRadius = 2*int(np.ceil(lbox/numPart**(1./3.)))
   
-    if dataFormat == "multidark":
-      setName = prefix+"halos_min"+str(minHaloMass)
-      writeScript(setName, "md.halos_min"+str(minHaloMass)+"_z", 
+    setName = prefix+"halos_min"+str(minHaloMass)
+    writeScript(setName, prefix+"halos_min"+str(minHaloMass)+"_z", 
                 scriptDir, catalogDir, fileNums, 
                 redshifts, 
                 numSubvolumes, numSlices, False, lbox, minRadius, omegaM)
-      writeScript(setName, "md.halos_min"+str(minHaloMass)+"_z", 
+    writeScript(setName, prefix+"halos_min"+str(minHaloMass)+"_z", 
                 scriptDir, catalogDir, fileNums, 
                 redshifts, 
                 numSubvolumes, numSlices, True, lbox, minRadius, omegaM)
@@ -356,7 +355,7 @@ if args.halos or args.all:
           numPart += 1
       inFile.close()
 
-      sampleName = "md.halos_min"+str(minHaloMass)+"_z"+redshift
+      sampleName = prefix+"halos_min"+str(minHaloMass)+"_z"+redshift
       outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
 
       outFile.write("%f\n" %(lbox))

@@ -63,8 +63,7 @@ public:
       fp >> simu->Id[i] >> simu->Pos[0][i] >> simu->Pos[1][i]
 	 >> simu->Pos[2][i] >> simu->Vel[2][i];
 
-      uniqueID[i] = 1;
-      //uniqueID[i] = 1 * simu->Id[i];
+      uniqueID[i] = simu->Id[i];
 
       if (simu->Id[i] == -99 && 
           simu->Pos[0][i] == -99 && simu->Pos[1][i] == -99 && 
