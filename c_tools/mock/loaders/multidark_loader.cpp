@@ -41,7 +41,7 @@ public:
       return 0;
 
     ifstream fp(darkname.c_str());
-    SimuData *simu;
+    SimuData *simu = new SimuData;
 
     fp >> simu->BoxSize >> simu->Omega_M >> simu->Hubble >> simu->time >> simu->NumPart;
     simu->time = 1./(1.+simu->time); // convert to scale factor

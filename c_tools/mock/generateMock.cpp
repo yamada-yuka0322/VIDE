@@ -11,6 +11,7 @@
 #include <CosmoTool/loadSimu.hpp>
 #include <CosmoTool/interpolate.hpp>
 #include <CosmoTool/fortran.hpp>
+#include <CosmoTool/algo.hpp>
 #include "generateMock_conf.h"
 #include "gslIntegrate.hpp"
 #include <netcdfcpp.h>
@@ -23,9 +24,6 @@ using boost::format;
 #define LIGHT_SPEED 299792.458
 
 typedef boost::function2<void, SimuData*, double*> MetricFunctor;
-{
-  return a*a*a;
-}
 
 struct TotalExpansion
 {
@@ -33,7 +31,7 @@ struct TotalExpansion
 
   double operator()(double z)
   {
-    return 1/sqrt(Omega_M*cubic(1+z) + Omega_L);
+    return 1/sqrt(Omega_M*cube(1+z) + Omega_L);
   }
 };
 
