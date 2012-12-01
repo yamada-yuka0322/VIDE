@@ -226,31 +226,28 @@ for thisSubSample in subSamples:
     print " Doing subsample", thisSubSample, " scripts"
     setName = prefix+"ss"+str(thisSubSample)
     if dataFormat == "multidark":
-      writeScript(setName, "md.ss"+str(thisSubSample)+"_z", 
-                  scriptDir, catalogDir, fileNums, 
-                  redshifts, 
-                  numSubvolumes, numSlices, False, lbox, minRadius, omegaM, 
-                  subsample=1.0)
-      writeScript(setName, "md.ss"+str(thisSubSample)+"_z", 
-                  scriptDir, catalogDir, 
-                  fileNums, 
-                  redshifts, numSubvolumes, numSlices, True, lbox, minRadius, 
-                  omegaM, subsample=1.0)
-    elif dataFormat == "gadget" or dataFormat == "lanl":
-      writeScript(setName, particleFileBase, scriptDir, catalogDir, fileNums,
-                   redshifts, 
-                  numSubvolumes, numSlices, False, lbox, minRadius, omegaM,
-                  subsample=thisSubSample, suffix="")
-      writeScript(setName, particleFileBase, scriptDir, catalogDir, fileNums,
-                   redshifts, 
-                  numSubvolumes, numSlices, True, lbox, minRadius, omegaM,
-                  subsample=thisSubSample, suffix="")
+      subSampleToUse = 1.0
+      fileToUse = "md.ss"+str(thisSubSample)+"_z"
+      suffix = ".dat"
+    elif dataFormat == "gadget":
+      subSampleToUse = thisSubSample
+      fileToUse = particleFileBase
+      suffix = ""
+    elif dataFormat == "lanl":
+      subSampleToUse = thisSubSample
+      fileToUse = particleFileBase
+      suffix = ""
     elif dataFormat == "random":
-      writeScript(setName, "ran.ss"+str(thisSubSample)+"_z", 
-                  scriptDir, catalogDir, fileNums, 
-                  redshifts, 
+      subSampleToUse = 1.0
+      fileToUse = "ran.ss"+str(thisSubSample)+"_z"
+      suffix = ".dat"
+
+    writeScript(setName, fileToUse, scriptDir, catalogDir, fileNums, redshifts, 
                   numSubvolumes, numSlices, False, lbox, minRadius, omegaM, 
-                  subsample=1.0)
+                  subsample=subSampleToUse, suffix=suffix)
+    writeScript(setName, fileToUse, scriptDir, catalogDir, fileNums, redshifts, 
+                  numSubvolumes, numSlices, True, lbox, minRadius, omegaM, 
+                  subsample=subSampleToUse, suffix=suffix)
   
   if args.subsample or args.all:
     print " Doing subsample", thisSubSample
@@ -311,7 +308,7 @@ for thisSubSample in subSamples:
 
 # -----------------------------------------------------------------------------
 # now halos
-if (args.script or args.all) and (dataFormat == "multidark" or dataFormat == "lanl"):
+if (args.script or args.all) and haloFileBase != "":
   print " Doing halo scripts"
 
   for minHaloMass in minHaloMasses:
@@ -319,16 +316,10 @@ if (args.script or args.all) and (dataFormat == "multidark" or dataFormat == "la
     dataFile = catalogDir+haloFileBase+fileNums[0]
     inFile = open(dataFile, 'r')
     numPart = 0
-    if dataFormat == "multidark":
-      for line in inFile: 
-        line = line.split(',')
-        if minHaloMass == "none" or float(line[6]) > minHaloMass:
-          numPart += 1
-    elif dataFormat == "lanl":
-      for line in inFile: 
-        line = line.split(' ')
-        if minHaloMass == "none" or float(line[0]) > minHaloMass:
-          numPart += 1
+    for line in inFile: 
+      line = line.split(haloFileColSep)
+      if minHaloMass == "none" or float(line[haloFileMCol]) > minHaloMass:
+        numPart += 1
     inFile.close()
 
     minRadius = 2*int(np.ceil(lbox/numPart**(1./3.)))
@@ -343,7 +334,7 @@ if (args.script or args.all) and (dataFormat == "multidark" or dataFormat == "la
                 redshifts, 
                 numSubvolumes, numSlices, True, lbox, minRadius, omegaM)
 
-if args.halos or args.all: 
+if (args.halos or args.all) and haloFileBase != "":
   print " Doing halos"
 
   for minHaloMass in minHaloMasses:
@@ -355,15 +346,10 @@ if args.halos or args.all:
       dataFile = catalogDir+haloFileBase+fileNums[iRedshift]
       inFile = open(dataFile, 'r')
       numPart = 0
-      if dataFormat == "multidark":
-        for line in inFile: 
-          line = line.split(',')
-          if minHaloMass == "none" or float(line[6]) > minHaloMass:
-            numPart += 1
-      elif dataFormat == "lanl":
-          line = line.split(' ')
-          if minHaloMass == "none" or float(line[0]) > minHaloMass:
-            numPart += 1
+      for line in inFile: 
+        line = line.split(haloFileColSep)
+        if minHaloMass == "none" or float(line[haloFileMCol]) > minHaloMass:
+          numPart += 1
       inFile.close()
 
       sampleName = prefix+"halos_min"+str(minHaloMass)+"_z"+redshift
@@ -377,20 +363,12 @@ if args.halos or args.all:
 
       inFile = open(dataFile, 'r')
       for (iHalo,line) in enumerate(inFile):
-        if dataFormat == "multidark":
-          line = line.split(',')
-          if minHaloMass == "none" or float(line[6]) > minHaloMass:
-            x  = float(line[0])
-            y  = float(line[1])
-            z  = float(line[2])
-            vz = float(line[5])
-        elif dataFormat == "lanl":
-          line = line.split(' ')
-          if minHaloMass == "none" or float(line[0]) > minHaloMass:
-            x  = float(line[1])
-            y  = float(line[2])
-            z  = float(line[3])
-            vz = float(line[4])
+        line = line.split(haloFileColSep)
+        if minHaloMass == "none" or float(line[haloFileMCol]) > minHaloMass:
+          x  = float(line[haloFileXCol])
+          y  = float(line[haloFileYCol])
+          z  = float(line[haloFileZCol])
+          vz = float(line[haloFileVZCol])
 
           # write to output file
           outFile.write("%d %e %e %e %e\n" %(iHalo,x,y,z,vz))
@@ -441,7 +419,7 @@ BOX_SIZE   {boxSize}
 root_filename hod
                """
 
-if (args.script or args.all) and (dataFormat == "multidark" or dataFormat == "lanl"):
+if (args.script or args.all) and haloFileBase != "":
   print " Doing DR7 HOD scripts"
   setName = prefix+"hod_dr72dim2"
   writeScript(setName, prefix+"hod_dr72dim2_z",
@@ -451,7 +429,7 @@ if (args.script or args.all) and (dataFormat == "multidark" or dataFormat == "la
               scriptDir, catalogDir, fileNums, redshifts, 
               numSubvolumes, numSlices, True, lbox, 5, omegaM)
 
-if args.hod or args.all:
+if (args.hod or args.all) and haloFileBase != "":
   print " Doing DR7 HOD"
   for (iRedshift, redshift) in enumerate(redshifts):
     print "  z = ", redshift
@@ -482,7 +460,7 @@ if args.hod or args.all:
 
 # -----------------------------------------------------------------------------
 # now the BOSS HOD
-if (args.script or args.all) and (dataFormat == "multidark" or dataFormat == "lanl"):
+if (args.script or args.all) and haloFileBase != "":
   print " Doing DR9 HOD scripts"
   setName = prefix+"hod_dr9mid"
   writeScript(setName, prefix+"hod_dr9mid_z",
@@ -492,7 +470,7 @@ if (args.script or args.all) and (dataFormat == "multidark" or dataFormat == "la
               scriptDir, catalogDir, fileNums, redshifts, 
                numSubvolumes, numSlices, True, lbox, 15, omegaM)
 
-if args.hod or args.all:
+if (args.hod or args.all) and haloFileBase != "":
   print " Doing DR9 HOD"
   for (iRedshift, redshift) in enumerate(redshifts):
     print "  z = ", redshift

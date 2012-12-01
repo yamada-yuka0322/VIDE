@@ -52,12 +52,22 @@ prefix = "md_"
 #subSamples = [0.0004]
 subSamples = ((0.1, 0.05, 0.01, 0.002, 0.001, 0.0004, 0.0002))
 
-# common filename of halo files
+# common filename of halo files, leave blank to ignore halos
 haloFileBase = "mdr1_halos_z"
 
 # minimum halo mass cuts to apply for the halo catalog
 #   use "none" to get all halos
 minHaloMasses = (("none", 2e12, 1.23e13))
+
+# locations of data in the halo catalog
+haloFileMCol  = 6
+haloFileXCol  = 0
+haloFileYCol  = 1
+haloFileZCol  = 2
+haloFileVXCol = 3
+haloFileVYCol = 4
+haloFileVZCol = 5
+haloFileColSep = ','
 
 # adjust these two parameters given the memory contraints on your system:
 #   numZobovDivisions: how many sub-volumes per dimension will zobov process
