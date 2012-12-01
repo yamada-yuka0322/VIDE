@@ -412,6 +412,7 @@ real_space_xi 1
 HOD 1
 populate_sim 1
 HaloFile {haloFile}
+HaloFileFormat {haloFileFormat}
 RESOLUTION {numPartPerSide}
 BOX_SIZE   {boxSize}
 
@@ -446,11 +447,13 @@ if (args.hod or args.all) and haloFileBase != "":
                                      alpha=1.12,
                                      Mcut=6.91831e11,
                                      haloFile=haloFile,
+                                     haloFileFormat=dataFormat,
                                      numPartPerSide=numPart**(1/3.),
                                      boxSize=lbox))
     parFile.close()
 
-    os.system(hodPath+" "+parFileName+">& /dev/null")
+    os.system(hodPath+" "+parFileName+"")
+    #os.system(hodPath+" "+parFileName+">& /dev/null")
 
     sampleName = getSampleName(prefix+"hod_dr72dim2", redshift, False)
     outFileName = catalogDir+"/"+sampleName+".dat"
@@ -488,6 +491,7 @@ if (args.hod or args.all) and haloFileBase != "":
                                      alpha=1.0127,
                                      Mcut=1.19399e13,
                                      haloFile=haloFile,
+                                     haloFileFormat=dataFormat,
                                      numPartPerSide=numPart**(1/3.),
                                      boxSize=lbox))
     parFile.close()
