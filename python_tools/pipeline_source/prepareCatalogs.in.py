@@ -236,7 +236,7 @@ for thisSubSample in subSamples:
                   fileNums, 
                   redshifts, numSubvolumes, numSlices, True, lbox, minRadius, 
                   omegaM, subsample=1.0)
-    elif dataFormat == "gadget":
+    elif dataFormat == "gadget" or dataFormat == "lanl":
       writeScript(setName, particleFileBase, scriptDir, catalogDir, fileNums,
                    redshifts, 
                   numSubvolumes, numSlices, False, lbox, minRadius, omegaM,
@@ -311,7 +311,7 @@ for thisSubSample in subSamples:
 
 # -----------------------------------------------------------------------------
 # now halos
-if (args.script or args.all) and dataFormat == "multidark":
+if (args.script or args.all) and (dataFormat == "multidark" or dataFormat == "lanl"):
   print " Doing halo scripts"
 
   for minHaloMass in minHaloMasses:
@@ -319,10 +319,16 @@ if (args.script or args.all) and dataFormat == "multidark":
     dataFile = catalogDir+haloFileBase+fileNums[0]
     inFile = open(dataFile, 'r')
     numPart = 0
-    for line in inFile: 
-      line = line.split(',')
-      if minHaloMass == "none" or float(line[6]) > minHaloMass:
-        numPart += 1
+    if dataFormat == "multidark":
+      for line in inFile: 
+        line = line.split(',')
+        if minHaloMass == "none" or float(line[6]) > minHaloMass:
+          numPart += 1
+    elif dataFormat == "lanl":
+      for line in inFile: 
+        line = line.split(' ')
+        if minHaloMass == "none" or float(line[0]) > minHaloMass:
+          numPart += 1
     inFile.close()
 
     minRadius = 2*int(np.ceil(lbox/numPart**(1./3.)))
@@ -349,10 +355,15 @@ if args.halos or args.all:
       dataFile = catalogDir+haloFileBase+fileNums[iRedshift]
       inFile = open(dataFile, 'r')
       numPart = 0
-      for line in inFile: 
-        line = line.split(',')
-        if minHaloMass == "none" or float(line[6]) > minHaloMass:
-          numPart += 1
+      if dataFormat == "multidark":
+        for line in inFile: 
+          line = line.split(',')
+          if minHaloMass == "none" or float(line[6]) > minHaloMass:
+            numPart += 1
+      elif dataFormat == "lanl":
+          line = line.split(' ')
+          if minHaloMass == "none" or float(line[0]) > minHaloMass:
+            numPart += 1
       inFile.close()
 
       sampleName = prefix+"halos_min"+str(minHaloMass)+"_z"+redshift
@@ -366,12 +377,20 @@ if args.halos or args.all:
 
       inFile = open(dataFile, 'r')
       for (iHalo,line) in enumerate(inFile):
-        line = line.split(',')
-        if minHaloMass == "none" or float(line[6]) > minHaloMass:
-          x  = float(line[0])
-          y  = float(line[1])
-          z  = float(line[2])
-          vz = float(line[5])
+        if dataFormat == "multidark":
+          line = line.split(',')
+          if minHaloMass == "none" or float(line[6]) > minHaloMass:
+            x  = float(line[0])
+            y  = float(line[1])
+            z  = float(line[2])
+            vz = float(line[5])
+        elif dataFormat == "lanl":
+          line = line.split(' ')
+          if minHaloMass == "none" or float(line[0]) > minHaloMass:
+            x  = float(line[1])
+            y  = float(line[2])
+            z  = float(line[3])
+            vz = float(line[4])
 
           # write to output file
           outFile.write("%d %e %e %e %e\n" %(iHalo,x,y,z,vz))
@@ -422,14 +441,13 @@ BOX_SIZE   {boxSize}
 root_filename hod
                """
 
-if (args.script or args.all) and dataFormat == "multidark":
+if (args.script or args.all) and (dataFormat == "multidark" or dataFormat == "lanl"):
   print " Doing DR7 HOD scripts"
-  if dataFormat == "multidark":
-    setName = prefix+"hod_dr72dim2"
-    writeScript(setName, "md.hod_dr72dim2_z",
+  setName = prefix+"hod_dr72dim2"
+  writeScript(setName, prefix+"hod_dr72dim2_z",
               scriptDir, catalogDir, fileNums, redshifts, 
               numSubvolumes, numSlices, False, lbox, 5, omegaM)
-    writeScript(setName, "md.hod_dr72dim2_z",
+  writeScript(setName, prefix+"hod_dr72dim2_z",
               scriptDir, catalogDir, fileNums, redshifts, 
               numSubvolumes, numSlices, True, lbox, 5, omegaM)
 
@@ -440,7 +458,7 @@ if args.hod or args.all:
 
     parFileName = "./hod.par"
     parFile = open(parFileName, 'w')
-    haloFile = catalogDir+"/mdr1_halos_z"+fileNums[iRedshift]
+    haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
     parFile.write(parFileText.format(omegaM=omegaM,
                                      hubble=hubble,
                                      redshift=redshift,
@@ -456,7 +474,7 @@ if args.hod or args.all:
 
     os.system(hodPath+" "+parFileName+">& /dev/null")
 
-    sampleName = getSampleName("md.hod_dr72dim2", redshift, False)
+    sampleName = getSampleName(prefix+"hod_dr72dim2", redshift, False)
     outFileName = catalogDir+"/"+sampleName+".dat"
     os.system("mv hod.mock" + " " + outFileName)
 
@@ -464,14 +482,13 @@ if args.hod or args.all:
 
 # -----------------------------------------------------------------------------
 # now the BOSS HOD
-if (args.script or args.all) and dataFormat == "multidark":
+if (args.script or args.all) and (dataFormat == "multidark" or dataFormat == "lanl"):
   print " Doing DR9 HOD scripts"
-  if dataFormat == "multidark":
-    setName = prefix+"hod_dr9mid"
-    writeScript(setName, "md.hod_dr9mid_z",
+  setName = prefix+"hod_dr9mid"
+  writeScript(setName, prefix+"hod_dr9mid_z",
               scriptDir, catalogDir, fileNums, redshifts, 
                numSubvolumes, numSlices, False, lbox, 15, omegaM)
-    writeScript(setName, "md.hod_dr9mid_z",
+  writeScript(setName, prefix+"hod_dr9mid_z",
               scriptDir, catalogDir, fileNums, redshifts, 
                numSubvolumes, numSlices, True, lbox, 15, omegaM)
 
@@ -483,7 +500,7 @@ if args.hod or args.all:
     # these parameters come from Manera et al 2012, eq. 26
     parFileName = "./hod.par"
     parFile = open(parFileName, 'w')
-    haloFile = catalogDir+"/mdr1_halos_z"+fileNums[iRedshift]
+    haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
     parFile.write(parFileText.format(omegaM=omegaM,
                                      hubble=hubble,
                                      redshift=redshift,
@@ -499,7 +516,7 @@ if args.hod or args.all:
 
     os.system(hodPath+" "+parFileName+">& /dev/null")
 
-    sampleName = getSampleName("md.hod_dr9mid", redshift, False)
+    sampleName = getSampleName(prefix+"hod_dr9mid", redshift, False)
     outFileName = catalogDir+"/"+sampleName+".dat"
     os.system("mv hod.mock" + " " + outFileName)
 
