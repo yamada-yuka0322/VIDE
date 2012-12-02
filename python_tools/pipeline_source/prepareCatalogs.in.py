@@ -417,7 +417,7 @@ RESOLUTION {numPartPerSide}
 BOX_SIZE   {boxSize}
 
 % output
-root_filename hod
+root_filename {workDir}/hod
                """
 
 if (args.script or args.all) and haloFileBase != "":
@@ -449,17 +449,18 @@ if (args.hod or args.all) and haloFileBase != "":
                                      haloFile=haloFile,
                                      haloFileFormat=dataFormat,
                                      numPartPerSide=numPart**(1/3.),
-                                     boxSize=lbox))
+                                     boxSize=lbox,
+                                     workDir=catalogDir))
     parFile.close()
 
-    os.system(hodPath+" "+parFileName+"")
-    #os.system(hodPath+" "+parFileName+">& /dev/null")
+    os.system(hodPath+" "+parFileName+">& /dev/null")
 
     sampleName = getSampleName(prefix+"hod_dr72dim2", redshift, False)
     outFileName = catalogDir+"/"+sampleName+".dat"
-    os.system("mv hod.mock" + " " + outFileName)
+    os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
 
-    os.system("rm ./hod.*")
+    os.system("rm %s/hod.*" % catalogDir)
+    os.system("rm %s/hod-*" % catalogDir)
 
 # -----------------------------------------------------------------------------
 # now the BOSS HOD
@@ -493,15 +494,15 @@ if (args.hod or args.all) and haloFileBase != "":
                                      haloFile=haloFile,
                                      haloFileFormat=dataFormat,
                                      numPartPerSide=numPart**(1/3.),
-                                     boxSize=lbox))
+                                     boxSize=lbox,
+                                     workDir=catalogDir))
     parFile.close()
 
     os.system(hodPath+" "+parFileName+">& /dev/null")
 
     sampleName = getSampleName(prefix+"hod_dr9mid", redshift, False)
     outFileName = catalogDir+"/"+sampleName+".dat"
-    os.system("mv hod.mock" + " " + outFileName)
+    os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
 
-    os.system("rm ./hod.*")
-
-
+    os.system("rm %s/hod.*" % catalogDir)
+    os.system("rm %s/hod-*" % catalogDir)
