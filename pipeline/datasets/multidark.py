@@ -68,6 +68,7 @@ haloFileVXCol = 3
 haloFileVYCol = 4
 haloFileVZCol = 5
 haloFileColSep = ','
+haloFileNumComLines = 0
 
 # adjust these two parameters given the memory contraints on your system:
 #   numZobovDivisions: how many sub-volumes per dimension will zobov process

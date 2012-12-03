@@ -316,7 +316,8 @@ if (args.script or args.all) and haloFileBase != "":
     dataFile = catalogDir+haloFileBase+fileNums[0]
     inFile = open(dataFile, 'r')
     numPart = 0
-    for line in inFile: 
+    for (iLine, line) in enumerate(inFile): 
+      if iLine < haloFileNumComLines: continue
       line = line.split(haloFileColSep)
       if minHaloMass == "none" or float(line[haloFileMCol]) > minHaloMass:
         numPart += 1
@@ -346,7 +347,8 @@ if (args.halos or args.all) and haloFileBase != "":
       dataFile = catalogDir+haloFileBase+fileNums[iRedshift]
       inFile = open(dataFile, 'r')
       numPart = 0
-      for line in inFile: 
+      for (iLine, line) in enumerate(inFile): 
+        if iLine < haloFileNumComLines: continue
         line = line.split(haloFileColSep)
         if minHaloMass == "none" or float(line[haloFileMCol]) > minHaloMass:
           numPart += 1

@@ -32,7 +32,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     if sample.dataFile == "":
       datafile = inputDataDir+"/"+sampleName
     else:
-      datafile = sample.dataFile
+      datafile = inputDataDir+"/"+sample.dataFile
 
     maskFile = sample.maskFile
 

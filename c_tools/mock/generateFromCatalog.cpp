@@ -528,7 +528,7 @@ int main(int argc, char **argv)
   
   generateFromCatalog_conf_print_version();
 
-  cout << "Loading NYU data..." << endl;
+  cout << "Loading data " << args_info.catalog_arg << "..." << endl;
   vector<NYU_Data> data;
   Healpix_Map<float> o_mask;
   vector<int> pixel_list;
