@@ -59,7 +59,7 @@ def getSampleName(setName, redshift, useVel, iSlice=-1, iVol=-1):
 
 #------------------------------------------------------------------------------
 # for given dataset parameters, outputs a script for use with analyzeVoids
-def writeScript(setName, dataFileNameBase,
+def writeScript(setName, dataFileNameBase, dataFormat,
                 scriptDir, catalogDir, fileNums, redshifts, numSubvolumes,
                 numSlices, useVel, lbox, minRadius, omegaM, subsample=1.0, 
                 suffix=".dat"):
@@ -242,10 +242,12 @@ for thisSubSample in subSamples:
       fileToUse = "ran.ss"+str(thisSubSample)+"_z"
       suffix = ".dat"
 
-    writeScript(setName, fileToUse, scriptDir, catalogDir, fileNums, redshifts, 
+    writeScript(setName, fileToUse, dataFormat, 
+                  scriptDir, catalogDir, fileNums, redshifts, 
                   numSubvolumes, numSlices, False, lbox, minRadius, omegaM, 
                   subsample=subSampleToUse, suffix=suffix)
-    writeScript(setName, fileToUse, scriptDir, catalogDir, fileNums, redshifts, 
+    writeScript(setName, fileToUse, dataFormat, 
+                  scriptDir, catalogDir, fileNums, redshifts, 
                   numSubvolumes, numSlices, True, lbox, minRadius, omegaM, 
                   subsample=subSampleToUse, suffix=suffix)
   
@@ -326,11 +328,11 @@ if (args.script or args.all) and haloFileBase != "":
     minRadius = 2*int(np.ceil(lbox/numPart**(1./3.)))
   
     setName = prefix+"halos_min"+str(minHaloMass)
-    writeScript(setName, prefix+"halos_min"+str(minHaloMass)+"_z", 
+    writeScript(setName, prefix+"halos_min"+str(minHaloMass)+"_z", "multidark",
                 scriptDir, catalogDir, fileNums, 
                 redshifts, 
                 numSubvolumes, numSlices, False, lbox, minRadius, omegaM)
-    writeScript(setName, prefix+"halos_min"+str(minHaloMass)+"_z", 
+    writeScript(setName, prefix+"halos_min"+str(minHaloMass)+"_z", "multidark",
                 scriptDir, catalogDir, fileNums, 
                 redshifts, 
                 numSubvolumes, numSlices, True, lbox, minRadius, omegaM)
@@ -425,10 +427,10 @@ root_filename {workDir}/hod
 if (args.script or args.all) and haloFileBase != "":
   print " Doing DR7 HOD scripts"
   setName = prefix+"hod_dr72dim2"
-  writeScript(setName, prefix+"hod_dr72dim2_z",
+  writeScript(setName, prefix+"hod_dr72dim2_z", dataFormat,
               scriptDir, catalogDir, fileNums, redshifts, 
               numSubvolumes, numSlices, False, lbox, 5, omegaM)
-  writeScript(setName, prefix+"hod_dr72dim2_z",
+  writeScript(setName, prefix+"hod_dr72dim2_z", dataFormat, 
               scriptDir, catalogDir, fileNums, redshifts, 
               numSubvolumes, numSlices, True, lbox, 5, omegaM)
 
@@ -469,10 +471,10 @@ if (args.hod or args.all) and haloFileBase != "":
 if (args.script or args.all) and haloFileBase != "":
   print " Doing DR9 HOD scripts"
   setName = prefix+"hod_dr9mid"
-  writeScript(setName, prefix+"hod_dr9mid_z",
+  writeScript(setName, prefix+"hod_dr9mid_z", dataFormat,
               scriptDir, catalogDir, fileNums, redshifts, 
                numSubvolumes, numSlices, False, lbox, 15, omegaM)
-  writeScript(setName, prefix+"hod_dr9mid_z",
+  writeScript(setName, prefix+"hod_dr9mid_z", dataFormat,
               scriptDir, catalogDir, fileNums, redshifts, 
                numSubvolumes, numSlices, True, lbox, 15, omegaM)
 
