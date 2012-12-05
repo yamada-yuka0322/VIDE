@@ -356,7 +356,7 @@ if (args.halos or args.all) and haloFileBase != "":
           numPart += 1
       inFile.close()
 
-      sampleName = prefix+"halos_min"+str(minHaloMass)+"_z"+redshift
+      sampleName = prefix+"halos_min"+str(minHaloMass)+"_z"+fileNums[iRedshift]
       outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
 
       outFile.write("%f\n" %(lbox))
@@ -367,6 +367,7 @@ if (args.halos or args.all) and haloFileBase != "":
 
       inFile = open(dataFile, 'r')
       for (iHalo,line) in enumerate(inFile):
+        if iHalo < haloFileNumComLines: continue
         line = line.split(haloFileColSep)
         if minHaloMass == "none" or float(line[haloFileMCol]) > minHaloMass:
           x  = float(line[haloFileXCol])
