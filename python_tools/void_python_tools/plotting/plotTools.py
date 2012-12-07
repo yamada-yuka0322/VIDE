@@ -240,7 +240,7 @@ def plotNumberDistribution(workDir=None, sampleList=None, figDir=None,
       boxVol = vp.getSurveyProps(sample.maskFile, 
                                  sample.zBoundary[0], sample.zBoundary[1],
                                  sample.zRange[0], sample.zRange[1], "all",
-                                 selectionFuncFile=sample.selFunFile)[0]
+                                 selectionFuncFile=None)[0]
     else:
       boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1] - 
                                             sample.zBoundaryMpc[0])

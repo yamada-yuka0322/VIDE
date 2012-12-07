@@ -158,10 +158,11 @@ def jobSuccessful(logFile, doneString):
   jobDone = False
   checkLine = ""
   if os.access(logFile, os.F_OK):
-    filelines = file(logFile, "r").readlines()
-    if len(filelines) >= 1:
-      checkLine = filelines[-1]
-    jobDone = (checkLine == doneString)
+    #filelines = file(logFile, "r").readlines()
+    #if len(filelines) >= 1:
+    #  checkLine = filelines[-1]
+    for line in open(logFile, 'r'):
+      if doneString in line: jobDone = True
   return jobDone
 
 def getStackSuffix(zMin, zMax, rMin, rMax, dataPortion):

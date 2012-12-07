@@ -379,8 +379,8 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   %s
   ranSeed %d
   dataPortion %s
-  #barycenters %s
-  #boundaryDistances %s
+  barycenters %s
+  boundaryDistances %s
   %s
   """ % \
   (zobovDir+"/voidDesc_"+thisDataPortion+"_"+sampleName+".out",

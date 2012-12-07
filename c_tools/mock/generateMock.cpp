@@ -200,7 +200,7 @@ void generateOutput(SimuData *data, int axis,
   f.beginCheckpoint();
   for (uint32_t i = 0; i < data->NumPart; i++)
     {
-      f.writeReal32(data->Pos[x2][i]);
+      f.writeReal32(data->Pos[x2][i]*LIGHT_SPEED);
     }
   f.endCheckpoint();
 
