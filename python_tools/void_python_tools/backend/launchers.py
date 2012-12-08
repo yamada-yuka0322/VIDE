@@ -111,7 +111,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       dataFileLine = "multidark " + datafile
     elif sample.dataFormat == "gadget":
       dataFileLine = "gadget " + datafile
-      
+    
     iX = float(sample.mySubvolume[0])
     iY = float(sample.mySubvolume[1])
 
