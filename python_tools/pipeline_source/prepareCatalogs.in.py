@@ -144,6 +144,7 @@ newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, Fal
                """
   for (iFile, redshift) in enumerate(redshifts):
     fileNum = fileNums[iFile]
+
     zBox = float(redshift)
     Om = float(omegaM)
     zBoxMpc = LIGHT_SPEED/100.*vp.angularDiameter(zBox, Om=Om)
@@ -214,20 +215,21 @@ if not os.access(catalogDir, os.F_OK): os.mkdir(catalogDir)
 #------------------------------------------------------------------------------
 # first the directly downsampled runs
 # Note: ss0.002   ~ SDSS DR7 dim2
-#       ss0.0004 ~ SDSS DR9 mid 
+#       ss0.000175 ~ SDSS DR9 mid 
 baseResolution = float(numPart)/lbox/lbox/lbox # particles/Mpc^3
-for thisSubSample in subSamples:
+prevSubSample = -1
+for thisSubSample in sorted(subSamples, reverse=True):
 
   keepFraction = float(thisSubSample) / baseResolution
   maxKeep = keepFraction * numPart
   minRadius = int(np.ceil(lbox/maxKeep**(1./3)))
 
   if args.script or args.all:
-    print " Doing subsample", thisSubSample, " scripts"
+    print " Doing subsample", thisSubSample, "scripts"
     setName = prefix+"ss"+str(thisSubSample)
     if dataFormat == "multidark":
       subSampleToUse = 1.0
-      fileToUse = "md.ss"+str(thisSubSample)+"_z"
+      fileToUse = prefix+"ss"+str(thisSubSample)+"_z"
       suffix = ".dat"
     elif dataFormat == "gadget":
       subSampleToUse = thisSubSample
@@ -258,10 +260,19 @@ for thisSubSample in subSamples:
       print "   redshift", redshift
   
       if dataFormat == "multidark":
-        dataFile = catalogDir+"/"+particleFileBase+fileNums[iRedshift]
+        # reuse previous subamples in order to:
+        #   - preserve unique IDs across multiple subsamples
+        #   - reuse smaller files for faster processing
+        if prevSubSample == -1:
+          dataFile = catalogDir+"/"+particleFileBase+fileNums[iRedshift]
+        else:
+          sampleName = prefix+"ss"+str(prevSubSample)+"_z"+redshift
+          dataFile = catalogDir+"/"+sampleName+".dat"
+          keepFraction = float(thisSubSample) / float(prevSubSample)
+
         inFile = open(dataFile, 'r')
 
-        sampleName = "md.ss"+str(thisSubSample)+"_z"+redshift
+        sampleName = prefix+"ss"+str(thisSubSample)+"_z"+redshift
         outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
 
         outFile.write("%f\n" %(lbox))
@@ -272,16 +283,22 @@ for thisSubSample in subSamples:
 
         numKept = 0
         for (i,line) in enumerate(inFile):
+          if (prevSubSample != -1 and i < 5): continue # skip header
+
           if np.random.uniform() > keepFraction: continue
           numKept += 1
           if numKept > maxKeep: break
-          line = line.split(',')
-          x  = float(line[0])
-          y  = float(line[1])
-          z  = float(line[2])
-          vz = float(line[3])
 
-          outFile.write("%d %e %e %e %e\n" %(i,x,y,z,vz))
+          if (prevSubSample == -1):
+            line = line.split(',')
+            x  = float(line[0])
+            y  = float(line[1])
+            z  = float(line[2])
+            vz = float(line[3])
+            uniqueID = i
+            outFile.write("%d %e %e %e %e\n" %(uniqueID,x,y,z,vz))
+          else:
+            outFile.write(line)
 
         outFile.write("-99 -99 -99 -99 -99\n")
         inFile.close()
@@ -307,13 +324,15 @@ for thisSubSample in subSamples:
         outFile.write("-99 -99 -99 -99 -99\n")
         outFile.close()
 
+  prevSubSample = thisSubSample
 
 # -----------------------------------------------------------------------------
 # now halos
 if (args.script or args.all) and haloFileBase != "":
-  print " Doing halo scripts"
 
   for minHaloMass in minHaloMasses:
+    print " Doing halo script", minHaloMass
+
     # estimate number of halos to get density
     dataFile = catalogDir+haloFileBase+fileNums[0]
     inFile = open(dataFile, 'r')
@@ -406,7 +425,7 @@ EXCLUSION 4
 
 % hod parameters 
 M_min {Mmin}
-GALAXY_DENSITY 0.0111134 % computed automatically if M_min set, use for sanity
+GALAXY_DENSITY {galden} % computed automatically if M_min set, use for sanity
 M1 {M1}   
 sigma_logM {sigma_logM}
 alpha {alpha}
@@ -451,6 +470,7 @@ if (args.hod or args.all) and haloFileBase != "":
                                      sigma_logM=0.21,
                                      alpha=1.12,
                                      Mcut=6.91831e11,
+                                     galden=0.02,
                                      haloFile=haloFile,
                                      haloFileFormat=dataFormat,
                                      numPartPerSide=numPart**(1/3.),
@@ -458,14 +478,13 @@ if (args.hod or args.all) and haloFileBase != "":
                                      workDir=catalogDir))
     parFile.close()
 
-    os.system(hodPath+" "+parFileName+">& /dev/null")
-
-    sampleName = getSampleName(prefix+"hod_dr72dim2", redshift, False)
-    outFileName = catalogDir+"/"+sampleName+".dat"
-    os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
-
-    os.system("rm %s/hod.*" % catalogDir)
-    os.system("rm %s/hod-*" % catalogDir)
+#    os.system(hodPath+" "+parFileName+">& /dev/null")
+#
+#    sampleName = getSampleName(prefix+"hod_dr72dim2", redshift, False)
+#    outFileName = catalogDir+"/"+sampleName+".dat"
+#    os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
+#
+#    os.system("rm %s/hod.*" % catalogDir)
 
 # -----------------------------------------------------------------------------
 # now the BOSS HOD
@@ -485,17 +504,21 @@ if (args.hod or args.all) and haloFileBase != "":
     print "  z = ", redshift
 
     # these parameters come from Manera et al 2012, eq. 26
+    # modified to match the observed galaxy density
     parFileName = "./hod.par"
     parFile = open(parFileName, 'w')
     haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
     parFile.write(parFileText.format(omegaM=omegaM,
                                      hubble=hubble,
                                      redshift=redshift,
-                                     Mmin=1.23e13,
+                                     Mmin=0.0,
+                                     #Mmin=1.23e13,
                                      M1=1.e14,
                                      sigma_logM=0.596,
                                      alpha=1.0127,
                                      Mcut=1.19399e13,
+                                     galden=galDens,
+                                     #galden=0.000225,
                                      haloFile=haloFile,
                                      haloFileFormat=dataFormat,
                                      numPartPerSide=numPart**(1/3.),
@@ -510,4 +533,3 @@ if (args.hod or args.all) and haloFileBase != "":
     os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
 
     os.system("rm %s/hod.*" % catalogDir)
-    os.system("rm %s/hod-*" % catalogDir)

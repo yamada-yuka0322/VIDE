@@ -50,14 +50,14 @@ prefix = "md_"
 
 # list of desired subsamples - these are in unts of h Mpc^-3!
 #subSamples = [0.0004]
-subSamples = ((0.1, 0.05, 0.01, 0.002, 0.001, 0.0004, 0.0002))
+subSamples = ((0.1, 0.05, 0.01, 0.002, 0.001, 0.0004, 0.000175, 0.00001))
 
 # common filename of halo files, leave blank to ignore halos
 haloFileBase = "mdr1_halos_z"
 
 # minimum halo mass cuts to apply for the halo catalog
 #   use "none" to get all halos
-minHaloMasses = (("none", 2e12, 1.23e13))
+minHaloMasses = ["none", 1.2e13]
 
 # locations of data in the halo catalog
 haloFileMCol  = 6
@@ -82,8 +82,7 @@ lbox = 1000 # Mpc/h
 omegaM = 0.27
 hubble = 0.70
 
-# the mask file which is used by applyMaskToMock
-maskFileName = os.getenv("HOME")+"/workspace/Voids/catalogs/boss/boss_mask_final.fits"
+galDens = 0.000225
 
 # END CONFIGURATION
 # -----------------------------------------------------------------------------
