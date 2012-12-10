@@ -27,7 +27,7 @@ struct NYU_Data
   double cz;
   double fgotten;
   double phi_z;
-  double uniqueID;
+  long uniqueID;
 };
 
 struct Position
@@ -42,7 +42,7 @@ struct ParticleData
   vector<double> dec;
   vector<double> redshift;
   vector<double> catalogID;
-  vector<double> uniqueID;
+  vector<long> uniqueID;
   int id_mask;
   // PMS
   int mask_index;
@@ -453,7 +453,7 @@ void saveForZobov(ParticleData& pdata, const string& fname, const string& paramn
   cout << format("Writing Unique ID...")  << endl;
   f.beginCheckpoint();
   for (uint32_t i = 0; i < pdata.pos.size(); i++) {
-	  f.writeReal32(pdata.uniqueID[i]);
+	  f.writeInt64(pdata.uniqueID[i]);
 	}
   f.endCheckpoint();
    
