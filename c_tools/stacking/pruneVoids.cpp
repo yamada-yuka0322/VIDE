@@ -315,9 +315,9 @@ int main(int argc, char **argv) {
       dist[1] = voidPart[p].y - voids[iVoid].center[1];
       dist[2] = voidPart[p].z - voids[iVoid].center[2];
 
-      if (periodicX) dist[0] = fmin(dist[0], abs(boxLen[0]-dist[0]));
-      if (periodicY) dist[1] = fmin(dist[1], abs(boxLen[1]-dist[1]));
-      if (periodicZ) dist[2] = fmin(dist[2], abs(boxLen[2]-dist[2]));
+      if (periodicX) dist[0] = fmin(dist[0], fabs(boxLen[0]-dist[0]));
+      if (periodicY) dist[1] = fmin(dist[1], fabs(boxLen[1]-dist[1]));
+      if (periodicZ) dist[2] = fmin(dist[2], fabs(boxLen[2]-dist[2]));
 
       voids[iVoid].barycenter[0] += voidPart[p].vol*(dist[0]);
       voids[iVoid].barycenter[1] += voidPart[p].vol*(dist[1]);
@@ -340,9 +340,9 @@ int main(int argc, char **argv) {
       dist[1] = voidPart[p].y - voids[iVoid].barycenter[1];
       dist[2] = voidPart[p].z - voids[iVoid].barycenter[2];
 
-      if (periodicX) dist[0] = fmin(dist[0], abs(boxLen[0]-dist[0]));
-      if (periodicY) dist[1] = fmin(dist[1], abs(boxLen[1]-dist[1]));
-      if (periodicZ) dist[2] = fmin(dist[2], abs(boxLen[2]-dist[2]));
+      if (periodicX) dist[0] = fmin(dist[0], fabs(boxLen[0]-dist[0]));
+      if (periodicY) dist[1] = fmin(dist[1], fabs(boxLen[1]-dist[1]));
+      if (periodicZ) dist[2] = fmin(dist[2], fabs(boxLen[2]-dist[2]));
 
       dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
       if (dist2 < centralRad) centralDen += 1;
@@ -374,9 +374,9 @@ int main(int argc, char **argv) {
         dist[0] = voidPart[p].y - voids[iVoid].barycenter[1];
         dist[0] = voidPart[p].z - voids[iVoid].barycenter[2];
 
-        if (periodicX) dist[0] = fmin(dist[0], abs(boxLen[0]-dist[0]));
-        if (periodicY) dist[1] = fmin(dist[1], abs(boxLen[1]-dist[1]));
-        if (periodicZ) dist[2] = fmin(dist[2], abs(boxLen[2]-dist[2]));
+        if (periodicX) dist[0] = fmin(dist[0], fabs(boxLen[0]-dist[0]));
+        if (periodicY) dist[1] = fmin(dist[1], fabs(boxLen[1]-dist[1]));
+        if (periodicZ) dist[2] = fmin(dist[2], fabs(boxLen[2]-dist[2]));
 
         dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
         if (dist2 > maxDist) maxDist = dist2;
