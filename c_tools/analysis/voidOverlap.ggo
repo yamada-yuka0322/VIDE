@@ -10,6 +10,7 @@ option "voidFile1" -	"Void info file for catalog 1"	string yes
 option "infoFile1" -	"Extra info file for catalog 1"	string yes
 option "zoneFile1" - "Zone file for catalog 1"	string yes
 option "zonePartFile1" -	"Zone-particle file for catalog 1"	string yes
+option "barycenterFile1" - "Barycenter file for catalog 1" string yes
 
 # void data for file 2
 option "partFile2" - "Particle file for catalog 2"	string yes
@@ -18,8 +19,9 @@ option "voidFile2" - "Void info file for catalog 2"	string yes
 option "infoFile2" -	"Extra info file for catalog 2"	string yes
 option "zoneFile2" - "Zone file for catalog 2"	string yes
 option "zonePartFile2"	- "Zone-particle file for catalog 2"	string yes
+option "barycenterFile2" - "Barycenter file for catalog 2" string yes
 
 # options
-option "prefix" - "Prefix for output" string yes
+option "outfile" - "Output file" string yes
 option "useID" - "Use unique catalog ID to match voids; otherwise use volumes" flag off
 option "periodic" - "Set of edges which are periodic" string optional default="xy"

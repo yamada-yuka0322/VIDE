@@ -16,6 +16,11 @@
 #include "voidOverlap_conf.h"
 #include <vector>
 #include <netcdfcpp.h>
+#include <iostream>
+#include <sstream>
+#include <fstream>
+
+using namespace std;
 
 typedef struct partStruct {
   float x, y, z, volume;
@@ -38,8 +43,10 @@ typedef struct voidStruct {
   int voidID, numPart, numZones, coreParticle, zoneNumPart;
   float maxRadius, nearestMock, centralDen, redshift, redshiftInMpc;
   float nearestEdge;
-  float center[3], barycenter[3];
+  float barycenter[3];
   std::vector<int> matches;
+  int biggestMatchID, numMatches;
+  float biggestMatchVol;
 } VOID;
 
 typedef struct catalog {
@@ -53,10 +60,21 @@ typedef struct catalog {
 
 void loadCatalog(const char *partFile, const char *volFile, 
                  const char *voidFile, const char *zoneFile,
-                 const char *infoFile,
+                 const char *infoFile, const char *barycenterFile,
                  const char *zonePartFile, CATALOG& catalog);
 
+float getDist(CATALOG& catalog1, CATALOG& catalog2, int& iVoid1, int& iVoid2);
+
 int main(int argc, char **argv) {
+
+  int p1, p2, iZ1, iZ2, iVoid1, iVoid2, iVoid, zoneID1, zoneID2;
+  int partID1, partID2;
+  int voidID1, voidID2;
+  bool periodicX=false, periodicY=false, periodicZ=false, match;
+  float dist[3], rdist, r1, r2;
+  FILE *fp;
+
+  CATALOG catalog1, catalog2;
 
   // initialize arguments
   voidOverlap_info args;
@@ -79,25 +97,12 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  char outVoid[200];
-  int p1, p2, iZ1, iZ2, iVoid1, iVoid2, iVoid, zoneID1, zoneID2;
-  int voidStartIndex, numVoids, numVoidsOut, targetVoidID, voidID1, voidID2;
-  FILE *fp;
-  float *temp, junk, voidVol;
-  long *temp2;
-  int junkInt, voidID, numPart, numZones, zoneID, partID;
-  char line[500], junkStr[10];
-  bool periodicX=false, periodicY=false, periodicZ=false, match;
-  float dist[3], rdist, r1, r2;
-
-  CATALOG catalog1, catalog2;
-
   loadCatalog(args.partFile1_arg, args.volFile1_arg, args.voidFile1_arg,
-              args.zoneFile1_arg, args.infoFile1_arg,
+              args.zoneFile1_arg, args.infoFile1_arg, args.barycenterFile1_arg,
               args.zonePartFile1_arg, catalog1);
 
   loadCatalog(args.partFile2_arg, args.volFile2_arg, args.voidFile2_arg,
-              args.zoneFile2_arg, args.infoFile2_arg,
+              args.zoneFile2_arg, args.infoFile2_arg, args.barycenterFile2_arg,
               args.zonePartFile2_arg, catalog2);
 
   // check for periodic box
@@ -115,63 +120,111 @@ int main(int argc, char **argv) {
     }
 
   printf(" Determining overlap...\n");
+  //for (iVoid1 = 0; iVoid1 < 1; iVoid1++) {
   for (iVoid1 = 0; iVoid1 < catalog1.numVoids; iVoid1++) {
     printf("  Working on void %d of %d...\n", iVoid1, catalog1.numVoids); 
     voidID1 = catalog1.voids[iVoid1].voidID;
-    for (iZ1 = 0; iZ1 < catalog1.void2Zones[voidID1].numZones; iZ1++) {
-      zoneID1 = catalog1.void2Zones[voidID1].zoneIDs[iZ1];
-      for (p1 = 0; p1 < catalog1.zones2Parts[zoneID1].numPart; p1++) {
-        
-        for (iVoid2 = 0; iVoid2 < catalog2.numVoids; iVoid2++) {
-          voidID2 = catalog2.voids[iVoid2].voidID;
+
+    for (iVoid2 = 0; iVoid2 < catalog2.numVoids; iVoid2++) {
+      voidID2 = catalog2.voids[iVoid2].voidID;
+      match = false;
+
+      for (iZ1 = 0; iZ1 < catalog1.void2Zones[voidID1].numZones; iZ1++) {
+        if (match) break;
+        zoneID1 = catalog1.void2Zones[voidID1].zoneIDs[iZ1];
+
+        for (p1 = 0; p1 < catalog1.zones2Parts[zoneID1].numPart; p1++) {
+          if (match) break;
+          partID1 = catalog1.zones2Parts[zoneID1].partIDs[p1];
+
           for (iZ2 = 0; iZ2 < catalog2.void2Zones[voidID2].numZones; iZ2++) {
+            if (match) break;
             zoneID2 = catalog2.void2Zones[voidID2].zoneIDs[iZ2];
+
             for (p2 = 0; p2 < catalog2.zones2Parts[zoneID2].numPart; p2++) {
-        
-              match = false;
+              partID2 = catalog2.zones2Parts[zoneID2].partIDs[p2];     
 
               if (args.useID_flag) {
-                if (catalog1.part[p1].uniqueID == 
-                    catalog2.part[p2].uniqueID) match = true;
+                if (catalog1.part[partID1].uniqueID == 
+                    catalog2.part[partID2].uniqueID) match = true;
               } else {
-                dist[0] = catalog1.part[p1].x - catalog2.part[p2].x;
-                dist[1] = catalog1.part[p1].y - catalog2.part[p2].y;
-                dist[2] = catalog1.part[p1].z - catalog2.part[p2].z;
+                dist[0] = fabs(catalog1.part[partID1].x - 
+                               catalog2.part[partID2].x);
+                dist[1] = fabs(catalog1.part[partID1].y - 
+                               catalog2.part[partID2].y);
+                dist[2] = fabs(catalog1.part[partID1].z - 
+                               catalog2.part[partID2].z);
 
-                if (periodicX) dist[0] = fmin(dist[0], 
-                                              abs(catalog1.boxLen[0]-dist[0]));
-                if (periodicY) dist[1] = fmin(dist[1], 
-                                              abs(catalog1.boxLen[1]-dist[1]));
-                if (periodicZ) dist[2] = fmin(dist[2], 
-                                              abs(catalog1.boxLen[2]-dist[2]));
+                if (periodicX) dist[0] = fmin(dist[0], 1.0 - dist[0]);
+                if (periodicY) dist[1] = fmin(dist[1], 1.0 - dist[1]);
+                if (periodicZ) dist[2] = fmin(dist[2], 1.0 - dist[2]);
 
                 rdist = sqrt(dist[0]*dist[0] + dist[1]*dist[1] + 
                              dist[2]*dist[2]);
 
-                r1 = pow(3./4./M_PI*catalog1.part[p1].volume, 1./3.);
-                r2 = pow(3./4./M_PI*catalog2.part[p2].volume, 1./3.);
-                if (rdist <=  r1 + r2) match = true;
+                r1 = pow(3./4./M_PI*catalog1.part[partID1].volume / 
+                         catalog1.numPartTot, 1./3.);
+                r2 = pow(3./4./M_PI*catalog2.part[partID2].volume / 
+                         catalog2.numPartTot, 1./3.);
+                if (rdist <= 0.1*r1 || rdist <= 0.1*r2) match = true;
              }
        
               if (match) {
+                //printf("MATCHED TO %d\n", iVoid2);
                 catalog1.voids[iVoid1].matches.push_back(iVoid2);
                 break;
               } 
 
             } // end p2
-            if (match) break;
-          } // end iZ1
-        } // end iVoid2
-
-      } // end p1
-    } // end iZ1
+          } // end iZ2
+        } // end p1
+      } // end iZ1
+    } // end iVoid2
   } // end iVoid1
 
 
-  printf("HELLO: ");
-  for (iVoid = 0; iVoid < catalog1.voids[0].matches.size(); iVoid++) {
-    printf("%d ", catalog2.voids[iVoid].voidID);
+  // output properties of matches
+  fp = fopen(args.outfile_arg, "w");
+  //for (iVoid1 = 0; iVoid1 < 1; iVoid1++) {
+  for (iVoid1 = 0; iVoid1 < catalog1.numVoids; iVoid1++) {
+    for (iVoid = 0; iVoid < catalog1.voids[iVoid1].matches.size(); iVoid++) {
+      iVoid2 = catalog1.voids[iVoid1].matches[iVoid];
+       rdist = getDist(catalog1, catalog2, iVoid1, iVoid2);
+
+      if (rdist/catalog1.voids[iVoid1].radius > 1 || 
+          rdist/catalog2.voids[iVoid2].radius > 1) {
+        catalog1.voids[iVoid].matches[iVoid] = -1;
+        continue;
+      }
+
+      if (catalog2.voids[iVoid2].vol > 
+          catalog1.voids[iVoid1].biggestMatchVol) {
+        catalog1.voids[iVoid1].biggestMatchID = iVoid2;
+        catalog1.voids[iVoid1].biggestMatchVol = catalog2.voids[iVoid2].vol;
+      }
+      catalog1.voids[iVoid1].numMatches++;
+      //printf("CENTER %d %d %e %e %e\n", iVoid1, iVoid2, rdist, rdist/catalog1.voids[iVoid1].radius, rdist/catalog2.voids[iVoid2].radius);
+    } 
+
+    int voidID = catalog1.voids[iVoid1].voidID;
+    if (catalog1.voids[iVoid1].numMatches > 0) {
+      iVoid2 = catalog1.voids[iVoid1].biggestMatchID;
+      float volRatio = catalog2.voids[iVoid2].vol / 
+                       catalog1.voids[iVoid1].vol;
+      rdist = getDist(catalog1, catalog2, iVoid1, iVoid2);
+      rdist /= catalog1.voids[iVoid1].radius;
+
+      fprintf(fp, "%d %e %e %d\n", voidID, 
+                                   volRatio, 
+                                   rdist, 
+                                   catalog1.voids[iVoid1].numMatches);
+
+    } else {
+      fprintf(fp, "%d 0.0 0.0 0\n", voidID);
+    }
   }
+  fclose(fp);
+
   printf("\n Well, bye.\n");
   return 0;
 } // end main
@@ -179,7 +232,7 @@ int main(int argc, char **argv) {
 // ----------------------------------------------------------------------------
 void loadCatalog(const char *partFile, const char *volFile, 
                  const char *voidFile, const char *zoneFile,
-                 const char *infoFile,
+                 const char *infoFile, const char *barycenterFile,
                  const char *zonePartFile, CATALOG& catalog) {
 
   int i, p, numPartTot, numZonesTot, dummy, iVoid, iZ, numVolTot;
@@ -191,7 +244,7 @@ void loadCatalog(const char *partFile, const char *volFile,
   char line[500], junkStr[10];
   float ranges[3][2];
 
-  printf("\n Loading info...\n");
+  printf("Loading info...\n");
   NcFile f_info(infoFile);
   ranges[0][0] = f_info.get_att("range_x_min")->as_double(0);
   ranges[0][1] = f_info.get_att("range_x_max")->as_double(0);
@@ -206,13 +259,14 @@ void loadCatalog(const char *partFile, const char *volFile,
   f_info.close();
   
   // read in all particle positions
-  printf("\n Loading particles...\n");
+  printf("Loading particles...\n");
   fp = fopen(partFile, "r");
   fread(&dummy, 1, 4, fp); 
-  fread(&catalog.numPartTot, 1, 4, fp);
+  fread(&numPartTot, 1, 4, fp);
   fread(&dummy, 1, 4, fp);
 
   catalog.part.resize(numPartTot);
+  catalog.numPartTot = numPartTot;
 
   temp = (float *) malloc(numPartTot * sizeof(float));
   temp2 = (long *) malloc(numPartTot * sizeof(long));
@@ -275,24 +329,47 @@ void loadCatalog(const char *partFile, const char *volFile,
   fgets(line, sizeof(line), fp);
 
   catalog.voids.resize(catalog.numVoids);
-  iVoid = 0;
+  i = 0;
   while (fgets(line, sizeof(line), fp) != NULL) {
-   scanf(line, "%d %d %d %f %f %d %d %f %d %f %f\n", &iVoid, &voidID,
+   sscanf(line, "%d %d %d %f %f %d %d %f %d %f %f\n", &iVoid, &voidID,
            &coreParticle, &coreDens, &zoneVol, &zoneNumPart, &numZones,
            &voidVol, &numPart, &densCon, &voidProb);
 
-    catalog.voids[iVoid].coreParticle = coreParticle;
-    catalog.voids[iVoid].zoneNumPart = zoneNumPart;
-    catalog.voids[iVoid].coreDens = coreDens;
-    catalog.voids[iVoid].zoneVol = zoneVol;
-    catalog.voids[iVoid].voidID = voidID;
-    catalog.voids[iVoid].vol = voidVol;
-    catalog.voids[iVoid].numPart = numPart;
-    catalog.voids[iVoid].numZones = numZones;
-    catalog.voids[iVoid].densCon = densCon;
-    catalog.voids[iVoid].voidProb = voidProb;
+    catalog.voids[i].coreParticle = coreParticle;
+    catalog.voids[i].zoneNumPart = zoneNumPart;
+    catalog.voids[i].coreDens = coreDens;
+    catalog.voids[i].zoneVol = zoneVol;
+    catalog.voids[i].voidID = voidID;
+    catalog.voids[i].vol = voidVol;
+    catalog.voids[i].numPart = numPart;
+    catalog.voids[i].numZones = numZones;
+    catalog.voids[i].densCon = densCon;
+    catalog.voids[i].voidProb = voidProb;
 
-    catalog.voids[iVoid].radius = pow(voidVol/volNorm*3./4./M_PI, 1./3.);
+    catalog.voids[i].radius = pow(voidVol/catalog.numPartTot*3./4./M_PI, 1./3.);
+    catalog.voids[i].biggestMatchID = -1;
+    catalog.voids[i].biggestMatchVol = 0;
+    catalog.voids[i].numMatches = 0;
+   
+    i++;
+  }
+  fclose(fp);
+
+  printf("  Read %d voids.\n", catalog.numVoids);
+
+  printf(" Loading barycenters\n");
+  fp = fopen(barycenterFile, "r");
+  float tempBary[3];
+  iVoid = 0;
+  while (fgets(line, sizeof(line), fp) != NULL) {
+    sscanf(line, "%d %f %f %f\n", &voidID, &tempBary[0], &tempBary[1], 
+                                  &tempBary[2]);
+    tempBary[0] = (tempBary[0] - ranges[0][0])/catalog.boxLen[0];
+    tempBary[1] = (tempBary[1] - ranges[1][0])/catalog.boxLen[1];
+    tempBary[2] = (tempBary[2] - ranges[2][0])/catalog.boxLen[2];
+    catalog.voids[iVoid].barycenter[0] = tempBary[0];
+    catalog.voids[iVoid].barycenter[1] = tempBary[1];
+    catalog.voids[iVoid].barycenter[2] = tempBary[2];
     iVoid++;
   }
   fclose(fp);
@@ -303,8 +380,8 @@ void loadCatalog(const char *partFile, const char *volFile,
   fread(&catalog.numZonesTot, 1, 4, fp);
 
   catalog.void2Zones.resize(catalog.numZonesTot);
-
-  for (iZ = 0; iZ < numZonesTot; iZ++) {
+    
+  for (iZ = 0; iZ < catalog.numZonesTot; iZ++) {
     fread(&numZones, 1, 4, fp);
 
     catalog.void2Zones[iZ].numZones = numZones;
@@ -323,6 +400,7 @@ void loadCatalog(const char *partFile, const char *volFile,
   fread(&numZonesTot, 1, 4, fp);
 
   catalog.zones2Parts.resize(numZonesTot); 
+
   for (iZ = 0; iZ < numZonesTot; iZ++) {
     fread(&numPart, 1, 4, fp);
     
@@ -337,3 +415,21 @@ void loadCatalog(const char *partFile, const char *volFile,
   fclose(fp);
 
 } // end loadCatalog
+
+// ----------------------------------------------------------------------------
+float getDist(CATALOG& catalog1, CATALOG& catalog2, int& iVoid1, int& iVoid2) {
+
+  float rdist, dist[3];
+
+  dist[0] = fabs(catalog1.voids[iVoid1].barycenter[0] - 
+                 catalog2.voids[iVoid2].barycenter[0]);
+  dist[1] = fabs(catalog1.voids[iVoid1].barycenter[1] - 
+                 catalog2.voids[iVoid2].barycenter[1]);
+  dist[2] = fabs(catalog1.voids[iVoid1].barycenter[2] - 
+                 catalog2.voids[iVoid2].barycenter[2]);
+
+  rdist = sqrt(dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2]);
+
+  return rdist;
+
+} // end getDist
