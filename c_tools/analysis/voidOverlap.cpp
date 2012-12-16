@@ -245,6 +245,7 @@ void loadCatalog(const char *partFile, const char *volFile,
   float ranges[3][2];
 
   printf("Loading info...\n");
+printf("HELLO %s\n", infoFile);
   NcFile f_info(infoFile);
   ranges[0][0] = f_info.get_att("range_x_min")->as_double(0);
   ranges[0][1] = f_info.get_att("range_x_max")->as_double(0);

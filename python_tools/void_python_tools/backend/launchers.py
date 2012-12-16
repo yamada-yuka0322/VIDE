@@ -308,6 +308,70 @@ def launchPrune(sample, binPath, thisDataPortion=None,
   else:
     print "already done!"
 
+ 
+# -----------------------------------------------------------------------------
+def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir, 
+                      binPath, thisDataPortion=None, 
+                      logFile=None, workDir=None,
+                      continueRun=None, outputFile=None):
+
+  sampleName1 = sample1.fullName
+  sampleName2 = sample2.fullName
+
+  periodicLine = " --periodic='"
+  if sample1.dataType != "observation":
+    if sample1.numSubvolumes == 1: periodicLine += "xy"
+    if sample1.zBoundaryMpc[0] == 0 and \
+       sample1.zBoundaryMpc[1] == sample1.boxLen : periodicLine += "z"
+    periodicLine += "' "
+
+  if not (continueRun and jobSuccessful(logFile, "Done!\n")):
+    cmd = binPath
+    cmd += " --partFile1=" + sample1Dir+"/zobov_slice_" + \
+           str(sampleName1)
+    cmd += " --volFile1=" + sample1Dir+"/vol_" + \
+           str(sampleName1)+".dat"
+    cmd += " --voidFile1=" + sample1Dir+"/voidDesc_" + \
+           thisDataPortion+"_"+str(sampleName1)+".out"
+    cmd += " --infoFile1=" + sample1Dir+"/zobov_slice_" + \
+           str(sampleName1)+".par"
+    cmd += " --barycenterFile1=" + sample1Dir + \
+           "/barycenters_"+thisDataPortion+"_"+str(sampleName1)+".out"
+    cmd += " --zoneFile1=" + sample1Dir+"/voidZone_" + \
+           str(sampleName1)+".dat"
+    cmd += " --zonePartFile1=" + sample1Dir+"/voidPart_" + \
+           str(sampleName1)+".dat"
+
+    cmd += " --partFile2=" + sample2Dir+"/zobov_slice_" + \
+           str(sampleName2)
+    cmd += " --volFile2=" + sample2Dir+"/vol_" + \
+           str(sampleName2)+".dat"
+    cmd += " --voidFile2=" + sample2Dir+"/voidDesc_" + \
+           thisDataPortion+"_"+str(sampleName2)+".out"
+    cmd += " --infoFile2=" + sample2Dir+"/zobov_slice_" + \
+           str(sampleName2)+".par"
+    cmd += " --barycenterFile2=" + sample2Dir + \
+           "/barycenters_"+thisDataPortion+"_"+str(sampleName2)+".out"
+    cmd += " --zoneFile2=" + sample2Dir+"/voidZone_" + \
+           str(sampleName2)+".dat"
+    cmd += " --zonePartFile2=" + sample2Dir+"/voidPart_" + \
+           str(sampleName2)+".dat"
+
+    #cmd += " --useID"
+    cmd += periodicLine
+    cmd += " --outfile=" + outputFile
+    cmd += " &> " + logFile
+    os.system(cmd)
+
+    if jobSuccessful(logFile, "Done!\n"):
+      print "done"
+    else:
+      print "FAILED!"
+      exit(-1)
+
+  else:
+    print "already done!"
+
 
 # -----------------------------------------------------------------------------
 def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
