@@ -331,6 +331,13 @@ int main(int argc, char **argv) {
     voids[iVoid].barycenter[1] += voids[iVoid].center[1];
     voids[iVoid].barycenter[2] += voids[iVoid].center[2];
 
+    if (periodicX) 
+      voids[iVoid].barycenter[0] = fmod(voids[iVoid].barycenter[0], boxLen[0]);
+    if (periodicY) 
+      voids[iVoid].barycenter[1] = fmod(voids[iVoid].barycenter[1], boxLen[1]);
+    if (periodicZ) 
+      voids[iVoid].barycenter[2] = fmod(voids[iVoid].barycenter[2], boxLen[2]);
+
     // compute central density
     centralRad = voids[iVoid].radius/args_info.centralRadFrac_arg;
     centralRad *= centralRad;
@@ -476,13 +483,14 @@ int main(int argc, char **argv) {
       voids[iVoid].accepted = -2;
     }
 
-    // *alwas* clean out near edges since there are no mocks there
+    // *always* clean out near edges since there are no mocks there
     if (tolerance*voids[iVoid].maxRadius > voids[iVoid].nearestEdge) {
       voids[iVoid].accepted = -3;
     }
 
     // assume the lower z-boundary is "soft" in observations
-    if (voids[iVoid].redshift < args_info.zMin_arg) {
+    if (args_info.isObservation_flag && 
+        voids[iVoid].redshift < args_info.zMin_arg) {
       voids[iVoid].accepted = -3;
     }
   }

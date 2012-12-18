@@ -33,13 +33,16 @@ particleFileBase = "mdr1_particles_z"
 
 # list of file numbers for the particle files
 # to get particle file name, we take particleFileBase+fileNum
-fileNums = (("0.0", "0.53", "1.0"))
+#fileNums = ["0.53"]
+fileNums = ["0.0", "0.53", "1.0"]
 
 # redshift of each file in the above list
-redshifts = (("0.0", "0.53", "1.0"))
+#redshifts = ["0.53"]
+redshifts = ["0.0", "0.53", "1.0"]
 
 # how many independent slices along the z-axis?
-numSlices = 4
+numSlices = 1
+#numSlices = 4
 
 # how many subdivisions along the x- and y- axis?
 #   ( = 2 will make 4 subvolumes for each slice, = 3 will make 9, etc.)
@@ -57,7 +60,8 @@ haloFileBase = "mdr1_halos_z"
 
 # minimum halo mass cuts to apply for the halo catalog
 #   use "none" to get all halos
-minHaloMasses = ["none", 1.2e13]
+minHaloMasses = [1.2e13]
+#minHaloMasses = ["none", 1.2e13]
 
 # locations of data in the halo catalog
 haloFileMCol  = 6
@@ -73,8 +77,8 @@ haloFileNumComLines = 0
 # adjust these two parameters given the memory contraints on your system:
 #   numZobovDivisions: how many sub-volumes per dimension will zobov process
 #   numZobovThreads: how many sub-volumes to process at once?   
-numZobovDivisions = 2
-numZobovThreads = 2
+numZobovDivisions = 4
+numZobovThreads = 4
 
 # simulation information
 numPart = 1024*1024*1024
