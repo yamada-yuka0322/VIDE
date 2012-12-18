@@ -330,6 +330,9 @@ int main(int argc, char **argv) {
     voids[iVoid].barycenter[0] += voids[iVoid].center[0];
     voids[iVoid].barycenter[1] += voids[iVoid].center[1];
     voids[iVoid].barycenter[2] += voids[iVoid].center[2];
+    voids[iVoid].barycenter[0] = fmod(voids[iVoid].barycenter[0], boxLen[0]);
+    voids[iVoid].barycenter[1] = fmod(voids[iVoid].barycenter[1], boxLen[1]);
+    voids[iVoid].barycenter[2] = fmod(voids[iVoid].barycenter[2], boxLen[2]);
 
     // compute central density
     centralRad = voids[iVoid].radius/args_info.centralRadFrac_arg;
