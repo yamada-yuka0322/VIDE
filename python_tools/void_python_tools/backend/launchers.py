@@ -254,8 +254,9 @@ def launchPrune(sample, binPath, thisDataPortion=None,
 
     periodicLine = " --periodic='"
     if sample.numSubvolumes == 1: periodicLine += "xy"
-    if sample.zBoundaryMpc[0] == 0 and \
-       sample.zBoundaryMpc[1] == sample.boxLen : periodicLine += "z"
+    if sample.zBoundaryMpc[1]  - sample.zBoundaryMpc[0] - \
+       sample.boxLen <= 1.e-1: 
+      periodicLine += "z"
     periodicLine += "' "
 
   if not (continueRun and jobSuccessful(logFile, "NetCDF: Not a valid ID\n")):
@@ -321,9 +322,9 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
   periodicLine = " --periodic='"
   if sample1.dataType != "observation":
     if sample1.numSubvolumes == 1: periodicLine += "xy"
-    if sample1.zBoundaryMpc[0] == 0 and \
-       sample1.zBoundaryMpc[1] == sample1.boxLen : periodicLine += "z"
-    periodicLine += "' "
+    if sample1.zBoundaryMpc[1]  - sample1.zBoundaryMpc[0] - sample1.boxLen <= 1.e-1: 
+      periodicLine += "z"
+  periodicLine += "' "
 
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
     cmd = binPath
@@ -357,7 +358,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
     cmd += " --zonePartFile2=" + sample2Dir+"/voidPart_" + \
            str(sampleName2)+".dat"
 
-    #cmd += " --useID"
+    cmd += " --useID"
     cmd += periodicLine
     cmd += " --outfile=" + outputFile
     cmd += " &> " + logFile

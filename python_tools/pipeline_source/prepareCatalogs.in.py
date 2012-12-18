@@ -478,13 +478,13 @@ if (args.hod or args.all) and haloFileBase != "":
                                      workDir=catalogDir))
     parFile.close()
 
-#    os.system(hodPath+" "+parFileName+">& /dev/null")
-#
-#    sampleName = getSampleName(prefix+"hod_dr72dim2", redshift, False)
-#    outFileName = catalogDir+"/"+sampleName+".dat"
-#    os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
-#
-#    os.system("rm %s/hod.*" % catalogDir)
+    os.system(hodPath+" "+parFileName+">& /dev/null")
+
+    sampleName = getSampleName(prefix+"hod_dr72dim2", redshift, False)
+    outFileName = catalogDir+"/"+sampleName+".dat"
+    os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
+
+    os.system("rm %s/hod.*" % catalogDir)
 
 # -----------------------------------------------------------------------------
 # now the BOSS HOD
