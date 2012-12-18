@@ -62,16 +62,20 @@ for (iSample, sampleDir) in enumerate(sampleDirList):
   if iSample == 1:
     os.system("cp %s %s" % (stepOutputFileName, outFileName))
   else:
-    outFile = fp.open("temp.out", "w")
-    stepOutFile1 = fp.open(outFileName, "r")
-    stepOutFile2 = fp.open(stepOutputFileName, "r")
+    outFile = open("temp.out", "w")
+    stepOutFile1 = open(outFileName, "r")
+    stepOutFile2 = open(stepOutputFileName, "r")
 
     for line1 in stepOutFile1:
+      line1 = line1.rstrip()
       line2 = stepOutFile2.readline()
       outFile.write(line1+" "+line2)
 
+    os.system("cp %s %s" % ("temp.out", outFileName))
     outFile.close()
     stepOutFile1.close()
     stepOutFile2.close()
 
-if os.access("mergerTree.log", os.F_OK): os.unlink("mergerTree.log")
+#if os.access("mergerTree.log", os.F_OK): os.unlink("mergerTree.log")
+if os.access("temp.out", os.F_OK): os.unlink("temp.out")
+#if os.access("thisStep.out", os.F_OK): os.unlink("thisStep.out")
