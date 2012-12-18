@@ -26,3 +26,9 @@ If you're wondering why these scripts are rather complex, it's because
 it can also support A-P analysis, which is much more complicated :)
 
 Good luck!
+
+Important directories:
+
+pipeline: scripts to set up and generate void catalogs
+crossCompare: analysis and plotting tools designed to work with disparate catalogs
+
