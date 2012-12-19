@@ -133,7 +133,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       rangeY_max %g
       rangeZ_min %g
       rangeZ_max %g
-      subsample %s
+      subsample %g
       """ % (dataFileLine, zobovDir+"/zobov_slice_"+sampleName,
              zobovDir+"/zobov_slice_"+sampleName+".par",
              includePecVelString,

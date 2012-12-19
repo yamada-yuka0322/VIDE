@@ -524,7 +524,7 @@ int main(int argc, char **argv)
     cout << "Boxsize = " << header->BoxSize << endl;
     cout << "Omega_M = " << header->Omega_M << endl;
     cout << "Omega_Lambda = " << header->Omega_Lambda << endl;
-    cout << "Subsample fraction: " << (args_info.subsample_given ? 1 : args_info.subsample_arg) << endl;
+    cout << "Subsample fraction: " << (args_info.subsample_given ? args_info.subsample_arg : 1.0) << endl;
   }
   double *expfact;
 
