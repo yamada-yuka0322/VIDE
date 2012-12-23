@@ -338,6 +338,7 @@ void saveBox(SimuData *&boxed, const std::string& outbox)
   f.add_att("range_z_min", ranges[4]);
   f.add_att("range_z_max", ranges[5]);
   f.add_att("mask_index", -1);
+  f.add_att("is_observation", 0);
 
   NcDim *NumPart_dim = f.add_dim("numpart_dim", boxed->NumPart);
   NcDim *NumSnap_dim = f.add_dim("numsnap_dim", num_snapshots);
