@@ -444,6 +444,8 @@ void makeBoxFromSimulation(SimulationLoader *loader, SimuData* &boxed, MetricFun
       selectBox(simu, targets, args_info);
       split.push_back(targets.size() - previous_target_num);
       previous_target_num = targets.size();
+      
+      delete simu;
     }
 
   createBox(loader->getHeader(), targets, split, boxed, args_info);
@@ -558,6 +560,8 @@ int main(int argc, char **argv)
       
       loaded += num_targets;
       assert(loaded <= simuOut->NumPart);
+
+      delete simu;
 
       delete[] efac;
     }
