@@ -103,6 +103,9 @@ int main(int argc, char **argv) {
                                              args_info.periodic_arg);
 
   // check for periodic box
+  periodicX = 0;
+  periodicY = 0;
+  periodicZ = 0;
   if (!args_info.isObservation_flag) {
     if ( strchr(args_info.periodic_arg, 'x') != NULL) {
       periodicX = 1;
@@ -143,9 +146,9 @@ int main(int argc, char **argv) {
   temp = (float *) malloc(numPartTot * sizeof(float));
  
   volNorm = numPartTot/(boxLen[0]*boxLen[1]*boxLen[2]);
-  printf("VOL NORM = %f\n", volNorm);
+  printf(" VOL NORM = %f\n", volNorm);
 
-  printf("CENTRAL DEN = %f\n", args_info.maxCentralDen_arg);
+  printf(" CENTRAL DEN = %f\n", args_info.maxCentralDen_arg);
 
   fread(&dummy, 1, 4, fp);
   fread(temp, numPartTot, 4, fp);
@@ -311,13 +314,16 @@ int main(int argc, char **argv) {
     voids[iVoid].barycenter[2] = 0.;
 
     for (p = 0; p < voids[iVoid].numPart; p++) {
-      dist[0] = fabs(voidPart[p].x - voids[iVoid].center[0]);
-      dist[1] = fabs(voidPart[p].y - voids[iVoid].center[1]);
-      dist[2] = fabs(voidPart[p].z - voids[iVoid].center[2]);
+      dist[0] = voidPart[p].x - voids[iVoid].center[0];
+      dist[1] = voidPart[p].y - voids[iVoid].center[1];
+      dist[2] = voidPart[p].z - voids[iVoid].center[2];
 
-      if (periodicX) dist[0] = fmin(dist[0], boxLen[0]-dist[0]);
-      if (periodicY) dist[1] = fmin(dist[1], boxLen[1]-dist[1]);
-      if (periodicZ) dist[2] = fmin(dist[2], boxLen[2]-dist[2]);
+      if (periodicX && fabs(dist[0]) > boxLen[0]/2.) 
+          dist[0] = dist[0] - copysign(boxLen[0], dist[0]);
+      if (periodicY && fabs(dist[1]) > boxLen[1]/2.) 
+          dist[1] = dist[1] - copysign(boxLen[1], dist[1]);
+      if (periodicZ && fabs(dist[2]) > boxLen[2]/2.) 
+          dist[2] = dist[2] - copysign(boxLen[2], dist[2]);
 
       voids[iVoid].barycenter[0] += voidPart[p].vol*(dist[0]);
       voids[iVoid].barycenter[1] += voidPart[p].vol*(dist[1]);
@@ -331,12 +337,25 @@ int main(int argc, char **argv) {
     voids[iVoid].barycenter[1] += voids[iVoid].center[1];
     voids[iVoid].barycenter[2] += voids[iVoid].center[2];
 
-    if (periodicX) 
-      voids[iVoid].barycenter[0] = fmod(voids[iVoid].barycenter[0], boxLen[0]);
-    if (periodicY) 
-      voids[iVoid].barycenter[1] = fmod(voids[iVoid].barycenter[1], boxLen[1]);
-    if (periodicZ) 
-      voids[iVoid].barycenter[2] = fmod(voids[iVoid].barycenter[2], boxLen[2]);
+    if (periodicX) {
+      if (voids[iVoid].barycenter[0] > boxLen[0])
+        voids[iVoid].barycenter[0] = voids[iVoid].barycenter[0] - boxLen[0];
+      if (voids[iVoid].barycenter[0] < 0)
+        voids[iVoid].barycenter[0] = boxLen[0] - voids[iVoid].barycenter[0];
+    }
+    if (periodicY) {
+      if (voids[iVoid].barycenter[1] > boxLen[1])
+        voids[iVoid].barycenter[1] = voids[iVoid].barycenter[1] - boxLen[1];
+      if (voids[iVoid].barycenter[1] < 1)
+        voids[iVoid].barycenter[1] = boxLen[1] - voids[iVoid].barycenter[1];
+    }
+    if (periodicZ) {
+      if (voids[iVoid].barycenter[2] > boxLen[2])
+        voids[iVoid].barycenter[2] = voids[iVoid].barycenter[2] - boxLen[2];
+      if (voids[iVoid].barycenter[2] < 2)
+        voids[iVoid].barycenter[2] = boxLen[2] - voids[iVoid].barycenter[2];
+    }
+
 
     // compute central density
     centralRad = voids[iVoid].radius/args_info.centralRadFrac_arg;
@@ -450,6 +469,11 @@ int main(int argc, char **argv) {
     voids[iVoid].nearestEdge = nearestEdge;
   } // iVoid
 
+  int numWrong = 0;
+  int numHighDen = 0;
+  int numEdge = 0;
+  int numTooSmall = 0;
+
   printf(" Picking winners and losers...\n");
   for (iVoid = 0; iVoid < numVoids; iVoid++) {
     voids[iVoid].accepted = 1;
@@ -462,36 +486,43 @@ int main(int argc, char **argv) {
  
     if (voids[iVoid].centralDen > args_info.maxCentralDen_arg) {
       voids[iVoid].accepted = -1;
+      numHighDen++;
     }
 
     // toss out voids that are obviously wrong
     if (voids[iVoid].densCon > 1.e3) {
       voids[iVoid].accepted = -4;
+      numWrong++;
     }
 
     if (strcmp(args_info.dataPortion_arg, "edge")  == 0 &&
         tolerance*voids[iVoid].maxRadius < voids[iVoid].nearestMock) {
       voids[iVoid].accepted = -3;
+      numEdge++;
     }
 
     if (strcmp(args_info.dataPortion_arg, "central") == 0 && 
         tolerance*voids[iVoid].maxRadius > voids[iVoid].nearestMock) {
       voids[iVoid].accepted = -3;
+      numEdge++;
     }
 
     if (voids[iVoid].radius < args_info.rMin_arg) {
       voids[iVoid].accepted = -2;
+      numTooSmall++;
     }
 
     // *always* clean out near edges since there are no mocks there
     if (tolerance*voids[iVoid].maxRadius > voids[iVoid].nearestEdge) {
       voids[iVoid].accepted = -3;
+      numEdge++;
     }
 
     // assume the lower z-boundary is "soft" in observations
     if (args_info.isObservation_flag && 
         voids[iVoid].redshift < args_info.zMin_arg) {
       voids[iVoid].accepted = -3;
+      numEdge++;
     }
   }
 
@@ -501,6 +532,10 @@ int main(int argc, char **argv) {
   }
 
   printf(" Number kept: %d (out of %d)\n", numKept, numVoids);
+  printf("   Rejected %d near the edge\n", numEdge); 
+  printf("   Rejected %d too small\n", numTooSmall); 
+  printf("   Rejected %d obviously bad\n", numWrong); 
+  printf("   Rejected %d too high central density\n", numHighDen); 
   
   printf(" Output...\n");
   fp = fopen(args_info.output_arg, "w");
@@ -531,6 +566,10 @@ int main(int argc, char **argv) {
 
      fprintf(fpBarycenter, "%d %e %e %e\n", 
              voids[iVoid].voidID,
+// TEST
+             //voids[iVoid].center[0],
+             //voids[iVoid].center[1],
+             //voids[iVoid].center[2]);
              voids[iVoid].barycenter[0],
              voids[iVoid].barycenter[1],
              voids[iVoid].barycenter[2]);
@@ -540,11 +579,19 @@ int main(int argc, char **argv) {
              voids[iVoid].nearestMock);
 
      double outCenter[3];
+// TEST
+     //outCenter[0] = voids[iVoid].center[0];
+     //outCenter[1] = voids[iVoid].center[1];
+     //outCenter[2] = voids[iVoid].center[2];
      outCenter[0] = voids[iVoid].barycenter[0];
      outCenter[1] = voids[iVoid].barycenter[1];
      outCenter[2] = voids[iVoid].barycenter[2];
 
      if (args_info.isObservation_flag) {
+// TEST
+       //outCenter[0] = (voids[iVoid].center[0]-boxLen[0]/2.)*100.;
+       //outCenter[1] = (voids[iVoid].center[1]-boxLen[1]/2.)*100.;
+       //outCenter[2] = (voids[iVoid].center[2]-boxLen[2]/2.)*100.;
        outCenter[0] = (voids[iVoid].barycenter[0]-boxLen[0]/2.)*100.;
        outCenter[1] = (voids[iVoid].barycenter[1]-boxLen[1]/2.)*100.;
        outCenter[2] = (voids[iVoid].barycenter[2]-boxLen[2]/2.)*100.;
