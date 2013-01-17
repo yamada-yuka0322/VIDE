@@ -79,7 +79,7 @@ startCatalogStage = 1
 endCatalogStage   = 4
                
 startAPStage = 1
-endAPStage = 7
+endAPStage = 1
 
 ZOBOV_PATH = "@CMAKE_BINARY_DIR@/zobov/"
 CTOOLS_PATH = "@CMAKE_BINARY_DIR@/c_tools/"
@@ -124,7 +124,7 @@ newSample = Sample(dataFile = "{dataFile}",
                    zBoundaryMpc = ({zMinMpc}, {zMaxMpc}),
                    omegaM    = {omegaM},
                    minVoidRadius = {minRadius},
-                   profileBinSize = 1.0,
+                   profileBinSize = "auto",
                    includeInHubble = True,
                    partOfCombo = False,
                    isCombo = False,
@@ -135,12 +135,20 @@ newSample = Sample(dataFile = "{dataFile}",
                    useLightCone = {useLightCone},
                    subsample = {subsample})
 dataSampleList.append(newSample)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False)
+newSample.addStack(0.0, 5.0, 20, 25, False, False)
+newSample.addStack(0.0, 5.0, 30, 35, False, False)
+newSample.addStack(0.0, 5.0, 40, 45, False, False)
+newSample.addStack(0.0, 5.0, 50, 55, False, False)
+newSample.addStack(0.0, 5.0, 60, 65, False, False)
+newSample.addStack(0.0, 5.0, 70, 75, False, False)
+newSample.addStack(0.0, 5.0, 80, 85, False, False)
+newSample.addStack(0.0, 5.0, 90, 95, False, False)
+#newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False)
+#newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False)
+#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False)
+#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False)
+#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False)
+#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False)
                """
   for (iFile, redshift) in enumerate(redshifts):
     fileNum = fileNums[iFile]
