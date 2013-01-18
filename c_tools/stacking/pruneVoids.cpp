@@ -490,7 +490,7 @@ int main(int argc, char **argv) {
     }
 
     // toss out voids that are obviously wrong
-    if (voids[iVoid].densCon > 1.e3) {
+    if (voids[iVoid].densCon > 1.e4) {
       voids[iVoid].accepted = -4;
       numWrong++;
     }
