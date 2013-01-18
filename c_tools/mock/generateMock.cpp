@@ -221,7 +221,12 @@ void generateOutput(SimuData *data, int axis,
 // cleared. That way new particles can be appended if this is a multi-file snapshot.
 void selectBox(SimuData *simu, std::vector<long>& targets, generateMock_info& args_info)
 {
-  float subsample = args_info.subsample_given ? args_info.subsample_arg : 1.0;
+  float subsample;
+  if (args_info.subsample_given) {
+    subsample = args_info.subsample_arg;
+  } else {
+    subsample = 1.0;
+  }
   double ranges[3][2] = {
     { args_info.rangeX_min_arg, args_info.rangeX_max_arg },
     { args_info.rangeY_min_arg, args_info.rangeY_max_arg },
