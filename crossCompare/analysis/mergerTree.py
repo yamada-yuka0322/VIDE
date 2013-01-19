@@ -30,30 +30,30 @@ if not os.access(filename, os.F_OK):
 parms = imp.load_source("name", filename)
 globals().update(vars(parms))
 
-if not os.access(figDir, os.F_OK):
-  os.makedirs(figDir)
+if not os.access(dataDir, os.F_OK):
+  os.makedirs(dataDir)
 
 outFileName = dataDir + "/" + dataNameBase #+ ".dat"
 
+with open(workDir+baseSampleDir+"/sample_info.dat", 'rb') as input:
+  baseSample = pickle.load(input)
+
 for (iSample, sampleDir) in enumerate(sampleDirList):
-  if iSample == 0: continue
 
   with open(workDir+sampleDir+"/sample_info.dat", 'rb') as input:
     sample = pickle.load(input)
 
-  with open(workDir+sampleDirList[0]+"/sample_info.dat", 'rb') as input:
-    baseSample = pickle.load(input)
-
-  print " Working with", sample.fullName, "..."
+  print " Working with", sample.fullName, "...",
 
   sampleName = sample.fullName
 
   binPath = CTOOLS_PATH+"/analysis/voidOverlap"
   logFile = os.getcwd()+"/mergerTree.log"
-  stepOutputFileName = outFileName + "_" + sampleName + "_"
+  stepOutputFileName = outFileName + "_" + baseSample.fullName + "_" + \
+                       sampleName + "_"
   #stepOutputFileName = os.getcwd()+"/data/overlap_"
 
-  launchVoidOverlap(baseSample, sample, workDir+sampleDirList[0], 
+  launchVoidOverlap(baseSample, sample, workDir+baseSampleDir, 
                     workDir+sampleDir, binPath, 
                     thisDataPortion="central", logFile=logFile,
                     continueRun=False, workDir=workDir,

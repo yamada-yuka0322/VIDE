@@ -314,7 +314,8 @@ def launchPrune(sample, binPath, thisDataPortion=None,
 def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir, 
                       binPath, thisDataPortion=None, 
                       logFile=None, workDir=None,
-                      continueRun=None, outputFile=None):
+                      continueRun=None, outputFile=None, 
+                      matchMethod=None):
 
   sampleName1 = sample1.fullName
   sampleName2 = sample2.fullName
@@ -358,7 +359,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
     cmd += " --zonePartFile2=" + sample2Dir+"/voidPart_" + \
            str(sampleName2)+".dat"
 
-    cmd += " --useID"
+    if matchMethod == "useID": cmd += " --useID"
     cmd += periodicLine
     cmd += " --outfile=" + outputFile
     cmd += " &> " + logFile
@@ -600,13 +601,18 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
 
     os.system("mv %s %s" % ("tree.data", treeFile))
     os.system("mv %s %s" % ("void_indexes.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("posx.nc", voidDir+"/posx.nc"))
-    os.system("mv %s %s" % ("posy.nc", voidDir+"/posy.nc"))
-    os.system("mv %s %s" % ("posz.nc", voidDir+"/posz.nc"))
-    os.system("mv %s %s" % ("redshifts.nc", voidDir+"/redshifts.nc"))
+    os.system("mv %s %s" % ("posx.nc", voidDir+"/"))
+    os.system("mv %s %s" % ("posy.nc", voidDir+"/"))
+    os.system("mv %s %s" % ("posz.nc", voidDir+"/"))
+    os.system("mv %s %s" % ("z_void_indexes.txt", voidDir+"/"))
+    os.system("mv %s %s" % ("z_posx.nc", voidDir+"/"))
+    os.system("mv %s %s" % ("z_posy.nc", voidDir+"/"))
+    os.system("mv %s %s" % ("z_posz.nc", voidDir+"/"))
+    os.system("mv %s %s" % ("redshifts.nc", voidDir+"/"))
     os.system("mv %s %s" % ("indexes.nc", voidDir+"/"))
     os.system("mv %s %s" % ("kdtree_stackvoids.dat", voidDir+"/"))
     os.system("mv %s %s" % ("centers.txt", voidDir+"/"))
+    os.system("mv %s %s" % ("z_centers.txt", voidDir+"/"))
     os.system("mv %s %s" % ("sky_positions.txt", voidDir+"/"))
     os.system("mv %s %s" % ("check.txt", voidDir+"/"))
     os.system("mv %s %s" % ("tracer.txt", voidDir+"/"))
@@ -899,22 +905,24 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     while badChain:
       Rexpect = (stack.rMin+stack.rMax)/2
       Rtruncate = stack.rMin*3. + 1 # TEST
-      if sample.dataType == "observation":
-        ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-                                      Niter=300000,
-                                      Nburn=100000,
-                                      Rextracut=Rtruncate)
-      else:
-        ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-                                      Niter=300000,
-                                      Nburn=100000,
-                                      Rextracut=Rtruncate)
-      badChain = (args[0][0] > 0.5 or args[0][1] > stack.rMax or \
-                  args[0][2] > stack.rMax) and \
-                 (ntries < maxtries)
+      #if sample.dataType == "observation":
+      #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+      #                                Niter=300000,
+      #                                Nburn=100000,
+      #                                Rextracut=Rtruncate)
+      #else:
+      #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+      #                                Niter=300000,
+      #                                Nburn=100000,
+      #                                Rextracut=Rtruncate)
+      #badChain = (args[0][0] > 0.5 or args[0][1] > stack.rMax or \
+      #            args[0][2] > stack.rMax) and \
+      #           (ntries < maxtries)
+      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax)
+      badChain = False
       ntries += 1
 
-    np.save(voidDir+"/chain.npy", ret)
+    #np.save(voidDir+"/chain.npy", ret)
     np.savetxt(voidDir+"/fits.out", fits)
 
     plotTitle = "Sample: "+sample.nickName+\
