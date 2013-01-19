@@ -1,3 +1,4 @@
+#include <cassert>
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -152,6 +153,7 @@ bool loadZobov(const char *descName, const char *adjName, const char *voidsName,
       for (int j = 0; j < z.allVoids[volId].zId.size(); j++)
         {
           int zzid = z.allVoids[volId].zId[j];
+          assert(zzid < z.allZones.size());
 	  actualNumber += z.allZones[zzid].pId.size();
         }
       
