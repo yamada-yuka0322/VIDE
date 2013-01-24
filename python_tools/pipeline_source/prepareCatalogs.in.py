@@ -342,7 +342,11 @@ if (args.script or args.all) and haloFileBase != "":
     print " Doing halo script", minHaloMass
 
     # estimate number of halos to get density
-    dataFile = catalogDir+haloFileBase+fileNums[0]
+    if haloFileDummy == '':
+      dataFile = catalogDir+haloFileBase+fileNums[0]
+    else:
+      dataFile = catalogDir+haloFileBase.replace(haloFileDummy, fileNums[0])
+
     inFile = open(dataFile, 'r')
     numPart = 0
     for (iLine, line) in enumerate(inFile): 
@@ -373,7 +377,11 @@ if (args.halos or args.all) and haloFileBase != "":
     for (iRedshift, redshift) in enumerate(redshifts):
       print "   z = ", redshift
 
-      dataFile = catalogDir+haloFileBase+fileNums[iRedshift]
+      if haloFileDummy == '':
+        dataFile = catalogDir+haloFileBase+fileNums[iRedshift]
+      else:
+        dataFile = catalogDir+haloFileBase.replace(haloFileDummy, 
+                                                   fileNums[iRedshift])
       inFile = open(dataFile, 'r')
       numPart = 0
       for (iLine, line) in enumerate(inFile): 
@@ -452,24 +460,31 @@ BOX_SIZE   {boxSize}
 root_filename {workDir}/hod
                """
 
-if (args.script or args.all) and haloFileBase != "":
+## TEMP: TURN OFF DR7
+if 1 == 0:
+#if (args.script or args.all) and haloFileBase != "":
   print " Doing DR7 HOD scripts"
   setName = prefix+"hod_dr72dim2"
-  writeScript(setName, prefix+"hod_dr72dim2_z", dataFormat,
+  writeScript(setName, prefix+"hod_dr72dim2_z", "multidark",
               scriptDir, catalogDir, fileNums, redshifts, 
               numSubvolumes, numSlices, False, lbox, 5, omegaM)
-  writeScript(setName, prefix+"hod_dr72dim2_z", dataFormat, 
+  writeScript(setName, prefix+"hod_dr72dim2_z", "multidark", 
               scriptDir, catalogDir, fileNums, redshifts, 
               numSubvolumes, numSlices, True, lbox, 5, omegaM)
 
-if (args.hod or args.all) and haloFileBase != "":
+if 1 == 0:
+#if (args.hod or args.all) and haloFileBase != "":
   print " Doing DR7 HOD"
   for (iRedshift, redshift) in enumerate(redshifts):
     print "  z = ", redshift
 
     parFileName = "./hod.par"
     parFile = open(parFileName, 'w')
-    haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
+    if haloFileDummy == '':
+      haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
+    else:
+      haloFile = catalogDir+haloFileBase.replace(haloFileDummy, 
+                                                 fileNums[iRedshift])
     parFile.write(parFileText.format(omegaM=omegaM,
                                      hubble=hubble,
                                      redshift=redshift,
@@ -499,10 +514,10 @@ if (args.hod or args.all) and haloFileBase != "":
 if (args.script or args.all) and haloFileBase != "":
   print " Doing DR9 HOD scripts"
   setName = prefix+"hod_dr9mid"
-  writeScript(setName, prefix+"hod_dr9mid_z", dataFormat,
+  writeScript(setName, prefix+"hod_dr9mid_z", "multidark",
               scriptDir, catalogDir, fileNums, redshifts, 
                numSubvolumes, numSlices, False, lbox, 15, omegaM)
-  writeScript(setName, prefix+"hod_dr9mid_z", dataFormat,
+  writeScript(setName, prefix+"hod_dr9mid_z", "multidark",
               scriptDir, catalogDir, fileNums, redshifts, 
                numSubvolumes, numSlices, True, lbox, 15, omegaM)
 
@@ -515,7 +530,11 @@ if (args.hod or args.all) and haloFileBase != "":
     # modified to match the observed galaxy density
     parFileName = "./hod.par"
     parFile = open(parFileName, 'w')
-    haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
+    if haloFileDummy == '':
+      haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
+    else:
+      haloFile = catalogDir+haloFileBase.replace(haloFileDummy,
+                                                 fileNums[iRedshift])
     parFile.write(parFileText.format(omegaM=omegaM,
                                      hubble=hubble,
                                      redshift=redshift,
