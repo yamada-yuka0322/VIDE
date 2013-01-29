@@ -24,10 +24,17 @@ ncFloat = 'f8' # Double precision
 # -----------------------------------------------------------------------------
 def launchGenerate(sample, binPath, workDir=None, inputDataDir=None, 
                    zobovDir=None, figDir=None, logFile=None, useLCDM=False,
-                   continueRun=None):
+                   continueRun=None,regenerate=False):
 
   if sample.dataType == "observation":
     sampleName = sample.fullName
+
+    if regenerate:
+      inputParameterFlag = "inputParameter " + zobovDir+"/zobov_slice_"+sampleName+".par"
+      outputFile = zobovDir+"/regenerated_zobov_slice_" + sampleName
+    else:
+      inputParameterFlag = ""
+      outputFile = zobovDir+"/zobov_slice_" + sampleName
 
     if sample.dataFile == "":
       datafile = inputDataDir+"/"+sampleName
@@ -50,16 +57,17 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       zMax %g
       density_fake %g
       %s
-      """ % (datafile, maskFile, zobovDir+"/zobov_slice_"+sampleName,
+      %s
+      """ % (datafile, maskFile, outputFile,
              zobovDir+"/zobov_slice_"+sampleName+".par",
              sample.zBoundary[0], sample.zBoundary[1], sample.fakeDensity,
-             useLCDMFlag)
+             useLCDMFlag, inputParameterFlag)
 
     parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
 
     file(parmFile, mode="w").write(conf)
 
-    if not (continueRun and jobSuccessful(logFile, "Done!\n")):
+    if regenerate or not (continueRun and jobSuccessful(logFile, "Done!\n")):
       cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
       os.system(cmd)
       if jobSuccessful(logFile, "Done!\n"):
@@ -96,6 +104,13 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     sampleName = sample.fullName
 
     datafile = inputDataDir+"/"+sample.dataFile
+
+    if regenerate:
+      inputParameterFlag = "inputParameter " + zobovDir+"/zobov_slice_"+sampleName+".par"
+      outputFile = zobovDir+"/regenerated_zobov_slice_" + sampleName 
+    else:
+      inputParameterFlag = ""
+      outputFile = zobovDir+"/zobov_slice_" + sampleName
 
     if sample.usePecVel:
       includePecVelString = "peculiarVelocities"
@@ -134,20 +149,21 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       rangeZ_min %g
       rangeZ_max %g
       subsample %g
-      """ % (dataFileLine, zobovDir+"/zobov_slice_"+sampleName,
+      %s
+      """ % (dataFileLine, outputFile,
              zobovDir+"/zobov_slice_"+sampleName+".par",
              includePecVelString,
              useLightConeString,
              sample.dataUnit,
              xMin, xMax, yMin, yMax,
              sample.zBoundaryMpc[0], sample.zBoundaryMpc[1],
-             sample.subsample)
+             sample.subsample,inputParameterFlag)
 
     parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
 
     file(parmFile, mode="w").write(conf)
 
-    if not (continueRun and jobSuccessful(logFile, "Done!\n")):
+    if regenerate or not (continueRun and jobSuccessful(logFile, "Done!\n")):
       cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
       os.system(cmd)
       if jobSuccessful(logFile, "Done!\n"):
@@ -258,6 +274,7 @@ def launchPrune(sample, binPath, thisDataPortion=None,
        sample.boxLen <= 1.e-1: 
       periodicLine += "z"
     periodicLine += "' "
+    periodicLine = ""
 
   if not (continueRun and jobSuccessful(logFile, "NetCDF: Not a valid ID\n")):
     cmd = binPath
@@ -297,6 +314,9 @@ def launchPrune(sample, binPath, thisDataPortion=None,
                           str(thisDataPortion)+"_"+\
                           str(sampleName)+".out"
     cmd += " &> " + logFile
+    f=file("run_prune.sh",mode="w")
+    f.write(cmd)
+    f.close()
     os.system(cmd)
 
     if jobSuccessful(logFile, "NetCDF: Not a valid ID\n") or \
@@ -314,7 +334,8 @@ def launchPrune(sample, binPath, thisDataPortion=None,
 def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir, 
                       binPath, thisDataPortion=None, 
                       logFile=None, workDir=None,
-                      continueRun=None, outputFile=None):
+                      continueRun=None, outputFile=None, 
+                      matchMethod=None):
 
   sampleName1 = sample1.fullName
   sampleName2 = sample2.fullName
@@ -358,7 +379,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
     cmd += " --zonePartFile2=" + sample2Dir+"/voidPart_" + \
            str(sampleName2)+".dat"
 
-    cmd += " --useID"
+    if matchMethod == "useID": cmd += " --useID"
     cmd += periodicLine
     cmd += " --outfile=" + outputFile
     cmd += " &> " + logFile
@@ -379,14 +400,14 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
                 voidDir=None, freshStack=True, runSuffix=None,
                 zobovDir=None,
                 INCOHERENT=False, ranSeed=None, summaryFile=None, 
-                continueRun=None, dataType=None):
+                continueRun=None, dataType=None, prefixRun=""):
 
   sampleName = sample.fullName
 
   runSuffix = getStackSuffix(stack.zMin, stack.zMax, stack.rMin,
                              stack.rMax, thisDataPortion)
 
-  logFile = logDir+"/stack_"+sampleName+"_"+runSuffix+".out"
+  logFile = logDir+("/%sstack_"%prefixRun)+sampleName+"_"+runSuffix+".out"
  
   treeFile = voidDir+"/tree.data"
 
@@ -413,7 +434,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     maxDen = 0.2*float(maskIndex)/float(totalPart)
   else:
     maskIndex = 999999999
-    maxDen = 0.2
+    maxDen = -0.8
 
   if INCOHERENT:
     nullTestFlag = "INCOHERENT"
@@ -454,7 +475,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
    zobovDir+"/vol_"+sampleName+".dat",
    stack.rMin,
    stack.rMax,
-   zobovDir+"/zobov_slice_"+sampleName,
+   zobovDir+("/%szobov_slice_"%prefixRun)+sampleName,
    zobovDir+"/zobov_slice_"+sampleName+".par",
    maxDen,
    centralRadius,
@@ -470,7 +491,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
    zobovDir+"/boundaryDistances_"+thisDataPortion+"_"+sampleName+".out",
    rescaleFlag)
 
-  parmFile = os.getcwd()+"/stack_"+sample.fullName+".par"
+  parmFile = os.getcwd()+("/%sstack_"%prefixRun)+sample.fullName+".par"
 
   fp = file(parmFile, mode="w")
   fp.write(conf)
@@ -600,13 +621,18 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
 
     os.system("mv %s %s" % ("tree.data", treeFile))
     os.system("mv %s %s" % ("void_indexes.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("posx.nc", voidDir+"/posx.nc"))
-    os.system("mv %s %s" % ("posy.nc", voidDir+"/posy.nc"))
-    os.system("mv %s %s" % ("posz.nc", voidDir+"/posz.nc"))
-    os.system("mv %s %s" % ("redshifts.nc", voidDir+"/redshifts.nc"))
+    os.system("mv %s %s" % ("posx.nc", voidDir+"/"))
+    os.system("mv %s %s" % ("posy.nc", voidDir+"/"))
+    os.system("mv %s %s" % ("posz.nc", voidDir+"/"))
+    os.system("mv %s %s" % ("z_void_indexes.txt", voidDir+"/"))
+    os.system("mv %s %s" % ("z_posx.nc", voidDir+"/"))
+    os.system("mv %s %s" % ("z_posy.nc", voidDir+"/"))
+    os.system("mv %s %s" % ("z_posz.nc", voidDir+"/"))
+    os.system("mv %s %s" % ("redshifts.nc", voidDir+"/"))
     os.system("mv %s %s" % ("indexes.nc", voidDir+"/"))
     os.system("mv %s %s" % ("kdtree_stackvoids.dat", voidDir+"/"))
     os.system("mv %s %s" % ("centers.txt", voidDir+"/"))
+    os.system("mv %s %s" % ("z_centers.txt", voidDir+"/"))
     os.system("mv %s %s" % ("sky_positions.txt", voidDir+"/"))
     os.system("mv %s %s" % ("check.txt", voidDir+"/"))
     os.system("mv %s %s" % ("tracer.txt", voidDir+"/"))
@@ -899,22 +925,24 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     while badChain:
       Rexpect = (stack.rMin+stack.rMax)/2
       Rtruncate = stack.rMin*3. + 1 # TEST
-      if sample.dataType == "observation":
-        ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-                                      Niter=300000,
-                                      Nburn=100000,
-                                      Rextracut=Rtruncate)
-      else:
-        ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-                                      Niter=300000,
-                                      Nburn=100000,
-                                      Rextracut=Rtruncate)
-      badChain = (args[0][0] > 0.5 or args[0][1] > stack.rMax or \
-                  args[0][2] > stack.rMax) and \
-                 (ntries < maxtries)
+      #if sample.dataType == "observation":
+      #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+      #                                Niter=300000,
+      #                                Nburn=100000,
+      #                                Rextracut=Rtruncate)
+      #else:
+      #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+      #                                Niter=300000,
+      #                                Nburn=100000,
+      #                                Rextracut=Rtruncate)
+      #badChain = (args[0][0] > 0.5 or args[0][1] > stack.rMax or \
+      #            args[0][2] > stack.rMax) and \
+      #           (ntries < maxtries)
+      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax)
+      badChain = False
       ntries += 1
 
-    np.save(voidDir+"/chain.npy", ret)
+    #np.save(voidDir+"/chain.npy", ret)
     np.savetxt(voidDir+"/fits.out", fits)
 
     plotTitle = "Sample: "+sample.nickName+\

@@ -466,6 +466,7 @@ void saveForZobov(ParticleData& pdata, const string& fname, const string& paramn
   fp.add_att("range_z_min", -Lmax/100.);
   fp.add_att("range_z_max", Lmax/100.);
   fp.add_att("mask_index", pdata.mask_index); // PMS
+  fp.add_att("is_observation", 1); // PMS
 
   int nOutputPart = pdata.mask_index;
   //int nOutputPart = pdata.pos.size();
