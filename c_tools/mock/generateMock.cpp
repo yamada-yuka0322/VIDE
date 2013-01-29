@@ -317,9 +317,9 @@ void buildBox(SimuData *simu, long num_targets, long loaded,
       
       for (int j = 0; j < 3; j++)
 	{
-	  boxed->Pos[j][loaded] = (simu->Pos[j][pid]-ranges[j*2])*mul[j];
-	  assert(boxed->Pos[j][loaded] > 0);
-	  assert(boxed->Pos[j][loaded] < 1);
+	  boxed->Pos[j][loaded] = max(min((simu->Pos[j][pid]-ranges[j*2])*mul[j], double(1)), double(0));
+	  assert(boxed->Pos[j][loaded] >= 0);
+	  assert(boxed->Pos[j][loaded] <= 1);
 	}
       uniqueID[loaded] = (simu_uniqueID != 0) ? simu_uniqueID[pid] : 0;
       expansion_fac[loaded] = efac[pid];
@@ -400,6 +400,7 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
   mul = new double[3];
   ranges = new double[6];
   snapshot_split = new long[*num_snapshots];
+  expansion_fac = new double[boxed->NumPart];
 
 
   boxed->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
@@ -408,6 +409,7 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
   boxed->new_attribute("particle_id", particle_id, delete_adaptor<long>);
   boxed->new_attribute("num_snapshots", num_snapshots, delete_adaptor<int>);
   boxed->new_attribute("snapshot_split", snapshot_split, delete_adaptor<long>);
+  boxed->new_attribute("expansion_fac", expansion_fac, delete_adaptor<double>);
 
   v_id->get(particle_id, boxed->NumPart);
   v_snap->get(snapshot_split, *num_snapshots);

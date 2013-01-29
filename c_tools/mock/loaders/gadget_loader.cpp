@@ -77,7 +77,7 @@ public:
 
 SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLength, int flags)
 {
-  bool singleFile;
+  bool singleFile = false;
   int num_files;
   SimuData *d;
 
