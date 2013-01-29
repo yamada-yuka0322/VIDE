@@ -81,6 +81,7 @@ endCatalogStage   = 4
 startAPStage = 1
 endAPStage = 1
 
+regenerateFlag = False
 ZOBOV_PATH = "@CMAKE_BINARY_DIR@/zobov/"
 CTOOLS_PATH = "@CMAKE_BINARY_DIR@/c_tools/"
 freshStack = True
