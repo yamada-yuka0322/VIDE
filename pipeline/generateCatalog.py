@@ -20,6 +20,7 @@ if (len(sys.argv) > 1):
     print "  Cannot find parameter file %s!" % filename
     exit(-1)
   parms = imp.load_source("name", filename)
+  regenerateFlag = False
   globals().update(vars(parms))
 else:
   print " Using default parameters"
@@ -90,7 +91,7 @@ for sample in dataSampleList:
     launchGenerate(sample, GENERATE_PATH, workDir=workDir, 
                    inputDataDir=inputDataDir, zobovDir=zobovDir,
                    figDir=figDir, logFile=logFile, useLCDM=useLCDM,
-                   continueRun=continueRun)
+                   continueRun=continueRun, regenerate=regenerateFlag)
 
   # --------------------------------------------------------------------------
   if (startCatalogStage <= 2) and (endCatalogStage >= 2) and not sample.isCombo:

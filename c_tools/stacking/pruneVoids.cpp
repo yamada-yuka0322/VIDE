@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
   double nearestEdge, redshift;
   char line[500], junkStr[10];
   int mask_index;
-  double ranges[2][3], boxLen[3], mul; 
+  double ranges[3][2], boxLen[3], mul; 
   double volNorm, radius;
   int clock1, clock2;
   int periodicX=0, periodicY=0, periodicZ=0;
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
       part[p].y += ranges[1][0];
       part[p].z += ranges[2][0];
     }
-  } 
+  }
   fclose(fp); 
 
   printf(" Read %d particles...\n", numPartTot);
@@ -350,19 +350,19 @@ int main(int argc, char **argv) {
       if (voids[iVoid].barycenter[0] > boxLen[0])
         voids[iVoid].barycenter[0] = voids[iVoid].barycenter[0] - boxLen[0];
       if (voids[iVoid].barycenter[0] < 0)
-        voids[iVoid].barycenter[0] = boxLen[0] - voids[iVoid].barycenter[0];
+        voids[iVoid].barycenter[0] = boxLen[0] + voids[iVoid].barycenter[0];
     }
     if (periodicY) {
       if (voids[iVoid].barycenter[1] > boxLen[1])
         voids[iVoid].barycenter[1] = voids[iVoid].barycenter[1] - boxLen[1];
-      if (voids[iVoid].barycenter[1] < 1)
-        voids[iVoid].barycenter[1] = boxLen[1] - voids[iVoid].barycenter[1];
+      if (voids[iVoid].barycenter[1] < 0)
+        voids[iVoid].barycenter[1] = boxLen[1] + voids[iVoid].barycenter[1];
     }
     if (periodicZ) {
       if (voids[iVoid].barycenter[2] > boxLen[2])
         voids[iVoid].barycenter[2] = voids[iVoid].barycenter[2] - boxLen[2];
-      if (voids[iVoid].barycenter[2] < 2)
-        voids[iVoid].barycenter[2] = boxLen[2] - voids[iVoid].barycenter[2];
+      if (voids[iVoid].barycenter[2] < 0)
+        voids[iVoid].barycenter[2] = boxLen[2] + voids[iVoid].barycenter[2];
     }
 
     // compute central density
@@ -406,8 +406,8 @@ int main(int argc, char **argv) {
       for (p = 0; p < voids[iVoid].numPart; p++) {
   
         dist[0] = fabs(voidPart[p].x - voids[iVoid].barycenter[0]);
-        dist[0] = fabs(voidPart[p].y - voids[iVoid].barycenter[1]);
-        dist[0] = fabs(voidPart[p].z - voids[iVoid].barycenter[2]);
+        dist[1] = fabs(voidPart[p].y - voids[iVoid].barycenter[1]);
+        dist[2] = fabs(voidPart[p].z - voids[iVoid].barycenter[2]);
 
         if (periodicX) dist[0] = fmin(dist[0], boxLen[0]-dist[0]);
         if (periodicY) dist[1] = fmin(dist[1], boxLen[1]-dist[1]);
@@ -599,7 +599,7 @@ int main(int argc, char **argv) {
              voids[iVoid].densCon, 
              voids[iVoid].voidProb);
 
-     fprintf(fpBarycenter, "%d %e %e %e\n", 
+     fprintf(fpBarycenter, "%d  %e %e %e\n", 
              voids[iVoid].voidID,
              voids[iVoid].barycenter[0],
              voids[iVoid].barycenter[1],

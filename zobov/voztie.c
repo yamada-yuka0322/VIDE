@@ -8,6 +8,7 @@ int main(int argc, char *argv[]) {
   FILE *part, *adj, *vol;
   char partfile[200], *suffix, adjfile[200], volfile[200], *outDir;
   float *vols, volstemp;
+  int *cnt_adj;
   
   PARTADJ *adjs;
 
@@ -78,13 +79,17 @@ int main(int argc, char *argv[]) {
   if (mockIndex == -1) mockIndex = np;
   // END PMS
 
+  cnt_adj = (int *)malloc(np*sizeof(int));
+  if (cnt_adj == NULL)
+    printf("Could not allocate cnt_adj.\n");
+
   adjs = (PARTADJ *)malloc(np*sizeof(PARTADJ));
   if (adjs == NULL) printf("Couldn't allocate adjs.\n");
   vols = (float *)malloc(np*sizeof(float));
   if (vols == NULL) printf("Couldn't allocate vols.\n");
   orig = (int *)malloc(nvpmax*sizeof(int));
   if (orig == NULL) printf("Couldn't allocate orig.\n");
-  if ((vols == NULL) || (orig == NULL) || (adjs == NULL)) {
+  if ((cnt_adj==NULL) || (vols == NULL) || (orig == NULL) || (adjs == NULL)) {
     printf("Not enough memory to allocate. Exiting.\n");
     exit(0);
   }
@@ -238,11 +243,24 @@ printf("\n");
 // END OMS
   /* Adjacencies: first the numbers of adjacencies, 
      and the number we're actually going to write per particle */
+
+  // Recount the number of adjacencies after merge
+  for(i=0;i<mockIndex;i++)
+    cnt_adj[i] = 0;
+  for(i=0;i<mockIndex;i++)
+    {
+      for (j=0;j<adjs[i].nadj;j++)
+        {
+          cnt_adj[adjs[i].adj[j]]++;
+          cnt_adj[i]++;
+        }
+    }
+
 // PMS
   for (i=0;i<mockIndex;i++)
   //for (i=0;i<np;i++)
 // END PMS
-    fwrite(&adjs[i].nadj,1,sizeof(int),adj);
+    fwrite(&cnt_adj[i],1,sizeof(int),adj);
     
   /* Now the lists of adjacencies (without double counting) */
   // PMS
@@ -253,9 +271,11 @@ printf("\n");
       nout = 0;
       for (j=0;j<adjs[i].nadj; j++) if (adjs[i].adj[j] > i) nout++;
       fwrite(&nout,1,sizeof(int),adj);      
-      for (j=0;j<adjs[i].nadj; j++) 
-	if (adjs[i].adj[j] > i) 
+      for (j=0;j<adjs[i].nadj; j++) {
+        int id = adjs[i].adj[j];
+	if (id > i) 
 	  fwrite(&(adjs[i].adj[j]),1,sizeof(int),adj);
+      }
     }
 
   fclose(adj);
@@ -274,6 +294,11 @@ printf("\n");
 // END PMS
 
   fclose(vol);
+
+  free(vols);
+  free(cnt_adj);
+  free(adjs);
+  free(orig);
 
   return(0);
 }
