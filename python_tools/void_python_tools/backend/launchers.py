@@ -293,6 +293,9 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     cmd += " --outSkyPositions=" + zobovDir+"/sky_positions_"+\
                           str(thisDataPortion)+"_"+\
                           str(sampleName)+".out"
+    cmd += " --outShapes=" + zobovDir+"/shapes_"+\
+                          str(thisDataPortion)+"_"+\
+                          str(sampleName)+".out"
     cmd += " --outDistances=" + zobovDir+"/boundaryDistances_"+\
                           str(thisDataPortion)+"_"+\
                           str(sampleName)+".out"
@@ -872,6 +875,14 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
       print "no voids here; skipping!"
       return
 
+    numVoids = int(open(voidDir+"/num_voids.txt", "r").readline())
+    if numVoids < 15:
+      print "not enough voids to fit; skipping!"
+      fp = open(voidDir+"/NOFIT", "w")
+      fp.write("not enough voids: %d \n" % numVoids)
+      fp.close()
+      return
+
     if stack.zMin < sample.zRange[0] or stack.zMax > sample.zRange[1]:
       print "outside sample redshift range; skipping!"
       return
@@ -918,7 +929,7 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
       #badChain = (args[0][0] > 0.5 or args[0][1] > stack.rMax or \
       #            args[0][2] > stack.rMax) and \
       #           (ntries < maxtries)
-      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax)
+      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="symmetric")
       badChain = False
       ntries += 1
 
@@ -983,7 +994,7 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
 def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
                  INCOHERENT=None, workDir=None, figDir=None, errorBars=None, 
                  ZOBOV_PATH=None, continueRun=None, voidDir=None, 
-                 doPlot = True):
+                 doPlot = True, setName=None):
 
   for thisDataPortion in dataPortions:
     print "    For data portion", thisDataPortion
@@ -1225,7 +1236,8 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
           plotTitle = ''
         else:
           #plotTitle = "all samples, "+thisDataPortion+" voids"
-          plotTitle = ''
+          plotTitle = setName
+          #plotTitle = ''
         vp.do_all_obs(zbase, allExpList, aveDistList,
                       rlist, plotTitle=plotTitle, sampleNames=shortSampleNames,
                       plotAve=True, mulfac = 1.0, biasLine = 1.16, 
