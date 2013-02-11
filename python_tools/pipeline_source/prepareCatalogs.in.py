@@ -419,7 +419,7 @@ if (args.halos or args.all) and haloFileBase != "":
       outFile.close()
 
 # -----------------------------------------------------------------------------
-# now the SDSS HOD
+# now the HOD
 parFileText = """
 % cosmology
 OMEGA_M {omegaM}
@@ -461,103 +461,53 @@ BOX_SIZE   {boxSize}
 root_filename {workDir}/hod
                """
 
-## TEMP: TURN OFF DR7
-if 1 == 0:
-#if (args.script or args.all) and haloFileBase != "":
-  print " Doing DR7 HOD scripts"
-  setName = prefix+"hod_dr72dim2"
-  writeScript(setName, prefix+"hod_dr72dim2_z", "multidark",
-              scriptDir, catalogDir, fileNums, redshifts, 
-              numSubvolumes, numSlices, False, lbox, 5, omegaM)
-  writeScript(setName, prefix+"hod_dr72dim2_z", "multidark", 
-              scriptDir, catalogDir, fileNums, redshifts, 
-              numSubvolumes, numSlices, True, lbox, 5, omegaM)
-
-if 1 == 0:
-#if (args.hod or args.all) and haloFileBase != "":
-  print " Doing DR7 HOD"
-  for (iRedshift, redshift) in enumerate(redshifts):
-    print "  z = ", redshift
-
-    parFileName = "./hod.par"
-    parFile = open(parFileName, 'w')
-    if haloFileDummy == '':
-      haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
-    else:
-      haloFile = catalogDir+haloFileBase.replace(haloFileDummy, 
-                                                 fileNums[iRedshift])
-    parFile.write(parFileText.format(omegaM=omegaM,
-                                     hubble=hubble,
-                                     redshift=redshift,
-                                     Mmin=1.99526e12,
-                                     M1=3.80189e13,
-                                     sigma_logM=0.21,
-                                     alpha=1.12,
-                                     Mcut=6.91831e11,
-                                     galden=0.02,
-                                     haloFile=haloFile,
-                                     haloFileFormat=dataFormat,
-                                     numPartPerSide=numPart**(1/3.),
-                                     boxSize=lbox,
-                                     workDir=catalogDir))
-    parFile.close()
-
-    os.system(hodPath+" "+parFileName+">& /dev/null")
-
-    sampleName = getSampleName(prefix+"hod_dr72dim2", redshift, False)
-    outFileName = catalogDir+"/"+sampleName+".dat"
-    os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
-
-    os.system("rm %s/hod.*" % catalogDir)
-
-# -----------------------------------------------------------------------------
-# now the BOSS HOD
 if (args.script or args.all) and haloFileBase != "":
-  print " Doing DR9 HOD scripts"
-  setName = prefix+"hod_dr9mid"
-  writeScript(setName, prefix+"hod_dr9mid_z", "multidark",
-              scriptDir, catalogDir, fileNums, redshifts, 
-               numSubvolumes, numSlices, False, lbox, 15, omegaM)
-  writeScript(setName, prefix+"hod_dr9mid_z", "multidark",
-              scriptDir, catalogDir, fileNums, redshifts, 
-               numSubvolumes, numSlices, True, lbox, 15, omegaM)
+  print " Doing HOD scripts"
+  for thisHod in hodParmList:
+    print "   ", thisHod['name']
+    setName = prefix+"hod_"+thisHod['name']
+    writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
+                scriptDir, catalogDir, fileNums, redshifts, 
+                 numSubvolumes, numSlices, False, lbox, 15, omegaM)
+    writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
+                scriptDir, catalogDir, fileNums, redshifts, 
+                 numSubvolumes, numSlices, True, lbox, 15, omegaM)
 
 if (args.hod or args.all) and haloFileBase != "":
-  print " Doing DR9 HOD"
-  for (iRedshift, redshift) in enumerate(redshifts):
-    print "  z = ", redshift
+  print " Doing HOD"
+  for thisHod in hodParmList:
+    print "   ", thisHod['name']
+    for (iRedshift, redshift) in enumerate(redshifts):
+      print "  z = ", redshift
 
-    # these parameters come from Manera et al 2012, eq. 26
-    # modified to match the observed galaxy density
-    parFileName = "./hod.par"
-    parFile = open(parFileName, 'w')
-    if haloFileDummy == '':
-      haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
-    else:
-      haloFile = catalogDir+haloFileBase.replace(haloFileDummy,
+      parFileName = "./hod.par"
+      parFile = open(parFileName, 'w')
+      if haloFileDummy == '':
+        haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
+      else:
+        haloFile = catalogDir+haloFileBase.replace(haloFileDummy,
                                                  fileNums[iRedshift])
-    parFile.write(parFileText.format(omegaM=omegaM,
+      parFile.write(parFileText.format(omegaM=omegaM,
                                      hubble=hubble,
                                      redshift=redshift,
-                                     Mmin=0.0,
+                                     Mmin=thisHod['Mmin'],
                                      #Mmin=1.23e13,
-                                     M1=1.e14,
-                                     sigma_logM=0.596,
-                                     alpha=1.0127,
-                                     Mcut=1.19399e13,
-                                     galden=galDens,
+                                     M1=thisHod['M1'],
+                                     sigma_logM=thisHod['sigma_logM'],
+                                     alpha=thisHod['alpha'],
+                                     Mcut=thisHod['Mcut'],
+                                     galden=thisHod['galDens'],
                                      #galden=0.000225,
                                      haloFile=haloFile,
                                      haloFileFormat=dataFormat,
                                      numPartPerSide=numPart**(1/3.),
                                      boxSize=lbox,
                                      workDir=catalogDir))
-    parFile.close()
+      parFile.close()
 
-    os.system(hodPath+" "+parFileName+">& /dev/null")
+      os.system(hodPath+" "+parFileName+">& /dev/null")
 
-    sampleName = getSampleName(prefix+"hod_dr9mid", redshift, False)
-    outFileName = catalogDir+"/"+sampleName+".dat"
-    os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
-
-    os.system("rm %s/hod.*" % catalogDir)
+      sampleName = getSampleName(prefix+"hod_"+thisHod['name'], redshift, False)
+      outFileName = catalogDir+"/"+sampleName+".dat"
+      os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
+      os.system("rm %s/hod.*" % catalogDir)
