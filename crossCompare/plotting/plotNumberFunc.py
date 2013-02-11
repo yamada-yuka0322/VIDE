@@ -11,6 +11,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
+from scipy.stats import ks_2samp
 
 # ------------------------------------------------------------------------------
 
@@ -19,6 +20,8 @@ plotNameBase = "compdist"
 obsFudgeFactor = 1.0 # what fraction of the volume are we *reall* capturing?
 #obsFudgeFactor = .66 # what fraction of the volume are we *reall* capturing?
 
+linewidth = 1
+
 parser = argparse.ArgumentParser(description='Plot.')
 parser.add_argument('--show', dest='showPlot', action='store_const',
                    const=True, default=False,
@@ -26,6 +29,10 @@ parser.add_argument('--show', dest='showPlot', action='store_const',
 parser.add_argument('--parmFile', dest='parmFile', default='datasetsToPlot.py',
                     help='path to parameter file')
 args = parser.parse_args()
+
+nErrorBars = 10
+plotMax = 120
+errorBarsX = np.linspace(0, plotMax, num=nErrorBars)
 
 # ------------------------------------------------------------------------------
 
@@ -50,52 +57,80 @@ plt.clf()
 plt.xlabel("Void Radius [Mpc/h]")
 plt.ylabel(r"N > R [$h^3$ Gpc$^{-3}$]")
 plt.yscale('log')
-plt.xlim(xmax=120.)
+plt.xlim(xmax=plotMax)
 
 plotName = plotNameBase
 allData = []
 
-for (iSample,sample) in enumerate(dataSampleList):
+for dataPortion in dataPortions: 
+  print "Data portion:", dataPortion
+  sizeList = []
+  for (iSample,sample) in enumerate(dataSampleList):
 
-  sampleName = sample.fullName
-  lineTitle = sampleName
+    sampleName = sample.fullName
+    lineTitle = sampleName
 
-  if sample.dataType == "observation":
-    boxVol = vp.getSurveyProps(sample.maskFile, 
-                               sample.zBoundary[0], sample.zBoundary[1], 
-                               sample.zRange[0], sample.zRange[1], "all",
-                               selectionFuncFile=None)[0]
-                               #selectionFuncFile=sample.selFunFile)[0]
-    boxVol *= obsFudgeFactor
-  else:
-    boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1] - 
+    if sample.dataType == "observation":
+      boxVol = vp.getSurveyProps(sample.maskFile, 
+                                 sample.zBoundary[0], sample.zBoundary[1], 
+                                 sample.zRange[0], sample.zRange[1], "all",
+                                 selectionFuncFile=None)[0]
+                                 #selectionFuncFile=sample.selFunFile)[0]
+      boxVol *= obsFudgeFactor
+    else:
+      boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1] - 
                                           sample.zBoundaryMpc[0])
 
-  boxVol *= 1.e-9 # Mpc->Gpc
+    boxVol *= 1.e-9 # Mpc->Gpc
 
-  filename = workDir+"/"+sampleDirList[iSample]+"/centers_"+dataPortion+"_"+\
-             sampleName+".out"
-  if not os.access(filename, os.F_OK):
-    print "File not found: ", filename
-    continue
+    filename = workDir+"/"+sampleDirList[iSample]+"/centers_"+dataPortion+"_"+\
+               sampleName+".out"
+    if not os.access(filename, os.F_OK):
+      print "File not found: ", filename
+      continue
 
-  data = np.loadtxt(filename, comments="#")
-  if data.ndim == 1:
-    print " Too few!"
-    continue
-  data = data[:,4]
-  indices = np.arange(0, len(data), 1)
-  sorted = np.sort(data)
+    data = np.loadtxt(filename, comments="#")
+    if data.ndim == 1:
+      print " Too few!"
+      continue
+    data = data[:,4]
+    indices = np.arange(0, len(data), 1)
+    numVoids = indices[::-1]/boxVol
+    voidSizes = np.sort(data)
 
-  plt.plot(sorted, indices[::-1]/boxVol, '-',
-           label=lineTitle, color=colorList[iSample],
-           linewidth=linewidth)
+    sizeList.append(voidSizes)
+    myErrorBarsX = []
+    errorBarsY = []
+    errorBarsDY = []
+    errorBarsIdx = []
+    for errorBarLoc in errorBarsX:
+      nearestIdx = (np.abs(voidSizes-errorBarLoc)).argmin()
+      if nearestIdx == 0: continue
+      myErrorBarsX.append(errorBarLoc)
+      errorBarsIdx.append(nearestIdx)
+      errorBarsY.append(numVoids[nearestIdx])
+      errorBarsDY.append(np.sqrt(numVoids[nearestIdx]))
 
-  hist, bin_edges = np.histogram(data, bins=100, range=(0,100)) 
-  allData.append(hist)
+    thisPlot = plt.plot(voidSizes, numVoids, '-',
+             color=colorList[iSample],
+             linewidth=linewidth, label=lineTitle)
+    plt.errorbar(myErrorBarsX, errorBarsY, errorBarsDY,
+             ecolor=colorList[iSample],
+             fmt=None, label='_nolegend_', capsize=0)
 
-plt.legend(title = "Samples", loc = "upper right", prop={'size':8})
-#plt.title(plotTitle)
+    hist, bin_edges = np.histogram(data, bins=100, range=(0,100)) 
+    allData.append(hist)
+
+  plt.legend(title = "Samples", loc = "upper right", prop={'size':8})
+  #plt.title(plotTitle)
+
+  # compute K-S statistic for all pairs of sets
+  for (i,sample1) in enumerate(dataSampleList):
+    for (j,sample2) in enumerate(dataSampleList):
+      if j <= i: continue
+      ks, pval = ks_2samp(sizeList[i][:], sizeList[j][:])
+      print sample1.fullName, sample2.fullName, pval
+
 
 plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
 plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
