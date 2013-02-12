@@ -276,7 +276,8 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     periodicLine += "' "
     periodicLine = ""
 
-  if not (continueRun and jobSuccessful(logFile, "NetCDF: Not a valid ID\n")):
+  if not (continueRun and (jobSuccessful(logFile, "NetCDF: Not a valid ID\n") \
+          or jobSuccessful(logFile, "Done!\n"))):
     cmd = binPath
     cmd += " --partFile=" + zobovDir+"/zobov_slice_"+str(sampleName)
     cmd += " --voidDesc=" + zobovDir+"/voidDesc_"+str(sampleName)+".out"
@@ -685,10 +686,15 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         shutil.copy(sourceStackDir+"/posx.nc", voidDir)
         shutil.copy(sourceStackDir+"/posy.nc", voidDir)
         shutil.copy(sourceStackDir+"/posz.nc", voidDir)
+        shutil.copy(sourceStackDir+"/z_posx.nc", voidDir)
+        shutil.copy(sourceStackDir+"/z_posy.nc", voidDir)
+        shutil.copy(sourceStackDir+"/z_posz.nc", voidDir)
         shutil.copy(sourceStackDir+"/indexes.nc", voidDir)
         shutil.copy(sourceStackDir+"/redshifts.nc", voidDir)
         shutil.copy(sourceStackDir+"/centers.txt", voidDir)
         shutil.copy(sourceStackDir+"/void_indexes.txt", voidDir)
+        shutil.copy(sourceStackDir+"/z_centers.txt", voidDir)
+        shutil.copy(sourceStackDir+"/z_void_indexes.txt", voidDir)
         shutil.copy(sourceStackDir+"/sky_positions.txt", voidDir)
         shutil.copy(sourceStackDir+"/normalizations.txt", voidDir)
         shutil.copy(sourceStackDir+"/boundaryDistances.txt", voidDir)
@@ -713,19 +719,72 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         dataTemp = str(dataTemp[0])
         file(voidDir+"/num_particles.txt", "w").write(str(dataTemp))
 
+        dataTemp = file(sourceStackDir+"/z_centers.txt", "r").read()
+        file(voidDir+"/z_centers.txt", "a").write(dataTemp)
+
         dataTemp = file(sourceStackDir+"/centers.txt", "r").read()
         file(voidDir+"/centers.txt", "a").write(dataTemp)
-        dataTemp = file(sourceStackDir+"/normalizations.txt", "r").\
-                   read()
+
+        dataTemp = file(sourceStackDir+"/normalizations.txt", "r").read()
         file(voidDir+"/normalizations.txt", "a").write(dataTemp)
 
-        dataTemp = file(sourceStackDir+"/boundaryDistances.txt","r").\
-                   read()
+        dataTemp = file(sourceStackDir+"/boundaryDistances.txt","r").read()
         file(voidDir+"/boundaryDistances.txt", "a").write(dataTemp)
 
         dataTemp = file(sourceStackDir+"/sky_positions.txt", "r").\
                    read()
         file(voidDir+"/sky_positions.txt", "a").write(dataTemp)
+
+        idxTemp = file(sourceStackDir+"/z_void_indexes.txt", "r").\
+                  readlines()
+        idxTemp = np.array(idxTemp, dtype='i')
+        dataTemp = (NetCDFFile(voidDir+"/z_posx.nc").\
+                   variables['array'])[0:]
+        idxTemp[:] += len(dataTemp)
+        fp = open(voidDir+"/z_void_indexes.txt", "a")
+        for idx in idxTemp:
+          fp.write(str(idx)+"\n")
+        fp.close()
+        dataTemp = ()
+
+        fp = NetCDFFile(voidDir+"/z_posx.nc")
+        dataTemp = fp.variables['array'][0:]
+        fp.close()
+        fp = NetCDFFile(sourceStackDir+"/z_posx.nc")
+        dataTemp2 = fp.variables['array'][0:]
+        fp.close()
+        dataTemp = np.append(dataTemp, dataTemp2)
+        outFile = NetCDFFile(voidDir+"/z_posx.nc", mode='w')
+        outFile.createDimension("dim", len(dataTemp))
+        v = outFile.createVariable("array", ncFloat, ("dim",))
+        v[:] = dataTemp
+        outFile.close()
+
+        fp = NetCDFFile(voidDir+"/z_posy.nc")
+        dataTemp = fp.variables['array'][0:]
+        fp.close()
+        fp = NetCDFFile(sourceStackDir+"/z_posy.nc")
+        dataTemp2 = fp.variables['array'][0:]
+        fp.close()
+        dataTemp = np.append(dataTemp, dataTemp2)
+        outFile = NetCDFFile(voidDir+"/z_posy.nc", mode='w')
+        outFile.createDimension("dim", len(dataTemp))
+        v = outFile.createVariable("array", ncFloat, ("dim",))
+        v[:] = dataTemp
+        outFile.close()
+
+        fp = NetCDFFile(voidDir+"/z_posz.nc")
+        dataTemp = fp.variables['array'][0:]
+        fp.close()
+        fp = NetCDFFile(sourceStackDir+"/z_posz.nc")
+        dataTemp2 = fp.variables['array'][0:]
+        fp.close()
+        dataTemp = np.append(dataTemp, dataTemp2)
+        outFile = NetCDFFile(voidDir+"/z_posz.nc", mode='w')
+        outFile.createDimension("dim", len(dataTemp))
+        v = outFile.createVariable("array", ncFloat, ("dim",))
+        v[:] = dataTemp
+        outFile.close()
 
         idxTemp = file(sourceStackDir+"/void_indexes.txt", "r").\
                   readlines()
@@ -777,6 +836,7 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         v = outFile.createVariable("array", ncFloat, ("dim",))
         v[:] = dataTemp
         outFile.close()
+
 
         fp = NetCDFFile(voidDir+"/redshifts.nc")
         dataTemp = fp.variables['array'][0:]
@@ -1250,6 +1310,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
       sys.stdout = open(logFile, 'w')
       sys.stderr = open(logFile, 'a')
       if doPlot:
+        print "DOING PLOT"
         if INCOHERENT:
           #plotTitle = "all samples, incoherent "+\
           #            thisDataPortion+" voids"
