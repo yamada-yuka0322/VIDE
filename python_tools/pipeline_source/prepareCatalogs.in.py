@@ -235,6 +235,7 @@ for thisSubSample in sorted(subSamples, reverse=True):
 
   if args.script or args.all:
     print " Doing subsample", thisSubSample, "scripts"
+    sys.stdout.flush()
     setName = prefix+"ss"+str(thisSubSample)
     if dataFormat == "multidark":
       subSampleToUse = 1.0
@@ -264,9 +265,11 @@ for thisSubSample in sorted(subSamples, reverse=True):
   
   if args.subsample or args.all:
     print " Doing subsample", thisSubSample
+    sys.stdout.flush()
 
     for (iRedshift, redshift) in enumerate(redshifts):
       print "   redshift", redshift
+      sys.stdout.flush()
   
       if dataFormat == "multidark":
         # reuse previous subamples in order to:
@@ -341,6 +344,7 @@ if (args.script or args.all) and haloFileBase != "":
 
   for minHaloMass in minHaloMasses:
     print " Doing halo script", minHaloMass
+    sys.stdout.flush()
 
     # estimate number of halos to get density
     if haloFileDummy == '':
@@ -371,12 +375,15 @@ if (args.script or args.all) and haloFileBase != "":
 
 if (args.halos or args.all) and haloFileBase != "":
   print " Doing halos"
+  sys.stdout.flush()
 
   for minHaloMass in minHaloMasses:
     print "  min halo mass = ", minHaloMass
+    sys.stdout.flush()
 
     for (iRedshift, redshift) in enumerate(redshifts):
       print "   z = ", redshift
+      sys.stdout.flush()
 
       if haloFileDummy == '':
         dataFile = catalogDir+haloFileBase+fileNums[iRedshift]
@@ -463,6 +470,7 @@ root_filename {workDir}/hod
 
 if (args.script or args.all) and haloFileBase != "":
   print " Doing HOD scripts"
+  sys.stdout.flush()
   for thisHod in hodParmList:
     print "   ", thisHod['name']
     setName = prefix+"hod_"+thisHod['name']
@@ -475,10 +483,13 @@ if (args.script or args.all) and haloFileBase != "":
 
 if (args.hod or args.all) and haloFileBase != "":
   print " Doing HOD"
+  sys.stdout.flush()
   for thisHod in hodParmList:
     print "   ", thisHod['name']
+    sys.stdout.flush()
     for (iRedshift, redshift) in enumerate(redshifts):
       print "  z = ", redshift
+      sys.stdout.flush()
 
       parFileName = "./hod.par"
       parFile = open(parFileName, 'w')
