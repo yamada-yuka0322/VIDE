@@ -57,6 +57,7 @@ subSamples = [0.1, 0.05, 0.01, 0.002, 0.001, 0.0004, 0.000175, 0.00001]
 
 # common filename of halo files, leave blank to ignore halos
 haloFileBase = "mdr1_halos_z"
+haloFileDummy = ''
 
 # minimum halo mass cuts to apply for the halo catalog
 #   use "none" to get all halos
