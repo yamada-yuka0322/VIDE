@@ -242,11 +242,13 @@ for thisSubSample in sorted(subSamples, reverse=True):
       fileToUse = prefix+"ss"+str(thisSubSample)+"_z"
       suffix = ".dat"
     elif dataFormat == "gadget":
-      subSampleToUse = thisSubSample
+      subSampleToUse = keepFraction
+      #subSampleToUse = thisSubSample
       fileToUse = particleFileBase
       suffix = ""
     elif dataFormat == "lanl":
-      subSampleToUse = thisSubSample
+      subSampleToUse = keepFraction
+      #subSampleToUse = thisSubSample
       fileToUse = particleFileBase
       suffix = ""
     elif dataFormat == "random":
