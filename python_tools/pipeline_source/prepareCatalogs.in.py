@@ -299,7 +299,7 @@ for thisSubSample in sorted(subSamples, reverse=True):
 
           if np.random.uniform() > keepFraction: continue
           numKept += 1
-          if numKept > maxKeep: break
+          #if numKept > maxKeep: break
 
           if (prevSubSample == -1):
             line = line.split(',')
@@ -307,8 +307,10 @@ for thisSubSample in sorted(subSamples, reverse=True):
             y  = float(line[1])
             z  = float(line[2])
             vz = float(line[3])
+            vy = float(line[4])
+            vx = float(line[5])
             uniqueID = i
-            outFile.write("%d %e %e %e %e\n" %(uniqueID,x,y,z,vz))
+            outFile.write("%d %e %e %e %e %e %e\n" %(uniqueID,x,y,z,vz,vy,vx))
           else:
             outFile.write(line)
 
@@ -331,7 +333,7 @@ for thisSubSample in sorted(subSamples, reverse=True):
           y  = np.random.uniform()*lbox
           z  = np.random.uniform()*lbox
 
-          outFile.write("%d %e %e %e %e\n" % (i, x,y,z, 0.))
+          outFile.write("%d %e %e %e 0. 0. 0.\n" % (i, x,y,z))
 
         outFile.write("-99 -99 -99 -99 -99\n")
         outFile.close()
@@ -417,9 +419,11 @@ if (args.halos or args.all) and haloFileBase != "":
           y  = float(line[haloFileYCol])
           z  = float(line[haloFileZCol])
           vz = float(line[haloFileVZCol])
+          vy = float(line[haloFileVYCol])
+          vx = float(line[haloFileVXCol])
 
           # write to output file
-          outFile.write("%d %e %e %e %e\n" %(iHalo,x,y,z,vz))
+          outFile.write("%d %e %e %e %e %e %e\n" %(iHalo,x,y,z,vz,vy,vx))
 
       outFile.write("-99 -99 -99 -99 -99\n")
       inFile.close()
