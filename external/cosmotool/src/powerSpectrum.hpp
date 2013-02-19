@@ -30,6 +30,8 @@ namespace Cosmology {
   double computeVarianceZero(double powNorm);
   double computeCorrel(double powNorm,  double topHatRad1);
   double computeCorrel2(double powNorm,  double topHatRad1, double topHatRad2);
+
+  double vvCorrection(double P_deltadelta, double k);
 };
 
 #endif

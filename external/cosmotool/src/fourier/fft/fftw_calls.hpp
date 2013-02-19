@@ -28,8 +28,8 @@ public: \
   typedef prefix ## _complex complex_type; \
   typedef prefix ## _plan plan_type; \
   \
-  static complex_type *alloc_complex(int N) { return prefix ## _alloc_complex(N); } \
-  static real_type *alloc_real(int N) { return prefix ## _alloc_real(N); } \
+  static complex_type *alloc_complex(size_t N) { return prefix ## _alloc_complex(N); } \
+  static real_type *alloc_real(size_t N) { return prefix ## _alloc_real(N); } \
   static void free(void *p) { fftw_free(p); } \
 \
   static void execute(plan_type p) { prefix ## _execute(p); } \

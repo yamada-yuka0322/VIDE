@@ -384,7 +384,7 @@ CosmoTool::SimuData *CosmoTool::loadRamsesSimu(const char *basename, int outputI
 	}
       if (flags & NEED_GADGET_ID)
 	{
-	  data->Id = new int[nPar];
+	  data->Id = new long[nPar];
 	}
 
       for (int k = 0; k < 3; k++)

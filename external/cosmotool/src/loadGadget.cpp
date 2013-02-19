@@ -195,7 +195,7 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
     try
       {
 	f->beginCheckpoint();
-	data->Id = new int[data->NumPart];
+	data->Id = new long[data->NumPart];
 	if (data->Id == 0)
 	  {
 	    delete f;

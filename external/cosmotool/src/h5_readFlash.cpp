@@ -185,7 +185,7 @@ void h5_read_flash3_particles (H5File* file,
                         float *vel1,
                         float *vel2,
                         float *vel3,
-                        int    *id)
+                        long    *id)
 {
 
   herr_t   status;
@@ -341,7 +341,7 @@ void h5_read_flash3_particles (H5File* file,
 
     if (id) {
     for(p=0; p < (pcount); p++) {
-      id[p+poffset] = (int)  *(partBuffer+iptag-1+p*numProps);
+      id[p+poffset] = (long)  *(partBuffer+iptag-1+p*numProps);
     } }
 
     if (pos1 && pos2 && pos3) {

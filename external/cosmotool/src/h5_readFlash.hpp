@@ -29,7 +29,7 @@ void h5_read_flash3_particles (H5File* file,
                         float *vel1,
                         float *vel2,
                         float *vel3,
-                        int    *id);
+                        long    *id);
 
 void h5_read_flash3_header_info(H5File* file,
 				double* time,                   /* simulation time */

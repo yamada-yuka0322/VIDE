@@ -38,7 +38,7 @@ namespace CosmoTool
 
     long NumPart;
     long TotalNumPart;
-    int *Id;
+    long *Id;
     float *Pos[3];
     float *Vel[3];
     int *type;
