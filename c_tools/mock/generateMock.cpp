@@ -359,7 +359,7 @@ void saveBox(SimuData *&boxed, const std::string& outbox)
       NcVar *v4 = f.add_var("unique_ids_lsb", ncLong, NumPart_dim);
       NcVar *v5 = f.add_var("unique_ids_msb", ncLong, NumPart_dim);
 
-      nclong *tmp_int = new nclong(boxed->NumPart);
+      nclong *tmp_int = new nclong[boxed->NumPart];
       for (long i = 0; i < boxed->NumPart; i++)
          tmp_int[i] = (nclong)(((unsigned long)uniqueID[i]) & 0xffffffff);
       v4->put(tmp_int, boxed->NumPart);
