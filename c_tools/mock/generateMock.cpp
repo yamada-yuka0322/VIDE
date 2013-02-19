@@ -356,8 +356,17 @@ void saveBox(SimuData *&boxed, const std::string& outbox)
   v3->put(snapshot_split, num_snapshots);
   if (uniqueID != 0)
     {
-      NcVar *v4 = f.add_var("unique_ids", ncLong, NumPart_dim);
-      v4->put(uniqueID, boxed->NumPart);
+      NcVar *v4 = f.add_var("unique_ids_lsb", ncLong, NumPart_dim);
+      NcVar *v5 = f.add_var("unique_ids_msb", ncLong, NumPart_dim);
+
+      nclong *tmp_int = new nclong(boxed->NumPart);
+      for (long i = 0; i < boxed->NumPart; i++)
+         tmp_int[i] = (nclong)(((unsigned long)uniqueID[i]) & 0xffffffff);
+      v4->put(tmp_int, boxed->NumPart);
+      for (long i = 0; i < boxed->NumPart; i++)
+         tmp_int[i] = (nclong)((((unsigned long)uniqueID[i]) & 0xffffffff) >> 32);
+      v5->put(tmp_int, boxed->NumPart);
+      delete[] tmp_int;
     }
 }
 
@@ -429,8 +438,21 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
     }
   
   uint32_t k = 0;
-  NcVar *v_uniq = f.get_var("unique_ids");
-  v_uniq->get(uniqueID, boxed->NumPart);
+  NcVar *v_uniq_lsb = f.get_var("unique_ids_lsb");
+  NcVar *v_uniq_msb = f.get_var("unique_ids_lsb");
+  nclong *tmp_int;
+
+  tmp_int = new nclong[boxed->NumPart];
+
+  v_uniq_lsb->get(tmp_int, boxed->NumPart);
+  for (long i = 0; i < boxed->NumPart; i++)
+    uniqueID[i] = tmp_int[i];
+
+  v_uniq_msb->get(tmp_int, boxed->NumPart);
+  for (long i = 0; i < boxed->NumPart; i++)
+    uniqueID[i] |= (unsigned long)(tmp_int[i]) << 32;
+
+  delete[] tmp_int;
 }
 
 void makeBoxFromSimulation(SimulationLoader *loader, SimuData* &boxed, MetricFunctor metric, generateMock_info& args_info)
