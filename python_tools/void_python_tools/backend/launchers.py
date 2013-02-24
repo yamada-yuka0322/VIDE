@@ -1460,3 +1460,39 @@ def launchEstimateErrorBars(workDir=None, nullDir=None, numNulls=None,
   
                       
 
+# -----------------------------------------------------------------------------
+def launchVelocityStack(sample, stack, binPath, 
+                         velField_file,
+                         thisDataPortion=None, logDir=None,
+                         voidDir=None, runSuffix=None,
+                         zobovDir=None,
+                         summaryFile=None, 
+                         continueRun=None, dataType=None, prefixRun=""):
+
+  sampleName = sample.fullName
+
+  runSuffix = getStackSuffix(stack.zMin, stack.zMax, stack.rMin,
+                             stack.rMax, thisDataPortion)
+
+  logFile = logDir+("/%svelocity_stack_"%prefixRun)+sampleName+"_"+runSuffix+".out"
+
+  voidCenters=voidDir+"/centers.txt"
+  Rmax = 
+
+  centralRadius = stack.rMin * 0.25
+  Rextracut = stack.rMin*3 + 1
+  Rcircular = stack.rMin*3 + 2
+
+  parameters="--velocityField=%s --voidCenters=%s --Rmax=%e --L0=%e --numBins=%d" % (velField_file, voidCenters, Rmax, Boxsize, numBins)
+
+  if not (continueRun and jobSuccessful(logFile, "Done!\n")):
+    cmd = "%s %s &> %s" % (binPath,parameters,logFile)
+    os.system(cmd)
+    if jobSuccessful(logFile, "Done!\n"):
+      print "done"
+    else:
+      print "FAILED!"
+      exit(-1)
+      
+  else:
+    print "already done!"
