@@ -1,3 +1,4 @@
+#include <cassert>
 #include <vector>
 #include <algorithm>
 #include <iostream>
@@ -21,7 +22,7 @@ using namespace std;
 #define POWER_BDM 7
 #define POWER_TEST 8
 
-#define POWER_SPECTRUM HU_WIGGLES
+#define POWER_SPECTRUM POWER_EFSTATHIOU
 
 namespace Cosmology {
 
@@ -649,6 +650,19 @@ double computeCorrel2(double powNorm,  double topHatRad1, double topHatRad2)
 	 << "  O0=" << OMEGA_0 << " Theta=" << Theta_27 << " beta=" << beta << " h=" << h << " G0=" << Gamma0 << endl
 	 << "  OmegaB=" << OMEGA_B << " Omega_C=" << OMEGA_C << endl;
 #endif
+  }
+
+  double vvCorrection(double P_deltadelta, double k)
+  {
+    static const double alpha0 = -12480.5, alpha1 = 1.824, alpha2 = 2165.87, alpha3=1.796;
+    if (k > 0.3)
+      return 0;
+    double r =(alpha0*sqrt(P_deltadelta) + alpha1*P_deltadelta*P_deltadelta)/(alpha2 + alpha3*P_deltadelta);
+    assert(P_deltadelta > 0);
+
+    if (r < 0)
+      return 0;
+    return r;
   }
 
 };

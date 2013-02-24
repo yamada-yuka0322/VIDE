@@ -276,7 +276,8 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     periodicLine += "' "
     periodicLine = ""
 
-  if not (continueRun and jobSuccessful(logFile, "NetCDF: Not a valid ID\n")):
+  if not (continueRun and (jobSuccessful(logFile, "NetCDF: Not a valid ID\n") \
+          or jobSuccessful(logFile, "Done!\n"))):
     cmd = binPath
     cmd += " --partFile=" + zobovDir+"/zobov_slice_"+str(sampleName)
     cmd += " --voidDesc=" + zobovDir+"/voidDesc_"+str(sampleName)+".out"
@@ -308,6 +309,9 @@ def launchPrune(sample, binPath, thisDataPortion=None,
                           str(thisDataPortion)+"_"+\
                           str(sampleName)+".out"
     cmd += " --outSkyPositions=" + zobovDir+"/sky_positions_"+\
+                          str(thisDataPortion)+"_"+\
+                          str(sampleName)+".out"
+    cmd += " --outShapes=" + zobovDir+"/shapes_"+\
                           str(thisDataPortion)+"_"+\
                           str(sampleName)+".out"
     cmd += " --outDistances=" + zobovDir+"/boundaryDistances_"+\
@@ -682,10 +686,15 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         shutil.copy(sourceStackDir+"/posx.nc", voidDir)
         shutil.copy(sourceStackDir+"/posy.nc", voidDir)
         shutil.copy(sourceStackDir+"/posz.nc", voidDir)
+        shutil.copy(sourceStackDir+"/z_posx.nc", voidDir)
+        shutil.copy(sourceStackDir+"/z_posy.nc", voidDir)
+        shutil.copy(sourceStackDir+"/z_posz.nc", voidDir)
         shutil.copy(sourceStackDir+"/indexes.nc", voidDir)
         shutil.copy(sourceStackDir+"/redshifts.nc", voidDir)
         shutil.copy(sourceStackDir+"/centers.txt", voidDir)
         shutil.copy(sourceStackDir+"/void_indexes.txt", voidDir)
+        shutil.copy(sourceStackDir+"/z_centers.txt", voidDir)
+        shutil.copy(sourceStackDir+"/z_void_indexes.txt", voidDir)
         shutil.copy(sourceStackDir+"/sky_positions.txt", voidDir)
         shutil.copy(sourceStackDir+"/normalizations.txt", voidDir)
         shutil.copy(sourceStackDir+"/boundaryDistances.txt", voidDir)
@@ -710,19 +719,72 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         dataTemp = str(dataTemp[0])
         file(voidDir+"/num_particles.txt", "w").write(str(dataTemp))
 
+        dataTemp = file(sourceStackDir+"/z_centers.txt", "r").read()
+        file(voidDir+"/z_centers.txt", "a").write(dataTemp)
+
         dataTemp = file(sourceStackDir+"/centers.txt", "r").read()
         file(voidDir+"/centers.txt", "a").write(dataTemp)
-        dataTemp = file(sourceStackDir+"/normalizations.txt", "r").\
-                   read()
+
+        dataTemp = file(sourceStackDir+"/normalizations.txt", "r").read()
         file(voidDir+"/normalizations.txt", "a").write(dataTemp)
 
-        dataTemp = file(sourceStackDir+"/boundaryDistances.txt","r").\
-                   read()
+        dataTemp = file(sourceStackDir+"/boundaryDistances.txt","r").read()
         file(voidDir+"/boundaryDistances.txt", "a").write(dataTemp)
 
         dataTemp = file(sourceStackDir+"/sky_positions.txt", "r").\
                    read()
         file(voidDir+"/sky_positions.txt", "a").write(dataTemp)
+
+        idxTemp = file(sourceStackDir+"/z_void_indexes.txt", "r").\
+                  readlines()
+        idxTemp = np.array(idxTemp, dtype='i')
+        dataTemp = (NetCDFFile(voidDir+"/z_posx.nc").\
+                   variables['array'])[0:]
+        idxTemp[:] += len(dataTemp)
+        fp = open(voidDir+"/z_void_indexes.txt", "a")
+        for idx in idxTemp:
+          fp.write(str(idx)+"\n")
+        fp.close()
+        dataTemp = ()
+
+        fp = NetCDFFile(voidDir+"/z_posx.nc")
+        dataTemp = fp.variables['array'][0:]
+        fp.close()
+        fp = NetCDFFile(sourceStackDir+"/z_posx.nc")
+        dataTemp2 = fp.variables['array'][0:]
+        fp.close()
+        dataTemp = np.append(dataTemp, dataTemp2)
+        outFile = NetCDFFile(voidDir+"/z_posx.nc", mode='w')
+        outFile.createDimension("dim", len(dataTemp))
+        v = outFile.createVariable("array", ncFloat, ("dim",))
+        v[:] = dataTemp
+        outFile.close()
+
+        fp = NetCDFFile(voidDir+"/z_posy.nc")
+        dataTemp = fp.variables['array'][0:]
+        fp.close()
+        fp = NetCDFFile(sourceStackDir+"/z_posy.nc")
+        dataTemp2 = fp.variables['array'][0:]
+        fp.close()
+        dataTemp = np.append(dataTemp, dataTemp2)
+        outFile = NetCDFFile(voidDir+"/z_posy.nc", mode='w')
+        outFile.createDimension("dim", len(dataTemp))
+        v = outFile.createVariable("array", ncFloat, ("dim",))
+        v[:] = dataTemp
+        outFile.close()
+
+        fp = NetCDFFile(voidDir+"/z_posz.nc")
+        dataTemp = fp.variables['array'][0:]
+        fp.close()
+        fp = NetCDFFile(sourceStackDir+"/z_posz.nc")
+        dataTemp2 = fp.variables['array'][0:]
+        fp.close()
+        dataTemp = np.append(dataTemp, dataTemp2)
+        outFile = NetCDFFile(voidDir+"/z_posz.nc", mode='w')
+        outFile.createDimension("dim", len(dataTemp))
+        v = outFile.createVariable("array", ncFloat, ("dim",))
+        v[:] = dataTemp
+        outFile.close()
 
         idxTemp = file(sourceStackDir+"/void_indexes.txt", "r").\
                   readlines()
@@ -774,6 +836,7 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         v = outFile.createVariable("array", ncFloat, ("dim",))
         v[:] = dataTemp
         outFile.close()
+
 
         fp = NetCDFFile(voidDir+"/redshifts.nc")
         dataTemp = fp.variables['array'][0:]
@@ -892,6 +955,14 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
       print "no voids here; skipping!"
       return
 
+    numVoids = int(open(voidDir+"/num_voids.txt", "r").readline())
+    if numVoids < 15:
+      print "not enough voids to fit; skipping!"
+      fp = open(voidDir+"/NOFIT", "w")
+      fp.write("not enough voids: %d \n" % numVoids)
+      fp.close()
+      return
+
     if stack.zMin < sample.zRange[0] or stack.zMax > sample.zRange[1]:
       print "outside sample redshift range; skipping!"
       return
@@ -938,7 +1009,7 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
       #badChain = (args[0][0] > 0.5 or args[0][1] > stack.rMax or \
       #            args[0][2] > stack.rMax) and \
       #           (ntries < maxtries)
-      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax)
+      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="symmetric")
       badChain = False
       ntries += 1
 
@@ -1003,7 +1074,7 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
 def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
                  INCOHERENT=None, workDir=None, figDir=None, errorBars=None, 
                  ZOBOV_PATH=None, continueRun=None, voidDir=None, 
-                 doPlot = True):
+                 doPlot = True, setName=None):
 
   for thisDataPortion in dataPortions:
     print "    For data portion", thisDataPortion
@@ -1239,13 +1310,15 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
       sys.stdout = open(logFile, 'w')
       sys.stderr = open(logFile, 'a')
       if doPlot:
+        print "DOING PLOT"
         if INCOHERENT:
           #plotTitle = "all samples, incoherent "+\
           #            thisDataPortion+" voids"
           plotTitle = ''
         else:
           #plotTitle = "all samples, "+thisDataPortion+" voids"
-          plotTitle = ''
+          plotTitle = setName
+          #plotTitle = ''
         vp.do_all_obs(zbase, allExpList, aveDistList,
                       rlist, plotTitle=plotTitle, sampleNames=shortSampleNames,
                       plotAve=True, mulfac = 1.0, biasLine = 1.16, 

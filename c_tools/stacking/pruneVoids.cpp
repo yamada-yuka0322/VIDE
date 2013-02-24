@@ -10,6 +10,7 @@
 //   for producing a "clean" void catalog for other purposes.
 
 #include "gsl/gsl_math.h"
+#include "gsl/gsl_eigen.h"
 #include "string.h"
 #include "ctype.h"
 #include "stdlib.h"
@@ -43,6 +44,8 @@ typedef struct voidStruct {
   float nearestEdge;
   float center[3], barycenter[3];
   int accepted;
+  gsl_vector *eval;
+  gsl_matrix *evec;
 } VOID;
 
 int main(int argc, char **argv) {
@@ -75,6 +78,7 @@ int main(int argc, char **argv) {
   int numVoids, mockIndex, numKept;
   double tolerance;
   FILE *fp, *fpBarycenter, *fpDistances, *fpSkyPositions, *fpInfo;
+  FILE *fpShapes;
   PART *part, *voidPart;
   ZONE2PART *zones2Parts;
   VOID2ZONE *void2Zones;
@@ -91,6 +95,8 @@ int main(int argc, char **argv) {
   double volNorm, radius;
   int clock1, clock2;
   int periodicX=0, periodicY=0, periodicZ=0;
+
+  gsl_eigen_symmv_workspace *eigw = gsl_eigen_symmv_alloc(3);
 
   numVoids = args_info.numVoids_arg;
   mockIndex = args_info.mockIndex_arg;
@@ -209,6 +215,9 @@ int main(int argc, char **argv) {
 
     voids[i-1].radius = pow(voidVol/volNorm*3./4./M_PI, 1./3.);
     voids[i-1].accepted = 1;
+  
+    voids[i-1].eval = gsl_vector_alloc(3);
+    voids[i-1].evec = gsl_matrix_alloc(3,3);
   }
   fclose(fp);
 
@@ -356,11 +365,10 @@ int main(int argc, char **argv) {
         voids[iVoid].barycenter[2] = boxLen[2] + voids[iVoid].barycenter[2];
     }
 
-
     // compute central density
     centralRad = voids[iVoid].radius/args_info.centralRadFrac_arg;
-    centralRad *= centralRad;
     centralDen = 0.;
+    int numCentral = 0;
     for (p = 0; p < voids[iVoid].numPart; p++) {
       dist[0] = fabs(voidPart[p].x - voids[iVoid].barycenter[0]);
       dist[1] = fabs(voidPart[p].y - voids[iVoid].barycenter[1]);
@@ -371,9 +379,10 @@ int main(int argc, char **argv) {
       if (periodicZ) dist[2] = fmin(dist[2], boxLen[2]-dist[2]);
 
       dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
-      if (dist2 < centralRad) centralDen += 1;
+      if (sqrt(dist2) < centralRad) numCentral += 1;
     }
-    voids[iVoid].centralDen = centralDen / (4./3. * M_PI * pow(centralRad, 3./2.));
+    voids[iVoid].centralDen = numCentral / (volNorm*4./3. * M_PI * 
+                                            pow(centralRad, 3.));
 
     // compute maximum extent
 /*
@@ -467,8 +476,32 @@ int main(int argc, char **argv) {
     }
 
     voids[iVoid].nearestEdge = nearestEdge;
+
+    // compute eigenvalues and vectors for orientation and shape
+    double inertia[9];
+    for (int p = 0; p < voids[iVoid].numPart; p++) {
+      dist[0] = voidPart[p].x - voids[iVoid].barycenter[0];
+      dist[1] = voidPart[p].y - voids[iVoid].barycenter[1];
+      dist[2] = voidPart[p].z - voids[iVoid].barycenter[2];
+
+      for (int i = 0; i < 3; i++) {
+      for (int j = i; j < 3; j++) {
+        if (i == j) inertia[i*3+j] += dist[0]*dist[0] + dist[1]*dist[1] + 
+                                    dist[2]*dist[2];
+        inertia[i*3+j] -= dist[i]*dist[j];      
+      }
+      }
+    }
+    inertia[1*3+0] = inertia[0*3+1];
+    inertia[2*3+0] = inertia[0*3+2];
+    inertia[2*3+1] = inertia[1*3+2];
+
+    gsl_matrix_view m = gsl_matrix_view_array(inertia, 3, 3);
+    gsl_eigen_symmv(&m.matrix, voids[iVoid].eval, voids[iVoid].evec, eigw);
   } // iVoid
 
+  gsl_eigen_symmv_free(eigw);
+    
   int numWrong = 0;
   int numHighDen = 0;
   int numEdge = 0;
@@ -483,7 +516,7 @@ int main(int argc, char **argv) {
     if (voids[iVoid].densCon < 1.5) {
 //      voids[iVoid].accepted = -4;
     }
- 
+
     if (voids[iVoid].centralDen > args_info.maxCentralDen_arg) {
       voids[iVoid].accepted = -1;
       numHighDen++;
@@ -515,14 +548,14 @@ int main(int argc, char **argv) {
     // *always* clean out near edges since there are no mocks there
     if (tolerance*voids[iVoid].maxRadius > voids[iVoid].nearestEdge) {
       voids[iVoid].accepted = -3;
-      numEdge++;
+      if (voids[iVoid].accepted == 1) numEdge++;
     }
 
     // assume the lower z-boundary is "soft" in observations
     if (args_info.isObservation_flag && 
         voids[iVoid].redshift < args_info.zMin_arg) {
       voids[iVoid].accepted = -3;
-      numEdge++;
+      if (voids[iVoid].accepted == 1) numEdge++;
     }
   }
 
@@ -543,10 +576,12 @@ int main(int argc, char **argv) {
   fpInfo = fopen(args_info.outInfo_arg, "w");
   fpDistances = fopen(args_info.outDistances_arg, "w");
   fpSkyPositions = fopen(args_info.outSkyPositions_arg, "w");
+  fpShapes = fopen(args_info.outShapes_arg, "w");
   fprintf(fp, "%d particles, %d voids.\n", mockIndex, numKept);
   fprintf(fp, "see column in master void file\n");
   fprintf(fpInfo, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast\n");
   fprintf(fpSkyPositions, "# RA, dec, redshift, radius (Mpc/h), void ID\n");
+  fprintf(fpShapes, "# void ID, eig(1), eig(2), eig(3), eigv(1)-x, eiv(1)-y, eigv(1)-z, eigv(2)-x, eigv(2)-y, eigv(2)-z, eigv(3)-x, eigv(3)-y, eigv(3)-z\n");
   for (iVoid = 0; iVoid < numVoids; iVoid++) {
 
     if (voids[iVoid].accepted != 1) continue;
@@ -566,10 +601,6 @@ int main(int argc, char **argv) {
 
      fprintf(fpBarycenter, "%d  %e %e %e\n", 
              voids[iVoid].voidID,
-// TEST
-//             voids[iVoid].center[0],
-//             voids[iVoid].center[1],
-//`             voids[iVoid].center[2],
              voids[iVoid].barycenter[0],
              voids[iVoid].barycenter[1],
              voids[iVoid].barycenter[2]);
@@ -579,19 +610,11 @@ int main(int argc, char **argv) {
              voids[iVoid].nearestMock);
 
      double outCenter[3];
-// TEST
-     //outCenter[0] = voids[iVoid].center[0];
-     //outCenter[1] = voids[iVoid].center[1];
-     //outCenter[2] = voids[iVoid].center[2];
      outCenter[0] = voids[iVoid].barycenter[0];
      outCenter[1] = voids[iVoid].barycenter[1];
      outCenter[2] = voids[iVoid].barycenter[2];
 
      if (args_info.isObservation_flag) {
-// TEST
-       //outCenter[0] = (voids[iVoid].center[0]-boxLen[0]/2.)*100.;
-       //outCenter[1] = (voids[iVoid].center[1]-boxLen[1]/2.)*100.;
-       //outCenter[2] = (voids[iVoid].center[2]-boxLen[2]/2.)*100.;
        outCenter[0] = (voids[iVoid].barycenter[0]-boxLen[0]/2.)*100.;
        outCenter[1] = (voids[iVoid].barycenter[1]-boxLen[1]/2.)*100.;
        outCenter[2] = (voids[iVoid].barycenter[2]-boxLen[2]/2.)*100.;
@@ -609,12 +632,29 @@ int main(int argc, char **argv) {
              voids[iVoid].densCon);
 
      fprintf(fpSkyPositions, "%.2f %.2f %.5f %.2f %d\n",
-             atan((voids[iVoid].barycenter[1]-boxLen[1]/2.)/(voids[iVoid].barycenter[0]-boxLen[0]/2.)) * 180/M_PI + 180,  
-             asin((voids[iVoid].barycenter[2]-boxLen[2]/2.)/voids[iVoid].redshiftInMpc) * 180/M_PI,  
+             atan((voids[iVoid].barycenter[1]-boxLen[1]/2.) / 
+                  (voids[iVoid].barycenter[0]-boxLen[0]/2.)) * 180/M_PI + 180,  
+             asin((voids[iVoid].barycenter[2]-boxLen[2]/2.) / 
+                   voids[iVoid].redshiftInMpc) * 180/M_PI,  
              voids[iVoid].redshift,
              voids[iVoid].radius,
              voids[iVoid].voidID);
 
+     fprintf(fpShapes, "%d %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f\n", 
+             voids[iVoid].voidID,
+             gsl_vector_get(voids[iVoid].eval, 0),
+             gsl_vector_get(voids[iVoid].eval, 1),
+             gsl_vector_get(voids[iVoid].eval, 2),
+             gsl_matrix_get(voids[iVoid].evec, 0 ,0),
+             gsl_matrix_get(voids[iVoid].evec, 0 ,1),
+             gsl_matrix_get(voids[iVoid].evec, 0 ,2),
+             gsl_matrix_get(voids[iVoid].evec, 1 ,0),
+             gsl_matrix_get(voids[iVoid].evec, 1 ,1),
+             gsl_matrix_get(voids[iVoid].evec, 1 ,2),
+             gsl_matrix_get(voids[iVoid].evec, 2 ,0),
+             gsl_matrix_get(voids[iVoid].evec, 2 ,1),
+             gsl_matrix_get(voids[iVoid].evec, 2 ,2)
+            );
   }
   fclose(fp);
   fclose(fpInfo);

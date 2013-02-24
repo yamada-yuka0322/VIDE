@@ -51,17 +51,18 @@ public:
     for (int k = 0; k < 3; k++)
       simu->Pos[k] = new float[simu->NumPart];
     simu->Vel[2] = new float[simu->NumPart];
-    simu->Id = new int[simu->NumPart];
+    simu->Id = new long[simu->NumPart];
     long *uniqueID = new long[simu->NumPart];
+    double tempData;
 
     simu->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
 
     cout << "loading multidark particles" << endl;
     long actualNumPart = 0;
-    for (int i = 0; i < simu->NumPart; i++) {
+    for (long i = 0; i < simu->NumPart; i++) {
 
       fp >> simu->Id[i] >> simu->Pos[0][i] >> simu->Pos[1][i]
-	 >> simu->Pos[2][i] >> simu->Vel[2][i];
+	 >> simu->Pos[2][i] >> simu->Vel[2][i] >> tempData >> tempData;
 
       uniqueID[i] = simu->Id[i];
 

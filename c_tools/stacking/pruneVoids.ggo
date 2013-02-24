@@ -38,6 +38,8 @@ option "outNoCutInfo" - "output info of voids" string required
 
 option "outSkyPositions" - "output sky positions of voids" string required
 
+option "outShapes" - "output shape information of voids" string required
+
 option "dataPortion" - "all, central, or edge" string required
 
 option "periodic" - "Set of edges which are periodic" string optional default="xy"

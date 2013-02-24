@@ -235,17 +235,20 @@ for thisSubSample in sorted(subSamples, reverse=True):
 
   if args.script or args.all:
     print " Doing subsample", thisSubSample, "scripts"
+    sys.stdout.flush()
     setName = prefix+"ss"+str(thisSubSample)
     if dataFormat == "multidark":
       subSampleToUse = 1.0
       fileToUse = prefix+"ss"+str(thisSubSample)+"_z"
       suffix = ".dat"
     elif dataFormat == "gadget":
-      subSampleToUse = thisSubSample
+      subSampleToUse = keepFraction
+      #subSampleToUse = thisSubSample
       fileToUse = particleFileBase
       suffix = ""
     elif dataFormat == "lanl":
-      subSampleToUse = thisSubSample
+      subSampleToUse = keepFraction
+      #subSampleToUse = thisSubSample
       fileToUse = particleFileBase
       suffix = ""
     elif dataFormat == "random":
@@ -264,9 +267,11 @@ for thisSubSample in sorted(subSamples, reverse=True):
   
   if args.subsample or args.all:
     print " Doing subsample", thisSubSample
+    sys.stdout.flush()
 
     for (iRedshift, redshift) in enumerate(redshifts):
       print "   redshift", redshift
+      sys.stdout.flush()
   
       if dataFormat == "multidark":
         # reuse previous subamples in order to:
@@ -296,7 +301,7 @@ for thisSubSample in sorted(subSamples, reverse=True):
 
           if np.random.uniform() > keepFraction: continue
           numKept += 1
-          if numKept > maxKeep: break
+          #if numKept > maxKeep: break
 
           if (prevSubSample == -1):
             line = line.split(',')
@@ -304,8 +309,10 @@ for thisSubSample in sorted(subSamples, reverse=True):
             y  = float(line[1])
             z  = float(line[2])
             vz = float(line[3])
+            vy = float(line[4])
+            vx = float(line[5])
             uniqueID = i
-            outFile.write("%d %e %e %e %e\n" %(uniqueID,x,y,z,vz))
+            outFile.write("%d %e %e %e %e %e %e\n" %(uniqueID,x,y,z,vz,vy,vx))
           else:
             outFile.write(line)
 
@@ -328,7 +335,7 @@ for thisSubSample in sorted(subSamples, reverse=True):
           y  = np.random.uniform()*lbox
           z  = np.random.uniform()*lbox
 
-          outFile.write("%d %e %e %e %e\n" % (i, x,y,z, 0.))
+          outFile.write("%d %e %e %e 0. 0. 0.\n" % (i, x,y,z))
 
         outFile.write("-99 -99 -99 -99 -99\n")
         outFile.close()
@@ -341,9 +348,14 @@ if (args.script or args.all) and haloFileBase != "":
 
   for minHaloMass in minHaloMasses:
     print " Doing halo script", minHaloMass
+    sys.stdout.flush()
 
     # estimate number of halos to get density
-    dataFile = catalogDir+haloFileBase+fileNums[0]
+    if haloFileDummy == '':
+      dataFile = catalogDir+haloFileBase+fileNums[0]
+    else:
+      dataFile = catalogDir+haloFileBase.replace(haloFileDummy, fileNums[0])
+
     inFile = open(dataFile, 'r')
     numPart = 0
     for (iLine, line) in enumerate(inFile): 
@@ -367,14 +379,21 @@ if (args.script or args.all) and haloFileBase != "":
 
 if (args.halos or args.all) and haloFileBase != "":
   print " Doing halos"
+  sys.stdout.flush()
 
   for minHaloMass in minHaloMasses:
     print "  min halo mass = ", minHaloMass
+    sys.stdout.flush()
 
     for (iRedshift, redshift) in enumerate(redshifts):
       print "   z = ", redshift
+      sys.stdout.flush()
 
-      dataFile = catalogDir+haloFileBase+fileNums[iRedshift]
+      if haloFileDummy == '':
+        dataFile = catalogDir+haloFileBase+fileNums[iRedshift]
+      else:
+        dataFile = catalogDir+haloFileBase.replace(haloFileDummy, 
+                                                   fileNums[iRedshift])
       inFile = open(dataFile, 'r')
       numPart = 0
       for (iLine, line) in enumerate(inFile): 
@@ -402,16 +421,18 @@ if (args.halos or args.all) and haloFileBase != "":
           y  = float(line[haloFileYCol])
           z  = float(line[haloFileZCol])
           vz = float(line[haloFileVZCol])
+          vy = float(line[haloFileVYCol])
+          vx = float(line[haloFileVXCol])
 
           # write to output file
-          outFile.write("%d %e %e %e %e\n" %(iHalo,x,y,z,vz))
+          outFile.write("%d %e %e %e %e %e %e\n" %(iHalo,x,y,z,vz,vy,vx))
 
       outFile.write("-99 -99 -99 -99 -99\n")
       inFile.close()
       outFile.close()
 
 # -----------------------------------------------------------------------------
-# now the SDSS HOD
+# now the HOD
 parFileText = """
 % cosmology
 OMEGA_M {omegaM}
@@ -454,91 +475,56 @@ root_filename {workDir}/hod
                """
 
 if (args.script or args.all) and haloFileBase != "":
-  print " Doing DR7 HOD scripts"
-  setName = prefix+"hod_dr72dim2"
-  writeScript(setName, prefix+"hod_dr72dim2_z", dataFormat,
-              scriptDir, catalogDir, fileNums, redshifts, 
-              numSubvolumes, numSlices, False, lbox, 5, omegaM)
-  writeScript(setName, prefix+"hod_dr72dim2_z", dataFormat, 
-              scriptDir, catalogDir, fileNums, redshifts, 
-              numSubvolumes, numSlices, True, lbox, 5, omegaM)
+  print " Doing HOD scripts"
+  sys.stdout.flush()
+  for thisHod in hodParmList:
+    print "   ", thisHod['name']
+    setName = prefix+"hod_"+thisHod['name']
+    writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
+                scriptDir, catalogDir, fileNums, redshifts, 
+                 numSubvolumes, numSlices, False, lbox, 15, omegaM)
+    writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
+                scriptDir, catalogDir, fileNums, redshifts, 
+                 numSubvolumes, numSlices, True, lbox, 15, omegaM)
 
 if (args.hod or args.all) and haloFileBase != "":
-  print " Doing DR7 HOD"
-  for (iRedshift, redshift) in enumerate(redshifts):
-    print "  z = ", redshift
+  print " Doing HOD"
+  sys.stdout.flush()
+  for thisHod in hodParmList:
+    print "   ", thisHod['name']
+    sys.stdout.flush()
+    for (iRedshift, redshift) in enumerate(redshifts):
+      print "  z = ", redshift
+      sys.stdout.flush()
 
-    parFileName = "./hod.par"
-    parFile = open(parFileName, 'w')
-    haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
-    parFile.write(parFileText.format(omegaM=omegaM,
+      parFileName = "./hod.par"
+      parFile = open(parFileName, 'w')
+      if haloFileDummy == '':
+        haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
+      else:
+        haloFile = catalogDir+haloFileBase.replace(haloFileDummy,
+                                                 fileNums[iRedshift])
+      parFile.write(parFileText.format(omegaM=omegaM,
                                      hubble=hubble,
                                      redshift=redshift,
-                                     Mmin=1.99526e12,
-                                     M1=3.80189e13,
-                                     sigma_logM=0.21,
-                                     alpha=1.12,
-                                     Mcut=6.91831e11,
-                                     galden=0.02,
-                                     haloFile=haloFile,
-                                     haloFileFormat=dataFormat,
-                                     numPartPerSide=numPart**(1/3.),
-                                     boxSize=lbox,
-                                     workDir=catalogDir))
-    parFile.close()
-
-    os.system(hodPath+" "+parFileName+">& /dev/null")
-
-    sampleName = getSampleName(prefix+"hod_dr72dim2", redshift, False)
-    outFileName = catalogDir+"/"+sampleName+".dat"
-    os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
-
-    os.system("rm %s/hod.*" % catalogDir)
-
-# -----------------------------------------------------------------------------
-# now the BOSS HOD
-if (args.script or args.all) and haloFileBase != "":
-  print " Doing DR9 HOD scripts"
-  setName = prefix+"hod_dr9mid"
-  writeScript(setName, prefix+"hod_dr9mid_z", dataFormat,
-              scriptDir, catalogDir, fileNums, redshifts, 
-               numSubvolumes, numSlices, False, lbox, 15, omegaM)
-  writeScript(setName, prefix+"hod_dr9mid_z", dataFormat,
-              scriptDir, catalogDir, fileNums, redshifts, 
-               numSubvolumes, numSlices, True, lbox, 15, omegaM)
-
-if (args.hod or args.all) and haloFileBase != "":
-  print " Doing DR9 HOD"
-  for (iRedshift, redshift) in enumerate(redshifts):
-    print "  z = ", redshift
-
-    # these parameters come from Manera et al 2012, eq. 26
-    # modified to match the observed galaxy density
-    parFileName = "./hod.par"
-    parFile = open(parFileName, 'w')
-    haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
-    parFile.write(parFileText.format(omegaM=omegaM,
-                                     hubble=hubble,
-                                     redshift=redshift,
-                                     Mmin=0.0,
+                                     Mmin=thisHod['Mmin'],
                                      #Mmin=1.23e13,
-                                     M1=1.e14,
-                                     sigma_logM=0.596,
-                                     alpha=1.0127,
-                                     Mcut=1.19399e13,
-                                     galden=galDens,
+                                     M1=thisHod['M1'],
+                                     sigma_logM=thisHod['sigma_logM'],
+                                     alpha=thisHod['alpha'],
+                                     Mcut=thisHod['Mcut'],
+                                     galden=thisHod['galDens'],
                                      #galden=0.000225,
                                      haloFile=haloFile,
                                      haloFileFormat=dataFormat,
                                      numPartPerSide=numPart**(1/3.),
                                      boxSize=lbox,
                                      workDir=catalogDir))
-    parFile.close()
+      parFile.close()
 
-    os.system(hodPath+" "+parFileName+">& /dev/null")
+      os.system(hodPath+" "+parFileName+">& /dev/null")
 
-    sampleName = getSampleName(prefix+"hod_dr9mid", redshift, False)
-    outFileName = catalogDir+"/"+sampleName+".dat"
-    os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
-
-    os.system("rm %s/hod.*" % catalogDir)
+      sampleName = getSampleName(prefix+"hod_"+thisHod['name'], redshift, False)
+      outFileName = catalogDir+"/"+sampleName+".dat"
+      os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
+      os.system("rm %s/hod.*" % catalogDir)
