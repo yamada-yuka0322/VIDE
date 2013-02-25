@@ -274,7 +274,6 @@ def launchPrune(sample, binPath,
        sample.boxLen <= 1.e-1: 
       periodicLine += "z"
     periodicLine += "' "
-    periodicLine = ""
 
   if not (continueRun and (jobSuccessful(logFile, "NetCDF: Not a valid ID\n") \
           or jobSuccessful(logFile, "Done!\n"))):
