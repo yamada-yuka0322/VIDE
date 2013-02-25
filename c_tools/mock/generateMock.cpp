@@ -1,3 +1,4 @@
+#include <gsl/gsl_rng.h>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -244,10 +245,27 @@ void selectBox(SimuData *simu, std::vector<long>& targets, generateMock_info& ar
 	  (simu->Pos[j][i] < ranges[j][1]);	
       }
       
-      if (acceptance && (drand48() <= subsample))
+      if (acceptance)
 	targets.push_back(i);
     }
 }
+
+class PreselectParticles: public SimulationPreprocessor
+{
+private:
+  gsl_rng *rng;
+  double subsample;
+public:
+  PreselectParticles(gsl_rng *r, double s)
+    : subsample(s), rng(r)
+  {
+  }
+
+  bool accept(const SingleParticle& p)
+  {
+    return gsl_rng_uniform(rng) < subsample;
+  }
+};
 
 void createBox(SimuData *simu, vector<long>& targets, vector<long>& snapshot_split, SimuData *& boxed, generateMock_info& args_info)
 {
@@ -486,6 +504,7 @@ int main(int argc, char **argv)
   generateMock_conf_params args_params;
   SimuData *simu, *simuOut;
   SimulationLoader *loader;
+  gsl_rng *rng = gsl_rng_alloc(gsl_rng_default);
  
   generateMock_conf_init(&args_info);
   generateMock_conf_params_init(&args_params);
@@ -511,13 +530,16 @@ int main(int argc, char **argv)
   
   generateMock_conf_print_version();
 
+  gsl_rng_set(rng, args_info.subsample_seed_arg);
+  SimulationPreprocessor *preselector = new PreselectParticles(rng, args_info.subsample_arg);
+
   if (args_info.ramsesBase_given || args_info.ramsesId_given)
     {
       if (args_info.ramsesBase_given && args_info.ramsesId_given)   {
 	loader = ramsesLoader(args_info.ramsesBase_arg, 
 			      args_info.ramsesId_arg, 
 			      false,
-			      NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID);
+			      NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID, preselector);
       }
       else
 	{
@@ -527,15 +549,15 @@ int main(int argc, char **argv)
     }
   else if (args_info.gadget_given)
     {
-      loader = gadgetLoader(args_info.gadget_arg, 1/args_info.gadgetUnit_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID);
+      loader = gadgetLoader(args_info.gadget_arg, 1/args_info.gadgetUnit_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID, preselector);
     }
   else if (args_info.flash_given)
     {
-      loader = flashLoader(args_info.flash_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID); 
+      loader = flashLoader(args_info.flash_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID, preselector); 
   }
   else if (args_info.multidark_given)
     {
-      loader = multidarkLoader(args_info.multidark_arg);      
+      loader = multidarkLoader(args_info.multidark_arg, preselector);      
     }
   else
     {
@@ -598,7 +620,9 @@ int main(int argc, char **argv)
   saveBox(simuOut, args_info.outputParameter_arg);
   generateOutput(simuOut, args_info.axis_arg, 
                  args_info.output_arg);
+  delete preselector;
   
+  gsl_rng_free(rng);
  
   printf("Done!\n"); 
   return 0;

@@ -61,7 +61,7 @@ public:
   }
 };
 
-SimulationLoader *ramsesLoader(const std::string& snapshot, int baseid, bool double_precision, int flags)
+SimulationLoader *ramsesLoader(const std::string& snapshot, int baseid, bool double_precision, int flags, SimulationPreprocessor *p)
 {
   SimuData *d, *header;
   int num_files = 0;

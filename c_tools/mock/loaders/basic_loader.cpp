@@ -1,0 +1,128 @@
+#include <cassert>
+#include <string>
+#include <iostream>
+#include <boost/format.hpp>
+#include <fstream>
+#include <CosmoTool/yorick.hpp>
+#include "simulation_loader.hpp"
+
+using namespace std;
+using namespace CosmoTool;
+using boost::format;
+using boost::str;
+
+class BasicGroupLoader: public SimulationLoader
+{
+private:
+  string storage;
+  SimuData *header;
+  int flags, numFiles;
+public:
+  BasicGroupLoader(const string& storage_path, SimuData *header, int flags, int numfiles)
+  {
+    this->header = header;
+    this->storage = storage_path;
+    this->flags = flags;
+    this->numFiles = numfiles;
+  }
+  
+  SimuData *getHeader() {
+    return header;
+  }
+  
+  int num_files() {
+    return numFiles;
+  }
+  
+  SimuData *loadFile(int id) {    
+    if (id < 0 || id >= numFiles)
+      return 0;
+
+    SimuData *simu = new SimuData;
+    uint32_t *dimlist, dimrank;
+    string fname;
+
+    simu->time = header->time;
+    simu->TotalNumPart = header->NumPart;
+    simu->Omega_M = header->Omega_M;
+    simu->Omega_Lambda = header->Omega_Lambda;
+    simu->NumPart = -1;
+
+    if (flags & NEED_POSITION)
+      {
+	loadArray(str(format("%s/x_%d.nc") % storage % id), 
+		  simu->Pos[0], dimlist, dimrank);
+	assert(dimrank == 1);
+	simu->NumPart = dimlist[0];
+	
+	loadArray(str(format("%s/y_%d.nc") % storage % id), 
+		  simu->Pos[1], dimlist, dimrank);
+	assert(dimrank == 1);
+	assert(simu->NumPart == dimlist[0]);
+	
+	loadArray(str(format("%s/z_%d.nc") % storage % id), 
+		  simu->Pos[2], dimlist, dimrank);
+	assert(dimrank == 1);
+	assert(simu->NumPart == dimlist[0]);
+      }
+
+    if (flags & NEED_VELOCITY)
+      {
+	loadArray(str(format("%s/vx_%d.nc") % storage % id), 
+		  simu->Vel[0], dimlist, dimrank);
+	assert(dimrank == 1);
+	if (simu->NumPart < 0)
+	  simu->NumPart = dimlist[0];
+
+	assert(simu->NumPart == dimlist[0]);
+	
+	loadArray(str(format("%s/vy_%d.nc") % storage % id), 
+		  simu->Vel[0], dimlist, dimrank);
+	assert(dimrank == 1);
+	assert(simu->NumPart == dimlist[0]);
+	
+	loadArray(str(format("%s/vz_%d.nc") % storage % id), 
+		  simu->Vel[2], dimlist, dimrank);
+	assert(dimrank == 1);
+	assert(simu->NumPart == dimlist[0]);
+      }
+
+    if (flags & NEED_GADGET_ID)
+      {
+	loadArray(str(format("%s/id_%d.nc") % storage % id), 
+		  simu->Id, dimlist, dimrank);
+	assert(dimrank == 1);
+	if (simu->NumPart < 0)
+	  simu->NumPart = dimlist[0];
+
+	assert(simu->NumPart == dimlist[0]);
+      }
+    
+    return simu;
+  }
+
+  ~BasicGroupLoader()
+  {
+    delete header;
+  }
+};
+
+SimulationLoader *basicGroupLoader(const std::string& simupath, 
+				   int flags)
+{
+  SimuData *header;
+  ifstream f;
+  string header_path = simupath + "/header.txt";
+  int numFiles;
+
+  header = new SimuData;
+  f.open(header_path.c_str());
+
+  f >> header->time
+    >> header->Omega_M
+    >> header->Omega_Lambda 
+    >> header->NumPart
+    >> numFiles;
+
+  return new BasicGroupLoader(simupath, header, flags, numFiles);
+}

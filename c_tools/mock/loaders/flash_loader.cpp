@@ -64,7 +64,7 @@ public:
 };
 
 
-SimulationLoader *flashLoader(const std::string& snapshot, int flags)
+SimulationLoader *flashLoader(const std::string& snapshot, int flags, SimulationPreprocessor *p)
 {
   bool singleFile;
   int num_files;
