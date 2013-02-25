@@ -26,21 +26,8 @@ option "zMax" - "Maximum redshift of sample" double optional default="10.0"
 
 option "rMin" - "Minimum allowable void radius" double optional default="0.0"
 
-
-option "output" - "Output void file" string required
-option "outDistances" - "output of distances from centers to nearest mock particle" string required
-
-option "outCenters" - "output barycenters of voids" string required
-
-option "outInfo" - "output info of voids" string required
-
-option "outNoCutInfo" - "output info of voids" string required
-
-option "outSkyPositions" - "output sky positions of voids" string required
-
-option "outShapes" - "output shape information of voids" string required
-
-option "dataPortion" - "all, central, or edge" string required
+option "outputDir" - "Directory to place outputs" string required
+option "sampleName" - "unique string to assign to outputs" string required
 
 option "periodic" - "Set of edges which are periodic" string optional default="xy"
 

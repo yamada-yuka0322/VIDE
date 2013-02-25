@@ -247,7 +247,7 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
     os.unlink(vozScript)
  
 # -----------------------------------------------------------------------------
-def launchPrune(sample, binPath, thisDataPortion=None, 
+def launchPrune(sample, binPath, 
                 summaryFile=None, logFile=None, zobovDir=None, 
                 continueRun=None):
 
@@ -287,7 +287,6 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     cmd += " --extraInfo=" + zobovDir+"/zobov_slice_"+str(sampleName)+\
            ".par"
     cmd += " --tolerance=1.0"
-    cmd += " --dataPortion=" + thisDataPortion
     cmd += " --mockIndex=" + str(mockIndex)
     cmd += " --maxCentralDen=" + str(maxDen)
     cmd += " --zMin=" + str(sample.zRange[0])
@@ -296,27 +295,8 @@ def launchPrune(sample, binPath, thisDataPortion=None,
     cmd += " --numVoids=" + str(numVoids)
     cmd += observationLine
     cmd += periodicLine
-    cmd += " --output=" + zobovDir+"/voidDesc_"+\
-                          str(thisDataPortion)+"_"+\
-                          str(sampleName)+".out"
-    cmd += " --outCenters=" + zobovDir+"/barycenters_"+\
-                          str(thisDataPortion)+"_"+\
-                          str(sampleName)+".out"
-    cmd += " --outInfo=" + zobovDir+"/centers_"+\
-                          str(thisDataPortion)+"_"+\
-                          str(sampleName)+".out"
-    cmd += " --outNoCutInfo=" + zobovDir+"/centers_nocut_"+\
-                          str(thisDataPortion)+"_"+\
-                          str(sampleName)+".out"
-    cmd += " --outSkyPositions=" + zobovDir+"/sky_positions_"+\
-                          str(thisDataPortion)+"_"+\
-                          str(sampleName)+".out"
-    cmd += " --outShapes=" + zobovDir+"/shapes_"+\
-                          str(thisDataPortion)+"_"+\
-                          str(sampleName)+".out"
-    cmd += " --outDistances=" + zobovDir+"/boundaryDistances_"+\
-                          str(thisDataPortion)+"_"+\
-                          str(sampleName)+".out"
+    cmd += " --outputDir=" + zobovDir
+    cmd += " --sampleName=" + str(sampleName)
     cmd += " &> " + logFile
     f=file("run_prune.sh",mode="w")
     f.write(cmd)
@@ -956,7 +936,7 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
       return
 
     numVoids = int(open(voidDir+"/num_voids.txt", "r").readline())
-    if numVoids < 15:
+    if numVoids < 10:
       print "not enough voids to fit; skipping!"
       fp = open(voidDir+"/NOFIT", "w")
       fp.write("not enough voids: %d \n" % numVoids)
@@ -1334,8 +1314,9 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
           plotTitle = "all samples, incoherent "+\
                       thisDataPortion+" voids (systematics corrected)"
         else:
-          plotTitle = "all samples, "+thisDataPortion+\
-                      " voids (systematics corrected)"
+          #plotTitle = "all samples, "+thisDataPortion+\
+          #            " voids (systematics corrected)"
+          plotTitle = setName + "(sysematics corrected)"
         vp.do_all_obs(zbase, allExpList, aveDistList,
                       rlist, plotTitle=plotTitle, sampleNames=shortSampleNames,
                       plotAve=True, mulfac = 1.16, 
@@ -1429,7 +1410,9 @@ def launchLikelihood(dataPortions=None, logDir=None, workDir=None,
                     OmStart = 0.0,
                     OmEnd   = 1.0,
                     biasStart = 1.0,
-                    biasEnd   = 1.2,
+                    biasEnd   = 1.32,
+                    #biasStart = 1.15,
+                    #biasEnd   = 1.17,
                     outputBase = workDir+"/1dlikelihoods_"+thisDataPortion+"_",
                     useBinAve = False)
 

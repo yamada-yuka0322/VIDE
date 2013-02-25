@@ -18,10 +18,14 @@
 #include <stdio.h>
 #include <netcdfcpp.h>
 #include "pruneVoids_conf.h"
+#include <vector>
 
 #define LIGHT_SPEED 299792.458
 #define MPC2Z 100./LIGHT_SPEED
 #define Z2MPC LIGHT_SPEED/100.
+
+#define CENTRAL_VOID 1
+#define EDGE_VOID 2
 
 typedef struct partStruct {
   float x, y, z, vol;
@@ -44,32 +48,38 @@ typedef struct voidStruct {
   float nearestEdge;
   float center[3], barycenter[3];
   int accepted;
+  int voidType;
   gsl_vector *eval;
   gsl_matrix *evec;
 } VOID;
 
+void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters, 
+                FILE* fpCenterNoCut, 
+                FILE* fpSkyPositions, FILE* fpBarycenters, FILE* fpDistances, 
+                FILE* fpShapes, bool isObservation, double *boxLen);
+
 int main(int argc, char **argv) {
 
   // initialize arguments
-  pruneVoids_info args_info;
+  pruneVoids_info args;
   pruneVoids_conf_params args_params;
 
-  pruneVoids_conf_init(&args_info);
+  pruneVoids_conf_init(&args);
   pruneVoids_conf_params_init(&args_params);
 
   args_params.check_required = 0;
-  if (pruneVoids_conf_ext (argc, argv, &args_info, &args_params))
+  if (pruneVoids_conf_ext (argc, argv, &args, &args_params))
     return 1;
 
-  if (!args_info.configFile_given) {
-    if (pruneVoids_conf_required (&args_info,
+  if (!args.configFile_given) {
+    if (pruneVoids_conf_required (&args,
                                            PRUNEVOIDS_CONF_PACKAGE))
       return 1;
   } else {
     args_params.check_required = 1;
     args_params.initialize = 0;
-    if (pruneVoids_conf_config_file (args_info.configFile_arg,
-                                              &args_info,
+    if (pruneVoids_conf_config_file (args.configFile_arg,
+                                              &args,
                                               &args_params))
     return 1;
   }
@@ -77,12 +87,15 @@ int main(int argc, char **argv) {
   int i, p, p2, numPartTot, numZonesTot, dummy, iVoid, iZ;
   int numVoids, mockIndex, numKept;
   double tolerance;
-  FILE *fp, *fpBarycenter, *fpDistances, *fpSkyPositions, *fpInfo;
-  FILE *fpShapes;
+  FILE *fp, *fpZobovCentral, *fpZobovAll, *fpCentersCentral, *fpCentersAll,
+       *fpCentersNoCutCentral, *fpCentersNoCutAll, *fpBarycenterCentral,
+       *fpBarycenterAll, *fpDistancesCentral, *fpDistancesAll,
+       *fpShapesCentral, *fpShapesAll, *fpSkyPositionsCentral,
+       *fpSkyPositionsAll;
   PART *part, *voidPart;
   ZONE2PART *zones2Parts;
   VOID2ZONE *void2Zones;
-  VOID *voids;
+  std::vector<VOID> voids;
   float *temp, junk, voidVol;
   int junkInt, voidID, numPart, numZones, zoneID, partID, maxNumPart;
   int coreParticle, zoneNumPart;
@@ -98,30 +111,30 @@ int main(int argc, char **argv) {
 
   gsl_eigen_symmv_workspace *eigw = gsl_eigen_symmv_alloc(3);
 
-  numVoids = args_info.numVoids_arg;
-  mockIndex = args_info.mockIndex_arg;
-  tolerance = args_info.tolerance_arg;
+  numVoids = args.numVoids_arg;
+  mockIndex = args.mockIndex_arg;
+  tolerance = args.tolerance_arg;
 
   clock1 = clock();
-  printf("Pruning parameters: %f %f %f %s\n", args_info.zMin_arg, 
-                                             args_info.zMax_arg,
-                                             args_info.rMin_arg,
-                                             args_info.periodic_arg);
+  printf("Pruning parameters: %f %f %f %s\n", args.zMin_arg, 
+                                             args.zMax_arg,
+                                             args.rMin_arg,
+                                             args.periodic_arg);
 
   // check for periodic box
   periodicX = 0;
   periodicY = 0;
   periodicZ = 0;
-  if (!args_info.isObservation_flag) {
-    if ( strchr(args_info.periodic_arg, 'x') != NULL) {
+  if (!args.isObservation_flag) {
+    if ( strchr(args.periodic_arg, 'x') != NULL) {
       periodicX = 1;
       printf("Will assume x-direction is periodic.\n");
     }
-    if ( strchr(args_info.periodic_arg, 'y') != NULL) {
+    if ( strchr(args.periodic_arg, 'y') != NULL) {
       periodicY = 1;
       printf("Will assume y-direction is periodic.\n");
     }
-    if ( strchr(args_info.periodic_arg, 'z') != NULL) {
+    if ( strchr(args.periodic_arg, 'z') != NULL) {
       periodicZ = 1;
       printf("Will assume z-direction is periodic.\n");
     }
@@ -129,7 +142,7 @@ int main(int argc, char **argv) {
 
   // load box size
   printf("\n Getting info...\n");
-  NcFile f_info(args_info.extraInfo_arg);
+  NcFile f_info(args.extraInfo_arg);
   ranges[0][0] = f_info.get_att("range_x_min")->as_double(0);
   ranges[0][1] = f_info.get_att("range_x_max")->as_double(0);
   ranges[1][0] = f_info.get_att("range_y_min")->as_double(0);
@@ -143,7 +156,7 @@ int main(int argc, char **argv) {
  
   // read in all particle positions
   printf("\n Loading particles...\n");
-  fp = fopen(args_info.partFile_arg, "r");
+  fp = fopen(args.partFile_arg, "r");
   fread(&dummy, 1, 4, fp); 
   fread(&numPartTot, 1, 4, fp);
   fread(&dummy, 1, 4, fp);
@@ -154,7 +167,7 @@ int main(int argc, char **argv) {
   volNorm = numPartTot/(boxLen[0]*boxLen[1]*boxLen[2]);
   printf(" VOL NORM = %f\n", volNorm);
 
-  printf(" CENTRAL DEN = %f\n", args_info.maxCentralDen_arg);
+  printf(" CENTRAL DEN = %f\n", args.maxCentralDen_arg);
 
   fread(&dummy, 1, 4, fp);
   fread(temp, numPartTot, 4, fp);
@@ -174,7 +187,7 @@ int main(int argc, char **argv) {
   for (p = 0; p < numPartTot; p++) 
     part[p].z = mul*temp[p];
 
-  if (!args_info.isObservation_flag) {
+  if (!args.isObservation_flag) {
     for (p = 0; p < numPartTot; p++)  {
       part[p].x += ranges[0][0];
       part[p].y += ranges[1][0];
@@ -189,12 +202,12 @@ int main(int argc, char **argv) {
   
   // read in desired voids
   printf(" Loading voids...\n");
-  fp = fopen(args_info.voidDesc_arg ,"r");
+  fp = fopen(args.voidDesc_arg ,"r");
   fgets(line, sizeof(line), fp);
   sscanf(line, "%d %s %d %s", &junkInt, junkStr, &junkInt, junkStr);
   fgets(line, sizeof(line), fp);
 
-  voids = (VOID *) malloc(numVoids * sizeof(VOID));
+  voids.resize(numVoids);
   i = 0;
   while (fgets(line, sizeof(line), fp) != NULL) {
     sscanf(line, "%d %d %d %f %f %d %d %f %d %f %f\n", &iVoid, &voidID, 
@@ -223,7 +236,7 @@ int main(int argc, char **argv) {
 
   // load up the zone membership for each void
   printf(" Loading void-zone membership info...\n");
-  fp = fopen(args_info.void2Zone_arg, "r");
+  fp = fopen(args.void2Zone_arg, "r");
   fread(&numZonesTot, 1, 4, fp);
   void2Zones = (VOID2ZONE *) malloc(numZonesTot * sizeof(VOID2ZONE));
 
@@ -241,7 +254,7 @@ int main(int argc, char **argv) {
 
   // now the particles-zone
   printf(" Loading particle-zone membership info...\n");
-  fp = fopen(args_info.zone2Part_arg, "r");
+  fp = fopen(args.zone2Part_arg, "r");
   fread(&dummy, 1, 4, fp);
   fread(&numZonesTot, 1, 4, fp);
  
@@ -259,7 +272,7 @@ int main(int argc, char **argv) {
 
   // and finally volumes
   printf(" Loading particle volumes...\n");
-  fp = fopen(args_info.partVol_arg, "r");
+  fp = fopen(args.partVol_arg, "r");
   fread(&mask_index, 1, 4, fp);
   if (mask_index != mockIndex) {
     printf("NON-MATCHING MOCK INDICES!? %d %d\n", mask_index, mockIndex);
@@ -366,7 +379,7 @@ int main(int argc, char **argv) {
     }
 
     // compute central density
-    centralRad = voids[iVoid].radius/args_info.centralRadFrac_arg;
+    centralRad = voids[iVoid].radius/args.centralRadFrac_arg;
     centralDen = 0.;
     int numCentral = 0;
     for (p = 0; p < voids[iVoid].numPart; p++) {
@@ -386,7 +399,7 @@ int main(int argc, char **argv) {
 
     // compute maximum extent
 /*
-    if (args_info.isObservation_flag) {
+    if (args.isObservation_flag) {
       maxDist = 0.;
       for (p = 0; p < voids[iVoid].numPart; p++) {
       for (p2 = p; p2 < voids[iVoid].numPart; p2++) {
@@ -419,7 +432,7 @@ int main(int argc, char **argv) {
       voids[iVoid].maxRadius = sqrt(maxDist);
 //    }
     
-    if (args_info.isObservation_flag) {
+    if (args.isObservation_flag) {
       // compute distance from center to nearest mock
       minDist = 1.e99;
       for (p = mockIndex; p < numPartTot; p++) {
@@ -436,16 +449,16 @@ int main(int argc, char **argv) {
       voids[iVoid].nearestMock = 1.e99;
     }
  
-    if (args_info.isObservation_flag) {
+    if (args.isObservation_flag) {
       voids[iVoid].redshiftInMpc = 
                         sqrt(pow(voids[iVoid].barycenter[0] - boxLen[0]/2.,2) + 
                              pow(voids[iVoid].barycenter[1] - boxLen[1]/2.,2) + 
                              pow(voids[iVoid].barycenter[2] - boxLen[2]/2.,2));
       voids[iVoid].redshiftInMpc = voids[iVoid].redshiftInMpc;
       redshift = voids[iVoid].redshiftInMpc;
-      nearestEdge = fabs(redshift-args_info.zMax_arg*LIGHT_SPEED/100.); 
-      //nearestEdge = fmin(fabs(redshift-args_info.zMin_arg*LIGHT_SPEED/100.), 
-      //                   fabs(redshift-args_info.zMax_arg*LIGHT_SPEED/100.)); 
+      nearestEdge = fabs(redshift-args.zMax_arg*LIGHT_SPEED/100.); 
+      //nearestEdge = fmin(fabs(redshift-args.zMin_arg*LIGHT_SPEED/100.), 
+      //                   fabs(redshift-args.zMax_arg*LIGHT_SPEED/100.)); 
       voids[iVoid].redshift = voids[iVoid].redshiftInMpc/LIGHT_SPEED*100.;
 
     } else {
@@ -504,200 +517,271 @@ int main(int argc, char **argv) {
     
   int numWrong = 0;
   int numHighDen = 0;
+  int numCentral = 0;
   int numEdge = 0;
+  int numNearZ = 0;
   int numTooSmall = 0;
 
   printf(" Picking winners and losers...\n");
-  for (iVoid = 0; iVoid < numVoids; iVoid++) {
+  printf("  Starting with %d voids\n", voids.size());
+
+  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
     voids[iVoid].accepted = 1;
   }
 
-  for (iVoid = 0; iVoid < numVoids; iVoid++) {
+/*
+  int j = 0;
+  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
     if (voids[iVoid].densCon < 1.5) {
 //      voids[iVoid].accepted = -4;
     }
+  }
+*/
 
-    if (voids[iVoid].centralDen > args_info.maxCentralDen_arg) {
+  // toss out voids that are obviously wrong
+  int iGood = 0;
+  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
+    if (voids[iVoid].densCon > 1.e4) {
+      numWrong++;
+    } else {
+      voids[iGood++] = voids[iVoid];
+    }
+  }
+  voids.resize(iGood);
+  printf("  1st filter: reiGoodected %d obviously bad\n", numWrong); 
+
+  iGood = 0;
+  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
+    if (voids[iVoid].radius < args.rMin_arg) {
+      numTooSmall++;
+    } else {
+      voids[iGood++] = voids[iVoid];
+    }
+  }
+  voids.resize(iGood);
+  printf("  2nd filter: reiGoodected %d too small\n", numTooSmall); 
+
+
+  iGood = 0;
+  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
+    // *always* clean out near edges since there are no mocks there
+    if (tolerance*voids[iVoid].maxRadius > voids[iVoid].nearestEdge) {
+      numNearZ++;
+    } else {
+      voids[iGood++] = voids[iVoid];
+    }
+  }
+  voids.resize(iGood);
+  printf("  3rd filter: reiGoodected %d too close to high redshift boundaries\n", numNearZ); 
+
+  numNearZ = 0;
+  iGood = 0;
+  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
+    // assume the lower z-boundary is "soft" in observations
+    if (args.isObservation_flag && 
+        voids[iVoid].redshift < args.zMin_arg) {
+      numNearZ++;
+     } else {
+      voids[iGood++] = voids[iVoid];
+    }
+  }
+  voids.resize(iGood);
+  printf("  4th filter: reiGoodected %d too close to low redshift boundaries\n", numNearZ); 
+
+  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
+    if (voids[iVoid].centralDen > args.maxCentralDen_arg) {
       voids[iVoid].accepted = -1;
       numHighDen++;
     }
+  }
 
-    // toss out voids that are obviously wrong
-    if (voids[iVoid].densCon > 1.e4) {
-      voids[iVoid].accepted = -4;
-      numWrong++;
-    }
-
-    if (strcmp(args_info.dataPortion_arg, "edge")  == 0 &&
-        tolerance*voids[iVoid].maxRadius < voids[iVoid].nearestMock) {
-      voids[iVoid].accepted = -3;
+  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
+    if (tolerance*voids[iVoid].maxRadius < voids[iVoid].nearestMock) {
+      voids[iVoid].voidType = CENTRAL_VOID;
+      numCentral++;
+    } else {
+      voids[iVoid].voidType = EDGE_VOID;
       numEdge++;
-    }
-
-    if (strcmp(args_info.dataPortion_arg, "central") == 0 && 
-        tolerance*voids[iVoid].maxRadius > voids[iVoid].nearestMock) {
-      voids[iVoid].accepted = -3;
-      numEdge++;
-    }
-
-    if (voids[iVoid].radius < args_info.rMin_arg) {
-      voids[iVoid].accepted = -2;
-      numTooSmall++;
-    }
-
-    // *always* clean out near edges since there are no mocks there
-    if (tolerance*voids[iVoid].maxRadius > voids[iVoid].nearestEdge) {
-      voids[iVoid].accepted = -3;
-      if (voids[iVoid].accepted == 1) numEdge++;
-    }
-
-    // assume the lower z-boundary is "soft" in observations
-    if (args_info.isObservation_flag && 
-        voids[iVoid].redshift < args_info.zMin_arg) {
-      voids[iVoid].accepted = -3;
-      if (voids[iVoid].accepted == 1) numEdge++;
     }
   }
 
-  numKept = 0;
-  for (iVoid = 0; iVoid < numVoids; iVoid++) {
-    if (voids[iVoid].accepted == 1) numKept++;
-  }
-
-  printf(" Number kept: %d (out of %d)\n", numKept, numVoids);
-  printf("   Rejected %d near the edge\n", numEdge); 
-  printf("   Rejected %d too small\n", numTooSmall); 
-  printf("   Rejected %d obviously bad\n", numWrong); 
-  printf("   Rejected %d too high central density\n", numHighDen); 
+  printf("  Number kept: %d (out of %d)\n", voids.size(), numVoids);
+  printf("   We have %d edge voids\n", numEdge); 
+  printf("   We have %d central voids\n", numCentral); 
+  printf("   We have %d too high central density\n", numHighDen); 
   
   printf(" Output...\n");
-  fp = fopen(args_info.output_arg, "w");
-  fpBarycenter = fopen(args_info.outCenters_arg, "w");
-  fpInfo = fopen(args_info.outInfo_arg, "w");
-  fpDistances = fopen(args_info.outDistances_arg, "w");
-  fpSkyPositions = fopen(args_info.outSkyPositions_arg, "w");
-  fpShapes = fopen(args_info.outShapes_arg, "w");
-  fprintf(fp, "%d particles, %d voids.\n", mockIndex, numKept);
-  fprintf(fp, "see column in master void file\n");
-  fprintf(fpInfo, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast\n");
-  fprintf(fpSkyPositions, "# RA, dec, redshift, radius (Mpc/h), void ID\n");
-  fprintf(fpShapes, "# void ID, eig(1), eig(2), eig(3), eigv(1)-x, eiv(1)-y, eigv(1)-z, eigv(2)-x, eigv(2)-y, eigv(2)-z, eigv(3)-x, eigv(3)-y, eigv(3)-z\n");
-  for (iVoid = 0; iVoid < numVoids; iVoid++) {
+  fpZobovCentral = fopen((std::string(args.outputDir_arg)+"/voidDesc_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
+  fprintf(fpZobovCentral, "%d particles, %d voids.\n", mockIndex, numKept);
+  fprintf(fpZobovCentral, "Void# FileVoid# CoreParticle CoreDens ZoneVol Zone#Part Void#Zones VoidVol Void#Part VoidDensContrast VoidProb\n");
 
-    if (voids[iVoid].accepted != 1) continue;
+  fpZobovAll = fopen((std::string(args.outputDir_arg)+"/voidDesc_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
+  fprintf(fpZobovAll, "%d particles, %d voids.\n", mockIndex, numKept);
+  fprintf(fpZobovAll, "Void# FileVoid# CoreParticle CoreDens ZoneVol Zone#Part Void#Zones VoidVol Void#Part VoidDensContrast VoidProb\n");
 
-     fprintf(fp, "%d %d %d %f %f %d %d %f %d %f %f\n", 
-             iVoid, 
-             voids[iVoid].voidID, 
-             voids[iVoid].coreParticle, 
-             voids[iVoid].coreDens, 
-             voids[iVoid].zoneVol, 
-             voids[iVoid].zoneNumPart, 
-             voids[iVoid].numZones, 
-             voids[iVoid].vol, 
-             voids[iVoid].numPart, 
-             voids[iVoid].densCon, 
-             voids[iVoid].voidProb);
+  fpBarycenterCentral = fopen((std::string(args.outputDir_arg)+"/barycenters_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
+  fpBarycenterAll = fopen((std::string(args.outputDir_arg)+"/barycenters_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
 
-     fprintf(fpBarycenter, "%d  %e %e %e\n", 
-             voids[iVoid].voidID,
-             voids[iVoid].barycenter[0],
-             voids[iVoid].barycenter[1],
-             voids[iVoid].barycenter[2]);
+  fpCentersCentral = fopen((std::string(args.outputDir_arg)+"/centers_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
+  fprintf(fpCentersCentral, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast\n");
 
-     fprintf(fpDistances, "%d %e\n", 
-             voids[iVoid].voidID, 
-             voids[iVoid].nearestMock);
+  fpCentersAll = fopen((std::string(args.outputDir_arg)+"/centers_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
+  fprintf(fpCentersAll, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast\n");
 
-     double outCenter[3];
-     outCenter[0] = voids[iVoid].barycenter[0];
-     outCenter[1] = voids[iVoid].barycenter[1];
-     outCenter[2] = voids[iVoid].barycenter[2];
+  fpCentersNoCutCentral = fopen((std::string(args.outputDir_arg)+"/centers_nocut_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
+  fprintf(fpCentersNoCutCentral, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast\n");
 
-     if (args_info.isObservation_flag) {
-       outCenter[0] = (voids[iVoid].barycenter[0]-boxLen[0]/2.)*100.;
-       outCenter[1] = (voids[iVoid].barycenter[1]-boxLen[1]/2.)*100.;
-       outCenter[2] = (voids[iVoid].barycenter[2]-boxLen[2]/2.)*100.;
-     }
-
-     fprintf(fpInfo, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f\n",
-             outCenter[0],
-             outCenter[1],
-             outCenter[2],
-             voids[iVoid].vol,
-             voids[iVoid].radius,
-             voids[iVoid].redshift, 
-             4./3.*M_PI*pow(voids[iVoid].radius, 3),
-             voids[iVoid].voidID,
-             voids[iVoid].densCon);
-
-     fprintf(fpSkyPositions, "%.2f %.2f %.5f %.2f %d\n",
-             atan((voids[iVoid].barycenter[1]-boxLen[1]/2.) / 
-                  (voids[iVoid].barycenter[0]-boxLen[0]/2.)) * 180/M_PI + 180,  
-             asin((voids[iVoid].barycenter[2]-boxLen[2]/2.) / 
-                   voids[iVoid].redshiftInMpc) * 180/M_PI,  
-             voids[iVoid].redshift,
-             voids[iVoid].radius,
-             voids[iVoid].voidID);
-
-     fprintf(fpShapes, "%d %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f\n", 
-             voids[iVoid].voidID,
-             gsl_vector_get(voids[iVoid].eval, 0),
-             gsl_vector_get(voids[iVoid].eval, 1),
-             gsl_vector_get(voids[iVoid].eval, 2),
-             gsl_matrix_get(voids[iVoid].evec, 0 ,0),
-             gsl_matrix_get(voids[iVoid].evec, 0 ,1),
-             gsl_matrix_get(voids[iVoid].evec, 0 ,2),
-             gsl_matrix_get(voids[iVoid].evec, 1 ,0),
-             gsl_matrix_get(voids[iVoid].evec, 1 ,1),
-             gsl_matrix_get(voids[iVoid].evec, 1 ,2),
-             gsl_matrix_get(voids[iVoid].evec, 2 ,0),
-             gsl_matrix_get(voids[iVoid].evec, 2 ,1),
-             gsl_matrix_get(voids[iVoid].evec, 2 ,2)
-            );
-  }
-  fclose(fp);
-  fclose(fpInfo);
-  fclose(fpBarycenter);
-  fclose(fpDistances);
-
-  // print the centers catalog again but without central density cuts
-  fpInfo = fopen(args_info.outNoCutInfo_arg, "w");
-  fprintf(fpInfo, "# center x,y,z (km/s), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID\n");
-  for (iVoid = 0; iVoid < numVoids; iVoid++) {
-
-    if (voids[iVoid].accepted < -1) continue;
-
-     double outCenter[3];
-     outCenter[0] = voids[iVoid].barycenter[0];
-     outCenter[1] = voids[iVoid].barycenter[1];
-     outCenter[2] = voids[iVoid].barycenter[2];
-
-     if (args_info.isObservation_flag) {
-       outCenter[0] = (voids[iVoid].barycenter[0]-boxLen[0]/2.)*100.;
-       outCenter[1] = (voids[iVoid].barycenter[1]-boxLen[1]/2.)*100.;
-       outCenter[2] = (voids[iVoid].barycenter[2]-boxLen[2]/2.)*100.;
-     }
+  fpCentersNoCutAll = fopen((std::string(args.outputDir_arg)+"/centers_nocut_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
+  fprintf(fpCentersNoCutAll, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast\n");
 
 
-     fprintf(fpInfo, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f\n",
-             outCenter[0],
-             outCenter[1],
-             outCenter[2],
-             voids[iVoid].vol,
-             voids[iVoid].radius,
-             voids[iVoid].redshift, 
-             4./3.*M_PI*pow(voids[iVoid].radius, 3),
-             voids[iVoid].voidID,
-             voids[iVoid].densCon);
-  }
-  fclose(fpInfo);
+  fpDistancesCentral = fopen((std::string(args.outputDir_arg)+"boundaryDistancesCentral_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
+  fpDistancesAll = fopen((std::string(args.outputDir_arg)+"boundaryDistancesAll_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
+
+  fpSkyPositionsCentral = fopen((std::string(args.outputDir_arg)+"/sky_positions_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
+  fprintf(fpSkyPositionsCentral, "# RA, dec, redshift, radius (Mpc/h), void ID\n");
+
+  fpSkyPositionsAll = fopen((std::string(args.outputDir_arg)+"/sky_positions_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
+  fprintf(fpSkyPositionsAll, "# RA, dec, redshift, radius (Mpc/h), void ID\n");
+
+  fpShapesCentral = fopen((std::string(args.outputDir_arg)+"/shapes_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
+  fprintf(fpShapesCentral, "# void ID, eig(1), eig(2), eig(3), eigv(1)-x, eiv(1)-y, eigv(1)-z, eigv(2)-x, eigv(2)-y, eigv(2)-z, eigv(3)-x, eigv(3)-y, eigv(3)-z\n");
+  
+  fpShapesAll = fopen((std::string(args.outputDir_arg)+"/shapes_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
+  fprintf(fpShapesAll, "# void ID, eig(1), eig(2), eig(3), eigv(1)-x, eiv(1)-y, eigv(1)-z, eigv(2)-x, eigv(2)-y, eigv(2)-z, eigv(3)-x, eigv(3)-y, eigv(3)-z\n");
+
+
+  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
+
+    if (voids[iVoid].voidType == CENTRAL_VOID) {
+      outputVoid(iVoid, voids[iVoid], fpZobovCentral, fpCentersCentral, 
+                 fpCentersNoCutCentral, fpSkyPositionsCentral,
+                 fpBarycenterCentral, fpDistancesCentral, fpShapesCentral,
+                 args.isObservation_flag, boxLen);
+   } 
+
+    if (voids[iVoid].voidType == EDGE_VOID || 
+        voids[iVoid].voidType == CENTRAL_VOID) {
+      outputVoid(iVoid, voids[iVoid], fpZobovAll, fpCentersAll, 
+                 fpCentersNoCutAll, fpSkyPositionsAll,
+                 fpBarycenterAll, fpDistancesAll, fpShapesAll,
+                 args.isObservation_flag, boxLen);
+    }
+ }
+
+  fclose(fpZobovCentral);
+  fclose(fpZobovAll);
+  fclose(fpCentersCentral);
+  fclose(fpCentersAll);
+  fclose(fpCentersNoCutCentral);
+  fclose(fpCentersNoCutAll);
+  fclose(fpBarycenterCentral);
+  fclose(fpBarycenterAll);
+  fclose(fpDistancesCentral);
+  fclose(fpDistancesAll);
+  fclose(fpShapesCentral);
+  fclose(fpShapesAll);
+  fclose(fpSkyPositionsCentral);
+  fclose(fpSkyPositionsAll);
 
   clock2 = clock();
-  printf(" Time: %f sec (for %d voids)\n", (1.*clock2-clock1)/CLOCKS_PER_SEC, numVoids);
+  printf(" Time: %f sec (for %d voids)\n", 
+         (1.*clock2-clock1)/CLOCKS_PER_SEC, numVoids);
   clock1 = clock();
 
 
   printf("Done!\n");
   return 0;
 } // end main
+
+
+// ----------------------------------------------------------------------------
+void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters, 
+                FILE* fpCenterNoCut, FILE* fpSkyPositions, 
+                FILE* fpBarycenters, FILE* fpDistances, FILE* fpShapes,
+                bool isObservation, double *boxLen) {
+
+     fprintf(fpZobov, "%d %d %d %f %f %d %d %f %d %f %f\n", 
+             iVoid, 
+             outVoid.voidID, 
+             outVoid.coreParticle, 
+             outVoid.coreDens, 
+             outVoid.zoneVol, 
+             outVoid.zoneNumPart, 
+             outVoid.numZones, 
+             outVoid.vol, 
+             outVoid.numPart, 
+             outVoid.densCon, 
+             outVoid.voidProb);
+
+     fprintf(fpBarycenters, "%d  %e %e %e\n", 
+             outVoid.voidID,
+             outVoid.barycenter[0],
+             outVoid.barycenter[1],
+             outVoid.barycenter[2]);
+
+     fprintf(fpDistances, "%d %e\n", 
+             outVoid.voidID, 
+             outVoid.nearestMock);
+
+     double outCenter[3];
+     outCenter[0] = outVoid.barycenter[0];
+     outCenter[1] = outVoid.barycenter[1];
+     outCenter[2] = outVoid.barycenter[2];
+
+     if (isObservation) {
+       outCenter[0] = (outVoid.barycenter[0]-boxLen[0]/2.)*100.;
+       outCenter[1] = (outVoid.barycenter[1]-boxLen[1]/2.)*100.;
+       outCenter[2] = (outVoid.barycenter[2]-boxLen[2]/2.)*100.;
+     }
+
+     if (outVoid.accepted == 1) {
+       fprintf(fpCenters, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f\n",
+             outCenter[0],
+             outCenter[1],
+             outCenter[2],
+             outVoid.vol,
+             outVoid.radius,
+             outVoid.redshift, 
+             4./3.*M_PI*pow(outVoid.radius, 3),
+             outVoid.voidID,
+             outVoid.densCon);
+     } 
+
+       fprintf(fpCenterNoCut, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f\n",
+             outCenter[0],
+             outCenter[1],
+             outCenter[2],
+             outVoid.vol,
+             outVoid.radius,
+             outVoid.redshift, 
+             4./3.*M_PI*pow(outVoid.radius, 3),
+             outVoid.voidID,
+             outVoid.densCon);
+
+     fprintf(fpSkyPositions, "%.2f %.2f %.5f %.2f %d\n",
+             atan((outVoid.barycenter[1]-boxLen[1]/2.) / 
+                  (outVoid.barycenter[0]-boxLen[0]/2.)) * 180/M_PI + 180,  
+             asin((outVoid.barycenter[2]-boxLen[2]/2.) / 
+                   outVoid.redshiftInMpc) * 180/M_PI,  
+             outVoid.redshift,
+             outVoid.radius,
+             outVoid.voidID);
+
+     fprintf(fpShapes, "%d %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f\n", 
+             outVoid.voidID,
+             gsl_vector_get(outVoid.eval, 0),
+             gsl_vector_get(outVoid.eval, 1),
+             gsl_vector_get(outVoid.eval, 2),
+             gsl_matrix_get(outVoid.evec, 0 ,0),
+             gsl_matrix_get(outVoid.evec, 0 ,1),
+             gsl_matrix_get(outVoid.evec, 0 ,2),
+             gsl_matrix_get(outVoid.evec, 1 ,0),
+             gsl_matrix_get(outVoid.evec, 1 ,1),
+             gsl_matrix_get(outVoid.evec, 1 ,2),
+             gsl_matrix_get(outVoid.evec, 2 ,0),
+             gsl_matrix_get(outVoid.evec, 2 ,1),
+             gsl_matrix_get(outVoid.evec, 2 ,2)
+            );
+
+} // end outputVoid
