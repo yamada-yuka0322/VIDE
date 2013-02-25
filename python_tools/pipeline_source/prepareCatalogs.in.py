@@ -76,7 +76,7 @@ from void_python_tools.backend.classes import *
 
 continueRun = False # set to True to enable restarting aborted jobs
 startCatalogStage = 1
-endCatalogStage   = 4
+endCatalogStage   = 3
                
 startAPStage = 1
 endAPStage = 1
@@ -316,7 +316,7 @@ for thisSubSample in sorted(subSamples, reverse=True):
           else:
             outFile.write(line)
 
-        outFile.write("-99 -99 -99 -99 -99\n")
+        outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
         inFile.close()
         outFile.close()
 
@@ -337,7 +337,7 @@ for thisSubSample in sorted(subSamples, reverse=True):
 
           outFile.write("%d %e %e %e 0. 0. 0.\n" % (i, x,y,z))
 
-        outFile.write("-99 -99 -99 -99 -99\n")
+        outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
         outFile.close()
 
   prevSubSample = thisSubSample
@@ -427,7 +427,7 @@ if (args.halos or args.all) and haloFileBase != "":
           # write to output file
           outFile.write("%d %e %e %e %e %e %e\n" %(iHalo,x,y,z,vz,vy,vx))
 
-      outFile.write("-99 -99 -99 -99 -99\n")
+      outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
       inFile.close()
       outFile.close()
 
@@ -528,3 +528,5 @@ if (args.hod or args.all) and haloFileBase != "":
       outFileName = catalogDir+"/"+sampleName+".dat"
       os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
       os.system("rm %s/hod.*" % catalogDir)
+
+print " Done!"
