@@ -623,16 +623,16 @@ int main(int argc, char **argv) {
   fpBarycenterAll = fopen((std::string(args.outputDir_arg)+"/barycenters_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
 
   fpCentersCentral = fopen((std::string(args.outputDir_arg)+"/centers_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpCentersCentral, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast\n");
+  fprintf(fpCentersCentral, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part\n");
 
   fpCentersAll = fopen((std::string(args.outputDir_arg)+"/centers_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpCentersAll, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast\n");
+  fprintf(fpCentersAll, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part\n");
 
   fpCentersNoCutCentral = fopen((std::string(args.outputDir_arg)+"/centers_nocut_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpCentersNoCutCentral, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast\n");
+  fprintf(fpCentersNoCutCentral, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part\n");
 
   fpCentersNoCutAll = fopen((std::string(args.outputDir_arg)+"/centers_nocut_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpCentersNoCutAll, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast\n");
+  fprintf(fpCentersNoCutAll, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part\n");
 
 
   fpDistancesCentral = fopen((std::string(args.outputDir_arg)+"boundaryDistancesCentral_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
@@ -736,7 +736,7 @@ void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters,
      }
 
      if (outVoid.accepted == 1) {
-       fprintf(fpCenters, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f\n",
+       fprintf(fpCenters, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f %d\n",
              outCenter[0],
              outCenter[1],
              outCenter[2],
@@ -745,10 +745,11 @@ void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters,
              outVoid.redshift, 
              4./3.*M_PI*pow(outVoid.radius, 3),
              outVoid.voidID,
-             outVoid.densCon);
+             outVoid.densCon,
+             outVoid.numPart);
      } 
 
-       fprintf(fpCenterNoCut, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f\n",
+       fprintf(fpCenterNoCut, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f %d\n",
              outCenter[0],
              outCenter[1],
              outCenter[2],
@@ -757,7 +758,8 @@ void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters,
              outVoid.redshift, 
              4./3.*M_PI*pow(outVoid.radius, 3),
              outVoid.voidID,
-             outVoid.densCon);
+             outVoid.densCon,
+             outVoid.numPart);
 
      fprintf(fpSkyPositions, "%.2f %.2f %.5f %.2f %d\n",
              atan((outVoid.barycenter[1]-boxLen[1]/2.) / 
