@@ -40,6 +40,8 @@ protected:
 
   void reallocSimu(CosmoTool::SimuData *s, long newNumPart);
  
+
+  void basicPreprocessor(SimuData *d, SimulationPreprocessor *preproc);
   void applyTransformations(CosmoTool::SimuData *s);
 
   void copyParticleToSimu(const SingleParticle& p, CosmoTool::SimuData *s, long index)

@@ -71,32 +71,7 @@ public:
     d->BoxSize *= unitMpc;
 
     applyTransformations(d);
-
-    long numAccepted = 0;
-    bool *accepted = new bool[d->NumPart];
-    for (long i = 0; i < d->NumPart; i++)
-      {
-	SingleParticle p;
-
-	for (int k = 0; k < 3; k++)
-	  {
-	    p.Pos[k] = (d->Pos[k]) ? 0 : d->Pos[k][i];
-	    p.Vel[k] = (d->Vel[k]) ? 0 : d->Vel[k][i];
-	  }
-	p.ID = (d->Id) ? 0 : d->Id[i];
-	
-	accepted[i] = preproc->accept(p);
-	numAccepted += accepted[i];
-      }
-    
-    for (int k = 0; k < 3; k++)
-      {
-	filteredCopy(d->Pos[k], accepted, d->NumPart);
-	filteredCopy(d->Vel[k], accepted, d->NumPart);
-      }
-    filteredCopy(d->Id, accepted, d->NumPart);
-    filteredCopy(d->type, accepted, d->NumPart);
-    delete[] accepted;
+    basicPreprocessing(d, preproc);
 
     return d;
   }
