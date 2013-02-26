@@ -105,17 +105,15 @@ for sample in dataSampleList:
   # -------------------------------------------------------------------------
   if (startCatalogStage <= 3) and (endCatalogStage >= 3) and not sample.isCombo:
 
-    for thisDataPortion in dataPortions:
-      print "  Taking data portion:", thisDataPortion, "...",
-      sys.stdout.flush()
+    print "  Taking data portions", "...",
+    sys.stdout.flush()
         
-      logFile = logDir+"/pruneVoids_"+sampleName+"_"+\
-                thisDataPortion+".out"
+    logFile = logDir+"/pruneVoids_"+sampleName+".out"
 
-      PRUNE_PATH = CTOOLS_PATH+"/stacking/pruneVoids"
+    PRUNE_PATH = CTOOLS_PATH+"/stacking/pruneVoids"
 
-      launchPrune(sample, PRUNE_PATH, thisDataPortion=thisDataPortion, 
-                  logFile=logFile, zobovDir=zobovDir, continueRun=continueRun)
+    launchPrune(sample, PRUNE_PATH, 
+                logFile=logFile, zobovDir=zobovDir, continueRun=continueRun)
 
 # -------------------------------------------------------------------------
 if (startCatalogStage <= 4) and (endCatalogStage >= 4):
