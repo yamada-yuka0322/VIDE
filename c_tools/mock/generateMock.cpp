@@ -592,6 +592,9 @@ int main(int argc, char **argv)
   else
     makeBoxFromSimulation(loader, simuOut, metricOperation, args_info);
 
+  // Reset the random number generator
+  gsl_rng_set(rng, args_info.subsample_seed_arg);
+
   long loaded = 0;
   for (int nf = 0; nf < loader->num_files(); nf++)
     {

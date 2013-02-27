@@ -97,6 +97,7 @@ public:
     filteredCopy(d->Id, accepted, d->NumPart);
     filteredCopy(d->type, accepted, d->NumPart);
     delete[] accepted;
+    d->NumPart = numAccepted;
 
     return d;
   }
