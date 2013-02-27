@@ -1532,7 +1532,7 @@ def launchVelocityStack(sample, stack, binPath,
   logFile = logDir+("/%svelocity_stack_"%prefixRun)+sampleName+"_"+runSuffix+".out"
 
   voidCenters=voidDir+"/centers.txt"
-  Rmax = 
+#  Rmax = 
 
   centralRadius = stack.rMin * 0.25
   Rextracut = stack.rMin*3 + 1
