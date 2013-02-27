@@ -165,26 +165,22 @@ newSample.addStack(0.0, 5.0, 90, 95, False, False)
     for i in xrange(len(zVsDY)):
       zVsDX[i] = vp.angularDiameter(zVsDY[i], Om=Om)
 
-    if useLightCone:
-      boxWidthZ = np.interp(vp.angularDiameter(zBox,Om=Om)+100. / \
-                  LIGHT_SPEED*lbox, zVsDX, zVsDY)-zBox
-      dzSafe = 0.03
-    else:
-      boxWidthZ = np.interp(vp.angularDiameter(zBox,Om=Om)+100. / \
-                  LIGHT_SPEED*lbox, zVsDX, zVsDY)-zBox
-      #boxWidthZ = lbox*100./LIGHT_SPEED
-      dzSafe = 0.0
+    boxWidthZ = np.interp(vp.angularDiameter(zBox,Om=Om)+100. / \
+                LIGHT_SPEED*lbox, zVsDX, zVsDY)-zBox
 
     for iSlice in xrange(numSlices):
-      sliceMin = zBox + dzSafe + iSlice*(boxWidthZ-2.*dzSafe)/numSlices
-      sliceMax = zBox + dzSafe + (iSlice+1)*(boxWidthZ-2.*dzSafe)/numSlices
 
       if useLightCone:
+        dzSafe = 0.03
+        sliceMin = zBox + dzSafe + iSlice*(boxWidthZ-2.*dzSafe)/numSlices
+        sliceMax = zBox + dzSafe + (iSlice+1)*(boxWidthZ-2.*dzSafe)/numSlices
         sliceMinMpc = sliceMin*LIGHT_SPEED/100.
         sliceMaxMpc = sliceMax*LIGHT_SPEED/100.
       else:
-        sliceMinMpc = LIGHT_SPEED/100.*vp.angularDiameter(sliceMin, Om=Om)
-        sliceMaxMpc = LIGHT_SPEED/100.*vp.angularDiameter(sliceMax, Om=Om)
+        sliceMinMpc = zBoxMpc + iSlice*lbox/numSlices
+        sliceMaxMpc = zBoxMpc + (iSlice+1)*lbox/numSlices
+        sliceMin = np.interp(sliceMinMpc*100./LIGHT_SPEED, zVsDX, zVsDY)
+        sliceMax = np.interp(sliceMaxMpc*100./LIGHT_SPEED, zVsDX, zVsDY)
 
       sliceMin = "%0.2f" % sliceMin
       sliceMax = "%0.2f" % sliceMax
