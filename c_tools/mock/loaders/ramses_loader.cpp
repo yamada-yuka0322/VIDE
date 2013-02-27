@@ -16,10 +16,11 @@ private:
   bool double_precision;
   SimuData *ramses_header;
   string snapshot_name;
+  SimulationPreprocessor *preproc;
 public:
-  RamsesLoader(const string& basename, int baseid, bool dp, SimuData *header, int flags, int _num)
+  RamsesLoader(const string& basename, int baseid, bool dp, SimuData *header, int flags, int _num, SimulationPreprocessor *p)
     : snapshot_name(basename), load_flags(flags), _num_files(_num), double_precision(dp),
-      ramses_header(header)
+      ramses_header(header), preproc(p)
   {
   }
   
@@ -56,6 +57,7 @@ public:
       }
 
     applyTransformations(d);
+    basicPreprocessing(d, preproc);
 
     return d;
   }
@@ -76,6 +78,6 @@ SimulationLoader *ramsesLoader(const std::string& snapshot, int baseid, bool dou
       delete d;
     }
 
-  return new RamsesLoader(snapshot, baseid, double_precision, header, flags, num_files);
+  return new RamsesLoader(snapshot, baseid, double_precision, header, flags, num_files, p);
 }
 

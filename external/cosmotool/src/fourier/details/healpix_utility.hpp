@@ -52,7 +52,7 @@ namespace CosmoTool
       HealpixSpectrum<T> *new_spectrum = new HealpixSpectrum<T>(in_spec.Lmax());
       T *out_d = new_spectrum->data();
 
-      std::copy(data, data + min(size,new_spectrum->size()), out_d);
+      std::copy(data, data + std::min(size,new_spectrum->size()), out_d);
 
       return Spectrum_ptr(new_spectrum);
     }

@@ -76,7 +76,7 @@ from void_python_tools.backend.classes import *
 
 continueRun = False # set to True to enable restarting aborted jobs
 startCatalogStage = 1
-endCatalogStage   = 4
+endCatalogStage   = 3
                
 startAPStage = 1
 endAPStage = 1
@@ -170,15 +170,21 @@ newSample.addStack(0.0, 5.0, 90, 95, False, False)
                   LIGHT_SPEED*lbox, zVsDX, zVsDY)-zBox
       dzSafe = 0.03
     else:
-      boxWidthZ = lbox*100./LIGHT_SPEED
+      boxWidthZ = np.interp(vp.angularDiameter(zBox,Om=Om)+100. / \
+                  LIGHT_SPEED*lbox, zVsDX, zVsDY)-zBox
+      #boxWidthZ = lbox*100./LIGHT_SPEED
       dzSafe = 0.0
 
     for iSlice in xrange(numSlices):
-      sliceMin = zBox + dzSafe + iSlice*(boxWidthZ-dzSafe)/numSlices
-      sliceMax = zBox + dzSafe + (iSlice+1)*(boxWidthZ-dzSafe)/numSlices
+      sliceMin = zBox + dzSafe + iSlice*(boxWidthZ-2.*dzSafe)/numSlices
+      sliceMax = zBox + dzSafe + (iSlice+1)*(boxWidthZ-2.*dzSafe)/numSlices
 
-      sliceMinMpc = sliceMin*LIGHT_SPEED/100.
-      sliceMaxMpc = sliceMax*LIGHT_SPEED/100.
+      if useLightCone:
+        sliceMinMpc = sliceMin*LIGHT_SPEED/100.
+        sliceMaxMpc = sliceMax*LIGHT_SPEED/100.
+      else:
+        sliceMinMpc = LIGHT_SPEED/100.*vp.angularDiameter(sliceMin, Om=Om)
+        sliceMaxMpc = LIGHT_SPEED/100.*vp.angularDiameter(sliceMax, Om=Om)
 
       sliceMin = "%0.2f" % sliceMin
       sliceMax = "%0.2f" % sliceMax
@@ -316,7 +322,7 @@ for thisSubSample in sorted(subSamples, reverse=True):
           else:
             outFile.write(line)
 
-        outFile.write("-99 -99 -99 -99 -99\n")
+        outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
         inFile.close()
         outFile.close()
 
@@ -337,7 +343,7 @@ for thisSubSample in sorted(subSamples, reverse=True):
 
           outFile.write("%d %e %e %e 0. 0. 0.\n" % (i, x,y,z))
 
-        outFile.write("-99 -99 -99 -99 -99\n")
+        outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
         outFile.close()
 
   prevSubSample = thisSubSample
@@ -427,7 +433,7 @@ if (args.halos or args.all) and haloFileBase != "":
           # write to output file
           outFile.write("%d %e %e %e %e %e %e\n" %(iHalo,x,y,z,vz,vy,vx))
 
-      outFile.write("-99 -99 -99 -99 -99\n")
+      outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
       inFile.close()
       outFile.close()
 
@@ -528,3 +534,5 @@ if (args.hod or args.all) and haloFileBase != "":
       outFileName = catalogDir+"/"+sampleName+".dat"
       os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
       os.system("rm %s/hod.*" % catalogDir)
+
+print " Done!"
