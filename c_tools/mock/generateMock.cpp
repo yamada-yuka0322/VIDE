@@ -255,15 +255,27 @@ class PreselectParticles: public SimulationPreprocessor
 private:
   gsl_rng *rng;
   double subsample;
+  int seed;
 public:
-  PreselectParticles(gsl_rng *r, double s)
-    : subsample(s), rng(r)
+  PreselectParticles(double s, int seed_value)
+    : subsample(s), seed(seed_value), rng(gsl_rng_alloc(gsl_rng_default))
   {
+    gsl_rng_set(rng, seed);
   }
+
+  virtual ~PreselectParticles()
+  {
+    gsl_rng_free(rng);
+  } 
 
   bool accept(const SingleParticle& p)
   {
     return gsl_rng_uniform(rng) < subsample;
+  }
+
+  void reset()
+  {
+    gsl_rng_set(rng, seed);
   }
 };
 
@@ -504,7 +516,6 @@ int main(int argc, char **argv)
   generateMock_conf_params args_params;
   SimuData *simu, *simuOut;
   SimulationLoader *loader;
-  gsl_rng *rng = gsl_rng_alloc(gsl_rng_default);
  
   generateMock_conf_init(&args_info);
   generateMock_conf_params_init(&args_params);
@@ -530,8 +541,7 @@ int main(int argc, char **argv)
   
   generateMock_conf_print_version();
 
-  gsl_rng_set(rng, args_info.subsample_seed_arg);
-  SimulationPreprocessor *preselector = new PreselectParticles(rng, args_info.subsample_arg);
+  SimulationPreprocessor *preselector = new PreselectParticles(args_info.subsample_arg, args_info.subsample_seed_arg);
 
   if (args_info.ramsesBase_given || args_info.ramsesId_given)
     {
@@ -593,7 +603,7 @@ int main(int argc, char **argv)
     makeBoxFromSimulation(loader, simuOut, metricOperation, args_info);
 
   // Reset the random number generator
-  gsl_rng_set(rng, args_info.subsample_seed_arg);
+  preselector->reset();
 
   long loaded = 0;
   for (int nf = 0; nf < loader->num_files(); nf++)
@@ -625,8 +635,6 @@ int main(int argc, char **argv)
                  args_info.output_arg);
   delete preselector;
   
-  gsl_rng_free(rng);
- 
   printf("Done!\n"); 
   return 0;
 }
