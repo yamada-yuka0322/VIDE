@@ -13,6 +13,17 @@ struct SingleParticle
   long ID;
 };
 
+class SimulationPreprocessor
+{
+public:
+  SimulationPreprocessor() {}
+  virtual ~SimulationPreprocessor() {}
+
+  virtual long getEstimatedPostprocessed(long numParticles) { return numParticles; };
+  virtual bool accept(const SingleParticle& p) { return true; }
+  virtual void reset() {}
+};
+
 class SimulationLoader
 {
 protected:
@@ -41,7 +52,7 @@ protected:
   void reallocSimu(CosmoTool::SimuData *s, long newNumPart);
  
 
-  void basicPreprocessor(SimuData *d, SimulationPreprocessor *preproc);
+  void basicPreprocessing(CosmoTool::SimuData *d, SimulationPreprocessor *preproc);
   void applyTransformations(CosmoTool::SimuData *s);
 
   void copyParticleToSimu(const SingleParticle& p, CosmoTool::SimuData *s, long index)
@@ -91,15 +102,6 @@ public:
   }
 };
 
-class SimulationPreprocessor
-{
-public:
-  SimulationPreprocessor() {}
-  virtual ~SimulationPreprocessor() {}
-
-  virtual long getEstimatedPostprocessed(long numParticles) { return numParticles; };
-  virtual bool accept(const SingleParticle& p) { return true; }
-};
 
 template<typename T>
 void delete_adaptor(void *ptr)
@@ -115,6 +117,9 @@ SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLengt
 SimulationLoader *flashLoader(const std::string& snapshot, int flags, SimulationPreprocessor *p);
 SimulationLoader *multidarkLoader(const std::string& snapshot, SimulationPreprocessor *p);
 SimulationLoader *ramsesLoader(const std::string& snapshot, int baseid, bool double_precision, int flags, SimulationPreprocessor *p);
+SimulationLoader *sdfLoader(const std::string& snapshot, int flags, int num_splitting, SimulationPreprocessor *p);
 
+/* This is required for some parallel I/O handler (thus MPI beneath it) */
+void simulationLoadersInit(int& argc, char **& argv);
 
 #endif
