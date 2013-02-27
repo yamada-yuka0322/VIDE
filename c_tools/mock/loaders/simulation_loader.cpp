@@ -74,7 +74,7 @@ void SimulationLoader::basicPreprocessing(SimuData *d,
     }
   filteredCopy(d->Id, accepted, d->NumPart);
   filteredCopy(d->type, accepted, d->NumPart);
-  d->NumPart = accepted;
+  d->NumPart = numAccepted;
   delete[] accepted;
 }
 
