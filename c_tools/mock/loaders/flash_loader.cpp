@@ -15,9 +15,10 @@ private:
   int _num_files;
   SimuData *gadget_header;
   string snapshot_name;
+  SimulationPreprocessor *preproc;
 public:
-  FlashLoader(const string& basename, SimuData *header, int flags, bool singleFile, int _num)
-    : snapshot_name(basename), load_flags(flags), onefile(singleFile), _num_files(_num), gadget_header(header)
+  FlashLoader(const string& basename, SimuData *header, int flags, bool singleFile, int _num, SimulationPreprocessor *p)
+    : snapshot_name(basename), load_flags(flags), onefile(singleFile), _num_files(_num), gadget_header(header), preproc(p)
   {
   }
   
@@ -58,13 +59,14 @@ public:
       }
 
     applyTransformations(d);
+    basicPreprocessing(d, preproc);
 
     return d;
   }
 };
 
 
-SimulationLoader *flashLoader(const std::string& snapshot, int flags)
+SimulationLoader *flashLoader(const std::string& snapshot, int flags, SimulationPreprocessor *p)
 {
   bool singleFile;
   int num_files;
@@ -107,5 +109,5 @@ SimulationLoader *flashLoader(const std::string& snapshot, int flags)
 	}
     }
     
-  return new FlashLoader(snapshot, header, flags, singleFile, num_files);
+  return new FlashLoader(snapshot, header, flags, singleFile, num_files, p);
 }

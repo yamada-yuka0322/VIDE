@@ -1,3 +1,4 @@
+#include <vector>
 #include <cassert>
 #include <string>
 #include <CosmoTool/loadGadget.hpp>
@@ -16,9 +17,10 @@ private:
   double unitMpc;
   SimuData *gadget_header;
   string snapshot_name;
+  SimulationPreprocessor *preproc;
 public:
-  GadgetLoader(const string& basename, SimuData *header, int flags, bool singleFile, int _num, double unit)
-    : snapshot_name(basename), load_flags(flags), onefile(singleFile), _num_files(_num), unitMpc(1/unit), gadget_header(header)
+  GadgetLoader(const string& basename, SimuData *header, int flags, bool singleFile, int _num, double unit, SimulationPreprocessor *p)
+    : snapshot_name(basename), load_flags(flags), onefile(singleFile), _num_files(_num), unitMpc(1/unit), gadget_header(header), preproc(p)
   {
   }
   
@@ -34,7 +36,7 @@ public:
   int num_files() {
     return _num_files;
   }
-  
+
   SimuData *loadFile(int id) {
     SimuData *d;
     
@@ -69,13 +71,14 @@ public:
     d->BoxSize *= unitMpc;
 
     applyTransformations(d);
+    basicPreprocessing(d, preproc);
 
     return d;
   }
 };
 
 
-SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLength, int flags)
+SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLength, int flags, SimulationPreprocessor *p)
 {
   bool singleFile = false;
   int num_files;
@@ -120,5 +123,5 @@ SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLengt
 	}
     }
     
-  return new GadgetLoader(snapshot, header, flags, singleFile, num_files, Mpc_unitLength);
+  return new GadgetLoader(snapshot, header, flags, singleFile, num_files, Mpc_unitLength, p);
 }

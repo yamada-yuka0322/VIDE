@@ -14,9 +14,10 @@ class MultiDarkLoader: public SimulationLoader
 protected:
   SimuData *header;
   string darkname;
+  SimulationPreprocessor *preproc;
 public:
-  MultiDarkLoader(const std::string& name, SimuData *h)
-    : darkname(name), header(h)
+  MultiDarkLoader(const std::string& name, SimuData *h, SimulationPreprocessor *p)
+    : preproc(p), darkname(name), header(h)
   {
   }
 
@@ -48,40 +49,59 @@ public:
     simu->TotalNumPart = simu->NumPart;
     simu->Omega_Lambda = 1.0 - simu->Omega_M;
 
+    long estimated = (preproc == 0) ? simu->NumPart : preproc->getEstimatedPostprocessed(simu->NumPart);
+    long allocated = estimated; 
+
     for (int k = 0; k < 3; k++)
-      simu->Pos[k] = new float[simu->NumPart];
-    simu->Vel[2] = new float[simu->NumPart];
-    simu->Id = new long[simu->NumPart];
-    long *uniqueID = new long[simu->NumPart];
+      simu->Pos[k] = new float[allocated];
+    simu->Vel[2] = new float[allocated];
+    simu->Id = new long[allocated];
+    long *uniqueID = new long[allocated];
+    long *index = new long[allocated];
+
     double tempData;
 
     simu->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
+    simu->new_attribute("index", index, delete_adaptor<long>);
 
     cout << "loading multidark particles" << endl;
     long actualNumPart = 0;
+
     for (long i = 0; i < simu->NumPart; i++) {
+      SingleParticle p;
 
-      fp >> simu->Id[i] >> simu->Pos[0][i] >> simu->Pos[1][i]
-	 >> simu->Pos[2][i] >> simu->Vel[2][i] >> tempData >> tempData;
+      fp >> p.ID >> p.Pos[0] >> p.Pos[1]
+         >> p.Pos[2] >> p.Vel[2] >> tempData >> tempData;
 
-      uniqueID[i] = simu->Id[i];
-
-      if (simu->Id[i] == -99 && 
-          simu->Pos[0][i] == -99 && simu->Pos[1][i] == -99 && 
-          simu->Pos[2][i] == -99 && simu->Vel[2][i] == -99) {
+      if (p.ID == -99 && 
+          p.Pos[0] == -99 && p.Pos[1] == -99 && 
+          p.Pos[2] == -99 && p.Vel[2] == -99) {
         break;
-      } else {
-        actualNumPart++;
+
+      if (preproc != 0 && !preproc->accept(p))
+        continue;
+
+      copyParticleToSimu(p, simu, actualNumPart);
+      uniqueID[actualNumPart]= p.ID;
+      index[actualNumPart] = i;
+      actualNumPart++;
+      if (actualNumPart == allocated)
+        {
+          allocated += (estimated+9)/10;
+          reallocSimu(simu, allocated); 
+          reallocArray(uniqueID, allocated, actualNumPart);
+          reallocArray(index, allocated, actualNumPart);
+        }
       }
     }
-
+    applyTransformations(simu);
     simu->NumPart = actualNumPart;
     simu->TotalNumPart = actualNumPart;
     return simu;
   }
 };
 
-SimulationLoader *multidarkLoader(const string& multidarkname)
+SimulationLoader *multidarkLoader(const string& multidarkname, SimulationPreprocessor *p)
 {
   SimuData *header;
   int actualNumPart;
@@ -101,7 +121,7 @@ SimulationLoader *multidarkLoader(const string& multidarkname)
   header->TotalNumPart = header->NumPart;
   header->Omega_Lambda = 1.0 - header->Omega_M;
 
-  return new MultiDarkLoader(multidarkname, header);
+  return new MultiDarkLoader(multidarkname, header, p);
 }
 
   
