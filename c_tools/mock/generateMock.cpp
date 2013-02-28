@@ -220,7 +220,7 @@ void generateOutput(SimuData *data, int axis,
 
 // This function prepares the list of targets for the specified snapshot. The target list is not
 // cleared. That way new particles can be appended if this is a multi-file snapshot.
-void selectBox(SimuData *simu, std::vector<long>& targets, generateMock_info& args_info)
+void selectBox(SimuData *simu, std::vector<long>& targets, generateMock_info& args_info, SimulationPreprocessor *preselect)
 {
   float subsample;
   if (args_info.subsample_given) {
@@ -237,13 +237,20 @@ void selectBox(SimuData *simu, std::vector<long>& targets, generateMock_info& ar
   for (uint32_t i = 0; i < simu->NumPart; i++)
     {
       bool acceptance = true;
+      SingleParticle p;
 
       for (int j = 0; j < 3; j++) {
 	acceptance = 
 	  acceptance &&
 	  (simu->Pos[j][i] > ranges[j][0]) && 
 	  (simu->Pos[j][i] < ranges[j][1]);	
+        p.Pos[j] = simu->Pos[j][i];
+        p.Vel[j] = (simu->Vel != 0) ? simu->Vel[j][i] : 0;
       }
+      p.ID = (simu->Id != 0) ? simu->Id[i] : -1;
+
+      if (preselect != 0)
+        acceptance = acceptance && preselect->accept(p);
       
       if (acceptance)
 	targets.push_back(i);
@@ -489,6 +496,13 @@ void makeBoxFromSimulation(SimulationLoader *loader, SimuData* &boxed, MetricFun
 {
   vector<long> targets, split;
   long previous_target_num = 0;
+  PreselectParticles *preselect = 0;
+
+  if (args_info.resubsample_given)
+    {
+      preselect = new PreselectParticles(args_info.resubsample_arg, args_info.resubsample_seed_arg);
+      preselect->reset();
+    }
 
   for (int nf = 0; nf < loader->num_files(); nf++)
     {
@@ -500,7 +514,7 @@ void makeBoxFromSimulation(SimulationLoader *loader, SimuData* &boxed, MetricFun
 
       metric(simu, 0);
 
-      selectBox(simu, targets, args_info);
+      selectBox(simu, targets, args_info, preselect);
       split.push_back(targets.size() - previous_target_num);
       previous_target_num = targets.size();
       
