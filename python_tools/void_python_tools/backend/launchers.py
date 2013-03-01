@@ -105,37 +105,43 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
     datafile = inputDataDir+"/"+sample.dataFile
 
-    if regenerate:
-      inputParameterFlag = "inputParameter " + zobovDir+"/zobov_slice_"+sampleName+".par"
-      outputFile = zobovDir+"/regenerated_zobov_slice_" + sampleName 
-    else:
-      inputParameterFlag = ""
-      outputFile = zobovDir+"/zobov_slice_" + sampleName
+    prevSubSample = -1
+    for thisSubSample in sample.subsample.split():
 
-    if sample.usePecVel:
-      includePecVelString = "peculiarVelocities"
-    else:
+      if prevSubSample == -1:
+        inputParameterFlag = ""
+        outputFile = zobovDir+"/zobov_slice_" + sampleName + "_ss" + thisSubSample
+        keepFraction = float(thsSubSample)
+        subSampleLime = "subsample %g" % keepFraction
+      else:
+        inputParameterFlag = "inputParameter " + zobovDir+"/zobov_slice_"+\
+                             sampleName+"_ss"+prevSubSample+".par"
+        outputFile = zobovDir+"/_zobov_slice_" + sampleName + "_ss" + tihsSubSample
+        keepFraction = float(thisSubSample)/float(prevSubSample)
+        subSampleLime = "resubsample %g" % keepFraction
+
       includePecVelString = ""
+      if sample.usePecVel: includePecVelString = "peculiarVelocities"
 
-    if sample.useLightCone:
-      useLightConeString = "cosmo"
-    else:
       useLightConeString = ""
+      if sample.useLightCone: useLightConeString = "cosmo"
 
-    if sample.dataFormat == "multidark" or sample.dataFormat == "random":
-      dataFileLine = "multidark " + datafile
-    elif sample.dataFormat == "gadget":
-      dataFileLine = "gadget " + datafile
+      if sample.dataFormat == "multidark" or sample.dataFormat == "random":
+        dataFileLine = "multidark " + datafile
+      elif sample.dataFormat == "gadget":
+        dataFileLine = "gadget " + datafile
+      elif sample.dataFormat == "sdf":
+        dataFileLine = "sdf " + datafile
     
-    iX = float(sample.mySubvolume[0])
-    iY = float(sample.mySubvolume[1])
+      iX = float(sample.mySubvolume[0])
+      iY = float(sample.mySubvolume[1])
 
-    xMin = iX/sample.numSubvolumes * sample.boxLen
-    yMin = iY/sample.numSubvolumes * sample.boxLen
-    xMax = (iX+1)/sample.numSubvolumes * sample.boxLen
-    yMax = (iY+1)/sample.numSubvolumes * sample.boxLen
+      xMin = iX/sample.numSubvolumes * sample.boxLen
+      yMin = iY/sample.numSubvolumes * sample.boxLen
+      xMax = (iX+1)/sample.numSubvolumes * sample.boxLen
+      yMax = (iY+1)/sample.numSubvolumes * sample.boxLen
 
-    conf="""
+      conf="""
       %s
       output %s
       outputParameter %s
@@ -148,36 +154,51 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       rangeY_max %g
       rangeZ_min %g
       rangeZ_max %g
-      subsample %g
       %s
       """ % (dataFileLine, outputFile,
-             zobovDir+"/zobov_slice_"+sampleName+".par",
+             outputFile+".par",
              includePecVelString,
              useLightConeString,
              sample.dataUnit,
              xMin, xMax, yMin, yMax,
              sample.zBoundaryMpc[0], sample.zBoundaryMpc[1],
-             sample.subsample,inputParameterFlag)
+             subSampleLine,inputParameterFlag)
 
-    parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
+      parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
 
-    file(parmFile, mode="w").write(conf)
+      file(parmFile, mode="w").write(conf)
 
-    if regenerate or not (continueRun and jobSuccessful(logFile, "Done!\n")):
-      cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
-      os.system(cmd)
-      if jobSuccessful(logFile, "Done!\n"):
-        print "done"
+      doneLine = "Done %g\n" % keepFraction
+      if not (continueRun and jobSuccessful(logFile, doneLine)):
+        if (prevSubSample == -1):
+          cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
+        else:
+          cmd = "%s --configFile=%s &>> %s" % (binPath,parmFile,logFile)
+        os.system(cmd)
+        if jobSuccessful(logFile, doneLine):
+          print "done"
+        else:
+          print "FAILED!"
+          exit(-1)
+      
       else:
-        print "FAILED!"
-        exit(-1)
+        print "already done!"
 
-    else:
-      print "already done!"
+      # remove intermediate files
+      if (prevSubSample != -1):
+       os.unlink(zobovDir+"/zobov_slice_"+sampleName+"_ss"+prevSubSample+".par")
+       os.unlink(zobovDir+"/zobov_slice_"+sampleName+"_ss"+prevSubSample)
+
+      prevSubSample = thisSubSample
+
+    # place the final subsample     
+    os.system("mv %s %s" % (zobovDir+"/zobov_slice_"+sampleName+"_ss"+\
+              prevSubSample, zobovDir+"/zobov_slice_"+sampleName))
+    os.system("mv %s %s" % (zobovDir+"/zobov_slice_"+sampleName+"_ss"+\
+              prevSubSample+".par", zobovDir+"/zobov_slice_"+sampleName+".par"))
 
     if os.access("comoving_distance.txt", os.F_OK):
       os.system("mv %s %s" % ("comoving_distance.txt", zobovDir))
-      #os.system("mv %s %s" % ("sample_info.txt", zobovDir))
 
     if os.access(parmFile, os.F_OK):
       os.unlink(parmFile)
