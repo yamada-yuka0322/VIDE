@@ -21,7 +21,7 @@ include $(treedir)/Make-common/Make.generic
 
 %.c : %.l
 #  commands to execute (built-in):
-	-($(LEX.L) $< > y.lex.c; $(RM) $@; mv y.lex.c $@)
+	-($(LEX) $(LEX.L) $<; mv -f lex.yy.c $@)
 
 # Makedepends can't pick these up...
 $(objdir)/SDF-parse$(objsuf): SDF-private.h SDF-lex.c SDF-parse.c
