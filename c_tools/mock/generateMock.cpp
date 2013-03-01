@@ -240,7 +240,7 @@ void selectBox(SimuData *simu, std::vector<long>& targets, generateMock_info& ar
 	  (simu->Pos[j][i] > ranges[j][0]) && 
 	  (simu->Pos[j][i] < ranges[j][1]);	
         p.Pos[j] = simu->Pos[j][i];
-        p.Vel[j] = (simu->Vel != 0) ? simu->Vel[j][i] : 0;
+        p.Vel[j] = (simu->Vel[j] != 0) ? simu->Vel[j][i] : 0;
       }
       p.ID = (simu->Id != 0) ? simu->Id[i] : -1;
 
