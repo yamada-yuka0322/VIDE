@@ -61,9 +61,6 @@ public:
 
     double tempData;
 
-    simu->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
-    simu->new_attribute("index", index, delete_adaptor<long>);
-
     cout << "loading multidark particles" << endl;
     long actualNumPart = 0;
 
@@ -96,6 +93,8 @@ public:
     applyTransformations(simu);
     simu->NumPart = actualNumPart;
     simu->TotalNumPart = actualNumPart;
+    simu->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
+    simu->new_attribute("index", index, delete_adaptor<long>);
     return simu;
   }
 };
