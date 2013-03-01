@@ -75,7 +75,7 @@ public:
 
       if (p.ID == -99 && 
           p.Pos[0] == -99 && p.Pos[1] == -99 && 
-          p.Pos[2] == -99 && p.Vel[2] == -99) {
+          p.Pos[2] == -99 && p.Vel[2] == -99)
         break;
 
       if (preproc != 0 && !preproc->accept(p))
@@ -93,7 +93,6 @@ public:
           reallocArray(index, allocated, actualNumPart);
         }
       }
-    }
     applyTransformations(simu);
     simu->NumPart = actualNumPart;
     simu->TotalNumPart = actualNumPart;
