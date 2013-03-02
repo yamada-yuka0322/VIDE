@@ -61,9 +61,6 @@ public:
 
     double tempData;
 
-    simu->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
-    simu->new_attribute("index", index, delete_adaptor<long>);
-
     cout << "loading multidark particles" << endl;
     long actualNumPart = 0;
 
@@ -75,7 +72,7 @@ public:
 
       if (p.ID == -99 && 
           p.Pos[0] == -99 && p.Pos[1] == -99 && 
-          p.Pos[2] == -99 && p.Vel[2] == -99) {
+          p.Pos[2] == -99 && p.Vel[2] == -99)
         break;
 
       if (preproc != 0 && !preproc->accept(p))
@@ -93,10 +90,11 @@ public:
           reallocArray(index, allocated, actualNumPart);
         }
       }
-    }
     applyTransformations(simu);
     simu->NumPart = actualNumPart;
     simu->TotalNumPart = actualNumPart;
+    simu->new_attribute("uniqueID", uniqueID, delete_adaptor<long>);
+    simu->new_attribute("index", index, delete_adaptor<long>);
     return simu;
   }
 };

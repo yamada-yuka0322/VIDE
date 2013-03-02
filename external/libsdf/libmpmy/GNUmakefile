@@ -68,39 +68,84 @@ endif
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 $(objdir)/mpmy_seq$(objsuf):
-$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/Msgs.h
-$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/gccextensions.h $(treedir)/include/libsdf/mpmy.h
-$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/timers.h
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/Msgs.h $(treedir)/include/libsdf/gccextensions.h
+$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/mpmy.h $(treedir)/include/libsdf/timers.h
+$(objdir)/mpmy_seq$(objsuf):
 $(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/Assert.h $(treedir)/include/libsdf/error.h
-$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/mpmy_io.h $(treedir)/include/libsdf/mpmy_time.h
+$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/mpmy_io.h
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/mpmy_time.h
 $(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/mpmy_abnormal.h timers_hwclock.c
-$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/Malloc.h
-$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/chn.h mpmy_io.c
+$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/Malloc.h $(treedir)/include/libsdf/chn.h
+$(objdir)/mpmy_seq$(objsuf): mpmy_io.c
 $(objdir)/mpmy_seq$(objsuf):
 $(objdir)/mpmy_seq$(objsuf):
 $(objdir)/mpmy_seq$(objsuf):
 $(objdir)/mpmy_seq$(objsuf):
-$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/protos.h iozero.h
-$(objdir)/mpmy_seq$(objsuf): iozero.c io_generic.c mpmy_abnormal.c
 $(objdir)/mpmy_seq$(objsuf):
-$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/singlio.h
-$(objdir)/mpmy_seq$(objsuf): mpmy_generic.c
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/protos.h
+$(objdir)/mpmy_seq$(objsuf): iozero.h iozero.c io_generic.c mpmy_abnormal.c
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf):
+$(objdir)/mpmy_seq$(objsuf): $(treedir)/include/libsdf/singlio.h mpmy_generic.c
 $(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/mpmy_abnormal.h
 $(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/gccextensions.h
 $(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/Malloc.h $(treedir)/include/libsdf/error.h
-$(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/chn.h $(treedir)/include/libsdf/Assert.h
-$(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/mpmy.h $(treedir)/include/libsdf/timers.h
+$(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/chn.h $(treedir)/include/libsdf/mpmy.h
+$(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/timers.h
 $(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/Assert.h
 $(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/Msgs.h $(treedir)/include/libsdf/memfile.h
 $(objdir)/mpmy_mpi$(objsuf): timers_hwclock.c
-$(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/mpmy_time.h
-$(objdir)/mpmy_mpi$(objsuf): mpmy_mpiio.c
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/mpmy_time.h mpmy_mpiio.c
 $(objdir)/mpmy_mpi$(objsuf):
 $(objdir)/mpmy_mpi$(objsuf):
 $(objdir)/mpmy_mpi$(objsuf):
 $(objdir)/mpmy_mpi$(objsuf):
 $(objdir)/mpmy_mpi$(objsuf):
-$(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/protos.h
-$(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/mpmy_io.h io_generic.c mpmy_abnormal.c
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/protos.h $(treedir)/include/libsdf/mpmy_io.h
+$(objdir)/mpmy_mpi$(objsuf): io_generic.c mpmy_abnormal.c
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
+$(objdir)/mpmy_mpi$(objsuf):
 $(objdir)/mpmy_mpi$(objsuf): $(treedir)/include/libsdf/singlio.h
 $(objdir)/mpmy_mpi$(objsuf): mpmy_generic.c

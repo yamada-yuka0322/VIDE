@@ -20,7 +20,7 @@ all: All
 # spell them a little differently in this file...
 include Make-common/Make.generic
 
-subdirs:= libSDF libmpmy
+subdirs:= libSDF libmpmy libsw
 
 All:
 	for dir in $(subdirs); do (cd $$dir; $(MAKE) ARCH=$(ARCH) all); done
