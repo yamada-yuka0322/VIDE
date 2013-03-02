@@ -11,6 +11,9 @@ option "gadget"	    -	"Base name of gadget snapshot (without parallel writing ex
 option "flash"	    -   "Base name for FLASH snapshot" string optional
 option "multidark"	    -   "Base name for multidark snapshot" string optional
 
+option "sdf"        -   "SDF snapshot name" string optional
+option "sdf_splitting" - "Number of artificial splitting of the SDF snapshot" int optional default="20"
+
 option "axis"	    -	"Redshift axis (X=0, Y=1, Z=2)" int optional default="2"
 
 option "output"	    -   "Output filename for particles" string required
@@ -37,3 +40,4 @@ option "subsample_seed" - "Seed for random number generation to select the subsa
 
 option "resubsample" - "Resubsampling factor compared to the subsampled simulation" double optional 
 option "resubsample_seed" - "Seed for resubsampling from a subsampled simulation" int optional default="20132011"
+

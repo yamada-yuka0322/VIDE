@@ -618,6 +618,12 @@ int main(int argc, char **argv)
     {
       loader = multidarkLoader(args_info.multidark_arg, preselector);      
     }
+#ifdef SDF_SUPPORT
+  else if (args_info.sdf_given)
+    {
+      loader = sdfLoader(args_info.sdf_arg, args_info.sdf_splitting_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID, preselector);
+    }
+#endif
   else
     {
       cerr << "A simulation snapshot is required to generate a mock catalog." << endl;
