@@ -1,3 +1,5 @@
+import shutil
+import tempfile
 import re
 from git import Repo,Tree,Blob
 
@@ -18,8 +20,7 @@ def apply_license(license, relimit, filename):
 
 
 def apply_python_license(filename):
-  license="""
-#+
+  license="""#+
 #   VIDE -- Void IDEntification pipeline -- @FILENAME@
 #   Copyright (C) 2010-2013 Guilhem Lavaux
 #   Copyright (C) 2011-2013 Paul M. Sutter
@@ -41,13 +42,12 @@ def apply_python_license(filename):
 """
    
   print("Shell/Python file: %s" % filename)
-  relimit = r'(?s)#\+.*#\+'
+  relimit = r'^(?s)#\+.*#\+'
   apply_license(license, relimit, filename)
 
 
 def apply_cpp_license(filename):
-  license="""
-/*+
+  license="""/*+
     VIDE -- Void IDEntification pipeline -- @FILENAME@
     Copyright (C) 2010-2013 Guilhem Lavaux
     Copyright (C) 2011-2013 Paul M. Sutter
@@ -67,7 +67,7 @@ def apply_cpp_license(filename):
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 +*/
 """
-  relimit = r'(?s)/\*\+.*\+\*/'
+  relimit = r'^(?s)/\*\+.*\+\*/'
   print("C++ file: %s" % filename)
   apply_license(license, relimit, filename)
   
