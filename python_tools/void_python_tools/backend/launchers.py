@@ -417,7 +417,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     maxDen = 0.2*float(maskIndex)/float(totalPart)
   else:
     maskIndex = 999999999
-    maxDen = -0.8
+    maxDen = 0.2
 
   if INCOHERENT:
     nullTestFlag = "INCOHERENT"
