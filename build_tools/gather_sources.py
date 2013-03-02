@@ -42,7 +42,7 @@ def apply_python_license(filename):
 """
    
   print("Shell/Python file: %s" % filename)
-  relimit = r'^(?s)#\+.*#\+'
+  relimit=r'^#\+\n(#.*\n)*#\+\n'
   apply_license(license, relimit, filename)
 
 
