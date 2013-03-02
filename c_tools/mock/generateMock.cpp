@@ -349,6 +349,8 @@ void buildBox(SimuData *simu, long num_targets, long loaded,
   for (uint32_t i = 0; i < num_targets; i++, loaded++)
     {
       long pid = particle_id[loaded];
+      assert(pid < simu->NumPart);
+      assert(loaded < boxed->NumPart);
       
       for (int j = 0; j < 3; j++)
 	{
@@ -513,7 +515,7 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
            {
              particle_id[pid_write] = particle_id[pid_read];
              uniqueID[pid_write] = uniqueID[pid_read];
-             expansion_fac[pid_write] = uniqueID[pid_read];
+             expansion_fac[pid_write] = expansion_fac[pid_read];
              pid_write++; 
            }
           pid_read++;
