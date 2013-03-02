@@ -62,7 +62,7 @@ def getSampleName(setName, redshift, useVel, iSlice=-1, iVol=-1):
 def writeScript(setName, dataFileNameBase, dataFormat,
                 scriptDir, catalogDir, fileNums, redshifts, numSubvolumes,
                 numSlices, useVel, lbox, minRadius, omegaM, subsample=1.0, 
-                suffix=".dat"):
+                suffix=".dat", dataFileNameList=None):
 
 
   if useVel: setName += "_pv"
@@ -134,7 +134,7 @@ newSample = Sample(dataFile = "{dataFile}",
                    numSubvolumes = {numSubvolumes},
                    mySubvolume = "{mySubvolume}",
                    useLightCone = {useLightCone},
-                   subsample = {subsample})
+                   subsample = "{subsample}")
 dataSampleList.append(newSample)
 newSample.addStack(0.0, 5.0, 20, 25, False, False)
 newSample.addStack(0.0, 5.0, 30, 35, False, False)
@@ -187,7 +187,10 @@ newSample.addStack(0.0, 5.0, 90, 95, False, False)
       sliceMinMpc = "%0.1f" % sliceMinMpc
       sliceMaxMpc = "%0.1f" % sliceMaxMpc
 
-      dataFileName = dataFileNameBase + fileNum + suffix
+      if (dataFileNameList != None):
+        dataFileName = dataFileNameList[iFile]
+      else:
+        dataFileName = dataFileNameBase + fileNum + suffix
 
       for iX in xrange(numSubvolumes):
         for iY in xrange(numSubvolumes):
@@ -212,7 +215,7 @@ newSample.addStack(0.0, 5.0, 90, 95, False, False)
                                          numSubvolumes=numSubvolumes,
                                          mySubvolume=mySubvolume,
                                          useLightCone=useLightCone,
-                                         subsample=subsample))
+                                         subsample=str(subsample).strip('[]')))
 
   scriptFile.close()
   return
@@ -229,44 +232,60 @@ if not os.access(catalogDir, os.F_OK): os.mkdir(catalogDir)
 #       ss0.000175 ~ SDSS DR9 mid 
 baseResolution = float(numPart)/lbox/lbox/lbox # particles/Mpc^3
 prevSubSample = -1
-for thisSubSample in sorted(subSamples, reverse=True):
+subSamples = sorted(subSamples, reverse=True)
+for iSubSample in xrange(len(subSamples)):
 
-  keepFraction = float(thisSubSample) / baseResolution
-  maxKeep = keepFraction * numPart
+  subSampleList = subSamples[0:iSubSample+1]
+
+  keepFractionList = []
+  for subSample in subSampleList:
+    keepFractionList.append(float(subSample) / baseResolution)
+  thisSubSample = subSamples[iSubSample]
+  maxKeep = keepFractionList[-1] * numPart
   minRadius = int(np.ceil(lbox/maxKeep**(1./3)))
+
+  partFileList = []
+  for (iRedshift, redshift) in enumerate(redshifts):
+    if particleFileDummy == '':
+      partFileList.append(particleFileBase+fileNums[iRedshift])
+    else:
+      partFileList.append(particleFileBase.replace(particleFileDummy, 
+                                                   fileNums[iRedshift]))
 
   if args.script or args.all:
     print " Doing subsample", thisSubSample, "scripts"
     sys.stdout.flush()
     setName = prefix+"ss"+str(thisSubSample)
-    if dataFormat == "multidark":
-      subSampleToUse = 1.0
-      fileToUse = prefix+"ss"+str(thisSubSample)+"_z"
-      suffix = ".dat"
-    elif dataFormat == "gadget":
-      subSampleToUse = keepFraction
-      #subSampleToUse = thisSubSample
-      fileToUse = particleFileBase
-      suffix = ""
-    elif dataFormat == "lanl":
-      subSampleToUse = keepFraction
-      #subSampleToUse = thisSubSample
-      fileToUse = particleFileBase
-      suffix = ""
-    elif dataFormat == "random":
+
+    if dataFormat == "random":
       subSampleToUse = 1.0
       fileToUse = "ran.ss"+str(thisSubSample)+"_z"
       suffix = ".dat"
 
-    writeScript(setName, fileToUse, dataFormat, 
+      writeScript(setName, fileToUse, dataFormat, 
                   scriptDir, catalogDir, fileNums, redshifts, 
                   numSubvolumes, numSlices, False, lbox, minRadius, omegaM, 
                   subsample=subSampleToUse, suffix=suffix)
-    writeScript(setName, fileToUse, dataFormat, 
+      writeScript(setName, fileToUse, dataFormat, 
                   scriptDir, catalogDir, fileNums, redshifts, 
                   numSubvolumes, numSlices, True, lbox, minRadius, omegaM, 
                   subsample=subSampleToUse, suffix=suffix)
-  
+    else:
+      subSampleToUse = keepFractionList
+      suffix = ""
+      fileToUse = partFileList[0]
+      writeScript(setName, fileToUse, dataFormat, 
+                  scriptDir, catalogDir, fileNums, redshifts, 
+                  numSubvolumes, numSlices, False, lbox, minRadius, omegaM, 
+                  subsample=subSampleToUse, suffix=suffix,
+                  dataFileNameList=partFileList)
+      writeScript(setName, fileToUse, dataFormat, 
+                  scriptDir, catalogDir, fileNums, redshifts, 
+                  numSubvolumes, numSlices, True, lbox, minRadius, omegaM, 
+                  subsample=subSampleToUse, suffix=suffix,
+                  dataFileNameList=partFileList)
+       
+
   if args.subsample or args.all:
     print " Doing subsample", thisSubSample
     sys.stdout.flush()
@@ -407,31 +426,37 @@ if (args.halos or args.all) and haloFileBase != "":
 
       sampleName = prefix+"halos_min"+str(minHaloMass)+"_z"+fileNums[iRedshift]
       outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
-
       outFile.write("%f\n" %(lbox))
       outFile.write("%s\n" %(omegaM))
       outFile.write("%s\n" %(hubble))
       outFile.write("%s\n" %(redshift))
       outFile.write("%d\n" %(numPart))
 
-      inFile = open(dataFile, 'r')
-      for (iHalo,line) in enumerate(inFile):
-        if iHalo < haloFileNumComLines: continue
-        line = line.split(haloFileColSep)
-        if minHaloMass == "none" or float(line[haloFileMCol]) > minHaloMass:
-          x  = float(line[haloFileXCol])
-          y  = float(line[haloFileYCol])
-          z  = float(line[haloFileZCol])
-          vz = float(line[haloFileVZCol])
-          vy = float(line[haloFileVYCol])
-          vx = float(line[haloFileVXCol])
+      if dataFormat == "sdf":
+        # TODO process halo file with SDFcvt
+        outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
+        outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
+        outFile.close()
+      else:
+        outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
+        inFile = open(dataFile, 'r')
+        for (iHalo,line) in enumerate(inFile):
+          if iHalo < haloFileNumComLines: continue
+          line = line.split(haloFileColSep)
+          if minHaloMass == "none" or float(line[haloFileMCol]) > minHaloMass:
+            x  = float(line[haloFileXCol])
+            y  = float(line[haloFileYCol])
+            z  = float(line[haloFileZCol])
+            vz = float(line[haloFileVZCol])
+            vy = float(line[haloFileVYCol])
+            vx = float(line[haloFileVXCol])
 
-          # write to output file
-          outFile.write("%d %e %e %e %e %e %e\n" %(iHalo,x,y,z,vz,vy,vx))
+            # write to output file
+            outFile.write("%d %e %e %e %e %e %e\n" %(iHalo,x,y,z,vz,vy,vx))
 
-      outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
-      inFile.close()
-      outFile.close()
+        outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
+        outFile.close()
+        inFile.close()
 
 # -----------------------------------------------------------------------------
 # now the HOD
@@ -506,6 +531,14 @@ if (args.hod or args.all) and haloFileBase != "":
       else:
         haloFile = catalogDir+haloFileBase.replace(haloFileDummy,
                                                  fileNums[iRedshift])
+
+      if dataFormat == "sdf":
+        # TODO process halo file with SDFcvt
+        inFile = haloFile
+        outFile = haloFile+"_temp"
+
+        haloFile = outFile
+
       parFile.write(parFileText.format(omegaM=omegaM,
                                      hubble=hubble,
                                      redshift=redshift,
@@ -530,5 +563,7 @@ if (args.hod or args.all) and haloFileBase != "":
       outFileName = catalogDir+"/"+sampleName+".dat"
       os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
       os.system("rm %s/hod.*" % catalogDir)
+
+      os.system("rm %s" % haloFile)
 
 print " Done!"

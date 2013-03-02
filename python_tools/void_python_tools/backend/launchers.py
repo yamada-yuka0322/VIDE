@@ -106,19 +106,19 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     datafile = inputDataDir+"/"+sample.dataFile
 
     prevSubSample = -1
-    for thisSubSample in sample.subsample.split():
+    for thisSubSample in sample.subsample.split(', '):
 
       if prevSubSample == -1:
         inputParameterFlag = ""
         outputFile = zobovDir+"/zobov_slice_" + sampleName + "_ss" + thisSubSample
-        keepFraction = float(thsSubSample)
-        subSampleLime = "subsample %g" % keepFraction
+        keepFraction = float(thisSubSample)
+        subSampleLine = "subsample %g" % keepFraction
       else:
         inputParameterFlag = "inputParameter " + zobovDir+"/zobov_slice_"+\
                              sampleName+"_ss"+prevSubSample+".par"
-        outputFile = zobovDir+"/_zobov_slice_" + sampleName + "_ss" + tihsSubSample
+        outputFile = zobovDir+"/_zobov_slice_" + sampleName + "_ss" + thisSubSample
         keepFraction = float(thisSubSample)/float(prevSubSample)
-        subSampleLime = "resubsample %g" % keepFraction
+        subSampleLine = "resubsample %g" % keepFraction
 
       includePecVelString = ""
       if sample.usePecVel: includePecVelString = "peculiarVelocities"
@@ -155,6 +155,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       rangeZ_min %g
       rangeZ_max %g
       %s
+      %s
       """ % (dataFileLine, outputFile,
              outputFile+".par",
              includePecVelString,
@@ -168,21 +169,18 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
       file(parmFile, mode="w").write(conf)
 
-      doneLine = "Done %g\n" % keepFraction
+      doneLine = "Done! %5.2e\n" % keepFraction
+      print "TEST", doneLine
       if not (continueRun and jobSuccessful(logFile, doneLine)):
         if (prevSubSample == -1):
           cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
         else:
           cmd = "%s --configFile=%s &>> %s" % (binPath,parmFile,logFile)
         os.system(cmd)
-        if jobSuccessful(logFile, doneLine):
-          print "done"
-        else:
+      
+        if not jobSuccessful(logFile, doneLine):
           print "FAILED!"
           exit(-1)
-      
-      else:
-        print "already done!"
 
       # remove intermediate files
       if (prevSubSample != -1):
@@ -191,6 +189,9 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
       prevSubSample = thisSubSample
 
+    if (continueRun and jobSuccessful(logFile, doneLine)): print "already done!"
+    if jobSuccessful(logFile, doneLine): print "done"
+ 
     # place the final subsample     
     os.system("mv %s %s" % (zobovDir+"/zobov_slice_"+sampleName+"_ss"+\
               prevSubSample, zobovDir+"/zobov_slice_"+sampleName))

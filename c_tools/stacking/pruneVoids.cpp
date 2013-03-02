@@ -548,7 +548,7 @@ int main(int argc, char **argv) {
     }
   }
   voids.resize(iGood);
-  printf("  1st filter: reiGoodected %d obviously bad\n", numWrong); 
+  printf("  1st filter: rejected %d obviously bad\n", numWrong); 
 
   iGood = 0;
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
@@ -559,7 +559,7 @@ int main(int argc, char **argv) {
     }
   }
   voids.resize(iGood);
-  printf("  2nd filter: reiGoodected %d too small\n", numTooSmall); 
+  printf("  2nd filter: rejected %d too small\n", numTooSmall); 
 
 
   iGood = 0;
@@ -572,7 +572,7 @@ int main(int argc, char **argv) {
     }
   }
   voids.resize(iGood);
-  printf("  3rd filter: reiGoodected %d too close to high redshift boundaries\n", numNearZ); 
+  printf("  3rd filter: rejected %d too close to high redshift boundaries\n", numNearZ); 
 
   numNearZ = 0;
   iGood = 0;
@@ -586,7 +586,7 @@ int main(int argc, char **argv) {
     }
   }
   voids.resize(iGood);
-  printf("  4th filter: reiGoodected %d too close to low redshift boundaries\n", numNearZ); 
+  printf("  4th filter: rejected %d too close to low redshift boundaries\n", numNearZ); 
 
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
     if (voids[iVoid].centralDen > args.maxCentralDen_arg) {
