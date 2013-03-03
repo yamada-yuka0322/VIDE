@@ -1,7 +1,7 @@
 #+
 #   VIDE -- Void IDEntification pipeline -- ./build_tools/gather_sources.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
-#   Copyright (C) 2011-2013 Paul M. Sutter
+#   Copyright (C) 2011-2013 P. M. Sutter
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ def apply_python_license(filename):
   license="""#+
 #   VIDE -- Void IDEntification pipeline -- @FILENAME@
 #   Copyright (C) 2010-2013 Guilhem Lavaux
-#   Copyright (C) 2011-2013 Paul M. Sutter
+#   Copyright (C) 2011-2013 P. M. Sutter
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ def apply_cpp_license(filename):
   license="""/*+
     VIDE -- Void IDEntification pipeline -- @FILENAME@
     Copyright (C) 2010-2013 Guilhem Lavaux
-    Copyright (C) 2011-2013 Paul M. Sutter
+    Copyright (C) 2011-2013 P. M. Sutter
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

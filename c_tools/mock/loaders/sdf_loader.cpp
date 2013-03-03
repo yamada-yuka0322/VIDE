@@ -1,7 +1,7 @@
 /*+
     VIDE -- Void IDEntification pipeline -- ./c_tools/mock/loaders/sdf_loader.cpp
     Copyright (C) 2010-2013 Guilhem Lavaux
-    Copyright (C) 2011-2013 Paul M. Sutter
+    Copyright (C) 2011-2013 P. M. Sutter
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 +*/
+
 
 
 #include <iostream>
