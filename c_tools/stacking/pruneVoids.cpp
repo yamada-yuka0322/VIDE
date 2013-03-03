@@ -1,3 +1,24 @@
+/*+
+    VIDE -- Void IDEntification pipeline -- ./c_tools/stacking/pruneVoids.cpp
+    Copyright (C) 2010-2013 Guilhem Lavaux
+    Copyright (C) 2011-2013 P. M. Sutter
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; version 2 of the License.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++*/
+
+
+
 // Reads in the void catalog and removes any void that could potentially
 //   be affected by a mock particle. It does this by computing the longest
 //   particle distance within each void and comparing it to the distance
@@ -548,7 +569,7 @@ int main(int argc, char **argv) {
     }
   }
   voids.resize(iGood);
-  printf("  1st filter: reiGoodected %d obviously bad\n", numWrong); 
+  printf("  1st filter: rejected %d obviously bad\n", numWrong); 
 
   iGood = 0;
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
@@ -559,7 +580,7 @@ int main(int argc, char **argv) {
     }
   }
   voids.resize(iGood);
-  printf("  2nd filter: reiGoodected %d too small\n", numTooSmall); 
+  printf("  2nd filter: rejected %d too small\n", numTooSmall); 
 
 
   iGood = 0;
@@ -572,7 +593,7 @@ int main(int argc, char **argv) {
     }
   }
   voids.resize(iGood);
-  printf("  3rd filter: reiGoodected %d too close to high redshift boundaries\n", numNearZ); 
+  printf("  3rd filter: rejected %d too close to high redshift boundaries\n", numNearZ); 
 
   numNearZ = 0;
   iGood = 0;
@@ -586,7 +607,7 @@ int main(int argc, char **argv) {
     }
   }
   voids.resize(iGood);
-  printf("  4th filter: reiGoodected %d too close to low redshift boundaries\n", numNearZ); 
+  printf("  4th filter: rejected %d too close to low redshift boundaries\n", numNearZ); 
 
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
     if (voids[iVoid].centralDen > args.maxCentralDen_arg) {

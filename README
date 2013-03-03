@@ -1,4 +1,35 @@
+\        /   /   |-\    -----
+ \      /    |   |  \   |
+  \    /    /    |   |  |--
+   \  /     |    |  /   |
+    \/      /    |-/    -----
+
+*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+
+This is VIDE. The Void IDEntifier pipeline.
+
+
+License/Copyright information
+-----------------------------
+
+Copyright (C) 2010-2013 Guilhem Lavaux, 2011-2013 Paul M. Sutter.
+This software is put under the GNU Public License. Please see LICENSE
+for further information.
+
+
+Parts of the pipeline includes ZOBOV. See zobov/zobov_readme.txt for 
+copyright/license information
+
+Building
+--------
+
+
 After compiling, go to the pipeline directory.
+
+
+Using the pipeline
+------------------
+
 
 Create a dataset parameter file. Look at datasets/multidark.py for 
 an example. Describe the simulation, where to put outputs, how many 

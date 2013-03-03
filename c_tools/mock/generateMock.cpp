@@ -1,3 +1,24 @@
+/*+
+    VIDE -- Void IDEntification pipeline -- ./c_tools/mock/generateMock.cpp
+    Copyright (C) 2010-2013 Guilhem Lavaux
+    Copyright (C) 2011-2013 P. M. Sutter
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; version 2 of the License.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++*/
+
+
+
 #include <gsl/gsl_rng.h>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
@@ -349,6 +370,8 @@ void buildBox(SimuData *simu, long num_targets, long loaded,
   for (uint32_t i = 0; i < num_targets; i++, loaded++)
     {
       long pid = particle_id[loaded];
+      assert(pid < simu->NumPart);
+      assert(loaded < boxed->NumPart);
       
       for (int j = 0; j < 3; j++)
 	{
@@ -513,7 +536,7 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
            {
              particle_id[pid_write] = particle_id[pid_read];
              uniqueID[pid_write] = uniqueID[pid_read];
-             expansion_fac[pid_write] = uniqueID[pid_read];
+             expansion_fac[pid_write] = expansion_fac[pid_read];
              pid_write++; 
            }
           pid_read++;
@@ -618,6 +641,12 @@ int main(int argc, char **argv)
     {
       loader = multidarkLoader(args_info.multidark_arg, preselector);      
     }
+#ifdef SDF_SUPPORT
+  else if (args_info.sdf_given)
+    {
+      loader = sdfLoader(args_info.sdf_arg, args_info.sdf_splitting_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID, preselector);
+    }
+#endif
   else
     {
       cerr << "A simulation snapshot is required to generate a mock catalog." << endl;

@@ -1,3 +1,22 @@
+#+
+#   VIDE -- Void IDEntification pipeline -- ./python_tools/void_python_tools/backend/launchers.py
+#   Copyright (C) 2010-2013 Guilhem Lavaux
+#   Copyright (C) 2011-2013 P. M. Sutter
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; version 2 of the License.
+# 
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#+
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 # routines which communicate with individual data analysis portions - 
@@ -105,37 +124,43 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
     datafile = inputDataDir+"/"+sample.dataFile
 
-    if regenerate:
-      inputParameterFlag = "inputParameter " + zobovDir+"/zobov_slice_"+sampleName+".par"
-      outputFile = zobovDir+"/regenerated_zobov_slice_" + sampleName 
-    else:
-      inputParameterFlag = ""
-      outputFile = zobovDir+"/zobov_slice_" + sampleName
+    prevSubSample = -1
+    for thisSubSample in sample.subsample.split(', '):
 
-    if sample.usePecVel:
-      includePecVelString = "peculiarVelocities"
-    else:
+      if prevSubSample == -1:
+        inputParameterFlag = ""
+        outputFile = zobovDir+"/zobov_slice_" + sampleName + "_ss" + thisSubSample
+        keepFraction = float(thisSubSample)
+        subSampleLine = "subsample %g" % keepFraction
+      else:
+        inputParameterFlag = "inputParameter " + zobovDir+"/zobov_slice_"+\
+                             sampleName+"_ss"+prevSubSample+".par"
+        outputFile = zobovDir+"/_zobov_slice_" + sampleName + "_ss" + thisSubSample
+        keepFraction = float(thisSubSample)/float(prevSubSample)
+        subSampleLine = "resubsample %g" % keepFraction
+
       includePecVelString = ""
+      if sample.usePecVel: includePecVelString = "peculiarVelocities"
 
-    if sample.useLightCone:
-      useLightConeString = "cosmo"
-    else:
       useLightConeString = ""
+      if sample.useLightCone: useLightConeString = "cosmo"
 
-    if sample.dataFormat == "multidark" or sample.dataFormat == "random":
-      dataFileLine = "multidark " + datafile
-    elif sample.dataFormat == "gadget":
-      dataFileLine = "gadget " + datafile
+      if sample.dataFormat == "multidark" or sample.dataFormat == "random":
+        dataFileLine = "multidark " + datafile
+      elif sample.dataFormat == "gadget":
+        dataFileLine = "gadget " + datafile
+      elif sample.dataFormat == "sdf":
+        dataFileLine = "sdf " + datafile
     
-    iX = float(sample.mySubvolume[0])
-    iY = float(sample.mySubvolume[1])
+      iX = float(sample.mySubvolume[0])
+      iY = float(sample.mySubvolume[1])
 
-    xMin = iX/sample.numSubvolumes * sample.boxLen
-    yMin = iY/sample.numSubvolumes * sample.boxLen
-    xMax = (iX+1)/sample.numSubvolumes * sample.boxLen
-    yMax = (iY+1)/sample.numSubvolumes * sample.boxLen
+      xMin = iX/sample.numSubvolumes * sample.boxLen
+      yMin = iY/sample.numSubvolumes * sample.boxLen
+      xMax = (iX+1)/sample.numSubvolumes * sample.boxLen
+      yMax = (iY+1)/sample.numSubvolumes * sample.boxLen
 
-    conf="""
+      conf="""
       %s
       output %s
       outputParameter %s
@@ -148,36 +173,52 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       rangeY_max %g
       rangeZ_min %g
       rangeZ_max %g
-      subsample %g
+      %s
       %s
       """ % (dataFileLine, outputFile,
-             zobovDir+"/zobov_slice_"+sampleName+".par",
+             outputFile+".par",
              includePecVelString,
              useLightConeString,
              sample.dataUnit,
              xMin, xMax, yMin, yMax,
              sample.zBoundaryMpc[0], sample.zBoundaryMpc[1],
-             sample.subsample,inputParameterFlag)
+             subSampleLine,inputParameterFlag)
 
-    parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
+      parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
 
-    file(parmFile, mode="w").write(conf)
+      file(parmFile, mode="w").write(conf)
 
-    if regenerate or not (continueRun and jobSuccessful(logFile, "Done!\n")):
-      cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
-      os.system(cmd)
-      if jobSuccessful(logFile, "Done!\n"):
-        print "done"
-      else:
-        print "FAILED!"
-        exit(-1)
+      doneLine = "Done! %5.2e\n" % keepFraction
+      print "TEST", doneLine
+      if not (continueRun and jobSuccessful(logFile, doneLine)):
+        if (prevSubSample == -1):
+          cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
+        else:
+          cmd = "%s --configFile=%s &>> %s" % (binPath,parmFile,logFile)
+        os.system(cmd)
+      
+        if not jobSuccessful(logFile, doneLine):
+          print "FAILED!"
+          exit(-1)
 
-    else:
-      print "already done!"
+      # remove intermediate files
+      if (prevSubSample != -1):
+       os.unlink(zobovDir+"/zobov_slice_"+sampleName+"_ss"+prevSubSample+".par")
+       os.unlink(zobovDir+"/zobov_slice_"+sampleName+"_ss"+prevSubSample)
+
+      prevSubSample = thisSubSample
+
+    if (continueRun and jobSuccessful(logFile, doneLine)): print "already done!"
+    if jobSuccessful(logFile, doneLine): print "done"
+ 
+    # place the final subsample     
+    os.system("mv %s %s" % (zobovDir+"/zobov_slice_"+sampleName+"_ss"+\
+              prevSubSample, zobovDir+"/zobov_slice_"+sampleName))
+    os.system("mv %s %s" % (zobovDir+"/zobov_slice_"+sampleName+"_ss"+\
+              prevSubSample+".par", zobovDir+"/zobov_slice_"+sampleName+".par"))
 
     if os.access("comoving_distance.txt", os.F_OK):
       os.system("mv %s %s" % ("comoving_distance.txt", zobovDir))
-      #os.system("mv %s %s" % ("sample_info.txt", zobovDir))
 
     if os.access(parmFile, os.F_OK):
       os.unlink(parmFile)
@@ -417,7 +458,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     maxDen = 0.2*float(maskIndex)/float(totalPart)
   else:
     maskIndex = 999999999
-    maxDen = -0.8
+    maxDen = 0.2
 
   if INCOHERENT:
     nullTestFlag = "INCOHERENT"
