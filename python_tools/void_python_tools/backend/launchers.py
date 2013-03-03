@@ -113,12 +113,14 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
         outputFile = zobovDir+"/zobov_slice_" + sampleName + "_ss" + thisSubSample
         keepFraction = float(thisSubSample)
         subSampleLine = "subsample %g" % keepFraction
+        resubSampleLine = ""
       else:
         inputParameterFlag = "inputParameter " + zobovDir+"/zobov_slice_"+\
                              sampleName+"_ss"+prevSubSample+".par"
         outputFile = zobovDir+"/_zobov_slice_" + sampleName + "_ss" + thisSubSample
         keepFraction = float(thisSubSample)/float(prevSubSample)
-        subSampleLine = "resubsample %g" % keepFraction
+        subSampleLine += "subsample %g" % keepFraction
+        resubSampleLine = "resubsample %g" % keepFraction
 
       includePecVelString = ""
       if sample.usePecVel: includePecVelString = "peculiarVelocities"
@@ -156,6 +158,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       rangeZ_max %g
       %s
       %s
+      %s
       """ % (dataFileLine, outputFile,
              outputFile+".par",
              includePecVelString,
@@ -163,7 +166,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
              sample.dataUnit,
              xMin, xMax, yMin, yMax,
              sample.zBoundaryMpc[0], sample.zBoundaryMpc[1],
-             subSampleLine,inputParameterFlag)
+             subSampleLine,resubSampleLine,inputParameterFlag)
 
       parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
 
@@ -671,7 +674,7 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         shutil.copy(workDir+"/sample_"+comboName+"/galaxies.txt", zobovDir)
       elif not doneGalUpdate:
         dataTemp = file(workDir+"/sample_"+comboName+"/galaxies.txt", 
-"r").read()
+                        "r").read()
         file(zobovDir+"/galaxies.txt", "a").write(dataTemp)
 
       sourceStackDir = workDir+"/sample_"+comboName+"/stacks_"+\
@@ -739,8 +742,9 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         idxTemp = file(sourceStackDir+"/z_void_indexes.txt", "r").\
                   readlines()
         idxTemp = np.array(idxTemp, dtype='i')
-        dataTemp = (NetCDFFile(voidDir+"/z_posx.nc").\
-                   variables['array'])[0:]
+        fp = NetCDFFile(voidDir+"/z_posx.nc")
+        dataTemp = fp.variables['array'][0:]
+        fp.close()
         idxTemp[:] += len(dataTemp)
         fp = open(voidDir+"/z_void_indexes.txt", "a")
         for idx in idxTemp:
@@ -790,8 +794,9 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
         idxTemp = file(sourceStackDir+"/void_indexes.txt", "r").\
                   readlines()
         idxTemp = np.array(idxTemp, dtype='i')
-        dataTemp = (NetCDFFile(voidDir+"/posx.nc").\
-                   variables['array'])[0:]
+        fp = NetCDFFile(voidDir+"/posx.nc")
+        dataTemp = fp.variables['array'][0:]
+        fp.close()
         idxTemp[:] += len(dataTemp)
         fp = open(voidDir+"/void_indexes.txt", "a")
         for idx in idxTemp:
