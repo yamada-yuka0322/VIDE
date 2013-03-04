@@ -545,6 +545,7 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
     }  
   boxed->NumPart = pid_write; 
   delete preselect;
+  cout << "Num accepted here = " << pid_write <<  " / input = " << pid_read << endl; 
 }
 
 void makeBoxFromSimulation(SimulationLoader *loader, SimuData* &boxed, MetricFunctor metric, generateMock_info& args_info)
