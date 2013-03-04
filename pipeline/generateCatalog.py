@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #+
 #   VIDE -- Void IDEntification pipeline -- ./pipeline/generateCatalog.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
@@ -17,7 +18,6 @@
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #+
-#!/usr/bin/env python
 
 # does full void analysis. Also generates 2d/1d stacked plots and hubble diagram
 

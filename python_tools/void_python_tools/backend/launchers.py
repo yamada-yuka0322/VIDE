@@ -124,21 +124,30 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
     datafile = inputDataDir+"/"+sample.dataFile
 
+    # check if the final subsampling is done
+    lastSample = sample.subsample.split(', ')[-1]
+    doneLine = "Done! %5.2e\n" % float(lastSample)
+    if (continueRun and jobSuccessful(logFile, doneLine)): 
+      print "already done!"
+      return
+
     prevSubSample = -1
     for thisSubSample in sample.subsample.split(', '):
 
       if prevSubSample == -1:
         inputParameterFlag = ""
-        outputFile = zobovDir+"/zobov_slice_" + sampleName + "_ss" + thisSubSample
+        outputFile = zobovDir+"/zobov_slice_" + sampleName + "_ss" + \
+                     thisSubSample
         keepFraction = float(thisSubSample)
         subSampleLine = "subsample %g" % keepFraction
         resubSampleLine = ""
       else:
         inputParameterFlag = "inputParameter " + zobovDir+"/zobov_slice_"+\
                              sampleName+"_ss"+prevSubSample+".par"
-        outputFile = zobovDir+"/_zobov_slice_" + sampleName + "_ss" + thisSubSample
+        outputFile = zobovDir+"/zobov_slice_" + sampleName + "_ss" + \
+                     thisSubSample
         keepFraction = float(thisSubSample)/float(prevSubSample)
-        subSampleLine += "subsample %g" % keepFraction
+        subSampleLine = "subsample %g" % keepFraction
         resubSampleLine = "resubsample %g" % keepFraction
 
       includePecVelString = ""
@@ -191,27 +200,24 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
       file(parmFile, mode="w").write(conf)
 
-      doneLine = "Done! %5.2e\n" % keepFraction
-      print "TEST", doneLine
-      if not (continueRun and jobSuccessful(logFile, doneLine)):
-        if (prevSubSample == -1):
-          cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
-        else:
-          cmd = "%s --configFile=%s &>> %s" % (binPath,parmFile,logFile)
-        os.system(cmd)
-      
-        if not jobSuccessful(logFile, doneLine):
-          print "FAILED!"
-          exit(-1)
-
+      if (prevSubSample == -1):
+        cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
+      else:
+        cmd = "%s --configFile=%s &>> %s" % (binPath,parmFile,logFile)
+      os.system(cmd)
+ 
       # remove intermediate files
       if (prevSubSample != -1):
        os.unlink(zobovDir+"/zobov_slice_"+sampleName+"_ss"+prevSubSample+".par")
        os.unlink(zobovDir+"/zobov_slice_"+sampleName+"_ss"+prevSubSample)
 
+      doneLine = "Done! %5.2e\n" % keepFraction
+      if not jobSuccessful(logFile, doneLine):
+        print "FAILED!"
+        exit(-1)
+
       prevSubSample = thisSubSample
 
-    if (continueRun and jobSuccessful(logFile, doneLine)): print "already done!"
     if jobSuccessful(logFile, doneLine): print "done"
  
     # place the final subsample     
