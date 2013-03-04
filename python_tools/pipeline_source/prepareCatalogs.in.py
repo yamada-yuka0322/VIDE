@@ -434,6 +434,7 @@ if (args.halos or args.all) and haloFileBase != "":
 
       if dataFormat == "sdf":
         # TODO process halo file with SDFcvt
+        SDFcvt_PATH = "@CMAKE_BINARY_DIR@/ep_build/sdf/bin/SDFcvt/"
         outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
         outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
         outFile.close()

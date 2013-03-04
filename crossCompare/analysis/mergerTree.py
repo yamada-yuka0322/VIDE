@@ -44,6 +44,7 @@ for (iSample, sampleDir) in enumerate(sampleDirList):
     sample = pickle.load(input)
 
   print " Working with", sample.fullName, "...",
+  sys.stdout.flush()
 
   sampleName = sample.fullName
 
@@ -53,11 +54,12 @@ for (iSample, sampleDir) in enumerate(sampleDirList):
                        sampleName + "_"
   #stepOutputFileName = os.getcwd()+"/data/overlap_"
 
-  launchVoidOverlap(baseSample, sample, workDir+baseSampleDir, 
-                    workDir+sampleDir, binPath, 
+  launchVoidOverlap(sample, baseSample, workDir+sampleDir, 
+                    workDir+baseSampleDir, binPath, 
                     thisDataPortion="central", logFile=logFile,
                     continueRun=False, workDir=workDir,
-                    outputFile=stepOutputFileName)
+                    outputFile=stepOutputFileName,
+                    matchMethod="proximity")
 
   # attach columns to summary file
   #if iSample == 1:
