@@ -462,7 +462,6 @@ if (args.halos or args.all) and haloFileBase != "":
       outFile.close()
 
       if dataFormat == "sdf":
-        # TODO process halo file with SDFcvt
         SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
         if minHaloMass == "none": minHaloMass = 0.0
         command = "%s %s mass id x y z vz vy vx | awk '{if ($1>%g) print $2, $3, $4, $5, $6, $7, $8}'>>%s" % (SDFcvt_PATH, dataFile, minHaloMass, outFileName )
@@ -538,7 +537,7 @@ if (args.script or args.all) and haloFileBase != "":
   print " Doing HOD scripts"
   sys.stdout.flush()
   for thisHod in hodParmList:
-    print "   ", thisHod['name']
+    print "  ", thisHod['name']
     setName = prefix+"hod_"+thisHod['name']
     writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
                 scriptDir, catalogDir, fileNums, redshifts, 
@@ -550,28 +549,30 @@ if (args.script or args.all) and haloFileBase != "":
 if (args.hod or args.all) and haloFileBase != "":
   print " Doing HOD"
   sys.stdout.flush()
-  for thisHod in hodParmList:
-    print "   ", thisHod['name']
+  for (iRedshift, redshift) in enumerate(redshifts):
+    print "  z = ", redshift
     sys.stdout.flush()
-    for (iRedshift, redshift) in enumerate(redshifts):
-      print "  z = ", redshift
+
+    if haloFileDummy == '':
+      haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
+    else:
+      haloFile = catalogDir+haloFileBase.replace(haloFileDummy,
+                                                 fileNums[iRedshift])
+
+    if dataFormat == "sdf":
+      inFile = haloFile
+      outFile = haloFile+"_temp"
+      SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
+      command = "%s %s mass x y z vx vy vz>>%s" % (SDFcvt_PATH, inFile, outFile)
+      os.system(command)
+      haloFile = outFile
+
+    for thisHod in hodParmList:
+      print "   ", thisHod['name']
       sys.stdout.flush()
 
       parFileName = "./hod.par"
       parFile = open(parFileName, 'w')
-      if haloFileDummy == '':
-        haloFile = catalogDir+haloFileBase+fileNums[iRedshift]
-      else:
-        haloFile = catalogDir+haloFileBase.replace(haloFileDummy,
-                                                 fileNums[iRedshift])
-
-      if dataFormat == "sdf":
-        # TODO process halo file with SDFcvt
-        inFile = haloFile
-        outFile = haloFile+"_temp"
-
-        haloFile = outFile
-
       parFile.write(parFileText.format(omegaM=omegaM,
                                      hubble=hubble,
                                      redshift=redshift,
@@ -597,6 +598,6 @@ if (args.hod or args.all) and haloFileBase != "":
       os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
       os.system("rm %s/hod.*" % catalogDir)
 
-      os.system("rm %s" % haloFile)
+    if dataFormat == "sdf": os.system("rm %s" % haloFile)
 
 print " Done!"
