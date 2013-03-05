@@ -370,7 +370,7 @@ void buildBox(SimuData *simu, long num_targets, long loaded,
   for (uint32_t i = 0; i < num_targets; i++, loaded++)
     {
       long pid = particle_id[loaded];
-      assert(pid < simu->NumPart);
+      //assert(pid < simu->NumPart);
       assert(loaded < boxed->NumPart);
       
       for (int j = 0; j < 3; j++)
@@ -545,6 +545,7 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
     }  
   boxed->NumPart = pid_write; 
   delete preselect;
+  cout << "Num accepted here = " << pid_write <<  " / input = " << pid_read << endl; 
 }
 
 void makeBoxFromSimulation(SimulationLoader *loader, SimuData* &boxed, MetricFunctor metric, generateMock_info& args_info)
@@ -712,7 +713,10 @@ int main(int argc, char **argv)
   generateOutput(simuOut, args_info.axis_arg, 
                  args_info.output_arg);
   delete preselector;
-  
-  printf("Done!\n"); 
+ 
+  double subsample = 1.0;
+  if (args_info.subsample_given) subsample = args_info.subsample_arg;
+  if (args_info.resubsample_given) subsample = args_info.resubsample_arg;
+  printf("Done! %5.2e\n", subsample); 
   return 0;
 }

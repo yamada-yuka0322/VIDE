@@ -286,7 +286,7 @@ int main(int argc, char **argv) {
       rdist = catalog1.voids[iVoid1].matches[0].dist;
       rdist /= catalog1.voids[iVoid1].radius;
 
-      fprintf(fp, "%d %.2f %.2f %.2f %.2f %.2f %d %d\n", voidID, 
+      fprintf(fp, "%d %.4f %.4f %.4f %.4f %.4f %d %d\n", voidID, 
                                    catalog1.voids[iVoid1].radiusMpc,
                                    rRatio, 
                                    commonVolRatio,

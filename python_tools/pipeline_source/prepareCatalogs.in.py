@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #+
 #   VIDE -- Void IDEntification pipeline -- ./python_tools/pipeline_source/prepareCatalogs.in.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
@@ -17,7 +18,6 @@
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #+
-#!/usr/bin/env python
 
 # prepares input catalogs based on multidark simulations
 #   (borrows heavily from generateMock, but doesn't hold much in memory)
@@ -453,6 +453,7 @@ if (args.halos or args.all) and haloFileBase != "":
 
       if dataFormat == "sdf":
         # TODO process halo file with SDFcvt
+        SDFcvt_PATH = "@CMAKE_BINARY_DIR@/ep_build/sdf/bin/SDFcvt/"
         outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
         outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
         outFile.close()

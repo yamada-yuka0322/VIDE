@@ -30,12 +30,12 @@ catalogDir = os.getenv("HOME")+"/workspace/Voids/catalogs/multidark/"
 hodPath = os.getenv("HOME")+"/projects/Voids/hod/HOD.x"
 
 # where to put the final void catalog, figures, and output logs
-voidOutputDir = os.getenv("HOME")+"/workspace/Voids/multidark_nocone/"
-figDir = os.getenv("PWD")+"/../figs/multidark_nocone/"
-logDir = os.getenv("PWD")+"/../logs/multidark_nocone/"
+voidOutputDir = os.getenv("HOME")+"/workspace/Voids/multidark/"
+figDir = os.getenv("PWD")+"/../figs/multidark/"
+logDir = os.getenv("PWD")+"/../logs/multidark/"
 
 # where to place the pipeline scripts
-scriptDir = os.getenv("PWD")+"/multidark_nocone/"
+scriptDir = os.getenv("PWD")+"/multidark/"
 
 # simulation or observation?
 dataType = "simulation"
@@ -49,15 +49,19 @@ useLightCone = False
 
 # common filename of particle files
 particleFileBase = "mdr1_particles_z"
+particleFileDummy = ''
 
 # list of file numbers for the particle files
 # to get particle file name, we take particleFileBase+fileNum
 #fileNums = ["0.53"]
-fileNums = ["0.0", "0.53", "1.0"]
+fileNums = ["0.0"]
+#fileNums = ["0.0", "0.53", "1.0"]
 
 # redshift of each file in the above list
 #redshifts = ["0.53"]
-redshifts = ["0.0", "0.53", "1.0"]
+redshifts = ["0.0"]
+#redshifts = ["0.0", "0.53"]
+#redshifts = ["0.0", "0.53", "1.0"]
 
 # how many independent slices along the z-axis?
 numSlices = 1
@@ -71,7 +75,7 @@ numSubvolumes = 1
 prefix = "md_"
 
 # list of desired subsamples - these are in unts of h Mpc^-3!
-#subSamples = [0.0004]
+#subSamples = [0.01]
 subSamples = [0.1, 0.05, 0.01, 0.002, 0.001, 0.0004, 0.000175, 0.00001]
 
 # common filename of halo files, leave blank to ignore halos
@@ -97,11 +101,12 @@ haloFileNumComLines = 0
 # adjust these two parameters given the memory contraints on your system:
 #   numZobovDivisions: how many sub-volumes per dimension will zobov process
 #   numZobovThreads: how many sub-volumes to process at once?   
-numZobovDivisions = 4
+numZobovDivisions = 2
 numZobovThreads = 2
 
 # simulation information
-numPart = 2048*2048*2048
+numPart = 100000000
+#numPart = 2048*2048*2048
 lbox = 1000 # Mpc/h
 omegaM = 0.27
 hubble = 0.70
