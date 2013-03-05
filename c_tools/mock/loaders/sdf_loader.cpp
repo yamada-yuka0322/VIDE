@@ -123,7 +123,12 @@ public:
       return 0;
 
     d = new SimuData;
-    *d = *sdf_header;
+    d->BoxSize = sdf_header->BoxSize;
+    d->time = sdf_header->time;
+    d->Hubble = sdf_header->Hubble;
+    d->Omega_M = sdf_header->Omega_M;
+    d->Omega_Lambda = sdf_header->Omega_Lambda;
+    
     d->NumPart = getNumberInSplit(id);
 
     int64_t numPartToLoad = getNumberInSplit(id);
