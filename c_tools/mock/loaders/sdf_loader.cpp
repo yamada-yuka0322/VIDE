@@ -193,6 +193,7 @@ SimulationLoader *sdfLoader(const std::string& snapshot, int flags,
     {
       return 0;
     }
+   cout << "Loading SDF with artificial splitting " << num_splitting << endl;
   
   SDFgetintOrDefault(sdfp, "version", &fileversion, 1);
   if (fileversion == 1)
@@ -215,7 +216,8 @@ SimulationLoader *sdfLoader(const std::string& snapshot, int flags,
       
     }
   double h0;
-  h0 = hdr->Hubble*10.0*(one_kpc/one_Gyr);
+  hdr->Hubble *= 10.0;
+  h0 = hdr->Hubble*(one_kpc/one_Gyr);
 
   if (SDFhasname("R0", sdfp))
     {
