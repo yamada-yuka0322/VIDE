@@ -1,3 +1,12 @@
+/*+
+
+!!! NOTE !!!
+
+This file has been developped by P. M. Sutter.
+
+!!!!
+
++*/
 /* This file contains the functions that read the data from the HDF5 file
  * The functions accept the PARAMESH data through arguments.
  */

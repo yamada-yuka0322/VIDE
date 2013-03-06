@@ -1,3 +1,10 @@
+/*+
+!!
+
+This particular file has been developped by P. M. Sutter
+
+!!
++*/
 /* general header file for the HDF 5 IO in FLASH */
 
 

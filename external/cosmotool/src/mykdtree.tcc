@@ -1,3 +1,4 @@
+#include "replicateGenerator.hpp"
 #include <cstring>
 #include <algorithm>
 #include <limits>
@@ -31,7 +32,8 @@ namespace CosmoTool {
   template<int N, typename ValType, typename CType, typename CellSplitter>
   KDTree<N,ValType,CType,CellSplitter>::KDTree(Cell *cells, uint32_t Ncells)
   {
-    
+    periodic = false; 
+
     base_cell = cells;
     numNodes = Ncells;
     nodes = new Node[numNodes];
@@ -93,6 +95,19 @@ namespace CosmoTool {
     info.distances = 0;
 
     recursiveIntersectionCells<false>(info, root, 0);
+    if (periodic)
+      {
+        ReplicateGenerator<float, N> r(x, replicate);
+
+        do
+          {
+            coords x_new;
+            r.getPosition(info.x);
+            recursiveIntersectionCells<false>(info, root, 0);
+          }
+        while (r.next());
+      }
+
     return info.currentRank;
   }
 
@@ -114,6 +129,18 @@ namespace CosmoTool {
     info.distances = distances;
 
     recursiveIntersectionCells<false>(info, root, 0);
+    if (periodic)
+      {
+        ReplicateGenerator<float, N> r(x, replicate);
+
+        do
+          {
+            coords x_new;
+            r.getPosition(info.x);
+            recursiveIntersectionCells<false>(info, root, 0);
+          }
+        while (r.next());
+      }
     return info.currentRank;
   }
 
@@ -131,6 +158,19 @@ namespace CosmoTool {
     info.distances = 0;
 
     recursiveIntersectionCells<true>(info, root, 0);
+    if (periodic)
+      {
+        ReplicateGenerator<float, N> r(x, replicate);
+
+        do
+          {
+            coords x_new;
+            r.getPosition(info.x);
+            recursiveIntersectionCells<true>(info, root, 0);
+          }
+        while (r.next());
+      }
+
     return info.currentRank;
   }
 
@@ -365,7 +405,19 @@ namespace CosmoTool {
    CoordType R2 = INFINITY;
    Cell *best = 0;
 
-   recursiveNearest(root, 0, x, R2, best);   
+   recursiveNearest(root, 0, x, R2, best);
+   if (periodic)
+     {
+       ReplicateGenerator<float, N> r(x, replicate);
+
+       do
+         {
+           coords x_new;
+           r.getPosition(x_new);
+           recursiveNearest(root, 0, x_new, R2, best); 
+         }
+       while (r.next());
+     }
    
    return best;
  }
@@ -437,6 +489,18 @@ namespace CosmoTool {
      cells[i] = 0;
 
    recursiveMultipleNearest(info, root, 0);
+   if (periodic)
+    {
+       ReplicateGenerator<float, N> r(x, replicate);
+
+       do
+         {
+           coords x_new;
+           r.getPosition(info.x);
+           recursiveMultipleNearest(info, root, 0);
+         }
+       while (r.next());
+    }
 
    //   std::cout << "Traversed = " << info.traversed << std::endl;
  }
@@ -452,9 +516,19 @@ namespace CosmoTool {
      cells[i] = 0;
 
    recursiveMultipleNearest(info, root, 0);
-   memcpy(distances, info.queue.getPriorities(), sizeof(CoordType)*N2);
+   if (periodic)
+    {
+       ReplicateGenerator<float, N> r(x, replicate);
 
-   //   std::cout << "Traversed = " << info.traversed << std::endl;
+       do
+         {
+           coords x_new;
+           r.getPosition(info.x);
+           recursiveMultipleNearest(info, root, 0);
+         }
+       while (r.next());
+    }
+   memcpy(distances, info.queue.getPriorities(), sizeof(CoordType)*N2);
  }
 
 #ifdef __KD_TREE_SAVE_ON_DISK
