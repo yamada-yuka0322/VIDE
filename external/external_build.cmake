@@ -1,7 +1,7 @@
 include(FindOpenMP)
 
 OPTION(ENABLE_OPENMP "Set to Yes if Healpix and/or you need openMP" OFF)
-OPTION(SDF_SUPPORT "Set to Yes to activate support for SDF" OFF)
+OPTION(SDF_SUPPORT "Set to Yes to activate support for SDF" ON)
 
 IF(ENABLE_OPENMP)
 
