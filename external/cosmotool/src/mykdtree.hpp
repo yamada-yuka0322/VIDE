@@ -136,7 +136,13 @@ namespace CosmoTool {
     void setPeriodic(bool on, CoordType replicate)
      {
        periodic = on;
-       this->replicate = replicate;
+       std::fill(this->replicate, this->replicate+N, replicate);
+     }
+
+    void setPeriodic(bool on, const coords& replicate)
+     {
+       periodic = on;
+       std::copy(replicate, replicate+N, this->replicate);
      }
 
     uint32_t getIntersection(const coords& x, CoordType r, 
@@ -193,7 +199,7 @@ namespace CosmoTool {
     Cell *base_cell;
 
     bool periodic;
-    CoordType replicate;
+    coords replicate;
 
     Node *buildTree(Cell **cell0,
 		    uint32_t NumCells,

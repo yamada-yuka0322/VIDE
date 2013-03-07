@@ -46,17 +46,28 @@ namespace CosmoTool
   {
   public:
     typedef Coord Coords[N];
-    Coord replicate;
+    Coords replicate;
 
     ReplicateGenerator(const Coords& x, Coord shift)
     {
       face = 0; 
-      replicate = shift;
+      std::fill(replicate, replicate+N, shift);
       numFaces = spower<N,long>(3);
       std::copy(x, x+N, x_base);
       if (!next())
 	abort();
     }
+
+    ReplicateGenerator(const Coords& x, Coords& shift)
+    {
+      face = 0;
+      std::copy(shift, shift+N, replicate);
+      numFaces = spower<N,long>(3);
+      std::copy(x, x+N, x_base);
+      if (!next())
+        abort();
+    }
+
 
     bool next()
     {
@@ -72,7 +83,7 @@ namespace CosmoTool
           int c_face;
           c_face = q_face % 3;
           q_face /= 3;
-          x_shifted[i] = x_base[i] + (c_face-1)*replicate;
+          x_shifted[i] = x_base[i] + (c_face-1)*replicate[i];
           no_move = no_move && (c_face == 1);
         }
       if (no_move)
