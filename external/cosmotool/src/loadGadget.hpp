@@ -36,6 +36,8 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifndef __COSMO_LOAD_GADGET_HPP
 #define __COSMO_LOAD_GADGET_HPP
 
+#include <string>
+
 #include "load_data.hpp"
 #include "loadSimu.hpp"
 
@@ -45,7 +47,7 @@ namespace CosmoTool {
 			    int GadgetFormat = 1, SimuFilter filter = 0);
  
   // Only single snapshot supported
-  void writeGadget(const char *fname, SimuData *data, int GadgetFormat = 1);
+  void writeGadget(const std::string& fname, SimuData *data, int GadgetFormat = 1);
  
 };
 

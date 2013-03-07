@@ -268,10 +268,10 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
 
 
 
-void CosmoTool::writeGadget(const char *fname, SimuData *data, int GadgetFormat)
+void CosmoTool::writeGadget(const std::string& fname, SimuData *data, int GadgetFormat)
 {
   UnformattedWrite *f;
-  int npart[6];
+  int npart[6], npartTotal[6];
   float mass[6];
 
   if (data->Pos[0] == 0 || data->Vel[0] == 0 || data->Id == 0)
@@ -283,12 +283,12 @@ void CosmoTool::writeGadget(const char *fname, SimuData *data, int GadgetFormat)
 
   for (int i = 0; i < 6; i++)
     {
-      npart[i] = 0;
+      npart[i] = npartTotal[i] = 0;
       mass[i] = 0;
     }
   mass[1] = 1.0;
-
   npart[1] = data->NumPart;
+  npartTotal[1] = data->TotalNumPart;
   
   f->beginCheckpoint();
   for (int i = 0; i < 6; i++)
@@ -302,7 +302,7 @@ void CosmoTool::writeGadget(const char *fname, SimuData *data, int GadgetFormat)
   f->writeInt32(0);
 
   for (int i = 0; i < 6; i++)
-    f->writeInt32(npart[i]);
+    f->writeInt32(npartTotal[i]);
   f->writeInt32(0);
   f->writeInt32(1);
   f->writeReal64(data->BoxSize);
