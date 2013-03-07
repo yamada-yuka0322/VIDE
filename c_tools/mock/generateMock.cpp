@@ -259,7 +259,7 @@ void selectBox(SimuData *simu, std::vector<long>& targets, generateMock_info& ar
 	acceptance = 
 	  acceptance &&
 	  (simu->Pos[j][i] > ranges[j][0]) && 
-	  (simu->Pos[j][i] < ranges[j][1]);	
+	  (simu->Pos[j][i] <= ranges[j][1]);	
         p.Pos[j] = simu->Pos[j][i];
         p.Vel[j] = (simu->Vel[j] != 0) ? simu->Vel[j][i] : 0;
       }
