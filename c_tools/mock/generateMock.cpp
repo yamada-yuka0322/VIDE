@@ -125,6 +125,7 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
       float z_old = z;
 
       double reduced_red = (z + baseComovingDistance)*100./LIGHT_SPEED;
+      double reduced_base = (reshift ? (baseComovingDistance*100./LIGHT_SPEED) : 0);
       try
         {
 
@@ -134,7 +135,7 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
           else if (cosmo_flag)
 	    z = (z_vs_D.compute(reduced_red)-z_base)*LIGHT_SPEED/100.;
           else
-            z = reduced_red*LIGHT_SPEED/100.0;
+            z = (reduced_red-reduced_base)*LIGHT_SPEED/100.0;
 
           if (expfact)
             expfact[i] = z / z_old; 
