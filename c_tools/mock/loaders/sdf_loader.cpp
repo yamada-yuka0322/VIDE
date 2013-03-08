@@ -86,7 +86,7 @@ public:
 #define INFINITY std::numeric_limits<float>::max()
     float shift = 0.5*d->BoxSize;
     rescale_position /= d->time;
-//    float min_pos[3] = {INFINITY,INFINITY, INFINITY}, max_pos[3] = {-INFINITY,-INFINITY,-INFINITY};
+    float min_pos[3] = {INFINITY,INFINITY, INFINITY}, max_pos[3] = {-INFINITY,-INFINITY,-INFINITY};
 
     if (d->Pos[0] != 0)
       {
@@ -95,10 +95,10 @@ public:
             for (int64_t i = 0; i < d->NumPart; i++)
               {
                 d->Pos[k][i] = (d->Pos[k][i]*rescale_position + shift);
-//                min_pos[k] = std::min(min_pos[k], d->Pos[k][i]);
-//                max_pos[k] = std::max(max_pos[k], d->Pos[k][i]);
+                min_pos[k] = std::min(min_pos[k], d->Pos[k][i]);
+                max_pos[k] = std::max(max_pos[k], d->Pos[k][i]);
               }
-//            cout << boost::format("min[%d] = %g, max[%d] = %g") % k % min_pos[k] % k %max_pos[k] << endl;
+            cout << boost::format("min[%d] = %g, max[%d] = %g") % k % min_pos[k] % k %max_pos[k] << endl;
           }
       }
     if (d->Vel[0] != 0)
@@ -190,7 +190,7 @@ public:
     if (load_flags & (NEED_POSITION | NEED_VELOCITY))
       rescaleParticles(d, d->Hubble*1e-5, one_kpc/one_Gyr);
 
-    enforceBoxSize(d);
+//    enforceBoxSize(d);
     applyTransformations(d);
     basicPreprocessing(d, preproc);
 
@@ -236,8 +236,8 @@ SimulationLoader *sdfLoader(const std::string& snapshot, int flags,
       
     }
   double h0;
-  hdr->Hubble *= 1000.0;
-  h0 = hdr->Hubble/100.*(one_kpc/one_Gyr);
+  hdr->Hubble *= 1000.0*(one_kpc/one_Gyr);
+  h0 = hdr->Hubble/100.;
 
   if (SDFhasname("R0", sdfp))
     {
