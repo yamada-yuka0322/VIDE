@@ -98,6 +98,7 @@ int main(int argc, char *argv[]) {
   for (p=0;p<np;p++)
     vols[p] = -1.;
 
+  nvpsum = 0;
   for (i = 0; i < numdiv; i++) {
    for (j = 0; j < numdiv; j++) {
     for (k = 0; k < numdiv; k++) {
