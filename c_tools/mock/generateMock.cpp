@@ -274,7 +274,7 @@ void selectBox(SimuData *simu, std::vector<long>& targets, generateMock_info& ar
         numAccepted++; 
       }
     }
-  cout << "Num accepted here = " << numAccepted <<  " / input = " << simu->NumPart << endl; 
+  cout << "SELECTBOX: Num accepted here = " << numAccepted <<  " / input = " << simu->NumPart << " (after resubsampling)" << endl; 
 }
 
 class PreselectParticles: public SimulationPreprocessor
