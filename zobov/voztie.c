@@ -14,8 +14,8 @@ int main(int argc, char *argv[]) {
 
   int numdiv,np,np2,na;
 
-  int i,j,k,p,nout;
-  int nvp,npnotdone,nvpmax, nvpsum, *orig;
+  pid_t i,j,k,p,nout;
+  pid_t nvp,npnotdone,nvpmax, nvpsum, *orig;
   double avgnadj, avgvol;
 
   int numRemoved = 0;
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
   if (adjs == NULL) printf("Couldn't allocate adjs.\n");
   vols = (float *)malloc(np*sizeof(float));
   if (vols == NULL) printf("Couldn't allocate vols.\n");
-  orig = (int *)malloc(nvpmax*sizeof(int));
+  orig = (pid_t *)malloc(nvpmax*sizeof(pid_t));
   if (orig == NULL) printf("Couldn't allocate orig.\n");
   if ((cnt_adj==NULL) || (vols == NULL) || (orig == NULL) || (adjs == NULL)) {
     printf("Not enough memory to allocate. Exiting.\n");
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
 
       nvpsum += nvp;
 
-      fread(orig,nvp,sizeof(int),part);
+      fread(orig,nvp,sizeof(pid_t),part);
       for (p=0;p<nvp;p++) {
 	fread(&volstemp,1,sizeof(float),part);
 	if (vols[orig[p]] > -1.)
@@ -133,12 +133,12 @@ int main(int argc, char *argv[]) {
 	fread(&na,1,sizeof(int),part);
 	if (na > 0) {
 	  adjs[orig[p]].nadj = na;
-	  adjs[orig[p]].adj = (int *)malloc(na*sizeof(int));
+	  adjs[orig[p]].adj = (pid_t *)malloc(na*sizeof(pid_t));
 	  if (adjs[orig[p]].adj == NULL) {
 	    printf("Couldn't allocate adjs[orig[%d]].adj.\n",p);
 	    exit(0);
 	  }
-	  fread(adjs[orig[p]].adj,na,sizeof(int),part);
+	  fread(adjs[orig[p]].adj,na,sizeof(pid_t),part);
 	} else {
 	  printf("0"); fflush(stdout);
 	}
@@ -272,9 +272,9 @@ printf("\n");
       for (j=0;j<adjs[i].nadj; j++) if (adjs[i].adj[j] > i) nout++;
       fwrite(&nout,1,sizeof(int),adj);      
       for (j=0;j<adjs[i].nadj; j++) {
-        int id = adjs[i].adj[j];
+        pid_t id = adjs[i].adj[j];
 	if (id > i) 
-	  fwrite(&(adjs[i].adj[j]),1,sizeof(int),adj);
+	  fwrite(&id,1,sizeof(pid_t),adj);
       }
     }
 

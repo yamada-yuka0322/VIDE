@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
   PARTADJ *adjs;
   float *vols;
   float predict, xmin,xmax,ymin,ymax,zmin,zmax;
-  int *orig;
+  pid_t *orig;
   
   int isitinbuf;
   char isitinmain, d;
@@ -183,15 +183,16 @@ int main(int argc, char *argv[]) {
   nvpbuf = nvp;
   for (i=0; i<np; i++) {
     isitinbuf = 1;
+    isitinmain = 1;
+
     DL {
       rtemp[d] = r[i][d] - c[d];
       if (rtemp[d] > 0.5) rtemp[d] --;
       if (rtemp[d] < -0.5) rtemp[d] ++;
       isitinbuf = isitinbuf && (fabs(rtemp[d])<totwidth2);
+      isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
     }
-    if ((isitinbuf > 0) &&
-	((fabs(rtemp[0])>width2)||(fabs(rtemp[1])>width2)||(fabs(rtemp[2])>width2))) {
-      
+    if (isitinbuf && !isitinmain) {
       /*printf("%3.3f ",sqrt(rtemp[0]*rtemp[0] + rtemp[1]*rtemp[1] +
 	rtemp[2]*rtemp[2]));
 	printf("|%2.2f,%2.2f,%2.2f,%f,%f",r[i][0],r[i][1],r[i][2],width2,totwidth2);*/
