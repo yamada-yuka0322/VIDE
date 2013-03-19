@@ -12,7 +12,7 @@ int posread(char *posfile, float ***p, float fact);
 
 int main(int argc, char *argv[]) {
   int exitcode;
-  int i, j, np;
+  pid_t i, j, np;
   float **r;
   coordT rtemp[3], *parts;
   coordT deladjs[3*MAXVERVER], points[3*MAXVERVER];
@@ -26,7 +26,8 @@ int main(int argc, char *argv[]) {
   
   int isitinbuf;
   char isitinmain, d;
-  int numdiv, nvp, nvpall, nvpbuf;
+  int numdiv;
+  pid_t nvp, nvpall, nvpbuf;
   float width, width2, totwidth, totwidth2, bf, s, g;
   float border, boxsize;
   float c[3];
