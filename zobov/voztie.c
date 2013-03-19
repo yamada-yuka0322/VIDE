@@ -18,6 +18,8 @@ int main(int argc, char *argv[]) {
   int nvp,npnotdone,nvpmax, nvpsum, *orig;
   double avgnadj, avgvol;
 
+  int numRemoved = 0;
+  
   // PMS
   int mockIndex;
   // END PMS
@@ -157,8 +159,6 @@ int main(int argc, char *argv[]) {
     adjs[i].nadj = 0;
   }
   
-  int numRemoved = 0;
-  
     // unlink particles adjacent to mock galaxies
     for (i = 0; i < mockIndex; i++) {
       for (j = 0; j < adjs[i].nadj; j++) {
@@ -217,7 +217,7 @@ printf("\n");
     avgvol += (double)(vols[p]);
   }
   if (npnotdone > 0)
-    printf("%d particles not done!\n");
+    printf("%d particles not done!\n", npnotdone);
   printf("%d particles done more than once.\n",nvpsum-np);
   avgnadj /= (double)np;
   avgvol /= (double)np;

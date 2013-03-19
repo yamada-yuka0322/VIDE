@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
 					points */
 
   parts = (coordT *)malloc(3*nvpbuf*sizeof(coordT));
-  orig = (int *)malloc(nvpbuf*sizeof(int));
+  orig = (pid_t *)malloc(nvpbuf*sizeof(pid_t));
 
   if (parts == NULL) {
     printf("Unable to allocate parts\n");
@@ -323,14 +323,14 @@ int main(int argc, char *argv[]) {
   printf("nvp = %d\n",nvp);
 
   /* Tell us where the original particles were */
-  fwrite(orig,sizeof(int),nvp,out);
+  fwrite(orig,sizeof(pid_t),nvp,out);
   /* Volumes*/
   fwrite(vols,sizeof(float),nvp,out);
   /* Adjacencies */
   for (i=0;i<nvp;i++) {
-    fwrite(&(adjs[i].nadj),1,sizeof(int),out);
+    fwrite(&(adjs[i].nadj),1,sizeof(pid_t),out);
     if (adjs[i].nadj > 0)
-      fwrite(adjs[i].adj,adjs[i].nadj,sizeof(int),out);
+      fwrite(adjs[i].adj,adjs[i].nadj,sizeof(pid_t),out);
     else printf("0");
   }
   fclose(out);
