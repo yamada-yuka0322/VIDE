@@ -395,6 +395,11 @@ void saveBox(SimuData *&boxed, const std::string& outbox)
   int num_snapshots = *boxed->as<int>("num_snapshots");
   long *uniqueID = boxed->as<long>("uniqueID");
 
+  if (!f.is_valid())
+    {
+      cerr << "Could not create parameter file '" << outbox << "'. Aborting." << endl;
+      exit(1);
+    }
   f.add_att("range_x_min", ranges[0]);
   f.add_att("range_x_max", ranges[1]);
   f.add_att("range_y_min", ranges[2]);
