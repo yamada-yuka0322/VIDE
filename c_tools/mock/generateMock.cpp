@@ -385,7 +385,7 @@ void buildBox(SimuData *simu, long num_targets, long loaded,
     }
 }
 
-void saveBox(SimuData *&boxed, const std::string& outbox)
+void saveBox(SimuData *&boxed, const std::string& outbox, generateMock_info& args_info)
 {
   double *ranges = boxed->as<double>("ranges");
   NcFile f(outbox.c_str(), NcFile::Replace, 0, 0, NcFile::Netcdf4);
@@ -408,6 +408,7 @@ void saveBox(SimuData *&boxed, const std::string& outbox)
   f.add_att("range_z_max", ranges[5]);
   f.add_att("mask_index", -1);
   f.add_att("is_observation", 0);
+  f.add_att("data_subsampling", args_info.subsample_arg);
 
   NcDim *NumPart_dim = f.add_dim("numpart_dim", boxed->NumPart);
   NcDim *NumSnap_dim = f.add_dim("numsnap_dim", num_snapshots);
@@ -450,6 +451,13 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
   boxed->Omega_Lambda = simu->Omega_Lambda;
   boxed->time = simu->time;
   boxed->BoxSize = simu->BoxSize;
+
+  NcAtt *d_sub = f.get_att("data_subsampling");
+  if (d_sub == 0 || d_sub->as_double(0) != args_info.subsample_arg)
+   {
+     cerr << "Parameter file was not generated with the same simulation subsampling argument. Particles will be different. Stop here." << endl;
+     exit(1);
+   }
 
   NcVar *v_id = f.get_var("particle_ids");
   NcVar *v_snap = f.get_var("snapshot_split");
@@ -715,7 +723,7 @@ int main(int argc, char **argv)
       delete[] efac;
     }
 
-  saveBox(simuOut, args_info.outputParameter_arg);
+  saveBox(simuOut, args_info.outputParameter_arg, args_info);
   generateOutput(simuOut, args_info.axis_arg, 
                  args_info.output_arg);
   delete preselector;
