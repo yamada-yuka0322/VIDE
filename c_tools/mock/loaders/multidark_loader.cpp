@@ -20,13 +20,16 @@
 
 
 #include <cassert>
+#include <boost/format.hpp>
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <CosmoTool/loadRamses.hpp>
 #include <CosmoTool/fortran.hpp>
 #include "simulation_loader.hpp"
+#include <libsdf/cosmo.h>
 
+using boost::format;
 using namespace std;
 using namespace CosmoTool;
 
@@ -82,6 +85,12 @@ public:
 
     double tempData;
 
+    double shift = 0.5*simu->BoxSize;
+    double rescale_position = simu->Hubble*1.e-5*100./simu->time;
+    double rescale_velocity = one_kpc/one_Gyr;
+#define INFINITY std::numeric_limits<float>::max()
+    float min_pos[3] = {INFINITY,INFINITY, INFINITY}, max_pos[3] = {-INFINITY,-INFINITY,-INFINITY};
+
     cout << "loading multidark particles" << endl;
     long actualNumPart = 0;
 
@@ -95,6 +104,17 @@ public:
           p.Pos[0] == -99 && p.Pos[1] == -99 && 
           p.Pos[2] == -99 && p.Vel[2] == -99)
         break;
+
+      p.Pos[0] = p.Pos[0]*rescale_position + shift;
+      p.Pos[1] = p.Pos[1]*rescale_position + shift;
+      p.Pos[2] = p.Pos[2]*rescale_position + shift;
+      p.Vel[2] = p.Vel[2]*rescale_velocity;
+
+      // enforce box size in case of roundoff error
+      for (int k = 0; k < 3; k++) {
+        //if (p.Pos[k] < 0) p.Pos[k] += simu->BoxSize;
+        //if (p.Pos[k] >= simu->BoxSize) p.Pos[k] -= simu->BoxSize;
+      }
 
       if (preproc != 0 && !preproc->accept(p))
         continue;
@@ -110,7 +130,14 @@ public:
           reallocArray(uniqueID, allocated, actualNumPart);
           reallocArray(index, allocated, actualNumPart);
         }
-      }
+
+       for (int k = 0; k < 3; k++) {
+         min_pos[k] = std::min(min_pos[k], p.Pos[k]);
+         max_pos[k] = std::max(max_pos[k], p.Pos[k]);
+       }
+    }
+    for (int k = 0; k < 3; k++) cout << boost::format("min[%d] = %g, max[%d] = %g") % k % min_pos[k] % k %max_pos[k] << endl;
+
     applyTransformations(simu);
     simu->NumPart = actualNumPart;
     simu->TotalNumPart = actualNumPart;
