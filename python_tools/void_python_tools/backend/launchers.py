@@ -163,6 +163,8 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
         dataFileLine = "gadget " + datafile
       elif sample.dataFormat == "sdf":
         dataFileLine = "sdf " + datafile
+      else:
+        raise ValueError("unknown dataFormat '%s'" % sample.dataFormat)
     
       iX = float(sample.mySubvolume[0])
       iY = float(sample.mySubvolume[1])

@@ -12,7 +12,7 @@ int posread(char *posfile, float ***p, float fact);
 
 int main(int argc, char *argv[]) {
   int exitcode;
-  int i, j, np;
+  pid_t i, j, np;
   float **r;
   coordT rtemp[3], *parts;
   coordT deladjs[3*MAXVERVER], points[3*MAXVERVER];
@@ -22,11 +22,12 @@ int main(int argc, char *argv[]) {
   PARTADJ *adjs;
   float *vols;
   float predict, xmin,xmax,ymin,ymax,zmin,zmax;
-  int *orig;
+  pid_t *orig;
   
   int isitinbuf;
   char isitinmain, d;
-  int numdiv, nvp, nvpall, nvpbuf;
+  int numdiv;
+  pid_t nvp, nvpall, nvpbuf;
   float width, width2, totwidth, totwidth2, bf, s, g;
   float border, boxsize;
   float c[3];
@@ -142,7 +143,7 @@ int main(int argc, char *argv[]) {
 					points */
 
   parts = (coordT *)malloc(3*nvpbuf*sizeof(coordT));
-  orig = (int *)malloc(nvpbuf*sizeof(int));
+  orig = (pid_t *)malloc(nvpbuf*sizeof(pid_t));
 
   if (parts == NULL) {
     printf("Unable to allocate parts\n");
@@ -182,15 +183,16 @@ int main(int argc, char *argv[]) {
   nvpbuf = nvp;
   for (i=0; i<np; i++) {
     isitinbuf = 1;
+    isitinmain = 1;
+
     DL {
       rtemp[d] = r[i][d] - c[d];
       if (rtemp[d] > 0.5) rtemp[d] --;
       if (rtemp[d] < -0.5) rtemp[d] ++;
       isitinbuf = isitinbuf && (fabs(rtemp[d])<totwidth2);
+      isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
     }
-    if ((isitinbuf > 0) &&
-	((fabs(rtemp[0])>width2)||(fabs(rtemp[1])>width2)||(fabs(rtemp[2])>width2))) {
-      
+    if (isitinbuf && !isitinmain) {
       /*printf("%3.3f ",sqrt(rtemp[0]*rtemp[0] + rtemp[1]*rtemp[1] +
 	rtemp[2]*rtemp[2]));
 	printf("|%2.2f,%2.2f,%2.2f,%f,%f",r[i][0],r[i][1],r[i][2],width2,totwidth2);*/
@@ -323,14 +325,14 @@ int main(int argc, char *argv[]) {
   printf("nvp = %d\n",nvp);
 
   /* Tell us where the original particles were */
-  fwrite(orig,sizeof(int),nvp,out);
+  fwrite(orig,sizeof(pid_t),nvp,out);
   /* Volumes*/
   fwrite(vols,sizeof(float),nvp,out);
   /* Adjacencies */
   for (i=0;i<nvp;i++) {
-    fwrite(&(adjs[i].nadj),1,sizeof(int),out);
+    fwrite(&(adjs[i].nadj),1,sizeof(pid_t),out);
     if (adjs[i].nadj > 0)
-      fwrite(adjs[i].adj,adjs[i].nadj,sizeof(int),out);
+      fwrite(adjs[i].adj,adjs[i].nadj,sizeof(pid_t),out);
     else printf("0");
   }
   fclose(out);
