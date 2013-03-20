@@ -285,24 +285,39 @@ for iSubSample in xrange(len(subSamples)):
                   scriptDir, catalogDir, fileNums, redshifts, 
                   numSubvolumes, numSlices, False, lbox, minRadius, omegaM, 
                   subsample=subSampleToUse, suffix=suffix)
-      writeScript(setName, fileToUse, dataFormat, 
-                  scriptDir, catalogDir, fileNums, redshifts, 
-                  numSubvolumes, numSlices, True, lbox, minRadius, omegaM, 
-                  subsample=subSampleToUse, suffix=suffix)
+      if doPecVel:
+        writeScript(setName, fileToUse, dataFormat, 
+                    scriptDir, catalogDir, fileNums, redshifts, 
+                    numSubvolumes, numSlices, True, lbox, minRadius, omegaM, 
+                    subsample=subSampleToUse, suffix=suffix)
     else:
-      subSampleToUse = keepFractionList
-      suffix = ""
-      fileToUse = partFileList[0]
-      writeScript(setName, fileToUse, dataFormat, 
+      if doSubSampling:
+        # prepare scripts using our own format
+        dataFormatToUse = "multidark"
+        subSampleToUse = 1.0
+        fileToUse = prefix+"ss"+str(thisSubSample)+"_z"
+        partFileList = []
+        suffix = ".dat"
+        for (iRedshift, redshift) in enumerate(redshifts):
+          sampleName = getSampleName(setName, redshift, False)
+          outFileName = sampleName+".dat"
+          partFileList.append(outFileName) 
+      else:
+        dataFormatToUse = dataFormat
+        subSampleToUse = keepFractionList
+        suffix = ""
+        fileToUse = partFileList[0]
+      writeScript(setName, fileToUse, dataFormatToUse, 
                   scriptDir, catalogDir, fileNums, redshifts, 
                   numSubvolumes, numSlices, False, lbox, minRadius, omegaM, 
                   subsample=subSampleToUse, suffix=suffix,
                   dataFileNameList=partFileList)
-      writeScript(setName, fileToUse, dataFormat, 
-                  scriptDir, catalogDir, fileNums, redshifts, 
-                  numSubvolumes, numSlices, True, lbox, minRadius, omegaM, 
-                  subsample=subSampleToUse, suffix=suffix,
-                  dataFileNameList=partFileList)
+      if doPecVel:
+        writeScript(setName, fileToUse, dataFormatToUse, 
+                    scriptDir, catalogDir, fileNums, redshifts, 
+                    numSubvolumes, numSlices, True, lbox, minRadius, omegaM, 
+                    subsample=subSampleToUse, suffix=suffix,
+                    dataFileNameList=partFileList)
        
 
   if args.subsample or args.all:
@@ -313,16 +328,30 @@ for iSubSample in xrange(len(subSamples)):
       print "   redshift", redshift
       sys.stdout.flush()
   
-      if dataFormat == "multidark":
+      if dataFormat == "multidark" or dataFormat == "sdf":
         # reuse previous subamples in order to:
         #   - preserve unique IDs across multiple subsamples
         #   - reuse smaller files for faster processing
         if prevSubSample == -1:
-          dataFile = catalogDir+"/"+particleFileBase+fileNums[iRedshift]
+          if particleFileDummy == '':
+            dataFile = catalogDir+"/"+particleFileBase+fileNums[iRedshift]
+          else:
+            dataFile = particleFileBase.replace(particleFileDummy,
+                                                fileNums[iRedshift])
+            dataFile = catalogDir+"/"+dataFile
+          keepFraction = float(thisSubSample) / baseResolution
         else:
           sampleName = prefix+"ss"+str(prevSubSample)+"_z"+redshift
           dataFile = catalogDir+"/"+sampleName+".dat"
           keepFraction = float(thisSubSample) / float(prevSubSample)
+
+        if prevSubSample == -1 and dataFormat == "sdf":
+          convertedFile = dataFile + "_temp"
+          SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
+          command = "%s %s x y z vz vy vx > %s" % (SDFcvt_PATH, dataFile, 
+                                                   convertedFile )
+          os.system(command)
+          dataFile = convertedFile
 
         inFile = open(dataFile, 'r')
 
@@ -335,6 +364,11 @@ for iSubSample in xrange(len(subSamples)):
         outFile.write("%s\n" %(redshift))
         outFile.write("%d\n" %(maxKeep))
 
+        if dataFormat == "sdf":
+          splitter = ' '
+        if dataFormat == "multidark":
+          splitter = ','
+
         numKept = 0
         for (i,line) in enumerate(inFile):
           if (prevSubSample != -1 and i < 5): continue # skip header
@@ -344,7 +378,7 @@ for iSubSample in xrange(len(subSamples)):
           #if numKept > maxKeep: break
 
           if (prevSubSample == -1):
-            line = line.split(',')
+            line = line.split(splitter)
             x  = float(line[0])
             y  = float(line[1])
             z  = float(line[2])
@@ -360,6 +394,9 @@ for iSubSample in xrange(len(subSamples)):
         inFile.close()
         outFile.close()
 
+        if prevSubSample == -1 and dataFormat == "sdf":
+          os.unlink(dataFile)     
+ 
       elif dataFormat == "random":
         sampleName = "ran.ss"+str(thisSubSample)+"_z"+redshift
         outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
@@ -409,14 +446,25 @@ if (args.script or args.all) and haloFileBase != "":
     minRadies = 10
   
     setName = prefix+"halos_min"+str(minHaloMass)
+    fileList = []
+    for (iRedshift, redshift) in enumerate(redshifts):
+      sampleName = getSampleName(setName, redshift, False)
+      outFileName = sampleName+".dat"
+      fileList.append(outFileName) 
+
     writeScript(setName, prefix+"halos_min"+str(minHaloMass)+"_z", "multidark",
                 scriptDir, catalogDir, fileNums, 
                 redshifts, 
-                numSubvolumes, numSlices, False, lbox, minRadius, omegaM)
-    writeScript(setName, prefix+"halos_min"+str(minHaloMass)+"_z", "multidark",
-                scriptDir, catalogDir, fileNums, 
-                redshifts, 
-                numSubvolumes, numSlices, True, lbox, minRadius, omegaM)
+                numSubvolumes, numSlices, False, lbox, minRadius, omegaM,
+                dataFileNameList = fileList)
+   
+    if doPecVel:
+      writeScript(setName, prefix+"halos_min"+str(minHaloMass)+"_z", 
+                  "multidark",
+                  scriptDir, catalogDir, fileNums, 
+                  redshifts, 
+                  numSubvolumes, numSlices, True, lbox, minRadius, omegaM,
+                  dataFileNameList = fileList)
 
 if (args.halos or args.all) and haloFileBase != "":
   print " Doing halos"
@@ -451,7 +499,7 @@ if (args.halos or args.all) and haloFileBase != "":
             numPart += 1
         inFile.close()
 
-      sampleName = prefix+"halos_min"+str(minHaloMass)+"_z"+fileNums[iRedshift]
+      sampleName = prefix+"halos_min"+str(minHaloMass)+"_z"+redshifts[iRedshift]
       outFileName = catalogDir+"/"+sampleName+".dat"
       outFile = open(outFileName, 'w')
       outFile.write("%f\n" %(lbox))
@@ -536,15 +584,25 @@ root_filename {workDir}/hod
 if (args.script or args.all) and haloFileBase != "":
   print " Doing HOD scripts"
   sys.stdout.flush()
+
   for thisHod in hodParmList:
+    fileList = []
+    for (iRedshift, redshift) in enumerate(redshifts):
+      sampleName = getSampleName(prefix+"hod_"+thisHod['name'], redshift, False)
+      outFileName = sampleName+".dat"
+      fileList.append(outFileName) 
+
     print "  ", thisHod['name']
     setName = prefix+"hod_"+thisHod['name']
     writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
                 scriptDir, catalogDir, fileNums, redshifts, 
-                 numSubvolumes, numSlices, False, lbox, 15, omegaM)
-    writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
-                scriptDir, catalogDir, fileNums, redshifts, 
-                 numSubvolumes, numSlices, True, lbox, 15, omegaM)
+                numSubvolumes, numSlices, False, lbox, 15, omegaM,
+                dataFileNameList = fileList)
+    if doPecVel:
+      writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
+                  scriptDir, catalogDir, fileNums, redshifts, 
+                  numSubvolumes, numSlices, True, lbox, 15, omegaM,
+                  dataFileNameList = fileList)
 
 if (args.hod or args.all) and haloFileBase != "":
   print " Doing HOD"
