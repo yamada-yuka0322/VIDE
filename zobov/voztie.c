@@ -108,8 +108,8 @@ int main(int argc, char *argv[]) {
 	printf("Unable to open file %s.\n\n",partfile);
 	exit(0);
       }
-      fread(&np2,1,sizeof(int),part);
-      fread(&nvp,1,sizeof(int),part);
+      fread(&np2,1,sizeof(pid_t),part);
+      fread(&nvp,1,sizeof(pid_t),part);
       /*printf("nvp = %d\n",nvp);fflush(stdout);*/
 
       nvpsum += nvp;
