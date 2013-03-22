@@ -150,5 +150,7 @@ if (startCatalogStage <= 4) and (endCatalogStage >= 4):
                              dataPortion=thisDataPortion, setName=setName)
     plotNumberDistribution(workDir, dataSampleList, figDir, showPlot=False, 
                              dataPortion=thisDataPortion, setName=setName)
+    plotVoidDistribution(workDir, dataSampleList, figDir, showPlot=False, 
+                             dataPortion=thisDataPortion, setName=setName)
 
 print "\n Done!"
