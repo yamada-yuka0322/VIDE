@@ -305,7 +305,7 @@ def plotVoidDistribution(workDir=None, sampleList=None, figDir=None,
   for (iSample,sample) in enumerate(sampleList):
     plt.clf()
     plt.xlabel("x (Mpc/h)")
-    plt.xlabel("y (Mpc/h)")
+    plt.ylabel("y (Mpc/h)")
 
     sampleName = sample.fullName
   

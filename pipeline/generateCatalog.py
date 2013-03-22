@@ -29,7 +29,7 @@ import pickle
 # ------------------------------------------------------------------------------
 
 if (len(sys.argv) == 1):
-  print "Usage: ./analyzeVoids.py parameter_file.py"
+  print "Usage: ./generateCatalog.py parameter_file.py"
   exit(-1)
 
 if (len(sys.argv) > 1):
