@@ -101,6 +101,8 @@ int main(int argc,char **argv) {
     exit(0);
   }
   fread(&np,1, sizeof(int),adj);
+  if (mockIndex < 0)
+    mockIndex = np;
   
   printf("adj: %d particles\n", np);
   FF;
