@@ -247,19 +247,10 @@ printf("\n");
 
   // Recount the number of adjacencies after merge
   for(i=0;i<mockIndex;i++)
-    cnt_adj[i] = 0;
-  for(i=0;i<mockIndex;i++)
-    {
-      for (j=0;j<adjs[i].nadj;j++)
-        {
-          cnt_adj[adjs[i].adj[j]]++;
-          cnt_adj[i]++;
-        }
-    }
+    cnt_adj[i] = adjs[i].nadj;
 
 // PMS
   for (i=0;i<mockIndex;i++)
-  //for (i=0;i<np;i++)
 // END PMS
     fwrite(&cnt_adj[i],1,sizeof(int),adj);
     
