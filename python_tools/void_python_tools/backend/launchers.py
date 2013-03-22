@@ -132,7 +132,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       return
 
     prevSubSample = -1
-    prevKeepFraction = -1
+    firstSubSample = -1
     for thisSubSample in sample.subsample.split(', '):
 
       if prevSubSample == -1:
@@ -142,13 +142,14 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
         keepFraction = float(thisSubSample)
         subSampleLine = "subsample %g" % keepFraction
         resubSampleLine = ""
+        firstSubSample = keepFraction
       else:
         inputParameterFlag = "inputParameter " + zobovDir+"/zobov_slice_"+\
                              sampleName+"_ss"+prevSubSample+".par"
         outputFile = zobovDir+"/zobov_slice_" + sampleName + "_ss" + \
                      thisSubSample
         keepFraction = float(thisSubSample)/float(prevSubSample)
-        subSampleLine = "subsample %s" % prevSubSample
+        subSampleLine = "subsample %s" % firstSubSample
         resubSampleLine = "resubsample %g" % keepFraction
 
       includePecVelString = ""
@@ -210,10 +211,9 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       os.system(cmd)
  
       # remove intermediate files
-# TEMP
-      #if (prevSubSample != -1):
-      # os.unlink(zobovDir+"/zobov_slice_"+sampleName+"_ss"+prevSubSample+".par")
-      # os.unlink(zobovDir+"/zobov_slice_"+sampleName+"_ss"+prevSubSample)
+      if (prevSubSample != -1):
+       os.unlink(zobovDir+"/zobov_slice_"+sampleName+"_ss"+prevSubSample+".par")
+       os.unlink(zobovDir+"/zobov_slice_"+sampleName+"_ss"+prevSubSample)
 
       doneLine = "Done! %5.2e\n" % keepFraction
       if not jobSuccessful(logFile, doneLine):
@@ -221,7 +221,6 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
         exit(-1)
 
       prevSubSample = thisSubSample
-      prevKeepFraction = keepFraction
 
     if jobSuccessful(logFile, doneLine): print "done"
  
