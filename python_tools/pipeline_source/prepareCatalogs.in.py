@@ -348,8 +348,23 @@ for iSubSample in xrange(len(subSamples)):
         if prevSubSample == -1 and dataFormat == "sdf":
           convertedFile = dataFile + "_temp"
           SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
-          command = "%s %s x y z vz vy vx > %s" % (SDFcvt_PATH, dataFile, 
-                                                   convertedFile )
+          scale = 1./(1.+float(redshift))
+          rescale_position = hubble/1000./scale
+          shift = lbox/2.
+          rescale_velocity = 3.08567802e16/3.1558149984e16
+          command = "%s %s x y z vz vy vx | awk '{print $1*%g+%g, $2*%g+%g, $3*%g+%g, $4*%g, $5*%g, $6*%g}' > %s" % (SDFcvt_PATH, dataFile,
+                                     rescale_position,
+                                     shift,
+                                     rescale_position,
+                                     shift,
+                                     rescale_position,
+                                     shift,
+                                     rescale_velocity,
+                                     rescale_velocity,
+                                     rescale_velocity,
+                                     convertedFile )
+          os.system(command)
+
           os.system(command)
           dataFile = convertedFile
 
