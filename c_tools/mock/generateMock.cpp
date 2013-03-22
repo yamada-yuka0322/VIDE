@@ -453,9 +453,9 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
   boxed->BoxSize = simu->BoxSize;
 
   NcAtt *d_sub = f.get_att("data_subsampling");
-  if (d_sub == 0 || d_sub->as_double(0) != args_info.subsample_arg)
+  if (d_sub == 0 || d_sub->as_double(0)/args_info.subsample_arg-1. > 1.e-5)
    {
-     cerr << "Parameter file was not generated with the same simulation subsampling argument. Particles will be different. Stop here." << endl;
+     cerr << "Parameter file was not generated with the same simulation subsampling argument. Particles will be different. Stop here." << d_sub->as_double(0) << " " << args_info.subsample_arg <<endl;
      exit(1);
    }
 

@@ -105,15 +105,15 @@ public:
           p.Pos[2] == -99 && p.Vel[2] == -99)
         break;
 
-      p.Pos[0] = p.Pos[0]*rescale_position + shift;
-      p.Pos[1] = p.Pos[1]*rescale_position + shift;
-      p.Pos[2] = p.Pos[2]*rescale_position + shift;
-      p.Vel[2] = p.Vel[2]*rescale_velocity;
+      //p.Pos[0] = p.Pos[0]*rescale_position + shift;
+      //p.Pos[1] = p.Pos[1]*rescale_position + shift;
+      //p.Pos[2] = p.Pos[2]*rescale_position + shift;
+      //p.Vel[2] = p.Vel[2]*rescale_velocity;
 
       // enforce box size in case of roundoff error
       for (int k = 0; k < 3; k++) {
-        //if (p.Pos[k] < 0) p.Pos[k] += simu->BoxSize;
-        //if (p.Pos[k] >= simu->BoxSize) p.Pos[k] -= simu->BoxSize;
+        if (p.Pos[k] < 0) p.Pos[k] += simu->BoxSize;
+        if (p.Pos[k] >= simu->BoxSize) p.Pos[k] -= simu->BoxSize;
       }
 
       if (preproc != 0 && !preproc->accept(p))
