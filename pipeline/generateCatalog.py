@@ -88,7 +88,10 @@ for sample in dataSampleList:
   if (sample.dataType == "simulation"):
     fp.write("Particles placed on lightcone: %g\n" % sample.useLightCone)
     fp.write("Peculiar velocities included: %g\n" % sample.usePecVel)
-    fp.write("Additional subsampling fraction: %s\n" % sample.subsample[-1])
+    if (len(sample.subsample) == 1):
+      fp.write("Additional subsampling fraction: %s\n" % sample.subsample)
+    else:
+      fp.write("Additional subsampling fraction: %s\n" % sample.subsample[-1])
     fp.write("Simulation box length (Mpc/h): %g\n" % sample.boxLen)
     fp.write("Simulation Omega_M: %g\n" % sample.omegaM)
     fp.write("Number of simulation subvolumes: %s\n" % sample.numSubvolumes)
