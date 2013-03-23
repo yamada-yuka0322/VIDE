@@ -437,12 +437,19 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
                 voidDir=None, freshStack=True, runSuffix=None,
                 zobovDir=None,
                 INCOHERENT=False, ranSeed=None, summaryFile=None, 
-                continueRun=None, dataType=None, prefixRun=""):
+                continueRun=None, dataType=None, prefixRun="",
+                idList=None):
 
   sampleName = sample.fullName
 
+  if idList != None:
+    customLine = "selected"
+  else:
+    customLine = ""
+
   runSuffix = getStackSuffix(stack.zMin, stack.zMax, stack.rMin,
-                             stack.rMax, thisDataPortion)
+                             stack.rMax, thisDataPortion, 
+                             customLine=customLine)
 
   logFile = logDir+("/%sstack_"%prefixRun)+sampleName+"_"+runSuffix+".out"
  
@@ -483,6 +490,16 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   else:
     rescaleFlag = ""
 
+  if idList != None:
+    idListFlag = "idList '" + str(idList).strip('[]') + "'"
+    rMinToUse = 0.
+    rMaxToUse = 100000.
+    centralRadius = rMaxToUse
+  else:
+    idListFlag = ""
+    rMinToUse = stack.rMin
+    rMaxToUse = stack.rMax
+
   conf="""
   desc %s
   partzone %s
@@ -505,13 +522,14 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   barycenters %s
   boundaryDistances %s
   %s
+  %s
   """ % \
   (zobovDir+"/voidDesc_"+thisDataPortion+"_"+sampleName+".out",
    zobovDir+"/voidPart_"+sampleName+".dat",
    zobovDir+"/voidZone_"+sampleName+".dat",
    zobovDir+"/vol_"+sampleName+".dat",
-   stack.rMin,
-   stack.rMax,
+   rMinToUse,
+   rMaxToUse,
    zobovDir+("/%szobov_slice_"%prefixRun)+sampleName,
    zobovDir+"/zobov_slice_"+sampleName+".par",
    maxDen,
@@ -526,7 +544,9 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
    thisDataPortion,
    zobovDir+"/barycenters_"+thisDataPortion+"_"+sampleName+".out",
    zobovDir+"/boundaryDistances_"+thisDataPortion+"_"+sampleName+".out",
-   rescaleFlag)
+   rescaleFlag,
+   idListFlag 
+   )
 
   parmFile = os.getcwd()+("/%sstack_"%prefixRun)+sample.fullName+".par"
 
