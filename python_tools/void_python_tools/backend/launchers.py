@@ -324,8 +324,8 @@ def launchPrune(sample, binPath,
 
     periodicLine = " --periodic='"
     if sample.numSubvolumes == 1: periodicLine += "xy"
-    if sample.zBoundaryMpc[1]  - sample.zBoundaryMpc[0] - \
-       sample.boxLen <= 1.e-1: 
+    if np.abs(sample.zBoundaryMpc[1]  - sample.zBoundaryMpc[0] - \
+       sample.boxLen) <= 1.e-1: 
       periodicLine += "z"
     periodicLine += "' "
 
@@ -380,7 +380,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
   periodicLine = " --periodic='"
   if sample1.dataType != "observation":
     if sample1.numSubvolumes == 1: periodicLine += "xy"
-    if sample1.zBoundaryMpc[1]  - sample1.zBoundaryMpc[0] - sample1.boxLen <= 1.e-1: 
+    if np.abs(sample1.zBoundaryMpc[1]  - sample1.zBoundaryMpc[0] - sample1.boxLen) <= 1.e-1: 
       periodicLine += "z"
   periodicLine += "' "
 
