@@ -124,19 +124,26 @@ int main(int argc,char **argv) {
 	fread(&j,1,sizeof(pid_t),adj);
 	if (j < np) {
 	  /* Set both halves of the pair */
-	assert(i < j);
+          assert(i < j);
           if (p[i].ncnt == p[i].nadj)
             {
-		p[i].adj = (pid_t *)realloc(p[i].adj, (p[i].nadj+1)*sizeof(pid_t));
-                p[i].nadj++;
+              int q;
+              printf("OVERFLOW for particle %d (pending %d). List of accepted:\n", i, j);
+              for (q=0;q<p[i].nadj;q++)
+                printf("  %d\n", p[i].adj[q]);
+              abort();
             }
-          if (p[j].ncnt == p[j].nadj)
+         if (p[j].ncnt == p[j].nadj)
             {
-              p[j].adj = (pid_t *)realloc(p[j].adj, (p[j].nadj+1)*sizeof(pid_t));
-              p[j].nadj++;
-            }
-	  p[i].adj[p[i].ncnt] = j;
-	  p[j].adj[p[j].ncnt] = i;
+              int q;
+              printf("OVERFLOW for particle %d (pending %d). List of accepted:\n", j, i);
+              for (q=0;q<p[j].nadj;q++)
+                printf("  %d\n", p[j].adj[q]);
+              abort();
+           }
+
+          p[i].adj[p[i].ncnt] = j;
+          p[j].adj[p[j].ncnt] = i;
 	  p[i].ncnt++; p[j].ncnt++;
 	} else {
 	  printf("%d: adj = %d\n",i,j);

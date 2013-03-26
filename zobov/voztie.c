@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,7 +97,11 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
   for (p=0;p<np;p++)
-    vols[p] = -1.;
+    {
+      vols[p] = -1.;
+      adjs[p].nadj = 0;
+      adjs[p].adj = 0;
+    }
 
   nvpsum = 0;
   for (i = 0; i < numdiv; i++) {
@@ -118,13 +123,9 @@ int main(int argc, char *argv[]) {
       for (p=0;p<nvp;p++) {
 	fread(&volstemp,1,sizeof(float),part);
 	if (vols[orig[p]] > -1.)
-// PMS
 	  if (fabs(vols[orig[p]]-volstemp)/volstemp > 1.5e-3 && orig[p] < mockIndex) {
-	  //if (fabs(vols[orig[p]]-volstemp)/volstemp > 1.5e-3) {
-// END PMS
 	    printf("Inconsistent volumes for p. %d: (%10g,%10g)!\n",
 		   orig[p],vols[orig[p]],volstemp);
-// TEST
 	    //exit(0);
 	  }
 	vols[orig[p]] = volstemp;
@@ -132,10 +133,13 @@ int main(int argc, char *argv[]) {
       
       for (p=0;p<nvp;p++) {
 	fread(&na,1,sizeof(int),part);
+        pid_t pid = orig[p];
 	if (na > 0) {
+          assert(adjs[pid].nadj == 0);// || adjs[pid].nadj == na);
 	  adjs[orig[p]].nadj = na;
-	  adjs[orig[p]].adj = (pid_t *)malloc(na*sizeof(pid_t));
-	  if (adjs[orig[p]].adj == NULL) {
+	  if (adjs[pid].adj == 0)
+            adjs[orig[p]].adj = (pid_t *)malloc(na*sizeof(pid_t));
+	  if (adjs[orig[p]].adj == 0) {
 	    printf("Couldn't allocate adjs[orig[%d]].adj.\n",p);
 	    exit(0);
 	  }
@@ -160,51 +164,37 @@ int main(int argc, char *argv[]) {
     adjs[i].nadj = 0;
   }
   
-    // unlink particles adjacent to mock galaxies
-    for (i = 0; i < mockIndex; i++) {
-      for (j = 0; j < adjs[i].nadj; j++) {
-        if (adjs[i].adj[j] > mockIndex) {
-//printf("KILLING %d\n", i);
-          vols[i] = 1.e-29;
-          adjs[i].nadj = 0;
-          numRemoved++;
-          break;
-        }
-      }
-    }
-
-    // update all other adjacencies
-    for (i = 0; i < mockIndex; i++) {
-    
-      int numAdjSaved = 0;
-      for (j = 0; j < adjs[i].nadj; j++) {
-
-        //if ( vols[adjs[i].adj[j]] != -99) {
-        if ( adjs[adjs[i].adj[j]].nadj != 0) {
-          adjs[i].adj[numAdjSaved] = adjs[i].adj[j];
-          numAdjSaved++;
-        }
-
-      }
-      adjs[i].nadj = numAdjSaved; 
-
-    }  
-
-/*
+  // unlink particles adjacent to mock galaxies
   for (i = 0; i < mockIndex; i++) {
-printf("ADJ: %d %d : ", i, adjs[i].nadj);
     for (j = 0; j < adjs[i].nadj; j++) {
-printf(" %d", adjs[i].adj[j]);
+      if (adjs[i].adj[j] > mockIndex) {
+//printf("KILLING %d\n", i);
+        vols[i] = 1.e-29;
+        adjs[i].nadj = 0;
+        numRemoved++;
+        break;
+      }
     }
-printf("\n");
   }
-*/
 
-  
+  // update all other adjacencies
+  for (i = 0; i < mockIndex; i++) {
+    
+    int numAdjSaved = 0;
+    for (j = 0; j < adjs[i].nadj; j++) {
 
-    printf("Removed %d mock galaxies and %d adjacent galaxies.\n", np-mockIndex, 
+      if ( adjs[adjs[i].adj[j]].nadj != 0) {
+        adjs[i].adj[numAdjSaved] = adjs[i].adj[j];
+        numAdjSaved++;
+      }
+
+    }
+    adjs[i].nadj = numAdjSaved; 
+  }
+
+  printf("Removed %d mock galaxies and %d adjacent galaxies.\n", np-mockIndex, 
                                                                  numRemoved); 
-    printf("There are %d galaxies remaining.\n", mockIndex-numRemoved);
+  printf("There are %d galaxies remaining.\n", mockIndex-numRemoved);
 
   // END PMS
 
@@ -238,10 +228,7 @@ printf("\n");
     printf("Unable to open %s\n",adjfile);
     exit(0);
   }
-// PMS
   fwrite(&mockIndex,1, sizeof(int),adj);
-  //fwrite(&np,1, sizeof(int),adj);
-// END OMS
   /* Adjacencies: first the numbers of adjacencies, 
      and the number we're actually going to write per particle */
 
@@ -249,19 +236,15 @@ printf("\n");
   for(i=0;i<mockIndex;i++)
     cnt_adj[i] = adjs[i].nadj;
 
-// PMS
   for (i=0;i<mockIndex;i++)
-// END PMS
     fwrite(&cnt_adj[i],1,sizeof(int),adj);
     
   /* Now the lists of adjacencies (without double counting) */
-  // PMS
   for (i=0;i<mockIndex;i++) {
-  //for (i=0;i<np;i++) {
-    //if (adjs[i].nadj > 0) {
-// END PMS
       nout = 0;
-      for (j=0;j<adjs[i].nadj; j++) if (adjs[i].adj[j] > i) nout++;
+      for (j=0;j<adjs[i].nadj; j++) 
+         if (adjs[i].adj[j] > i)
+           nout++;
       fwrite(&nout,1,sizeof(int),adj);      
       for (j=0;j<adjs[i].nadj; j++) {
         pid_t id = adjs[i].adj[j];
