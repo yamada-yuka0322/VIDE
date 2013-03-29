@@ -21,16 +21,16 @@ int main(int argc, char *argv[]) {
   char *posfile, outfile[200], *suffix, *outDir;
   PARTADJ *adjs;
   float *vols;
-  float predict, xmin,xmax,ymin,ymax,zmin,zmax;
+  realT predict, xmin,xmax,ymin,ymax,zmin,zmax;
   pid_t *orig;
   
   int isitinbuf;
   char isitinmain, d;
   int numdiv;
   pid_t nvp, nvpall, nvpbuf;
-  float width, width2, totwidth, totwidth2, bf, s, g;
+  realT width, width2, totwidth, totwidth2, bf, s, g;
   float border, boxsize;
-  float c[3];
+  realT c[3];
   int b[3];
   double totalvol;
 
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
   
-  DL c[d] = ((float)b[d]+0.5)*width;
+  DL c[d] = ((float)b[d])*width;
   printf("c: %f,%f,%f\n",c[0],c[1],c[2]);
   /* Assign temporary array*/
   nvpbuf = 0; /* Number of particles to tesselate, including
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
   for (i=0; i<np; i++) {
     isitinmain = 1;
     DL {
-      rtemp[d] = r[i][d] - c[d];
+      rtemp[d] = (realT)r[i][d] - (realT)c[d];
       if (rtemp[d] > 0.5) rtemp[d] --;
       if (rtemp[d] < -0.5) rtemp[d] ++;
       isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
     isitinmain = 1;
 
     DL {
-      rtemp[d] = r[i][d] - c[d];
+      rtemp[d] = (realT)r[i][d] - (realT)c[d];
       if (rtemp[d] > 0.5) rtemp[d] --;
       if (rtemp[d] < -0.5) rtemp[d] ++;
       isitinbuf = isitinbuf && (fabs(rtemp[d])<totwidth2);
@@ -223,40 +223,40 @@ int main(int argc, char *argv[]) {
   for (i=0; i<NGUARD+1; i++) {
     for (j=0; j<NGUARD+1; j++) {
       /* Bottom */
-      parts[3*nvpall]   = -width2 + (float)i * s;
-      parts[3*nvpall+1] = -width2 + (float)j * s;
+      parts[3*nvpall]   = -width2 + (realT)i * s;
+      parts[3*nvpall+1] = -width2 + (realT)j * s;
       parts[3*nvpall+2] = -width2 - g;
       nvpall++;
       /* Top */
-      parts[3*nvpall]   = -width2 + (float)i * s;
-      parts[3*nvpall+1] = -width2 + (float)j * s;
+      parts[3*nvpall]   = -width2 + (realT)i * s;
+      parts[3*nvpall+1] = -width2 + (realT)j * s;
       parts[3*nvpall+2] = width2 + g;
       nvpall++;
     }
   }
   for (i=0; i<NGUARD+1; i++) { /* Don't want to overdo the corners*/
     for (j=0; j<NGUARD+1; j++) {
-      parts[3*nvpall]   = -width2 + (float)i * s;
+      parts[3*nvpall]   = -width2 + (realT)i * s;
       parts[3*nvpall+1] = -width2 - g;
-      parts[3*nvpall+2] = -width2 + (float)j * s;
+      parts[3*nvpall+2] = -width2 + (realT)j * s;
       nvpall++;
       
-      parts[3*nvpall]   = -width2 + (float)i * s;
+      parts[3*nvpall]   = -width2 + (realT)i * s;
       parts[3*nvpall+1] = width2 + g;
-      parts[3*nvpall+2] = -width2 + (float)j * s;
+      parts[3*nvpall+2] = -width2 + (realT)j * s;
       nvpall++;
     }
   }
   for (i=0; i<NGUARD+1; i++) {
     for (j=0; j<NGUARD+1; j++) {
       parts[3*nvpall]   = -width2 - g;
-      parts[3*nvpall+1] = -width2 + (float)i * s;
-      parts[3*nvpall+2] = -width2 + (float)j * s;
+      parts[3*nvpall+1] = -width2 + (realT)i * s;
+      parts[3*nvpall+2] = -width2 + (realT)j * s;
       nvpall++;
       
       parts[3*nvpall]   = width2 + g;
-      parts[3*nvpall+1] = -width2 + (float)i * s;
-      parts[3*nvpall+2] = -width2 + (float)j * s;
+      parts[3*nvpall+1] = -width2 + (realT)i * s;
+      parts[3*nvpall+2] = -width2 + (realT)j * s;
       nvpall++;
     }
   }
