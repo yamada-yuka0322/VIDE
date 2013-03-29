@@ -40,6 +40,9 @@
 #include <netcdfcpp.h>
 #include "pruneVoids_conf.h"
 #include <vector>
+#include "assert.h"
+#include "voidTree.hpp"
+#include "loadZobov.hpp"
 
 #define LIGHT_SPEED 299792.458
 #define MPC2Z 100./LIGHT_SPEED
@@ -70,6 +73,7 @@ typedef struct voidStruct {
   float center[3], barycenter[3];
   int accepted;
   int voidType;
+  int parentID, numChildren;
   gsl_vector *eval;
   gsl_matrix *evec;
 } VOID;
@@ -306,6 +310,27 @@ int main(int argc, char **argv) {
   fclose(fp);
   free(temp);
 
+  // load voids *again* using Guilhem's code so we can get tree
+  printf(" Re-loading voids and building tree..\n");
+  ZobovRep zobovCat;
+  if (!loadZobov(args.voidDesc_arg, args.zone2Part_arg,
+                 args.void2Zone_arg, 
+                 0, zobovCat)) {
+     printf("Error loading catalog!\n");
+     return -1;
+  }
+  VoidTree *tree;
+  tree = new VoidTree(zobovCat);
+  zobovCat.allZones.erase(zobovCat.allZones.begin(), zobovCat.allZones.end());
+  //zobovCat.allZones.erase(zobovCat.allVoids.begin(), zobovCat.allVoids.end());
+ 
+  // copy tree information to our own data structures
+  for (iVoid = 0; iVoid < numVoids; iVoid++) {
+    voidID = voids[iVoid].voidID;
+    voids[iVoid].parentID = tree->getParent(voidID);
+    voids[iVoid].numChildren = tree->getChildren(voidID).size();
+  }
+
   // check boundaries
   printf(" Computing void properties...\n");
 
@@ -541,6 +566,7 @@ int main(int argc, char **argv) {
   int numCentral = 0;
   int numEdge = 0;
   int numNearZ = 0;
+  int numAreParents = 0;
   int numTooSmall = 0;
 
   printf(" Picking winners and losers...\n");
@@ -607,7 +633,20 @@ int main(int argc, char **argv) {
     }
   }
   voids.resize(iGood);
-  printf("  4th filter: rejected %d too close to low redshift boundaries\n", numNearZ); 
+  printf("  4th filter: rejected %d below redshift boundaries\n", numNearZ); 
+
+  numAreParents = 0;
+  iGood = 0;
+  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
+    if (voids[iVoid].numChildren > 0) {
+      numAreParents++;
+     } else {
+      voids[iGood++] = voids[iVoid];
+    }
+  }
+  voids.resize(iGood);
+  printf("  5th filter: rejected %d that are not leaf nodes\n", numAreParents); 
+
 
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
     if (voids[iVoid].centralDen > args.maxCentralDen_arg) {
