@@ -50,13 +50,13 @@ parser.add_argument('--hod', dest='hod', action='store_const',
 parser.add_argument('--all', dest='all', action='store_const',
                    const=True, default=False,
                    help='write everything')
-parser.add_argument('--parmFile', dest='parmFile',
+parser.add_argument('--parm', dest='parm',
                    default="",
                    help='path to parameter file')
 args = parser.parse_args()
 
 
-filename = args.parmFile
+filename = args.parm
 print " Loading parameters from", filename
 if not os.access(filename, os.F_OK):
   print "  Cannot find parameter file %s!" % filename
@@ -75,6 +75,26 @@ def getSampleName(setName, redshift, useVel, iSlice=-1, iVol=-1):
   if iVol != -1: sampleName += "_d" + iVol
 
   return sampleName
+
+#------------------------------------------------------------------------------
+def getNickName(sampleName):
+
+  splitName = sampleName.split('_')
+  
+  if "ss" in splitName[1]:
+    nickName = "Subsample = " + splitName[1].replace("ss","")
+    nickName += ", z = " + splitName[2].replace("z","")
+  elif "hod" in splitName[1]:
+    nickName = "HOD = " + splitName[2]
+    nickName += ", z = " + splitName[3].replace("z","")
+  elif "halos" in splitName[1]:
+    nickName = "Halos, min mass = " + splitName[2].replace("min","")
+    nickName += ", z = " + splitName[3].replace("z","")
+  else:
+    nickName = sampleName
+
+  return nickName
+
 
 #------------------------------------------------------------------------------
 # for given dataset parameters, outputs a script for use with analyzeVoids
@@ -137,7 +157,7 @@ newSample = Sample(dataFile = "{dataFile}",
                    dataFormat = "{dataFormat}",
                    dataUnit = {dataUnit},
                    fullName = "{sampleName}",
-                   nickName = "{sampleName}",
+                   nickName = "{nickName}",
                    dataType = "simulation",
                    zBoundary = ({zMin}, {zMax}),
                    zRange    = ({zMin}, {zMax}),
@@ -218,11 +238,14 @@ newSample.addStack(0.0, 5.0, 90, 95, False, False)
 
           sampleName = getSampleName(setName, sliceMin, useVel,
                                      iSlice=iSlice, iVol=mySubvolume)
+          nickName = getNickName(sampleName)
+
 
           scriptFile.write(sampleInfo.format(dataFile=dataFileName,
                                          dataFormat=dataFormat,
                                          dataUnit=dataUnit,
                                          sampleName=sampleName,
+                                         nickName=nickName,
                                          zMin=sliceMin,
                                          zMax=sliceMax,
                                          zMinMpc=sliceMinMpc,
