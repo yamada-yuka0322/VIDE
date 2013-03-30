@@ -420,6 +420,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
     cmd += periodicLine
     cmd += " --outfile=" + outputFile
     cmd += " &> " + logFile
+    open("temp.par",'w').write(cmd)
     os.system(cmd)
 
     if jobSuccessful(logFile, "Done!\n"):
@@ -438,7 +439,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
                 zobovDir=None,
                 INCOHERENT=False, ranSeed=None, summaryFile=None, 
                 continueRun=None, dataType=None, prefixRun="",
-                idList=None):
+                idList=None, rescaleOverride=None):
 
   sampleName = sample.fullName
 
@@ -485,13 +486,18 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   else:
     nullTestFlag = ""
 
-  if stack.rescaleMode == "rmax":
+  if rescaleOverride == None: rescaleOverride = stack.rescaleMode
+  if rescaleOverride == "rmax":
     rescaleFlag = "rescale"
   else:
     rescaleFlag = ""
 
+  idListFile = "idlist.temp"
   if idList != None:
-    idListFlag = "idList '" + str(idList).strip('[]') + "'"
+    idListFlag = "idList " + idListFile
+    idFile = open(idListFile, 'w')
+    for id in idList: idFile.write(str(id)+"\n")
+    idFile.close()
     rMinToUse = 0.
     rMaxToUse = 100000.
     centralRadius = rMaxToUse
@@ -696,8 +702,9 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     os.system("mv %s %s" % ("normalizations.txt", voidDir+"/"))
     os.system("mv %s %s" % ("boundaryDistances.txt", voidDir+"/"))
 
-  if os.access(parmFile, os.F_OK):
-    os.unlink(parmFile)
+  if os.access(idListFile, os.F_OK): os.unlink(idListFile)
+
+  if os.access(parmFile, os.F_OK): os.unlink(parmFile)
 
   return
  

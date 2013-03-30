@@ -51,6 +51,8 @@
 #define CENTRAL_VOID 1
 #define EDGE_VOID 2
 
+using namespace std;
+
 typedef struct partStruct {
   float x, y, z, vol;
 } PART;
@@ -74,12 +76,25 @@ typedef struct voidStruct {
   int accepted;
   int voidType;
   int parentID, numChildren;
+  bool isLeaf, hasHighCentralDen;
   gsl_vector *eval;
   gsl_matrix *evec;
 } VOID;
 
+void openFiles(string outputDir, string sampleName, string name, 
+               int mockIndex, int numKept,
+               FILE** fpZobov, FILE** fpCenters, 
+               FILE** fpCentersNoCut, 
+               FILE** fpBarycenter, FILE** fpDistances, FILE** fpShapes, 
+               FILE** fpSkyPositions);
+
+void closeFiles(FILE* fpZobov, FILE* fpCenters, 
+                FILE* fpCentersNoCut, 
+                FILE* fpBarycenter, FILE* fpDistances, FILE* fpShapes, 
+                FILE* fpSkyPositions);
+
 void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters, 
-                FILE* fpCenterNoCut, 
+                FILE* fpCentersNoCut, 
                 FILE* fpSkyPositions, FILE* fpBarycenters, FILE* fpDistances, 
                 FILE* fpShapes, bool isObservation, double *boxLen);
 
@@ -112,15 +127,12 @@ int main(int argc, char **argv) {
   int i, p, p2, numPartTot, numZonesTot, dummy, iVoid, iZ;
   int numVoids, mockIndex, numKept;
   double tolerance;
-  FILE *fp, *fpZobovCentral, *fpZobovAll, *fpCentersCentral, *fpCentersAll,
-       *fpCentersNoCutCentral, *fpCentersNoCutAll, *fpBarycenterCentral,
-       *fpBarycenterAll, *fpDistancesCentral, *fpDistancesAll,
-       *fpShapesCentral, *fpShapesAll, *fpSkyPositionsCentral,
-       *fpSkyPositionsAll;
+  FILE *fp, *fpZobov, *fpCenters, *fpCentersNoCut, *fpBarycenter,
+        *fpDistances, *fpShapes, *fpSkyPositions;
   PART *part, *voidPart;
   ZONE2PART *zones2Parts;
   VOID2ZONE *void2Zones;
-  std::vector<VOID> voids;
+  vector<VOID> voids;
   float *temp, junk, voidVol;
   int junkInt, voidID, numPart, numZones, zoneID, partID, maxNumPart;
   int coreParticle, zoneNumPart;
@@ -128,6 +140,7 @@ int main(int argc, char **argv) {
   float centralRad, centralDen;
   double nearestEdge, redshift;
   char line[500], junkStr[10];
+  string outputDir, sampleName, name;
   int mask_index;
   double ranges[3][2], boxLen[3], mul; 
   double volNorm, radius;
@@ -253,6 +266,9 @@ int main(int argc, char **argv) {
 
     voids[i-1].radius = pow(voidVol/volNorm*3./4./M_PI, 1./3.);
     voids[i-1].accepted = 1;
+
+    voids[i-1].isLeaf = true;
+    voids[i-1].hasHighCentralDen = false;
   
     voids[i-1].eval = gsl_vector_alloc(3);
     voids[i-1].evec = gsl_matrix_alloc(3,3);
@@ -640,18 +656,23 @@ int main(int argc, char **argv) {
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
     if (voids[iVoid].numChildren > 0) {
       numAreParents++;
+      voids[iVoid].isLeaf = false;
      } else {
-      voids[iGood++] = voids[iVoid];
+      //voids[iGood++] = voids[iVoid];
+      voids[iVoid].isLeaf = true;
     }
   }
-  voids.resize(iGood);
-  printf("  5th filter: rejected %d that are not leaf nodes\n", numAreParents); 
+  //voids.resize(iGood);
+  //printf("  5th filter: rejected %d that are not leaf nodes\n", numAreParents); 
 
 
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
     if (voids[iVoid].centralDen > args.maxCentralDen_arg) {
       voids[iVoid].accepted = -1;
+      voids[iVoid].hasHighCentralDen = true;
       numHighDen++;
+    } else {
+      voids[iVoid].hasHighCentralDen = false;
     }
   }
 
@@ -669,80 +690,46 @@ int main(int argc, char **argv) {
   printf("   We have %d edge voids\n", numEdge); 
   printf("   We have %d central voids\n", numCentral); 
   printf("   We have %d too high central density\n", numHighDen); 
-  
+  printf("   We have %d that are not leaf nodes\n", numAreParents); 
+ 
   printf(" Output...\n");
-  fpZobovCentral = fopen((std::string(args.outputDir_arg)+"/voidDesc_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpZobovCentral, "%d particles, %d voids.\n", mockIndex, numKept);
-  fprintf(fpZobovCentral, "Void# FileVoid# CoreParticle CoreDens ZoneVol Zone#Part Void#Zones VoidVol Void#Part VoidDensContrast VoidProb\n");
-
-  fpZobovAll = fopen((std::string(args.outputDir_arg)+"/voidDesc_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpZobovAll, "%d particles, %d voids.\n", mockIndex, numKept);
-  fprintf(fpZobovAll, "Void# FileVoid# CoreParticle CoreDens ZoneVol Zone#Part Void#Zones VoidVol Void#Part VoidDensContrast VoidProb\n");
-
-  fpBarycenterCentral = fopen((std::string(args.outputDir_arg)+"/barycenters_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fpBarycenterAll = fopen((std::string(args.outputDir_arg)+"/barycenters_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-
-  fpCentersCentral = fopen((std::string(args.outputDir_arg)+"/centers_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpCentersCentral, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part\n");
-
-  fpCentersAll = fopen((std::string(args.outputDir_arg)+"/centers_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpCentersAll, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part\n");
-
-  fpCentersNoCutCentral = fopen((std::string(args.outputDir_arg)+"/centers_nocut_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpCentersNoCutCentral, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part\n");
-
-  fpCentersNoCutAll = fopen((std::string(args.outputDir_arg)+"/centers_nocut_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpCentersNoCutAll, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part\n");
-
-
-  fpDistancesCentral = fopen((std::string(args.outputDir_arg)+"boundaryDistancesCentral_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fpDistancesAll = fopen((std::string(args.outputDir_arg)+"boundaryDistancesAll_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-
-  fpSkyPositionsCentral = fopen((std::string(args.outputDir_arg)+"/sky_positions_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpSkyPositionsCentral, "# RA, dec, redshift, radius (Mpc/h), void ID\n");
-
-  fpSkyPositionsAll = fopen((std::string(args.outputDir_arg)+"/sky_positions_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpSkyPositionsAll, "# RA, dec, redshift, radius (Mpc/h), void ID\n");
-
-  fpShapesCentral = fopen((std::string(args.outputDir_arg)+"/shapes_central_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpShapesCentral, "# void ID, eig(1), eig(2), eig(3), eigv(1)-x, eiv(1)-y, eigv(1)-z, eigv(2)-x, eigv(2)-y, eigv(2)-z, eigv(3)-x, eigv(3)-y, eigv(3)-z\n");
   
-  fpShapesAll = fopen((std::string(args.outputDir_arg)+"/shapes_all_"+std::string(args.sampleName_arg)+".out").c_str(), "w");
-  fprintf(fpShapesAll, "# void ID, eig(1), eig(2), eig(3), eigv(1)-x, eiv(1)-y, eigv(1)-z, eigv(2)-x, eigv(2)-y, eigv(2)-z, eigv(3)-x, eigv(3)-y, eigv(3)-z\n");
-
-
+  outputDir = string(args.outputDir_arg);
+  sampleName = (string(args.sampleName_arg)+".out");
+ 
+  name = "central"; 
+  openFiles(outputDir, sampleName, name, 
+            mockIndex, numKept,
+            &fpZobov, &fpCenters, &fpCentersNoCut, &fpBarycenter, 
+            &fpDistances, &fpShapes, &fpSkyPositions);
+  
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
-
     if (voids[iVoid].voidType == CENTRAL_VOID) {
-      outputVoid(iVoid, voids[iVoid], fpZobovCentral, fpCentersCentral, 
-                 fpCentersNoCutCentral, fpSkyPositionsCentral,
-                 fpBarycenterCentral, fpDistancesCentral, fpShapesCentral,
+      outputVoid(iVoid, voids[iVoid], fpZobov, fpCenters, 
+                 fpCentersNoCut, fpSkyPositions,
+                 fpBarycenter, fpDistances, fpShapes,
                  args.isObservation_flag, boxLen);
-   } 
+    } 
+  }
+  closeFiles(fpZobov, fpCenters, fpCentersNoCut, fpBarycenter, 
+            fpDistances, fpShapes, fpSkyPositions);
 
+  name = "all";
+  openFiles(outputDir, sampleName, name, 
+            mockIndex, numKept,
+            &fpZobov, &fpCenters, &fpCentersNoCut, &fpBarycenter, 
+            &fpDistances, &fpShapes, &fpSkyPositions);
+  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
     if (voids[iVoid].voidType == EDGE_VOID || 
         voids[iVoid].voidType == CENTRAL_VOID) {
-      outputVoid(iVoid, voids[iVoid], fpZobovAll, fpCentersAll, 
-                 fpCentersNoCutAll, fpSkyPositionsAll,
-                 fpBarycenterAll, fpDistancesAll, fpShapesAll,
+      outputVoid(iVoid, voids[iVoid], fpZobov, fpCenters, 
+                 fpCentersNoCut, fpSkyPositions,
+                 fpBarycenter, fpDistances, fpShapes,
                  args.isObservation_flag, boxLen);
     }
- }
-
-  fclose(fpZobovCentral);
-  fclose(fpZobovAll);
-  fclose(fpCentersCentral);
-  fclose(fpCentersAll);
-  fclose(fpCentersNoCutCentral);
-  fclose(fpCentersNoCutAll);
-  fclose(fpBarycenterCentral);
-  fclose(fpBarycenterAll);
-  fclose(fpDistancesCentral);
-  fclose(fpDistancesAll);
-  fclose(fpShapesCentral);
-  fclose(fpShapesAll);
-  fclose(fpSkyPositionsCentral);
-  fclose(fpSkyPositionsAll);
+  }
+  closeFiles(fpZobov, fpCenters, fpCentersNoCut, fpBarycenter, 
+            fpDistances, fpShapes, fpSkyPositions);
 
   clock2 = clock();
   printf(" Time: %f sec (for %d voids)\n", 
@@ -756,8 +743,56 @@ int main(int argc, char **argv) {
 
 
 // ----------------------------------------------------------------------------
+void openFiles(string outputDir, string sampleName, string name, 
+               int mockIndex, int numKept,
+               FILE** fpZobov, FILE** fpCenters, 
+               FILE** fpCentersNoCut, 
+               FILE** fpBarycenter, FILE** fpDistances, FILE** fpShapes, 
+               FILE** fpSkyPositions) {
+
+  *fpZobov = fopen((outputDir+"/voidDesc_"+name+"_"+sampleName).c_str(), "w");
+  fprintf(*fpZobov, "%d particles, %d voids.\n", mockIndex, numKept);
+  fprintf(*fpZobov, "Void# FileVoid# CoreParticle CoreDens ZoneVol Zone#Part Void#Zones VoidVol Void#Part VoidDensContrast VoidProb\n");
+
+  *fpBarycenter = fopen((outputDir+"/barycenters_"+name+"_"+sampleName).c_str(), "w");
+
+  *fpCenters = fopen((outputDir+"/centers_"+name+"_"+sampleName).c_str(), "w");
+  fprintf(*fpCenters, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part, parent ID, number of children\n");
+
+  *fpCentersNoCut = fopen((outputDir+"/centers_nocut_"+name+"_"+sampleName).c_str(), "w");
+  fprintf(*fpCentersNoCut, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part, parent ID, number of children\n");
+
+
+  *fpDistances = fopen((outputDir+"boundaryDistances_"+name+"_"+sampleName).c_str(), "w");
+
+  *fpSkyPositions = fopen((outputDir+"/sky_positions_"+name+"_"+sampleName).c_str(), "w");
+  fprintf(*fpSkyPositions, "# RA, dec, redshift, radius (Mpc/h), void ID\n");
+
+  *fpShapes = fopen((outputDir+"/shapes_"+name+"_"+sampleName).c_str(), "w");
+  fprintf(*fpShapes, "# void ID, eig(1), eig(2), eig(3), eigv(1)-x, eiv(1)-y, eigv(1)-z, eigv(2)-x, eigv(2)-y, eigv(2)-z, eigv(3)-x, eigv(3)-y, eigv(3)-z\n");
+  
+} // end openFiles
+
+
+// ----------------------------------------------------------------------------
+void closeFiles(FILE* fpZobov, FILE* fpCenters, 
+                FILE* fpCentersNoCut, 
+                FILE* fpBarycenter, FILE* fpDistances, FILE* fpShapes, 
+                FILE* fpSkyPositions) {
+
+  fclose(fpZobov);
+  fclose(fpCenters);
+  fclose(fpCentersNoCut);
+  fclose(fpBarycenter);
+  fclose(fpDistances);
+  fclose(fpShapes);
+  fclose(fpSkyPositions);
+
+} // end closeFile
+
+// ----------------------------------------------------------------------------
 void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters, 
-                FILE* fpCenterNoCut, FILE* fpSkyPositions, 
+                FILE* fpCentersNoCut, FILE* fpSkyPositions, 
                 FILE* fpBarycenters, FILE* fpDistances, FILE* fpShapes,
                 bool isObservation, double *boxLen) {
 
@@ -795,8 +830,8 @@ void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters,
        outCenter[2] = (outVoid.barycenter[2]-boxLen[2]/2.)*100.;
      }
 
-     if (outVoid.accepted == 1) {
-       fprintf(fpCenters, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f %d\n",
+     if (!outVoid.hasHighCentralDen && outVoid.isLeaf) {
+       fprintf(fpCenters, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f %d %d %d\n",
              outCenter[0],
              outCenter[1],
              outCenter[2],
@@ -806,10 +841,12 @@ void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters,
              4./3.*M_PI*pow(outVoid.radius, 3),
              outVoid.voidID,
              outVoid.densCon,
-             outVoid.numPart);
+             outVoid.numPart,
+             outVoid.parentID,
+             outVoid.numChildren);
      } 
 
-       fprintf(fpCenterNoCut, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f %d\n",
+       fprintf(fpCentersNoCut, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f %d %d %d\n",
              outCenter[0],
              outCenter[1],
              outCenter[2],
@@ -819,7 +856,9 @@ void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters,
              4./3.*M_PI*pow(outVoid.radius, 3),
              outVoid.voidID,
              outVoid.densCon,
-             outVoid.numPart);
+             outVoid.numPart,
+             outVoid.parentID,
+             outVoid.numChildren);
 
      fprintf(fpSkyPositions, "%.2f %.2f %.5f %.2f %d\n",
              atan((outVoid.barycenter[1]-boxLen[1]/2.) / 
