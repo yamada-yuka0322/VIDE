@@ -5,6 +5,8 @@
 #define DL for (d=0;d<3;d++)
 #define BF 1e30
 
+#define QHULL_MAX_PARTICLES (1L<<24-1)
+
 int posread(char *posfile, float ***p, float fact);
 
 int main(int argc, char *argv[]) {
@@ -22,6 +24,7 @@ int main(int argc, char *argv[]) {
   float width, width2, totwidth, totwidth2, bf, s, g;
   float border, boxsize;
   float c[3];
+  int numGuards;
   int b[3];
   int numThreads;
   int mockIndex;
@@ -145,6 +148,14 @@ int main(int argc, char *argv[]) {
   printf("Nvp range: %d,%d\n",nvpmin,nvpmax);
   printf("Nvpbuf range: %d,%d\n",nvpbufmin,nvpbufmax);
 
+  numGuards = 6*(NGUARD+1)*(NGUARD+1);
+  if (nvpbufmax+numGuards >= QHULL_MAX_PARTICLES)
+    {
+      printf("Too many particles to tesselate per division (Qhull will overflow). Increase divisions or reduce buffer size.");
+      fflush(stdout);
+      exit(1);
+    }
+
   /* Output script file */
   sprintf(scrfile,"scr%s",suffix);
   printf("Writing script file to %s.\n",scrfile);fflush(stdout);
@@ -152,7 +163,7 @@ int main(int argc, char *argv[]) {
   if (scr == NULL) {
     printf("Problem opening script file.\n");
     fflush(stdout);
-    exit(0);
+    exit(1);
   }
   fprintf(scr,"#!/bin/bash -f\n");
   p = 0;

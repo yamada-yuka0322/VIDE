@@ -277,6 +277,11 @@ int main(int argc, char *argv[]) {
   /* Do tesselation*/
   printf("File read.  Tessellating ...\n"); fflush(stdout);
   exitcode = delaunadj(parts, nvp, nvpbuf, nvpall, &adjs);
+  if (exitcode != 0)
+   {
+     printf("Error while tesselating. Stopping here."); fflush(stdout);
+     exit(1);
+   }
   
   /* Now calculate volumes*/
   printf("Now finding volumes ...\n"); fflush(stdout);
