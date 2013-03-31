@@ -20,6 +20,9 @@ typedef struct Zone {
   float denscontrast; /* density contrast */
   double vol; /* Total volume of all particles in the zone */
   double voljoin; /* Total volume of all particles in the joined void */
+
+  int *zonelist; /* Zones bound to the void. */
+  int numzones; /* Number of zones bound. */
 } ZONE;
 
 typedef struct ZoneT {

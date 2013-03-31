@@ -314,6 +314,8 @@ void buildZones(PARTICLE *p, pid_t np, pid_t *&jumped,
   for (pid_t i=0; i < np; i++) {
     int h = zonenum[i];
     z[h].vol += 1.0/(double)p[i].dens;
+    z[h].numzones = 0;
+    z[h].zonelist = 0;
   }
 }
 
@@ -373,7 +375,9 @@ void doWatershed(const std::string& zonfile2, PARTICLE *p, pid_t np, ZONE *z, in
   int *zonelist, *zonelist2;
   int nhl;
   int *links = new int[NLINKS];
+  int *iord;
   float maxdenscontrast = 0;
+  bool *done_zones;
 
   ofstream zon2(zonfile2.c_str());
   if (!zon2)
@@ -387,20 +391,37 @@ void doWatershed(const std::string& zonfile2, PARTICLE *p, pid_t np, ZONE *z, in
   inyet2 = new char[numZones];
   zonelist = new int[numZones];
   zonelist2 = new int[numZones];
+  done_zones = new bool[nzones];
 
   fill(inyet, inyet + numZones, 0);
   fill(inyet2, inyet2 + numZones, 0);
+  fill(done_zones, done_zones + numZones, false);
+
+  sorter = new double[nzones+1];
+  /* Assign sorter by probability (could use volume instead) */
+  for (int h = 0; h < nzones; h++)
+    sorter[h] = (double)z[h].core;
+    
+  /* Text output file */
+
+  printf("about to sort (pre-watershed sort) ...\n");FF;
+
+  iord = new int[nzones];
+ 
+  findrtop(sorter, numZones, iord, numZones);
+  delete[] sorter;
 
   nhl = 0;
-  for (int h = 0; h < numZones; h++)
+  for (int ii = 0; ii < numZones; h++)
     {
       int nhlcount = 0;
+      int h = iord[ii];
       float lowvol;
       bool beaten;
       
       for (int hl = 0; hl < nhl; hl++)
         inyet[zonelist[hl]] = 0;
-      
+
       zonelist[0] = h;
       inyet[h] = 1;
       nhl = 1;
@@ -462,7 +483,7 @@ void doWatershed(const std::string& zonfile2, PARTICLE *p, pid_t np, ZONE *z, in
         
         for (int l = 0; l < nl; l++)
           {
-            if (p[z[links[l]].core].dens < p[z[h].core].dens)
+            if (!done_zones[links[l]]) /* Equivalent to p[z[links[l]].core].dens < p[z[h].core].dens) as zones are sorted. */
               beaten = true;
           }
 
@@ -496,7 +517,7 @@ void doWatershed(const std::string& zonfile2, PARTICLE *p, pid_t np, ZONE *z, in
                             if ((inyet[link2]+inyet2[link2]) == 0) {
                               interior = false;
                               if (z[h2].slv[za] <= lowvol) {
-                                if (p[z[link2].core].dens < p[z[h].core].dens) {
+                                if (!done_zones[link2]) { // Equivalent to p[z[link2].core].dens < p[z[h].core].dens)
                                   beaten = true;
                                   break;
                                 }
@@ -550,10 +571,14 @@ void doWatershed(const std::string& zonfile2, PARTICLE *p, pid_t np, ZONE *z, in
       }
       /* Calculate volume */
       z[h].voljoin = 0.;
+      z[h].zonelist = new int[nhl];
+      z[h].numzones = nhl;
       for (int q = 0; q < nhl; q++) {
         z[h].voljoin += z[zonelist[q]].vol;
+	z[h].zonelist[q] = zonelist[q];
       }
       
+      done_zones[h] = true;
       z[h].nhl = nhl;
       
       zon2.write((char *)&nhl, sizeof(int));
@@ -672,7 +697,7 @@ int main(int argc,char **argv)
 
   printf("about to sort ...\n");FF;
 
-  iord = (int *)malloc(nzones*sizeof(int));
+  iord = new int[nzones];
 
   findrtop(sorter, nzones, iord, nzones);
   delete[] sorter;
@@ -694,7 +719,11 @@ int main(int argc,char **argv)
 
     } /* h+1 to start from 1, not zero */
   txt.close();
-    
+
+  delete[] iord;
+  delete[] z;
+  delete[] p;
+
   cout << "Done!" << endl;
   return(0);
 }
