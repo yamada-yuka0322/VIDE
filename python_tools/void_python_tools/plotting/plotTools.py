@@ -18,7 +18,7 @@
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #+
 __all__=['plotRedshiftDistribution', 'plotSizeDistribution', 'plot1dProfiles',
-         'plotMarg1d', 'plotNumberDistribution']
+         'plotMarg1d', 'plotNumberDistribution', 'plotVoidDistribution']
 
 from void_python_tools.backend.classes import *
 from plotDefs import *
@@ -26,6 +26,7 @@ import numpy as np
 import os
 import pylab as plt
 import void_python_tools.apTools as vp
+import void_python_tools.xcor as xcor
 
 # -----------------------------------------------------------------------------
 def plotRedshiftDistribution(workDir=None, sampleList=None, figDir=None, 
@@ -266,7 +267,7 @@ def plotNumberDistribution(workDir=None, sampleList=None, figDir=None,
 
     boxVol *= 1.e-9
 
-    filename = workDir+"/sample_"+sampleName+"/centers_"+dataPortion+"_"+\
+    filename = workDir+"/sample_"+sampleName+"/centers_nocut_"+dataPortion+"_"+\
                sampleName+".out"
     if not os.access(filename, os.F_OK):
       print "File not found: ", filename
@@ -294,5 +295,50 @@ def plotNumberDistribution(workDir=None, sampleList=None, figDir=None,
   if showPlot:
     os.system("display %s" % figDir+"/fig_"+plotName+".png")
 
+# -----------------------------------------------------------------------------
+def plotVoidDistribution(workDir=None, sampleList=None, figDir=None, 
+                     plotNameBase="dv", 
+                     showPlot=False, dataPortion=None, setName=None):
 
+  Nmesh = 256
+ 
+  for (iSample,sample) in enumerate(sampleList):
+    plt.clf()
+    plt.xlabel("x (Mpc/h)")
+    plt.ylabel("y (Mpc/h)")
+
+    sampleName = sample.fullName
+  
+    plotName = plotNameBase+"_"+sampleName
+
+    filename = workDir+"/sample_"+sampleName+"/centers_nocut_"+dataPortion+"_"+\
+               sampleName+".out"
+
+    if not os.access(filename, os.F_OK):
+      print "File not found: ", filename
+      continue
+
+    void_file = open(filename,'r')
+    void_header1 = void_file.readline().split(",")
+    void_data1 = np.reshape(void_file.read().split(),
+                            (-1,len(void_header1))).astype(np.float32)
+    void_file.close()
+
+    xv = void_data1[:,0:3]
+    rv = void_data1[:,4]
+    vv = void_data1[:,6]
+    dv, wm, ws = xcor.cic(xv, sample.boxLen, Lboxcut = 0., Nmesh = Nmesh)
+    plt.imshow(np.sum(dv+1,2)/Nmesh,extent=[0,sample.boxLen,0,sample.boxLen],
+               aspect='equal',
+               cmap='YlGnBu_r',interpolation='gaussian')
+    plt.colorbar()
+
+    plt.title("Voids: "+sampleName)
+
+    plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
+    plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
+    plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")
+
+    if showPlot:
+      os.system("display %s" % figDir+"/fig_"+plotName+".png")
 

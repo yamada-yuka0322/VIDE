@@ -50,13 +50,13 @@ parser.add_argument('--hod', dest='hod', action='store_const',
 parser.add_argument('--all', dest='all', action='store_const',
                    const=True, default=False,
                    help='write everything')
-parser.add_argument('--parmFile', dest='parmFile',
+parser.add_argument('--parm', dest='parm',
                    default="",
                    help='path to parameter file')
 args = parser.parse_args()
 
 
-filename = args.parmFile
+filename = args.parm
 print " Loading parameters from", filename
 if not os.access(filename, os.F_OK):
   print "  Cannot find parameter file %s!" % filename
@@ -75,6 +75,26 @@ def getSampleName(setName, redshift, useVel, iSlice=-1, iVol=-1):
   if iVol != -1: sampleName += "_d" + iVol
 
   return sampleName
+
+#------------------------------------------------------------------------------
+def getNickName(sampleName):
+
+  splitName = sampleName.split('_')
+  
+  if "ss" in splitName[1]:
+    nickName = "Subsample = " + splitName[1].replace("ss","")
+    nickName += ", z = " + splitName[2].replace("z","")
+  elif "hod" in splitName[1]:
+    nickName = "HOD = " + splitName[2]
+    nickName += ", z = " + splitName[3].replace("z","")
+  elif "halos" in splitName[1]:
+    nickName = "Halos, min mass = " + splitName[2].replace("min","")
+    nickName += ", z = " + splitName[3].replace("z","")
+  else:
+    nickName = sampleName
+
+  return nickName
+
 
 #------------------------------------------------------------------------------
 # for given dataset parameters, outputs a script for use with analyzeVoids
@@ -137,7 +157,7 @@ newSample = Sample(dataFile = "{dataFile}",
                    dataFormat = "{dataFormat}",
                    dataUnit = {dataUnit},
                    fullName = "{sampleName}",
-                   nickName = "{sampleName}",
+                   nickName = "{nickName}",
                    dataType = "simulation",
                    zBoundary = ({zMin}, {zMax}),
                    zRange    = ({zMin}, {zMax}),
@@ -218,11 +238,14 @@ newSample.addStack(0.0, 5.0, 90, 95, False, False)
 
           sampleName = getSampleName(setName, sliceMin, useVel,
                                      iSlice=iSlice, iVol=mySubvolume)
+          nickName = getNickName(sampleName)
+
 
           scriptFile.write(sampleInfo.format(dataFile=dataFileName,
                                          dataFormat=dataFormat,
                                          dataUnit=dataUnit,
                                          sampleName=sampleName,
+                                         nickName=nickName,
                                          zMin=sliceMin,
                                          zMax=sliceMax,
                                          zMinMpc=sliceMinMpc,
@@ -285,24 +308,39 @@ for iSubSample in xrange(len(subSamples)):
                   scriptDir, catalogDir, fileNums, redshifts, 
                   numSubvolumes, numSlices, False, lbox, minRadius, omegaM, 
                   subsample=subSampleToUse, suffix=suffix)
-      writeScript(setName, fileToUse, dataFormat, 
-                  scriptDir, catalogDir, fileNums, redshifts, 
-                  numSubvolumes, numSlices, True, lbox, minRadius, omegaM, 
-                  subsample=subSampleToUse, suffix=suffix)
+      if doPecVel:
+        writeScript(setName, fileToUse, dataFormat, 
+                    scriptDir, catalogDir, fileNums, redshifts, 
+                    numSubvolumes, numSlices, True, lbox, minRadius, omegaM, 
+                    subsample=subSampleToUse, suffix=suffix)
     else:
-      subSampleToUse = keepFractionList
-      suffix = ""
-      fileToUse = partFileList[0]
-      writeScript(setName, fileToUse, dataFormat, 
+      if doSubSampling:
+        # prepare scripts using our own format
+        dataFormatToUse = "multidark"
+        subSampleToUse = 1.0
+        fileToUse = prefix+"ss"+str(thisSubSample)+"_z"
+        partFileList = []
+        suffix = ".dat"
+        for (iRedshift, redshift) in enumerate(redshifts):
+          sampleName = getSampleName(setName, redshift, False)
+          outFileName = sampleName+".dat"
+          partFileList.append(outFileName) 
+      else:
+        dataFormatToUse = dataFormat
+        subSampleToUse = keepFractionList
+        suffix = ""
+        fileToUse = partFileList[0]
+      writeScript(setName, fileToUse, dataFormatToUse, 
                   scriptDir, catalogDir, fileNums, redshifts, 
                   numSubvolumes, numSlices, False, lbox, minRadius, omegaM, 
                   subsample=subSampleToUse, suffix=suffix,
                   dataFileNameList=partFileList)
-      writeScript(setName, fileToUse, dataFormat, 
-                  scriptDir, catalogDir, fileNums, redshifts, 
-                  numSubvolumes, numSlices, True, lbox, minRadius, omegaM, 
-                  subsample=subSampleToUse, suffix=suffix,
-                  dataFileNameList=partFileList)
+      if doPecVel:
+        writeScript(setName, fileToUse, dataFormatToUse, 
+                    scriptDir, catalogDir, fileNums, redshifts, 
+                    numSubvolumes, numSlices, True, lbox, minRadius, omegaM, 
+                    subsample=subSampleToUse, suffix=suffix,
+                    dataFileNameList=partFileList)
        
 
   if args.subsample or args.all:
@@ -313,16 +351,45 @@ for iSubSample in xrange(len(subSamples)):
       print "   redshift", redshift
       sys.stdout.flush()
   
-      if dataFormat == "multidark":
+      if dataFormat == "multidark" or dataFormat == "sdf":
         # reuse previous subamples in order to:
         #   - preserve unique IDs across multiple subsamples
         #   - reuse smaller files for faster processing
         if prevSubSample == -1:
-          dataFile = catalogDir+"/"+particleFileBase+fileNums[iRedshift]
+          if particleFileDummy == '':
+            dataFile = catalogDir+"/"+particleFileBase+fileNums[iRedshift]
+          else:
+            dataFile = particleFileBase.replace(particleFileDummy,
+                                                fileNums[iRedshift])
+            dataFile = catalogDir+"/"+dataFile
+          keepFraction = float(thisSubSample) / baseResolution
         else:
           sampleName = prefix+"ss"+str(prevSubSample)+"_z"+redshift
           dataFile = catalogDir+"/"+sampleName+".dat"
           keepFraction = float(thisSubSample) / float(prevSubSample)
+
+        if prevSubSample == -1 and dataFormat == "sdf":
+          convertedFile = dataFile + "_temp"
+          SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
+          scale = 1./(1.+float(redshift))
+          rescale_position = hubble/1000./scale
+          shift = lbox/2.
+          rescale_velocity = 3.08567802e16/3.1558149984e16
+          command = "%s %s x y z vz vy vx | awk '{print $1*%g+%g, $2*%g+%g, $3*%g+%g, $4*%g, $5*%g, $6*%g}' > %s" % (SDFcvt_PATH, dataFile,
+                                     rescale_position,
+                                     shift,
+                                     rescale_position,
+                                     shift,
+                                     rescale_position,
+                                     shift,
+                                     rescale_velocity,
+                                     rescale_velocity,
+                                     rescale_velocity,
+                                     convertedFile )
+          os.system(command)
+
+          os.system(command)
+          dataFile = convertedFile
 
         inFile = open(dataFile, 'r')
 
@@ -335,6 +402,11 @@ for iSubSample in xrange(len(subSamples)):
         outFile.write("%s\n" %(redshift))
         outFile.write("%d\n" %(maxKeep))
 
+        if dataFormat == "sdf":
+          splitter = ' '
+        if dataFormat == "multidark":
+          splitter = ','
+
         numKept = 0
         for (i,line) in enumerate(inFile):
           if (prevSubSample != -1 and i < 5): continue # skip header
@@ -344,7 +416,7 @@ for iSubSample in xrange(len(subSamples)):
           #if numKept > maxKeep: break
 
           if (prevSubSample == -1):
-            line = line.split(',')
+            line = line.split(splitter)
             x  = float(line[0])
             y  = float(line[1])
             z  = float(line[2])
@@ -360,6 +432,9 @@ for iSubSample in xrange(len(subSamples)):
         inFile.close()
         outFile.close()
 
+        if prevSubSample == -1 and dataFormat == "sdf":
+          os.unlink(dataFile)     
+ 
       elif dataFormat == "random":
         sampleName = "ran.ss"+str(thisSubSample)+"_z"+redshift
         outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
@@ -409,14 +484,25 @@ if (args.script or args.all) and haloFileBase != "":
     minRadies = 10
   
     setName = prefix+"halos_min"+str(minHaloMass)
+    fileList = []
+    for (iRedshift, redshift) in enumerate(redshifts):
+      sampleName = getSampleName(setName, redshift, False)
+      outFileName = sampleName+".dat"
+      fileList.append(outFileName) 
+
     writeScript(setName, prefix+"halos_min"+str(minHaloMass)+"_z", "multidark",
                 scriptDir, catalogDir, fileNums, 
                 redshifts, 
-                numSubvolumes, numSlices, False, lbox, minRadius, omegaM)
-    writeScript(setName, prefix+"halos_min"+str(minHaloMass)+"_z", "multidark",
-                scriptDir, catalogDir, fileNums, 
-                redshifts, 
-                numSubvolumes, numSlices, True, lbox, minRadius, omegaM)
+                numSubvolumes, numSlices, False, lbox, minRadius, omegaM,
+                dataFileNameList = fileList)
+   
+    if doPecVel:
+      writeScript(setName, prefix+"halos_min"+str(minHaloMass)+"_z", 
+                  "multidark",
+                  scriptDir, catalogDir, fileNums, 
+                  redshifts, 
+                  numSubvolumes, numSlices, True, lbox, minRadius, omegaM,
+                  dataFileNameList = fileList)
 
 if (args.halos or args.all) and haloFileBase != "":
   print " Doing halos"
@@ -451,7 +537,7 @@ if (args.halos or args.all) and haloFileBase != "":
             numPart += 1
         inFile.close()
 
-      sampleName = prefix+"halos_min"+str(minHaloMass)+"_z"+fileNums[iRedshift]
+      sampleName = prefix+"halos_min"+str(minHaloMass)+"_z"+redshifts[iRedshift]
       outFileName = catalogDir+"/"+sampleName+".dat"
       outFile = open(outFileName, 'w')
       outFile.write("%f\n" %(lbox))
@@ -536,15 +622,25 @@ root_filename {workDir}/hod
 if (args.script or args.all) and haloFileBase != "":
   print " Doing HOD scripts"
   sys.stdout.flush()
+
   for thisHod in hodParmList:
+    fileList = []
+    for (iRedshift, redshift) in enumerate(redshifts):
+      sampleName = getSampleName(prefix+"hod_"+thisHod['name'], redshift, False)
+      outFileName = sampleName+".dat"
+      fileList.append(outFileName) 
+
     print "  ", thisHod['name']
     setName = prefix+"hod_"+thisHod['name']
     writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
                 scriptDir, catalogDir, fileNums, redshifts, 
-                 numSubvolumes, numSlices, False, lbox, 15, omegaM)
-    writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
-                scriptDir, catalogDir, fileNums, redshifts, 
-                 numSubvolumes, numSlices, True, lbox, 15, omegaM)
+                numSubvolumes, numSlices, False, lbox, 15, omegaM,
+                dataFileNameList = fileList)
+    if doPecVel:
+      writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
+                  scriptDir, catalogDir, fileNums, redshifts, 
+                  numSubvolumes, numSlices, True, lbox, 15, omegaM,
+                  dataFileNameList = fileList)
 
 if (args.hod or args.all) and haloFileBase != "":
   print " Doing HOD"

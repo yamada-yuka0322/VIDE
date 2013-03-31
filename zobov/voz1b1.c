@@ -12,7 +12,7 @@ int posread(char *posfile, float ***p, float fact);
 
 int main(int argc, char *argv[]) {
   int exitcode;
-  int i, j, np;
+  pid_t i, j, np;
   float **r;
   coordT rtemp[3], *parts;
   coordT deladjs[3*MAXVERVER], points[3*MAXVERVER];
@@ -21,15 +21,16 @@ int main(int argc, char *argv[]) {
   char *posfile, outfile[200], *suffix, *outDir;
   PARTADJ *adjs;
   float *vols;
-  float predict, xmin,xmax,ymin,ymax,zmin,zmax;
-  int *orig;
+  realT predict, xmin,xmax,ymin,ymax,zmin,zmax;
+  pid_t *orig;
   
   int isitinbuf;
   char isitinmain, d;
-  int numdiv, nvp, nvpall, nvpbuf;
-  float width, width2, totwidth, totwidth2, bf, s, g;
+  int numdiv;
+  pid_t nvp, nvpall, nvpbuf;
+  realT width, width2, totwidth, totwidth2, bf, s, g;
   float border, boxsize;
-  float c[3];
+  realT c[3];
   int b[3];
   double totalvol;
 
@@ -117,7 +118,7 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
   
-  DL c[d] = ((float)b[d]+0.5)*width;
+  DL c[d] = ((float)b[d])*width;
   printf("c: %f,%f,%f\n",c[0],c[1],c[2]);
   /* Assign temporary array*/
   nvpbuf = 0; /* Number of particles to tesselate, including
@@ -142,7 +143,7 @@ int main(int argc, char *argv[]) {
 					points */
 
   parts = (coordT *)malloc(3*nvpbuf*sizeof(coordT));
-  orig = (int *)malloc(nvpbuf*sizeof(int));
+  orig = (pid_t *)malloc(nvpbuf*sizeof(pid_t));
 
   if (parts == NULL) {
     printf("Unable to allocate parts\n");
@@ -158,7 +159,7 @@ int main(int argc, char *argv[]) {
   for (i=0; i<np; i++) {
     isitinmain = 1;
     DL {
-      rtemp[d] = r[i][d] - c[d];
+      rtemp[d] = (realT)r[i][d] - (realT)c[d];
       if (rtemp[d] > 0.5) rtemp[d] --;
       if (rtemp[d] < -0.5) rtemp[d] ++;
       isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
@@ -182,15 +183,16 @@ int main(int argc, char *argv[]) {
   nvpbuf = nvp;
   for (i=0; i<np; i++) {
     isitinbuf = 1;
+    isitinmain = 1;
+
     DL {
-      rtemp[d] = r[i][d] - c[d];
+      rtemp[d] = (realT)r[i][d] - (realT)c[d];
       if (rtemp[d] > 0.5) rtemp[d] --;
       if (rtemp[d] < -0.5) rtemp[d] ++;
       isitinbuf = isitinbuf && (fabs(rtemp[d])<totwidth2);
+      isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
     }
-    if ((isitinbuf > 0) &&
-	((fabs(rtemp[0])>width2)||(fabs(rtemp[1])>width2)||(fabs(rtemp[2])>width2))) {
-      
+    if (isitinbuf && !isitinmain) {
       /*printf("%3.3f ",sqrt(rtemp[0]*rtemp[0] + rtemp[1]*rtemp[1] +
 	rtemp[2]*rtemp[2]));
 	printf("|%2.2f,%2.2f,%2.2f,%f,%f",r[i][0],r[i][1],r[i][2],width2,totwidth2);*/
@@ -221,40 +223,40 @@ int main(int argc, char *argv[]) {
   for (i=0; i<NGUARD+1; i++) {
     for (j=0; j<NGUARD+1; j++) {
       /* Bottom */
-      parts[3*nvpall]   = -width2 + (float)i * s;
-      parts[3*nvpall+1] = -width2 + (float)j * s;
+      parts[3*nvpall]   = -width2 + (realT)i * s;
+      parts[3*nvpall+1] = -width2 + (realT)j * s;
       parts[3*nvpall+2] = -width2 - g;
       nvpall++;
       /* Top */
-      parts[3*nvpall]   = -width2 + (float)i * s;
-      parts[3*nvpall+1] = -width2 + (float)j * s;
+      parts[3*nvpall]   = -width2 + (realT)i * s;
+      parts[3*nvpall+1] = -width2 + (realT)j * s;
       parts[3*nvpall+2] = width2 + g;
       nvpall++;
     }
   }
   for (i=0; i<NGUARD+1; i++) { /* Don't want to overdo the corners*/
     for (j=0; j<NGUARD+1; j++) {
-      parts[3*nvpall]   = -width2 + (float)i * s;
+      parts[3*nvpall]   = -width2 + (realT)i * s;
       parts[3*nvpall+1] = -width2 - g;
-      parts[3*nvpall+2] = -width2 + (float)j * s;
+      parts[3*nvpall+2] = -width2 + (realT)j * s;
       nvpall++;
       
-      parts[3*nvpall]   = -width2 + (float)i * s;
+      parts[3*nvpall]   = -width2 + (realT)i * s;
       parts[3*nvpall+1] = width2 + g;
-      parts[3*nvpall+2] = -width2 + (float)j * s;
+      parts[3*nvpall+2] = -width2 + (realT)j * s;
       nvpall++;
     }
   }
   for (i=0; i<NGUARD+1; i++) {
     for (j=0; j<NGUARD+1; j++) {
       parts[3*nvpall]   = -width2 - g;
-      parts[3*nvpall+1] = -width2 + (float)i * s;
-      parts[3*nvpall+2] = -width2 + (float)j * s;
+      parts[3*nvpall+1] = -width2 + (realT)i * s;
+      parts[3*nvpall+2] = -width2 + (realT)j * s;
       nvpall++;
       
       parts[3*nvpall]   = width2 + g;
-      parts[3*nvpall+1] = -width2 + (float)i * s;
-      parts[3*nvpall+2] = -width2 + (float)j * s;
+      parts[3*nvpall+1] = -width2 + (realT)i * s;
+      parts[3*nvpall+2] = -width2 + (realT)j * s;
       nvpall++;
     }
   }
@@ -275,6 +277,11 @@ int main(int argc, char *argv[]) {
   /* Do tesselation*/
   printf("File read.  Tessellating ...\n"); fflush(stdout);
   exitcode = delaunadj(parts, nvp, nvpbuf, nvpall, &adjs);
+  if (exitcode != 0)
+   {
+     printf("Error while tesselating. Stopping here."); fflush(stdout);
+     exit(1);
+   }
   
   /* Now calculate volumes*/
   printf("Now finding volumes ...\n"); fflush(stdout);
@@ -323,14 +330,14 @@ int main(int argc, char *argv[]) {
   printf("nvp = %d\n",nvp);
 
   /* Tell us where the original particles were */
-  fwrite(orig,sizeof(int),nvp,out);
+  fwrite(orig,sizeof(pid_t),nvp,out);
   /* Volumes*/
   fwrite(vols,sizeof(float),nvp,out);
   /* Adjacencies */
   for (i=0;i<nvp;i++) {
-    fwrite(&(adjs[i].nadj),1,sizeof(int),out);
+    fwrite(&(adjs[i].nadj),1,sizeof(pid_t),out);
     if (adjs[i].nadj > 0)
-      fwrite(adjs[i].adj,adjs[i].nadj,sizeof(int),out);
+      fwrite(adjs[i].adj,adjs[i].nadj,sizeof(pid_t),out);
     else printf("0");
   }
   fclose(out);

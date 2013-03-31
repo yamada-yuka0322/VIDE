@@ -132,6 +132,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       return
 
     prevSubSample = -1
+    firstSubSample = -1
     for thisSubSample in sample.subsample.split(', '):
 
       if prevSubSample == -1:
@@ -141,13 +142,14 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
         keepFraction = float(thisSubSample)
         subSampleLine = "subsample %g" % keepFraction
         resubSampleLine = ""
+        firstSubSample = keepFraction
       else:
         inputParameterFlag = "inputParameter " + zobovDir+"/zobov_slice_"+\
                              sampleName+"_ss"+prevSubSample+".par"
         outputFile = zobovDir+"/zobov_slice_" + sampleName + "_ss" + \
                      thisSubSample
         keepFraction = float(thisSubSample)/float(prevSubSample)
-        subSampleLine = "subsample %g" % keepFraction
+        subSampleLine = "subsample %s" % firstSubSample
         resubSampleLine = "resubsample %g" % keepFraction
 
       includePecVelString = ""
@@ -162,6 +164,8 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
         dataFileLine = "gadget " + datafile
       elif sample.dataFormat == "sdf":
         dataFileLine = "sdf " + datafile
+      else:
+        raise ValueError("unknown dataFormat '%s'" % sample.dataFormat)
     
       iX = float(sample.mySubvolume[0])
       iY = float(sample.mySubvolume[1])
@@ -320,8 +324,8 @@ def launchPrune(sample, binPath,
 
     periodicLine = " --periodic='"
     if sample.numSubvolumes == 1: periodicLine += "xy"
-    if sample.zBoundaryMpc[1]  - sample.zBoundaryMpc[0] - \
-       sample.boxLen <= 1.e-1: 
+    if np.abs(sample.zBoundaryMpc[1]  - sample.zBoundaryMpc[0] - \
+       sample.boxLen) <= 1.e-1: 
       periodicLine += "z"
     periodicLine += "' "
 
@@ -376,7 +380,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
   periodicLine = " --periodic='"
   if sample1.dataType != "observation":
     if sample1.numSubvolumes == 1: periodicLine += "xy"
-    if sample1.zBoundaryMpc[1]  - sample1.zBoundaryMpc[0] - sample1.boxLen <= 1.e-1: 
+    if np.abs(sample1.zBoundaryMpc[1]  - sample1.zBoundaryMpc[0] - sample1.boxLen) <= 1.e-1: 
       periodicLine += "z"
   periodicLine += "' "
 
@@ -416,6 +420,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
     cmd += periodicLine
     cmd += " --outfile=" + outputFile
     cmd += " &> " + logFile
+    open("temp.par",'w').write(cmd)
     os.system(cmd)
 
     if jobSuccessful(logFile, "Done!\n"):
@@ -433,12 +438,19 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
                 voidDir=None, freshStack=True, runSuffix=None,
                 zobovDir=None,
                 INCOHERENT=False, ranSeed=None, summaryFile=None, 
-                continueRun=None, dataType=None, prefixRun=""):
+                continueRun=None, dataType=None, prefixRun="",
+                idList=None, rescaleOverride=None):
 
   sampleName = sample.fullName
 
+  if idList != None:
+    customLine = "selected"
+  else:
+    customLine = ""
+
   runSuffix = getStackSuffix(stack.zMin, stack.zMax, stack.rMin,
-                             stack.rMax, thisDataPortion)
+                             stack.rMax, thisDataPortion, 
+                             customLine=customLine)
 
   logFile = logDir+("/%sstack_"%prefixRun)+sampleName+"_"+runSuffix+".out"
  
@@ -474,10 +486,25 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   else:
     nullTestFlag = ""
 
-  if stack.rescaleMode == "rmax":
+  if rescaleOverride == None: rescaleOverride = stack.rescaleMode
+  if rescaleOverride == "rmax":
     rescaleFlag = "rescale"
   else:
     rescaleFlag = ""
+
+  idListFile = "idlist.temp"
+  if idList != None:
+    idListFlag = "idList " + idListFile
+    idFile = open(idListFile, 'w')
+    for id in idList: idFile.write(str(id)+"\n")
+    idFile.close()
+    rMinToUse = 0.
+    rMaxToUse = 100000.
+    centralRadius = rMaxToUse
+  else:
+    idListFlag = ""
+    rMinToUse = stack.rMin
+    rMaxToUse = stack.rMax
 
   conf="""
   desc %s
@@ -501,13 +528,14 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   barycenters %s
   boundaryDistances %s
   %s
+  %s
   """ % \
   (zobovDir+"/voidDesc_"+thisDataPortion+"_"+sampleName+".out",
    zobovDir+"/voidPart_"+sampleName+".dat",
    zobovDir+"/voidZone_"+sampleName+".dat",
    zobovDir+"/vol_"+sampleName+".dat",
-   stack.rMin,
-   stack.rMax,
+   rMinToUse,
+   rMaxToUse,
    zobovDir+("/%szobov_slice_"%prefixRun)+sampleName,
    zobovDir+"/zobov_slice_"+sampleName+".par",
    maxDen,
@@ -522,7 +550,9 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
    thisDataPortion,
    zobovDir+"/barycenters_"+thisDataPortion+"_"+sampleName+".out",
    zobovDir+"/boundaryDistances_"+thisDataPortion+"_"+sampleName+".out",
-   rescaleFlag)
+   rescaleFlag,
+   idListFlag 
+   )
 
   parmFile = os.getcwd()+("/%sstack_"%prefixRun)+sample.fullName+".par"
 
@@ -672,8 +702,9 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     os.system("mv %s %s" % ("normalizations.txt", voidDir+"/"))
     os.system("mv %s %s" % ("boundaryDistances.txt", voidDir+"/"))
 
-  if os.access(parmFile, os.F_OK):
-    os.unlink(parmFile)
+  if os.access(idListFile, os.F_OK): os.unlink(idListFile)
+
+  if os.access(parmFile, os.F_OK): os.unlink(parmFile)
 
   return
  

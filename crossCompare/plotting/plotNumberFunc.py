@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #+
 #   VIDE -- Void IDEntification pipeline -- ./crossCompare/plotting/plotNumberFunc.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
@@ -17,7 +18,6 @@
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #+
-#!/usr/bin/env python
 
 # plots cumulative distributions of number counts
 
@@ -36,8 +36,8 @@ from scipy.stats import ks_2samp
 
 plotNameBase = "compdist"
 
-obsFudgeFactor = 1.0 # what fraction of the volume are we *reall* capturing?
-#obsFudgeFactor = .66 # what fraction of the volume are we *reall* capturing?
+#obsFudgeFactor = 1.0 # what fraction of the volume are we *reall* capturing?
+obsFudgeFactor = .15 # what fraction of the volume are we *reall* capturing?
 
 linewidth = 1
 
@@ -45,7 +45,7 @@ parser = argparse.ArgumentParser(description='Plot.')
 parser.add_argument('--show', dest='showPlot', action='store_const',
                    const=True, default=False,
                    help='display the plot (default: just write eps)')
-parser.add_argument('--parmFile', dest='parmFile', default='datasetsToPlot.py',
+parser.add_argument('--parm', dest='parm', default='datasetsToPlot.py',
                     help='path to parameter file')
 args = parser.parse_args()
 
@@ -55,7 +55,7 @@ errorBarsX = np.linspace(0, plotMax, num=nErrorBars)
 
 # ------------------------------------------------------------------------------
 
-filename = args.parmFile
+filename = args.parm
 print " Loading parameters from", filename
 if not os.access(filename, os.F_OK):
   print "  Cannot find parameter file %s!" % filename
@@ -102,7 +102,7 @@ for dataPortion in dataPortions:
 
     boxVol *= 1.e-9 # Mpc->Gpc
 
-    filename = workDir+"/"+sampleDirList[iSample]+"/centers_"+dataPortion+"_"+\
+    filename = workDir+"/"+sampleDirList[iSample]+"/centers_nocut_"+dataPortion+"_"+\
                sampleName+".out"
     if not os.access(filename, os.F_OK):
       print "File not found: ", filename
@@ -137,8 +137,13 @@ for dataPortion in dataPortions:
              ecolor=colorList[iSample],
              fmt=None, label='_nolegend_', capsize=0)
 
-    hist, bin_edges = np.histogram(data, bins=100, range=(0,100)) 
-    allData.append(hist)
+    hist, bin_edges = np.histogram(data, bins=40, range=(0,100))
+    #allData.append(hist)
+
+    binCenters = 0.5*(bin_edges[1:] + bin_edges[:-1])
+    #plt.plot(binCenters, hist, '-',
+    #         label=lineTitle, color=colorList[iSample],
+    #         linewidth=linewidth)
 
   plt.legend(title = "Samples", loc = "upper right", prop={'size':8})
   #plt.title(plotTitle)
@@ -155,19 +160,19 @@ plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
 plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
 plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")
 
-dataFile = figDir+"/data_"+plotName+".dat"
-fp = open(dataFile, 'w')
-fp.write("# R [Mpc/h], N [h^3 Gpc^-3]\n")
-fp.write("# ")
-for sample in dataSampleList:
-  fp.write(sample.fullName+" ")
-fp.write("\n")
-for i in xrange(100):
-  fp.write(str(bin_edges[i]) + " ")
-  for iSample in xrange(len(dataSampleList)):
-    fp.write(str(allData[iSample][i])+" ")
-  fp.write("\n")
-fp.close()
+#dataFile = figDir+"/data_"+plotName+".dat"
+#fp = open(dataFile, 'w')
+#fp.write("# R [Mpc/h], N [h^3 Gpc^-3]\n")
+#fp.write("# ")
+#for sample in dataSampleList:
+#  fp.write(sample.fullName+" ")
+#fp.write("\n")
+#for i in xrange(100):
+#  fp.write(str(bin_edges[i]) + " ")
+#  for iSample in xrange(len(dataSampleList)):
+#    fp.write(str(allData[iSample][i])+" ")
+#  fp.write("\n")
+#fp.close()
 
 if args.showPlot:
   os.system("display %s" % figDir+"/fig_"+plotName+".png")

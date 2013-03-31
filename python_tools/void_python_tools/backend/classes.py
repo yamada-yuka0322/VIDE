@@ -184,9 +184,9 @@ def jobSuccessful(logFile, doneString):
       if doneString in line: jobDone = True
   return jobDone
 
-def getStackSuffix(zMin, zMax, rMin, rMax, dataPortion):
+def getStackSuffix(zMin, zMax, rMin, rMax, dataPortion, customLine=""):
   return "z"+str(zMin)+"-"+str(zMax)+"_"+str(rMin)+"-"+str(rMax)+\
-         "Mpc"+"_"+dataPortion
+           "Mpc"+customLine+"_"+dataPortion
 
 def my_import(name):
     mod = __import__(name)

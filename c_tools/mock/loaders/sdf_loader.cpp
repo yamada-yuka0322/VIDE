@@ -190,7 +190,7 @@ public:
     if (load_flags & (NEED_POSITION | NEED_VELOCITY))
       rescaleParticles(d, d->Hubble*1e-5, one_kpc/one_Gyr);
 
-//    enforceBoxSize(d);
+    enforceBoxSize(d);
     applyTransformations(d);
     basicPreprocessing(d, preproc);
 

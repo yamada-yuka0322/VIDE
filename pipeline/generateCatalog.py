@@ -29,7 +29,7 @@ import pickle
 # ------------------------------------------------------------------------------
 
 if (len(sys.argv) == 1):
-  print "Usage: ./analyzeVoids.py parameter_file.py"
+  print "Usage: ./generateCatalog.py parameter_file.py"
   exit(-1)
 
 if (len(sys.argv) > 1):
@@ -88,7 +88,10 @@ for sample in dataSampleList:
   if (sample.dataType == "simulation"):
     fp.write("Particles placed on lightcone: %g\n" % sample.useLightCone)
     fp.write("Peculiar velocities included: %g\n" % sample.usePecVel)
-    fp.write("Additional subsampling fraction: %s\n" % sample.subsample[-1])
+    if (len(sample.subsample) == 1):
+      fp.write("Additional subsampling fraction: %s\n" % sample.subsample)
+    else:
+      fp.write("Additional subsampling fraction: %s\n" % sample.subsample[-1])
     fp.write("Simulation box length (Mpc/h): %g\n" % sample.boxLen)
     fp.write("Simulation Omega_M: %g\n" % sample.omegaM)
     fp.write("Number of simulation subvolumes: %s\n" % sample.numSubvolumes)
@@ -146,6 +149,8 @@ if (startCatalogStage <= 4) and (endCatalogStage >= 4):
     plotSizeDistribution(workDir, dataSampleList, figDir, showPlot=False, 
                              dataPortion=thisDataPortion, setName=setName)
     plotNumberDistribution(workDir, dataSampleList, figDir, showPlot=False, 
+                             dataPortion=thisDataPortion, setName=setName)
+    plotVoidDistribution(workDir, dataSampleList, figDir, showPlot=False, 
                              dataPortion=thisDataPortion, setName=setName)
 
 print "\n Done!"

@@ -85,7 +85,7 @@ int main(int argc,char **argv) {
     printf("Bad density threshold.\n");
     exit(0);
   }
-  if (sscanf(argv[7],"%f",&mockIndex) == 0) {
+  if (sscanf(argv[7],"%d",&mockIndex) == 0) {
     printf("Bad mock galaxy index.\n");
     exit(0);
   }
@@ -101,6 +101,8 @@ int main(int argc,char **argv) {
     exit(0);
   }
   fread(&np,1, sizeof(int),adj);
+  if (mockIndex < 0)
+    mockIndex = np;
   
   printf("adj: %d particles\n", np);
   FF;
@@ -108,33 +110,40 @@ int main(int argc,char **argv) {
   p = (PARTICLE *)malloc(np*sizeof(PARTICLE));
   /* Adjacencies*/
   for (i=0;i<np;i++) {
-    fread(&p[i].nadj,1,sizeof(int),adj); 
+    fread(&p[i].nadj,1,sizeof(pid_t),adj); 
     /* The number of adjacencies per particle */
     if (p[i].nadj > 0)
-      p[i].adj = (int *)malloc(p[i].nadj*sizeof(int));
+      p[i].adj = (pid_t *)malloc(p[i].nadj*sizeof(pid_t));
     else p[i].adj = 0;
     p[i].ncnt = 0; /* Temporarily, it's an adj counter */
   }
   for (i=0;i<np;i++) {
-    fread(&nin,1,sizeof(int),adj);
+    fread(&nin,1,sizeof(pid_t),adj);
     if (nin > 0)
       for (k=0;k<nin;k++) {
-	fread(&j,1,sizeof(int),adj);
+	fread(&j,1,sizeof(pid_t),adj);
 	if (j < np) {
 	  /* Set both halves of the pair */
-	assert(i < j);
+          assert(i < j);
           if (p[i].ncnt == p[i].nadj)
             {
-		p[i].adj = (int *)realloc(p[i].adj, (p[i].nadj+1)*sizeof(int));
-                 p[i].nadj++;
+              int q;
+              printf("OVERFLOW for particle %d (pending %d). List of accepted:\n", i, j);
+              for (q=0;q<p[i].nadj;q++)
+                printf("  %d\n", p[i].adj[q]);
+              abort();
             }
-          if (p[j].ncnt == p[j].nadj)
+         if (p[j].ncnt == p[j].nadj)
             {
-              p[j].adj = (int *)realloc(p[j].adj, (p[j].nadj+1)*sizeof(int));
-              p[j].nadj++;
-            }
-	  p[i].adj[p[i].ncnt] = j;
-	  p[j].adj[p[j].ncnt] = i;
+              int q;
+              printf("OVERFLOW for particle %d (pending %d). List of accepted:\n", j, i);
+              for (q=0;q<p[j].nadj;q++)
+                printf("  %d\n", p[j].adj[q]);
+              abort();
+           }
+
+          p[i].adj[p[i].ncnt] = j;
+          p[j].adj[p[j].ncnt] = i;
 	  p[i].ncnt++; p[j].ncnt++;
 	} else {
 	  printf("%d: adj = %d\n",i,j);
@@ -144,13 +153,13 @@ int main(int argc,char **argv) {
   fclose(adj);
 
   /* Check that we got all the pairs */
-//  adj = fopen(adjfile, "r");
-//  fread(&np,1, sizeof(int),adj);
+  /*  adj = fopen(adjfile, "r");
+      fread(&np,1, sizeof(int),adj);*/
   for (i=0;i<np;i++) {
-//    fread(&nin,1,sizeof(int),adj); /* actually nadj */
+    /*    fread(&nin,1,sizeof(int),adj); /* actually nadj */
     // PMS
     if (p[i].ncnt != p[i].nadj && i < mockIndex) {
-    //if (p[i].ncnt != p[i].nadj) {
+      /*if (p[i].ncnt != p[i].nadj) {*/
     // END PMS
       p[i].nadj = p[i].ncnt;
       printf("We didn't get all of %d's adj's; %d != %d.\n",i,nin,p[i].nadj);
@@ -185,9 +194,9 @@ int main(int argc,char **argv) {
   }
   fclose(vol);
 
-  jumped = (int *)malloc(np*sizeof(int));  
-  jumper = (int *)malloc(np*sizeof(int));
-  numinh = (int *)malloc(np*sizeof(int));
+  jumped = (pid_t *)malloc(np*sizeof(pid_t));  
+  jumper = (pid_t *)malloc(np*sizeof(pid_t));
+  numinh = (pid_t *)malloc(np*sizeof(pid_t));
 
   /* find jumper */
   for (i = 0; i < np; i++) {
@@ -252,7 +261,7 @@ int main(int argc,char **argv) {
     }
   
   for (h=0;h<nzones;h++) {
-    zt[h].adj = (int *)malloc(zt[h].nadj*sizeof(int));
+    zt[h].adj = (pid_t *)malloc(zt[h].nadj*sizeof(pid_t));
     if (zt[h].adj == NULL) {
       printf("Unable to allocate %d adj's of zone %d\n",zt[h].nadj,h);
       exit(0);
@@ -313,7 +322,7 @@ int main(int argc,char **argv) {
   for (h=0;h<nzones;h++) {
     /*printf("%d ",zt[h].nadj);*/
     z[h].nadj = zt[h].nadj;
-    z[h].adj = (int *)malloc(zt[h].nadj*sizeof(int));
+    z[h].adj = (pid_t *)malloc(zt[h].nadj*sizeof(pid_t));
     z[h].slv = (float *)malloc(zt[h].nadj*sizeof(float));
     for (za = 0; za<zt[h].nadj; za++) {
       z[h].adj[za] = zt[h].adj[za];
@@ -326,12 +335,12 @@ int main(int argc,char **argv) {
   free(zt);
   free(numinh);
 
-  m = (int **)malloc(nzones*sizeof(int *));
+  m = (pid_t **)malloc(nzones*sizeof(pid_t *));
   /* Not in the zone struct since it'll be freed up (contiguously, we hope)
      soon */
-  nm = (int *)malloc(nzones*sizeof(int));
+  nm = (pid_t *)malloc(nzones*sizeof(pid_t));
   for (h=0; h<nzones; h++) {
-    m[h] = (int *)malloc(z[h].np*sizeof(int));
+    m[h] = (pid_t *)malloc(z[h].np*sizeof(pid_t));
     nm[h] = 0;
     z[h].vol = 0.;
   }
@@ -354,14 +363,14 @@ int main(int argc,char **argv) {
     printf("Problem opening zonefile %s.\n\n",zonfile);
     exit(0);
   }
-  fwrite(&np,1,4,zon);
-  fwrite(&nzones,1,4,zon);
+  fwrite(&np,1,sizeof(pid_t),zon);
+  fwrite(&nzones,1,sizeof(int),zon);
   for (h=0; h<nzones; h++) {
 // PMS
   //printf("%d %d %d", &(z[h].np), m[h], z[h].np);
 // END PMS
-    fwrite(&(z[h].np),1,4,zon);
-    fwrite(m[h],z[h].np,4,zon);
+    fwrite(&(z[h].np),1,sizeof(pid_t),zon);
+    fwrite(m[h],z[h].np,sizeof(pid_t),zon);
     free(m[h]);
   }
   free(m);
@@ -394,7 +403,7 @@ int main(int argc,char **argv) {
     printf("Problem opening zonefile %s.\n\n",zonfile2);
     exit(0);
   }
-  fwrite(&nzones,1,4,zon2);
+  fwrite(&nzones,1,sizeof(int),zon2);
 
   for (h = 0; h<nzones; h++) {
     nhlcount = 0;
@@ -532,8 +541,8 @@ int main(int argc,char **argv) {
 
     z[h].nhl = nhl;
 
-    fwrite(&nhl,1,4,zon2);
-    fwrite(zonelist,nhl,4,zon2);
+    fwrite(&nhl,1,sizeof(int),zon2);
+    fwrite(zonelist,nhl,sizeof(int),zon2);
   }
   fclose(zon2);
 

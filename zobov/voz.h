@@ -3,7 +3,9 @@
 ##define NGUARD 42 /*Actually, the number of SPACES between guard points
 		    in each dim */
 
+typedef int pid_t;
+
 typedef struct Partadj {
-  int nadj;
-  int *adj;
+  pid_t nadj;
+  pid_t *adj;
 } PARTADJ;

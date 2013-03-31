@@ -271,7 +271,7 @@ int main(int argc, char **argv) {
   filename = string(args.outfile_arg);
   filename = filename.append("summary.out");
   fp = fopen(filename.c_str(), "w");
-  fprintf(fp, "# void ID, radius, radius ratio, common volume ratio, common volume ratio 2, relative dist, num matches, num significant matches\n");
+  fprintf(fp, "# void ID, radius, radius ratio, common volume ratio, common volume ratio 2, relative dist, num matches, num significant matches, match ID\n");
   for (iVoid1 = 0; iVoid1 < catalog1.numVoids; iVoid1++) {
     int voidID = catalog1.voids[iVoid1].voidID;
     if (catalog1.voids[iVoid1].numMatches > 0) {
@@ -286,14 +286,15 @@ int main(int argc, char **argv) {
       rdist = catalog1.voids[iVoid1].matches[0].dist;
       rdist /= catalog1.voids[iVoid1].radius;
 
-      fprintf(fp, "%d %.4f %.4f %.4f %.4f %.4f %d %d\n", voidID, 
+      fprintf(fp, "%d %.4f %.4f %.4f %.4f %.4f %d %d %d\n", voidID, 
                                    catalog1.voids[iVoid1].radiusMpc,
                                    rRatio, 
                                    commonVolRatio,
                                    volRatio,
                                    rdist, 
                                    catalog1.voids[iVoid1].numMatches,
-                                   catalog1.voids[iVoid1].numBigMatches);
+                                   catalog1.voids[iVoid1].numBigMatches,
+                                   catalog2.voids[iVoid2].voidID);
 
     } else {
       fprintf(fp, "%d %.2f 0.0 0.0 0.0 0.0 0 0\n", voidID, 

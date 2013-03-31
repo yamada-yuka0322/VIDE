@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #+
 #   VIDE -- Void IDEntification pipeline -- ./crossCompare/analysis/mergerTree.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
@@ -17,9 +18,6 @@
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #+
-#!/usr/bin/env python
-
-# plots cumulative distributions of number counts
 
 from void_python_tools.backend import *
 from void_python_tools.plotting import *
@@ -35,13 +33,13 @@ import argparse
 dataNameBase = "mergerTree"
 
 parser = argparse.ArgumentParser(description='Analyze.')
-parser.add_argument('--parmFile', dest='parmFile', default='datasetsToAnalyze.py',
+parser.add_argument('--parm', dest='parm', default='datasetsToAnalyze.py',
                     help='path to parameter file')
 args = parser.parse_args()
 
 # ------------------------------------------------------------------------------
 
-filename = args.parmFile
+filename = args.parm
 print " Loading parameters from", filename
 if not os.access(filename, os.F_OK):
   print "  Cannot find parameter file %s!" % filename
@@ -78,7 +76,7 @@ for (iSample, sampleDir) in enumerate(sampleDirList):
                     thisDataPortion="central", logFile=logFile,
                     continueRun=False, workDir=workDir,
                     outputFile=stepOutputFileName,
-                    matchMethod="proximity")
+                    matchMethod="useID")
 
   # attach columns to summary file
   #if iSample == 1:
@@ -101,3 +99,5 @@ for (iSample, sampleDir) in enumerate(sampleDirList):
 #if os.access("mergerTree.log", os.F_OK): os.unlink("mergerTree.log")
 #if os.access("temp.out", os.F_OK): os.unlink("temp.out")
 #if os.access("thisStep.out", os.F_OK): os.unlink("thisStep.out")
+
+print " Done!"
