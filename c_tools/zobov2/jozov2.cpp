@@ -650,8 +650,6 @@ int main(int argc,char **argv)
   buildZones(p, np, jumped, z, nzones, zonenum);
   writeZoneFile(zonfile, p, np, z, nzones, zonenum, jumped);
 
-  sorter = new double[nzones+1];
-
   maxvol = 0.;
   minvol = BIGFLT;
   for(pid_t i = 0; i < np; i++){
@@ -677,6 +675,7 @@ int main(int argc,char **argv)
   iord = (int *)malloc(nzones*sizeof(int));
 
   findrtop(sorter, nzones, iord, nzones);
+  delete[] sorter;
 
   txt.open(txtfile.c_str());
   txt << format("%d particles, %d voids.") % np % nzones << endl;
