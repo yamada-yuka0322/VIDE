@@ -14,13 +14,7 @@ using boost::format;
 
 void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, float voltol)
 {
-  char *inyet, *inyet2;
-  int *zonelist, *zonelist2;
-  int nhl;
-  int *links = new int[NLINKS];
   int *iord;
-  float maxdenscontrast = 0;
-  bool *done_zones;
 
   double *sorter = new double[numZones+1];
   /* Assign sorter by probability (could use volume instead) */
@@ -38,6 +32,12 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
 
 #pragma omp parallel
   {
+    char *inyet, *inyet2;
+    int *zonelist, *zonelist2;
+    int nhl;
+    int *links = new int[NLINKS];
+    bool *done_zones;
+
     inyet = new char[numZones];
     inyet2 = new char[numZones];
     zonelist = new int[numZones];
@@ -218,11 +218,14 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
     delete[] zonelist;
     delete[] zonelist2;
     delete[] links;
-    delete[] iord;
-    
-  }
+    delete[] inyet;
+    delete[] inyet2;
+    delete[] done_zones;
 
-  maxdenscontrast = 0;
+  }
+  delete[] iord;
+
+  double maxdenscontrast = 0;
 #pragma omp parallel shared(maxdenscontrast)
   {
     double maxdenscontrast_local = 0;
