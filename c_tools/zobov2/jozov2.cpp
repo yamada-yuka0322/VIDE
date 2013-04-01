@@ -391,28 +391,28 @@ void doWatershed(const std::string& zonfile2, PARTICLE *p, pid_t np, ZONE *z, in
   inyet2 = new char[numZones];
   zonelist = new int[numZones];
   zonelist2 = new int[numZones];
-  done_zones = new bool[nzones];
+  done_zones = new bool[numZones];
 
   fill(inyet, inyet + numZones, 0);
   fill(inyet2, inyet2 + numZones, 0);
   fill(done_zones, done_zones + numZones, false);
 
-  sorter = new double[nzones+1];
+  double *sorter = new double[numZones+1];
   /* Assign sorter by probability (could use volume instead) */
-  for (int h = 0; h < nzones; h++)
+  for (int h = 0; h < numZones; h++)
     sorter[h] = (double)z[h].core;
     
   /* Text output file */
 
   printf("about to sort (pre-watershed sort) ...\n");FF;
 
-  iord = new int[nzones];
+  iord = new int[numZones];
  
   findrtop(sorter, numZones, iord, numZones);
   delete[] sorter;
 
   nhl = 0;
-  for (int ii = 0; ii < numZones; h++)
+  for (int ii = 0; ii < numZones; ii++)
     {
       int nhlcount = 0;
       int h = iord[ii];
@@ -580,11 +580,18 @@ void doWatershed(const std::string& zonfile2, PARTICLE *p, pid_t np, ZONE *z, in
       
       done_zones[h] = true;
       z[h].nhl = nhl;
-      
-      zon2.write((char *)&nhl, sizeof(int));
-      zon2.write((char *)zonelist, nhl*sizeof(int));
     }
+  delete[] zonelist;
+  delete[] zonelist2;
   delete[] links;
+  delete[] iord;
+
+  cout << "Writing void/zone relations..." << endl;
+  for (int h = 0; h < numZones; h++)
+    {
+      zon2.write((char *)&z[h].nhl, sizeof(int));
+      zon2.write((char *)z[h].zonelist, z[h].nhl*sizeof(int));
+    }
 
   cout << format("Maxdenscontrast = %f.") % maxdenscontrast << endl;
 }
