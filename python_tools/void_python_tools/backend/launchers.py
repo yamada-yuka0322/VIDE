@@ -390,12 +390,12 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
            str(sampleName1)
     cmd += " --volFile1=" + sample1Dir+"/vol_" + \
            str(sampleName1)+".dat"
-    cmd += " --voidFile1=" + sample1Dir+"/voidDesc_" + \
+    cmd += " --voidFile1=" + sample1Dir+"/untrimmed_voidDesc_" + \
            thisDataPortion+"_"+str(sampleName1)+".out"
     cmd += " --infoFile1=" + sample1Dir+"/zobov_slice_" + \
            str(sampleName1)+".par"
     cmd += " --centerFile1=" + sample1Dir + \
-           "/centers_"+thisDataPortion+"_"+str(sampleName1)+".out"
+           "/untrimmed_centers_"+thisDataPortion+"_"+str(sampleName1)+".out"
     cmd += " --zoneFile1=" + sample1Dir+"/voidZone_" + \
            str(sampleName1)+".dat"
     cmd += " --zonePartFile1=" + sample1Dir+"/voidPart_" + \
@@ -405,12 +405,12 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
            str(sampleName2)
     cmd += " --volFile2=" + sample2Dir+"/vol_" + \
            str(sampleName2)+".dat"
-    cmd += " --voidFile2=" + sample2Dir+"/voidDesc_" + \
+    cmd += " --voidFile2=" + sample2Dir+"/untrimmed_voidDesc_" + \
            thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --infoFile2=" + sample2Dir+"/zobov_slice_" + \
            str(sampleName2)+".par"
     cmd += " --centerFile2=" + sample2Dir + \
-           "/centers_"+thisDataPortion+"_"+str(sampleName2)+".out"
+           "/untrimmed_centers_"+thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --zoneFile2=" + sample2Dir+"/voidZone_" + \
            str(sampleName2)+".dat"
     cmd += " --zonePartFile2=" + sample2Dir+"/voidPart_" + \
