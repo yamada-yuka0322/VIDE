@@ -189,7 +189,7 @@ void buildZones(PARTICLE *p, pid_t np, pid_t *&jumped,
   delete[] numinh;
 
   for (pid_t i=0; i < np; i++) {
-    int h = zonenum[i];
+    int h = zonenum[jumped[i]];
     z[h].vol += 1.0/(double)p[i].dens;
     z[h].numzones = 0;
     z[h].zonelist = 0;
