@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
   }
 
   int i, p, p2, numPartTot, numZonesTot, dummy, iVoid, iZ;
-  int numVoids, mockIndex, numKept;
+  int numVoids, mockIndex;
   double tolerance;
   FILE *fp, *fpZobov, *fpCenters, *fpCentersNoCut, *fpBarycenter,
         *fpDistances, *fpShapes, *fpSkyPositions;
@@ -662,6 +662,21 @@ int main(int argc, char **argv) {
       voids[iVoid].isLeaf = true;
     }
   }
+
+// TEST - grabbing only top-level voids
+  numAreParents = 0;
+  iGood = 0;
+  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
+    if (voids[iVoid].parentID != -1) {
+      numAreParents++;
+      voids[iVoid].isLeaf = false;
+     } else {
+      //voids[iGood++] = voids[iVoid];
+      voids[iVoid].isLeaf = true;
+    }
+  }
+// END TEST
+
   //voids.resize(iGood);
   //printf("  5th filter: rejected %d that are not leaf nodes\n", numAreParents); 
 
@@ -699,7 +714,7 @@ int main(int argc, char **argv) {
  
   name = "central"; 
   openFiles(outputDir, sampleName, name, 
-            mockIndex, numKept,
+            mockIndex, voids.size(),
             &fpZobov, &fpCenters, &fpCentersNoCut, &fpBarycenter, 
             &fpDistances, &fpShapes, &fpSkyPositions);
   
@@ -716,7 +731,7 @@ int main(int argc, char **argv) {
 
   name = "all";
   openFiles(outputDir, sampleName, name, 
-            mockIndex, numKept,
+            mockIndex, voids.size(),
             &fpZobov, &fpCenters, &fpCentersNoCut, &fpBarycenter, 
             &fpDistances, &fpShapes, &fpSkyPositions);
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
@@ -796,6 +811,35 @@ void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters,
                 FILE* fpBarycenters, FILE* fpDistances, FILE* fpShapes,
                 bool isObservation, double *boxLen) {
 
+     double outCenter[3];
+     outCenter[0] = outVoid.barycenter[0];
+     outCenter[1] = outVoid.barycenter[1];
+     outCenter[2] = outVoid.barycenter[2];
+
+     if (isObservation) {
+       outCenter[0] = (outVoid.barycenter[0]-boxLen[0]/2.)*100.;
+       outCenter[1] = (outVoid.barycenter[1]-boxLen[1]/2.)*100.;
+       outCenter[2] = (outVoid.barycenter[2]-boxLen[2]/2.)*100.;
+     }
+
+  fprintf(fpCentersNoCut, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f %d %d %d\n",
+             outCenter[0],
+             outCenter[1],
+             outCenter[2],
+             outVoid.vol,
+             outVoid.radius,
+             outVoid.redshift, 
+             4./3.*M_PI*pow(outVoid.radius, 3),
+             outVoid.voidID,
+             outVoid.densCon,
+             outVoid.numPart,
+             outVoid.parentID,
+             outVoid.numChildren);
+
+    if (outVoid.hasHighCentralDen || !outVoid.isLeaf) {
+       return;
+    } 
+
      fprintf(fpZobov, "%d %d %d %f %f %d %d %f %d %f %f\n", 
              iVoid, 
              outVoid.voidID, 
@@ -819,18 +863,6 @@ void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters,
              outVoid.voidID, 
              outVoid.nearestMock);
 
-     double outCenter[3];
-     outCenter[0] = outVoid.barycenter[0];
-     outCenter[1] = outVoid.barycenter[1];
-     outCenter[2] = outVoid.barycenter[2];
-
-     if (isObservation) {
-       outCenter[0] = (outVoid.barycenter[0]-boxLen[0]/2.)*100.;
-       outCenter[1] = (outVoid.barycenter[1]-boxLen[1]/2.)*100.;
-       outCenter[2] = (outVoid.barycenter[2]-boxLen[2]/2.)*100.;
-     }
-
-     if (!outVoid.hasHighCentralDen && outVoid.isLeaf) {
        fprintf(fpCenters, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f %d %d %d\n",
              outCenter[0],
              outCenter[1],
@@ -844,22 +876,7 @@ void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters,
              outVoid.numPart,
              outVoid.parentID,
              outVoid.numChildren);
-     } 
-
-       fprintf(fpCentersNoCut, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f %d %d %d\n",
-             outCenter[0],
-             outCenter[1],
-             outCenter[2],
-             outVoid.vol,
-             outVoid.radius,
-             outVoid.redshift, 
-             4./3.*M_PI*pow(outVoid.radius, 3),
-             outVoid.voidID,
-             outVoid.densCon,
-             outVoid.numPart,
-             outVoid.parentID,
-             outVoid.numChildren);
-
+     
      fprintf(fpSkyPositions, "%.2f %.2f %.5f %.2f %d\n",
              atan((outVoid.barycenter[1]-boxLen[1]/2.) / 
                   (outVoid.barycenter[0]-boxLen[0]/2.)) * 180/M_PI + 180,  
