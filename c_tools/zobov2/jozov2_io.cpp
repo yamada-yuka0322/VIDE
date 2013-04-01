@@ -127,7 +127,6 @@ void writeZoneFile(const std::string& zonfile, PARTICLE* p, pid_t np,
     {
       m[h] = new pid_t[z[h].np];
       nm[h] = 0;
-      z[h].vol = 0.;
     }
 
   for (pid_t i = 0; i < np; i++)
