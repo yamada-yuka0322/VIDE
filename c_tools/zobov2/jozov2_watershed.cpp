@@ -37,6 +37,7 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
     int nhl;
     int *links = new int[NLINKS];
     bool *done_zones;
+    int prev_ii = -1;
 
     inyet = new char[numZones];
     inyet2 = new char[numZones];
@@ -49,13 +50,17 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
     fill(done_zones, done_zones + numZones, false);
 
     nhl = 0;
-#pragma omp for schedule(dynamic,100)
-    for (int ii = 0; ii < numZones; ii++)
+#pragma omp for schedule(dynamic,1)
+    for (int h = 0; h < numZones; h++)
       {
         int nhlcount = 0;
-        int h = iord[ii];
         float lowvol;
         bool beaten;
+        if (h/100 > prev_ii)
+         {
+          (cout << format("[%d]: Doing %d") % omp_get_thread_num() % h << endl).flush();
+          prev_ii = h/100;
+         }
         
         for (int hl = 0; hl < nhl; hl++)
           inyet[zonelist[hl]] = 0;
@@ -157,7 +162,7 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
                                 interior = false;
                                 if (z[h2].slv[za] <= lowvol) {
                                   //if (!done_zones[link2]) { // Equivalent to p[z[link2].core].dens < p[z[h].core].dens)
-                                  if (p[z[link2].core].dens < p[z[h].core].dens)
+                                  if (p[z[link2].core].dens < p[z[h].core].dens) {
                                     beaten = true;
                                     break;
                                   }
@@ -190,8 +195,11 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
             }
           }
           if (nhl/10000 > nhlcount) {
+            if (nhlcount == 0)
+              (cout << format("Zone %d: %d") % h % nhl).flush(); 
+            else
+              (cout << nhl << " ").flush();
             nhlcount = nhl/10000;
-            printf(" %d",nhl); FF;
           }
         } while((lowvol < BIGFLT) && (!beaten));
         
