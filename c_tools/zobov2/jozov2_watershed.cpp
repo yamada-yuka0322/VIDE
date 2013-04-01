@@ -121,7 +121,8 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
           
           for (int l = 0; l < nl; l++)
             {
-              if (!done_zones[links[l]]) /* Equivalent to p[z[links[l]].core].dens < p[z[h].core].dens) as zones are sorted. */
+              //if (!done_zones[links[l]]) /* Equivalent to p[z[links[l]].core].dens < p[z[h].core].dens) as zones are sorted. */
+              if (p[z[links[l]].core].dens < p[z[h].core].dens)
                 beaten = true;
             }
           
@@ -155,7 +156,8 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
                               if ((inyet[link2]+inyet2[link2]) == 0) {
                                 interior = false;
                                 if (z[h2].slv[za] <= lowvol) {
-                                  if (!done_zones[link2]) { // Equivalent to p[z[link2].core].dens < p[z[h].core].dens)
+                                  //if (!done_zones[link2]) { // Equivalent to p[z[link2].core].dens < p[z[h].core].dens)
+                                  if (p[z[link2].core].dens < p[z[h].core].dens)
                                     beaten = true;
                                     break;
                                   }
