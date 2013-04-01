@@ -81,7 +81,8 @@ typedef struct voidStruct {
   gsl_matrix *evec;
 } VOID;
 
-void openFiles(string outputDir, string sampleName, string name, 
+void openFiles(string outputDir, string sampleName, 
+               string prefix, string dataPortion, 
                int mockIndex, int numKept,
                FILE** fpZobov, FILE** fpCenters, 
                FILE** fpCentersNoCut, 
@@ -93,10 +94,11 @@ void closeFiles(FILE* fpZobov, FILE* fpCenters,
                 FILE* fpBarycenter, FILE* fpDistances, FILE* fpShapes, 
                 FILE* fpSkyPositions);
 
-void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters, 
-                FILE* fpCentersNoCut, 
-                FILE* fpSkyPositions, FILE* fpBarycenters, FILE* fpDistances, 
-                FILE* fpShapes, bool isObservation, double *boxLen);
+void outputVoids(string outputDir, string sampleName, string prefix, 
+                string dataPortion, int mockIndex, 
+                vector<VOID> voids, 
+                bool isObservation, double *boxLen,
+                bool doTrim);
 
 int main(int argc, char **argv) {
 
@@ -127,8 +129,7 @@ int main(int argc, char **argv) {
   int i, p, p2, numPartTot, numZonesTot, dummy, iVoid, iZ;
   int numVoids, mockIndex;
   double tolerance;
-  FILE *fp, *fpZobov, *fpCenters, *fpCentersNoCut, *fpBarycenter,
-        *fpDistances, *fpShapes, *fpSkyPositions;
+  FILE *fp;
   PART *part, *voidPart;
   ZONE2PART *zones2Parts;
   VOID2ZONE *void2Zones;
@@ -140,12 +141,13 @@ int main(int argc, char **argv) {
   float centralRad, centralDen;
   double nearestEdge, redshift;
   char line[500], junkStr[10];
-  string outputDir, sampleName, name;
+  string outputDir, sampleName, dataPortion, prefix;
   int mask_index;
   double ranges[3][2], boxLen[3], mul; 
   double volNorm, radius;
   int clock1, clock2;
   int periodicX=0, periodicY=0, periodicZ=0;
+  string dataPortions[2];
 
   gsl_eigen_symmv_workspace *eigw = gsl_eigen_symmv_alloc(3);
 
@@ -707,44 +709,35 @@ int main(int argc, char **argv) {
   printf("   We have %d too high central density\n", numHighDen); 
   printf("   We have %d that are not leaf nodes\n", numAreParents); 
  
-  printf(" Output...\n");
+  printf(" Output trimmed catalog...\n");
   
   outputDir = string(args.outputDir_arg);
   sampleName = (string(args.sampleName_arg)+".out");
- 
-  name = "central"; 
-  openFiles(outputDir, sampleName, name, 
-            mockIndex, voids.size(),
-            &fpZobov, &fpCenters, &fpCentersNoCut, &fpBarycenter, 
-            &fpDistances, &fpShapes, &fpSkyPositions);
-  
-  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
-    if (voids[iVoid].voidType == CENTRAL_VOID) {
-      outputVoid(iVoid, voids[iVoid], fpZobov, fpCenters, 
-                 fpCentersNoCut, fpSkyPositions,
-                 fpBarycenter, fpDistances, fpShapes,
-                 args.isObservation_flag, boxLen);
-    } 
-  }
-  closeFiles(fpZobov, fpCenters, fpCentersNoCut, fpBarycenter, 
-            fpDistances, fpShapes, fpSkyPositions);
 
-  name = "all";
-  openFiles(outputDir, sampleName, name, 
-            mockIndex, voids.size(),
-            &fpZobov, &fpCenters, &fpCentersNoCut, &fpBarycenter, 
-            &fpDistances, &fpShapes, &fpSkyPositions);
-  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
-    if (voids[iVoid].voidType == EDGE_VOID || 
-        voids[iVoid].voidType == CENTRAL_VOID) {
-      outputVoid(iVoid, voids[iVoid], fpZobov, fpCenters, 
-                 fpCentersNoCut, fpSkyPositions,
-                 fpBarycenter, fpDistances, fpShapes,
-                 args.isObservation_flag, boxLen);
-    }
+  dataPortions[0] = "central";
+  dataPortions[1] = "all";
+
+  prefix = "";
+  for (int i = 0; i < 2; i++) {
+    dataPortion = dataPortions[i]; 
+  
+    outputVoids(outputDir, sampleName, prefix, dataPortion,
+                mockIndex,
+                voids,
+                args.isObservation_flag, boxLen, true);
   }
-  closeFiles(fpZobov, fpCenters, fpCentersNoCut, fpBarycenter, 
-            fpDistances, fpShapes, fpSkyPositions);
+
+  printf(" Output untrimmed catalog...\n");
+  prefix = "untrimmed_";
+  for (int i = 0; i < 2; i++) {
+    dataPortion = dataPortions[i]; 
+  
+    outputVoids(outputDir, sampleName, prefix, dataPortion,
+                mockIndex,
+                voids,
+                args.isObservation_flag, boxLen, false);
+  }
+
 
   clock2 = clock();
   printf(" Time: %f sec (for %d voids)\n", 
@@ -753,37 +746,32 @@ int main(int argc, char **argv) {
 
 
   printf("Done!\n");
-  return 0;
 } // end main
 
 
 // ----------------------------------------------------------------------------
-void openFiles(string outputDir, string sampleName, string name, 
+void openFiles(string outputDir, string sampleName, 
+               string prefix, string dataPortion, 
                int mockIndex, int numKept,
                FILE** fpZobov, FILE** fpCenters, 
-               FILE** fpCentersNoCut, 
                FILE** fpBarycenter, FILE** fpDistances, FILE** fpShapes, 
                FILE** fpSkyPositions) {
 
-  *fpZobov = fopen((outputDir+"/voidDesc_"+name+"_"+sampleName).c_str(), "w");
+  *fpZobov = fopen((outputDir+"/"+prefix+"voidDesc_"+dataPortion+"_"+sampleName).c_str(), "w");
   fprintf(*fpZobov, "%d particles, %d voids.\n", mockIndex, numKept);
   fprintf(*fpZobov, "Void# FileVoid# CoreParticle CoreDens ZoneVol Zone#Part Void#Zones VoidVol Void#Part VoidDensContrast VoidProb\n");
 
-  *fpBarycenter = fopen((outputDir+"/barycenters_"+name+"_"+sampleName).c_str(), "w");
+  *fpBarycenter = fopen((outputDir+"/"+prefix+"barycenters_"+dataPortion+"_"+sampleName).c_str(), "w");
 
-  *fpCenters = fopen((outputDir+"/centers_"+name+"_"+sampleName).c_str(), "w");
+  *fpCenters = fopen((outputDir+"/"+prefix+"centers_"+dataPortion+"_"+sampleName).c_str(), "w");
   fprintf(*fpCenters, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part, parent ID, number of children\n");
 
-  *fpCentersNoCut = fopen((outputDir+"/centers_nocut_"+name+"_"+sampleName).c_str(), "w");
-  fprintf(*fpCentersNoCut, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part, parent ID, number of children\n");
+  *fpDistances = fopen((outputDir+"/"+prefix+"boundaryDistances_"+dataPortion+"_"+sampleName).c_str(), "w");
 
-
-  *fpDistances = fopen((outputDir+"boundaryDistances_"+name+"_"+sampleName).c_str(), "w");
-
-  *fpSkyPositions = fopen((outputDir+"/sky_positions_"+name+"_"+sampleName).c_str(), "w");
+  *fpSkyPositions = fopen((outputDir+"/"+prefix+"sky_positions_"+dataPortion+"_"+sampleName).c_str(), "w");
   fprintf(*fpSkyPositions, "# RA, dec, redshift, radius (Mpc/h), void ID\n");
 
-  *fpShapes = fopen((outputDir+"/shapes_"+name+"_"+sampleName).c_str(), "w");
+  *fpShapes = fopen((outputDir+"/"+prefix+"shapes_"+dataPortion+"_"+sampleName).c_str(), "w");
   fprintf(*fpShapes, "# void ID, eig(1), eig(2), eig(3), eigv(1)-x, eiv(1)-y, eigv(1)-z, eigv(2)-x, eigv(2)-y, eigv(2)-z, eigv(3)-x, eigv(3)-y, eigv(3)-z\n");
   
 } // end openFiles
@@ -791,13 +779,11 @@ void openFiles(string outputDir, string sampleName, string name,
 
 // ----------------------------------------------------------------------------
 void closeFiles(FILE* fpZobov, FILE* fpCenters, 
-                FILE* fpCentersNoCut, 
                 FILE* fpBarycenter, FILE* fpDistances, FILE* fpShapes, 
                 FILE* fpSkyPositions) {
 
   fclose(fpZobov);
   fclose(fpCenters);
-  fclose(fpCentersNoCut);
   fclose(fpBarycenter);
   fclose(fpDistances);
   fclose(fpShapes);
@@ -806,10 +792,35 @@ void closeFiles(FILE* fpZobov, FILE* fpCenters,
 } // end closeFile
 
 // ----------------------------------------------------------------------------
-void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters, 
-                FILE* fpCentersNoCut, FILE* fpSkyPositions, 
-                FILE* fpBarycenters, FILE* fpDistances, FILE* fpShapes,
-                bool isObservation, double *boxLen) {
+void outputVoids(string outputDir, string sampleName, string prefix, 
+                string dataPortion, int mockIndex,
+                vector<VOID> voids, 
+                bool isObservation, double *boxLen, bool doTrim) {
+
+    int iVoid;
+    VOID outVoid;
+    FILE *fp, *fpZobov, *fpCenters, *fpCentersNoCut, *fpBarycenter,
+         *fpDistances, *fpShapes, *fpSkyPositions;
+
+
+    openFiles(outputDir, sampleName, prefix, dataPortion,
+              mockIndex, voids.size(),
+              &fpZobov, &fpCenters, &fpBarycenter,
+              &fpDistances, &fpShapes, &fpSkyPositions);
+
+
+    for (iVoid = 0; iVoid < voids.size(); iVoid++) {
+      outVoid = voids[iVoid];
+
+
+      if (dataPortion == "central" && outVoid.voidType == EDGE_VOID) {
+        continue;
+      } 
+
+      //if (doTrim && (outVoid.hasHighCentralDen)) {
+      if (doTrim && (outVoid.hasHighCentralDen || !outVoid.isLeaf)) {
+         continue;
+       } 
 
      double outCenter[3];
      outCenter[0] = outVoid.barycenter[0];
@@ -822,23 +833,6 @@ void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters,
        outCenter[2] = (outVoid.barycenter[2]-boxLen[2]/2.)*100.;
      }
 
-  fprintf(fpCentersNoCut, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f %d %d %d\n",
-             outCenter[0],
-             outCenter[1],
-             outCenter[2],
-             outVoid.vol,
-             outVoid.radius,
-             outVoid.redshift, 
-             4./3.*M_PI*pow(outVoid.radius, 3),
-             outVoid.voidID,
-             outVoid.densCon,
-             outVoid.numPart,
-             outVoid.parentID,
-             outVoid.numChildren);
-
-    if (outVoid.hasHighCentralDen || !outVoid.isLeaf) {
-       return;
-    } 
 
      fprintf(fpZobov, "%d %d %d %f %f %d %d %f %d %f %f\n", 
              iVoid, 
@@ -853,7 +847,7 @@ void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters,
              outVoid.densCon, 
              outVoid.voidProb);
 
-     fprintf(fpBarycenters, "%d  %e %e %e\n", 
+     fprintf(fpBarycenter, "%d  %e %e %e\n", 
              outVoid.voidID,
              outVoid.barycenter[0],
              outVoid.barycenter[1],
@@ -902,4 +896,9 @@ void outputVoid(int iVoid, VOID outVoid, FILE* fpZobov, FILE* fpCenters,
              gsl_matrix_get(outVoid.evec, 2 ,2)
             );
 
-} // end outputVoid
+  } // end iVoid
+
+    closeFiles(fpZobov, fpCenters, fpBarycenter,
+              fpDistances, fpShapes, fpSkyPositions);
+
+} // end outputVoids
