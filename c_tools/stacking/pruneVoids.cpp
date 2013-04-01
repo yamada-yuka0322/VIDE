@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
   }
 
   int i, p, p2, numPartTot, numZonesTot, dummy, iVoid, iZ;
-  int numVoids, mockIndex, numKept;
+  int numVoids, mockIndex;
   double tolerance;
   FILE *fp, *fpZobov, *fpCenters, *fpCentersNoCut, *fpBarycenter,
         *fpDistances, *fpShapes, *fpSkyPositions;
@@ -714,7 +714,7 @@ int main(int argc, char **argv) {
  
   name = "central"; 
   openFiles(outputDir, sampleName, name, 
-            mockIndex, numKept,
+            mockIndex, voids.size(),
             &fpZobov, &fpCenters, &fpCentersNoCut, &fpBarycenter, 
             &fpDistances, &fpShapes, &fpSkyPositions);
   
@@ -731,7 +731,7 @@ int main(int argc, char **argv) {
 
   name = "all";
   openFiles(outputDir, sampleName, name, 
-            mockIndex, numKept,
+            mockIndex, voids.size(),
             &fpZobov, &fpCenters, &fpCentersNoCut, &fpBarycenter, 
             &fpDistances, &fpShapes, &fpSkyPositions);
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
