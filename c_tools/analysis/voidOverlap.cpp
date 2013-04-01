@@ -88,7 +88,7 @@ typedef struct catalog {
 
 void loadCatalog(const char *partFile, const char *volFile, 
                  const char *voidFile, const char *zoneFile,
-                 const char *infoFile, const char *barycenterFile,
+                 const char *infoFile, const char *centerFile,
                  const char *zonePartFile, CATALOG& catalog);
 
 float getDist(CATALOG& catalog1, CATALOG& catalog2, int& iVoid1, int& iVoid2,
@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
   float closestMatchDist;
   float commonVolRatio;
   MATCHPROPS newMatch;
-  int MAX_MATCHES = 20;
+  int MAX_MATCHES = 10;
 
   CATALOG catalog1, catalog2;
 
@@ -136,11 +136,11 @@ int main(int argc, char **argv) {
   }
 
   loadCatalog(args.partFile1_arg, args.volFile1_arg, args.voidFile1_arg,
-              args.zoneFile1_arg, args.infoFile1_arg, args.barycenterFile1_arg,
+              args.zoneFile1_arg, args.infoFile1_arg, args.centerFile1_arg,
               args.zonePartFile1_arg, catalog1);
 
   loadCatalog(args.partFile2_arg, args.volFile2_arg, args.voidFile2_arg,
-              args.zoneFile2_arg, args.infoFile2_arg, args.barycenterFile2_arg,
+              args.zoneFile2_arg, args.infoFile2_arg, args.centerFile2_arg,
               args.zonePartFile2_arg, catalog2);
 
   // check for periodic box
@@ -164,7 +164,6 @@ int main(int argc, char **argv) {
       rdist = getDist(catalog1, catalog2, iVoid1, iVoid2, 
                       periodicX, periodicY, periodicZ);
 
-  
       newMatch.matchID = iVoid2;
       newMatch.commonVol = 0;
       newMatch.dist = rdist; 
@@ -319,7 +318,7 @@ int main(int argc, char **argv) {
                          //catalog1.voids[iVoid1].numPart;
                          catalog1.voids[iVoid1].vol;
 
-        fprintf(fp, "%.3f ", catalog1.voids[iVoid1].matches[iMatch].dist);
+        fprintf(fp, "%.3f %.2f ", catalog1.voids[iVoid1].matches[iMatch].dist, commonVolRatio);
         //fprintf(fp, "%.2f ", commonVolRatio);
       } else {
         fprintf(fp, "0.00 ");
@@ -339,7 +338,7 @@ int main(int argc, char **argv) {
 // ----------------------------------------------------------------------------
 void loadCatalog(const char *partFile, const char *volFile, 
                  const char *voidFile, const char *zoneFile,
-                 const char *infoFile, const char *barycenterFile,
+                 const char *infoFile, const char *centerFile,
                  const char *zonePartFile, CATALOG& catalog) {
 
   int i, p, numPartTot, numZonesTot, dummy, iVoid, iZ, numVolTot;
@@ -465,15 +464,22 @@ void loadCatalog(const char *partFile, const char *volFile,
   }
   fclose(fp);
 
+  catalog.numVoids = i - 1;
+  catalog.voids.resize(catalog.numVoids);
   printf("  Read %d voids.\n", catalog.numVoids);
 
   printf(" Loading barycenters\n");
-  fp = fopen(barycenterFile, "r");
+  fp = fopen(centerFile, "r");
   float tempBary[3];
+  float tempFloat;
+  int   tempInt;
   iVoid = 0;
   while (fgets(line, sizeof(line), fp) != NULL) {
-    sscanf(line, "%d %f %f %f\n", &voidID, &tempBary[0], &tempBary[1], 
-                                  &tempBary[2]);
+    sscanf(line, "%f %f %f %f %f %f %f %d %f %d %d %d\n", 
+           &tempBary[0], &tempBary[1], &tempBary[2],
+           &tempFloat, &tempFloat, &tempFloat, &tempFloat, &tempInt,
+           &tempFloat, &tempInt, &tempInt);
+
     tempBary[0] = (tempBary[0] - ranges[0][0])/catalog.boxLen[0];
     tempBary[1] = (tempBary[1] - ranges[1][0])/catalog.boxLen[1];
     tempBary[2] = (tempBary[2] - ranges[2][0])/catalog.boxLen[2];
