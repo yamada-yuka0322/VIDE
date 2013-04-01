@@ -216,11 +216,14 @@ SimulationLoader *sdfLoader(const std::string& snapshot, int flags,
   hdr = new SimuData;
   
   SDFgetintOrDefault(sdfp, "version", &fileversion, 1);
+  double h0;
   if (fileversion == 1)
     {
       SDFgetfloatOrDie(sdfp, "Omega0", &hdr->Omega_M);
       SDFgetfloatOrDie(sdfp, "Lambda_prime", &hdr->Omega_Lambda);
       SDFgetfloatOrDie(sdfp, "H0", &hdr->Hubble);
+      hdr->Hubble *= 1000.*(one_kpc/one_Gyr);
+      h0 = hdr->Hubble / 100.;
     }
   else
     {
@@ -232,12 +235,10 @@ SimulationLoader *sdfLoader(const std::string& snapshot, int flags,
 
       hdr->Omega_M += Or;
       hdr->Omega_Lambda += Of;
-      SDFgetfloatOrDie(sdfp, "H0", &hdr->Hubble);
-      
+      SDFgetfloatOrDie(sdfp, "h_100", &hdr->Hubble);
+      hdr->Hubble *= 100.;
+      h0 = hdr->Hubble / 100.; 
     }
-  double h0;
-  hdr->Hubble *= 1000.0*(one_kpc/one_Gyr);
-  h0 = hdr->Hubble/100.;
 
   if (SDFhasname("R0", sdfp))
     {

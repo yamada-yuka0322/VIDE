@@ -5,7 +5,7 @@
 #define DL for (d=0;d<3;d++)
 #define BF 1e30
 
-#define QHULL_MAX_PARTICLES (1L<<24-1)
+#define QHULL_MAX_PARTICLES ((1L<<24)-1)
 
 int posread(char *posfile, float ***p, float fact);
 
@@ -149,9 +149,10 @@ int main(int argc, char *argv[]) {
   printf("Nvpbuf range: %d,%d\n",nvpbufmin,nvpbufmax);
 
   numGuards = 6*(NGUARD+1)*(NGUARD+1);
+  printf("Total max particles: %d\n" , nvpbufmax+numGuards);
   if (nvpbufmax+numGuards >= QHULL_MAX_PARTICLES)
     {
-      printf("Too many particles to tesselate per division (Qhull will overflow). Increase divisions or reduce buffer size.");
+      printf("Too many particles to tesselate per division (Qhull will overflow). Increase divisions or reduce buffer size.\n");
       fflush(stdout);
       exit(1);
     }
