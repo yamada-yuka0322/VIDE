@@ -2,6 +2,7 @@
 #include <omp.h>
 #endif
 
+#include <set>
 #include <iostream>
 #include <fstream>
 #include <boost/format.hpp>
@@ -37,6 +38,7 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
     int nhl;
     int *links = new int[NLINKS];
     bool *done_zones;
+    int prev_ii = -1;
 
     inyet = new char[numZones];
     inyet2 = new char[numZones];
@@ -49,20 +51,21 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
     fill(done_zones, done_zones + numZones, false);
 
     nhl = 0;
-#pragma omp for schedule(dynamic,100)
-    for (int ii = 0; ii < numZones; ii++)
+#pragma omp for schedule(dynamic,1)
+    for (int h = 0; h < numZones; h++)
       {
         int nhlcount = 0;
-        int h = iord[ii];
         float lowvol;
         bool beaten;
-        
+        set<int> to_process;
+
         for (int hl = 0; hl < nhl; hl++)
           inyet[zonelist[hl]] = 0;
         
         zonelist[0] = h;
         inyet[h] = 1;
         nhl = 1;
+        to_process.insert(h);
         z[h].npjoin = z[h].np;
         do {
           /* Find the lowest-volume (highest-density) adjacency */
@@ -71,38 +74,45 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
           beaten = false;
           lowvol = BIGFLT;
           
-          for (int hl = 0; hl < nhl; hl++)
+          set<int>::iterator iter = to_process.begin();
+          while (iter != to_process.end())
             {
-              int h2 = zonelist[hl];
-              if (inyet[h2] == 1) { /* If it's not already identified as 
-                                       an interior zone, with inyet=2 */
-                bool interior = true;
-                for (int za = 0; za < z[h2].nadj; za++)
-                  {
-                    if (inyet[z[h2].adj[za]] == 0)
-                      {
-                        interior = false;
-                        if (z[h2].slv[za] == lowvol)
+              int h2 = *iter;
+              ZONE& z_cur = z[h2];
+              bool interior = true, touched = false;
+              assert(inyet[h2] == 1);
+
+              for (int za = 0; za < z_cur.nadj; za++)
+                {
+                 if (inyet[z_cur.adj[za]] == 0)
+                    {
+                      interior = false;
+                      if (z_cur.slv[za] == lowvol)
+                        {
+                          links[nl] = z_cur.adj[za];
+                          touched = true;
+                          nl ++;
+                          if (nl == NLINKS) 
+                            {
+                              printf("Too many links with the same rho_sl!  Increase NLINKS from %d\n",nl);
+                              exit(0);
+                            }
+                        }
+                      else
+                        if (z_cur.slv[za] < lowvol)
                           {
-                            links[nl] = z[h2].adj[za];
-                            nl ++;
-                            if (nl == NLINKS) 
-                              {
-                                printf("Too many links with the same rho_sl!  Increase NLINKS from %d\n",nl);
-                                exit(0);
-                              }
-                          }
-                        if (z[h2].slv[za] < lowvol)
-                          {
-                            lowvol = z[h2].slv[za];
-                            links[0] = z[h2].adj[za];
+                            lowvol = z_cur.slv[za];
+                            links[0] = z_cur.adj[za];
                             nl = 1;
+                            touched = true;
                           }
-                      }
-                  }
-                if (interior)
-                  inyet[h2] = 2; /* No bordering exter. zones */
-              }
+                    }
+                }
+              ++iter;
+              if (interior || !touched)
+                to_process.erase(h2);
+              if (interior)
+                inyet[h2] = 2; /* No bordering exter. zones */
             }
           
           if (nl == 0)
@@ -157,7 +167,7 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
                                 interior = false;
                                 if (z[h2].slv[za] <= lowvol) {
                                   //if (!done_zones[link2]) { // Equivalent to p[z[link2].core].dens < p[z[h].core].dens)
-                                  if (p[z[link2].core].dens < p[z[h].core].dens)
+                                  if (p[z[link2].core].dens < p[z[h].core].dens) {
                                     beaten = true;
                                     break;
                                   }
@@ -175,23 +185,32 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
                     }
                 }
             }
-          for (int hl = 0; hl < nhl2; hl++)
-            inyet2[zonelist2[hl]] = 0;
           
           /* See if there's a beater */
           if (beaten) {
             z[h].leak = lowvol;
           } else {
             for (int h2 = 0; h2 < nhl2; h2++) {
-              zonelist[nhl] = zonelist2[h2];
-              inyet[zonelist2[h2]] = 1;
+              int new_h = zonelist2[h2];
+
+              zonelist[nhl] = new_h;
+              assert(inyet[new_h] == 0);
+              inyet[new_h] = 1;
+              if (inyet2[new_h] != 2)
+                to_process.insert(new_h);
               nhl++;
-              z[h].npjoin += z[zonelist2[h2]].np;
+              z[h].npjoin += z[new_h].np;
             }
           }
+
+          for (int hl = 0; hl < nhl2; hl++)
+            inyet2[zonelist2[hl]] = 0;
           if (nhl/10000 > nhlcount) {
+            if (nhlcount == 0)
+              (cout << format("Zone %d: %d") % h % nhl).flush(); 
+            else
+              (cout << format(" %d [%d]") % nhl % to_process.size()).flush();
             nhlcount = nhl/10000;
-            printf(" %d",nhl); FF;
           }
         } while((lowvol < BIGFLT) && (!beaten));
         
