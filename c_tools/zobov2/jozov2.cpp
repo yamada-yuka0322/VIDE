@@ -139,10 +139,10 @@ int main(int argc,char **argv)
       if (z[i].np == 1) 
 	continue;
       
-      txt << format("%d %d %d %e %e %d %d %e %d %f %6.2e %f")
+      txt << format("%d %d %d %e %e %d %d %e %d %f %6.2e")
 	   % (h+1) % i % z[i].core % p[z[i].core].dens % z[i].vol
            % z[i].np % z[i].nhl % z[i].voljoin % z[i].npjoin
-	   % z[i].denscontrast % prob % z[i].leak << endl;
+	   % z[i].denscontrast % prob << endl;
 
     } /* h+1 to start from 1, not zero */
   txt.close();

@@ -50,23 +50,9 @@ static void build_process_queue(ZoneQueue& q, ZONE *z, char *inyet, int h)
 
 void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, float voltol)
 {
-  int *iord;
-
-  double *sorter = new double[numZones+1];
-  /* Assign sorter by probability (could use volume instead) */
-  for (int h = 0; h < numZones; h++)
-    sorter[h] = (double)z[h].core;
-    
   /* Text output file */
 
-  printf("about to sort (pre-watershed sort) ...\n");FF;
-
-  iord = new int[numZones];
- 
-//  findrtop(sorter, numZones, iord, numZones);
-  delete[] sorter;
-
-  //#pragma omp parallel
+#pragma omp parallel
   {
     char *inyet, *inyet2;
     int *zonelist, *zonelist2;
@@ -82,7 +68,7 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
     fill(inyet2, inyet2 + numZones, 0);
 
     nhl = 0;
-    //#pragma omp for schedule(dynamic,1)
+#pragma omp for schedule(dynamic,1)
     for (int h = 0; h < numZones; h++)
       {
         int nhlcount = 0;
@@ -244,7 +230,6 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
     delete[] inyet2;
     
   }
-  delete[] iord;
   
   double maxdenscontrast = 0;
 #pragma omp parallel shared(maxdenscontrast)
