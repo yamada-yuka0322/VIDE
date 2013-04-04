@@ -39,10 +39,13 @@ void buildInitialZones(PARTICLE *p, pid_t np, pid_t* jumped,
   }
   (cout << "Post-jump ..." << endl).flush();
   
-  numZones = 0;
+  pid_t loc_NumZones = 0;
+#pragma omp parallel for schedule(static) reduction(+:loc_NumZones)
   for (pid_t i = 0; i < np; i++)
     if (numinh[i] > 0) 
-      numZones++;
+      loc_NumZones++;
+
+  numZones = loc_NumZones;
   cout << format("%d initial zones found") % numZones << endl;
 
   delete[] jumper;

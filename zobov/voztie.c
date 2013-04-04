@@ -2,7 +2,20 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "voz.h"
+
+int compare_int(const void *a, const void *b)
+{
+  const int *ia = (const int *)a;
+  const int *ib = (const int *)b;
+  if ((*ia) < (*ib))
+    return -1;
+  else if ((*ia) > (*ib))
+    return 1;
+  else
+    return 0;
+}
 
 int main(int argc, char *argv[]) {
 
@@ -135,15 +148,25 @@ int main(int argc, char *argv[]) {
 	fread(&na,1,sizeof(int),part);
         pid_t pid = orig[p];
 	if (na > 0) {
-          assert(adjs[pid].nadj == 0);// || adjs[pid].nadj == na);
-	  adjs[orig[p]].nadj = na;
-	  if (adjs[pid].adj == 0)
-            adjs[orig[p]].adj = (pid_t *)malloc(na*sizeof(pid_t));
-	  if (adjs[orig[p]].adj == 0) {
+          pid_t *previous_adj = adjs[pid].adj;
+          assert(adjs[pid].nadj == 0 || adjs[pid].nadj == na);
+	  adjs[pid].nadj = na;
+          adjs[pid].adj = (pid_t *)malloc(na*sizeof(pid_t));
+	  if (adjs[pid].adj == 0) {
 	    printf("Couldn't allocate adjs[orig[%d]].adj.\n",p);
 	    exit(0);
 	  }
-	  fread(adjs[orig[p]].adj,na,sizeof(pid_t),part);
+	  fread(adjs[pid].adj,na,sizeof(pid_t),part);
+          if (previous_adj != 0)
+           {
+             qsort(previous_adj, na, sizeof(pid_t), compare_int);
+             qsort(adjs[pid].adj, na, sizeof(pid_t), compare_int);
+             if (memcmp(previous_adj, adjs[pid].adj, sizeof(pid_t)*na) != 0)
+               {
+                 printf("Inconsistent adjacencies between two divisions.\n");
+                 abort();
+               }
+           }
 	} else {
 	  printf("0"); fflush(stdout);
 	}
