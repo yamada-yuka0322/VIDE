@@ -1,23 +1,4 @@
 #!/usr/bin/env python
-#+
-#   VIDE -- Void IDEntification pipeline -- ./crossCompare/plotting/plotNumberFunc.py
-#   Copyright (C) 2010-2013 Guilhem Lavaux
-#   Copyright (C) 2011-2013 P. M. Sutter
-#
-#   This program is free software; you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation; version 2 of the License.
-# 
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License along
-#   with this program; if not, write to the Free Software Foundation, Inc.,
-#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#+
 
 # plots cumulative distributions of number counts
 
@@ -30,30 +11,104 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
-from scipy.stats import ks_2samp
 
 # ------------------------------------------------------------------------------
 
-plotNameBase = "compdist"
+obsFudgeFactor = 1.0 # what fraction of the volume are we *reall* capturing?
+#obsFudgeFactor = .66 # what fraction of the volume are we *reall* capturing?
 
-#obsFudgeFactor = 1.0 # what fraction of the volume are we *reall* capturing?
-obsFudgeFactor = .15 # what fraction of the volume are we *reall* capturing?
-
-linewidth = 1
+histBinWidth = 1 # Mpc
 
 parser = argparse.ArgumentParser(description='Plot.')
 parser.add_argument('--show', dest='showPlot', action='store_const',
                    const=True, default=False,
                    help='display the plot (default: just write eps)')
+parser.add_argument('--binned', dest='binned', action='store_const',
+                   const=True, default=False,
+                   help='plot binned function (default: cumulative)')
 parser.add_argument('--parm', dest='parm', default='datasetsToPlot.py',
                     help='path to parameter file')
+parser.add_argument('--xmax', dest='xmax', default=120.,
+                    help='x limit of plot')
+parser.add_argument('--xmin', dest='xmin', default=20.,
+                    help='x limit of plot')
 args = parser.parse_args()
 
-nErrorBars = 10
-plotMax = 120
-errorBarsX = np.linspace(0, plotMax, num=nErrorBars)
+# ------------------------------------------------------------------------------
+
+
+def loadData(sampleDir, dataPortion):
+  with open(workDir+sampleDir+"/sample_info.dat", 'rb') as input:
+    sample = pickle.load(input)
+
+  filename = workDir+"/"+sampleDir+"/centers_"+dataPortion+"_"+sample.fullName+".out"
+  if not os.access(filename, os.F_OK):
+    print "File not found: ", filename
+    return -1, -1, -1
+
+  data = np.loadtxt(filename, comments="#")
+  if data.ndim == 1:
+    print " Too few!"
+    return -1, -1, -1
+
+  data = data[:,4]
+  indices = np.arange(0, len(data), 1)
+  sorted = np.sort(data)
+
+  if sample.dataType == "observation":
+    boxVol = vp.getSurveyProps(sample.maskFile,
+                               sample.zBoundary[0], sample.zBoundary[1],
+                               sample.zRange[0], sample.zRange[1], "all",
+                               selectionFuncFile=None)[0]
+                               #selectionFuncFile=sample.selFunFile)[0]
+    boxVol *= obsFudgeFactor
+  else:
+    boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1] -
+                                          sample.zBoundaryMpc[0])
+
+  boxVol *= 1.e-9 # Mpc->Gpc
+
+  indices /= boxVol
+
+  #xmin = sorted[0]
+  #xmax = sorted[-1]
+  #bins = int((xmax-xmin)/histBinWidth)
+  bins = args.xmax/histBinWidth
+  hist, binEdges = np.histogram(sorted, bins=bins, range=(0., args.xmax)) 
+  #hist, binEdges = np.histogram(sorted, bins=bins, range=(xmin,xmax)) 
+  binCenters = 0.5*(binEdges[1:] + binEdges[:-1])
+
+  if not args.binned:
+    foundStart = False
+    for iBin in xrange(len(hist)):
+      if not foundStart and hist[iBin] == 0:
+        continue
+      foundStart = True
+      hist[iBin] = np.sum(hist[iBin:])
+
+  hist /= boxVol
+
+  hist = np.log10(hist)
+
+  lineTitle = sample.nickName
+
+  return hist, binCenters, lineTitle
+
+def fill_between(x, y1, y2=0, ax=None, **kwargs):
+    """Plot filled region between `y1` and `y2`.
+
+    This function works exactly the same as matplotlib's fill_between, except
+    that it also plots a proxy artist (specifically, a rectangle of 0 size)
+    so that it can be added it appears on a legend.
+    """
+    ax = ax if ax is not None else plt.gca()
+    ax.fill_between(x, y1, y2, interpolate=True, **kwargs)
+    p = plt.Rectangle((0, 0), 0, 0, **kwargs)
+    ax.add_patch(p)
 
 # ------------------------------------------------------------------------------
+
+print "Plotting number function"
 
 filename = args.parm
 print " Loading parameters from", filename
@@ -66,113 +121,74 @@ globals().update(vars(parms))
 if not os.access(figDir, os.F_OK):
   os.makedirs(figDir)
 
-dataSampleList = []
-
-for sampleDir in sampleDirList:
-  with open(workDir+sampleDir+"/sample_info.dat", 'rb') as input:
-    dataSampleList.append(pickle.load(input))
-
 plt.clf()
 plt.xlabel("Void Radius [Mpc/h]")
-plt.ylabel(r"N > R [$h^3$ Gpc$^{-3}$]")
-plt.yscale('log')
-plt.xlim(xmax=plotMax)
+plt.ylabel(r"log (N > R [$h^3$ Gpc$^{-3}$])")
+#plt.yscale('log')
+#plt.xlim(xmax=args.xmax)
+#plt.xlim(xmin=args.xmin)
+#plt.ylim(ymin=-1)
+#plt.ylim(ymax=6)
 
-plotName = plotNameBase
-allData = []
+plotNameBase = "numberfunc"
+plotName = plotNameBase + "_" + plotLabel
 
-for dataPortion in dataPortions: 
-  print "Data portion:", dataPortion
-  sizeList = []
-  for (iSample,sample) in enumerate(dataSampleList):
+for (iSample,sampleDir) in enumerate(sampleDirList):
+ for dataPortion in dataPortions:
+  # get all the data
+  allHist = []
+  if "ZZZZ" in sampleDir:
+    for fileZ in fileList:
+      thisSampleDir = sampleDir.replace("ZZZZ", fileZ)
+      hist, binCenters, lineTitle = loadData(thisSampleDir, dataPortion)
+      if lineTitle == -1: continue
+      allHist.append(hist)
+   
+    lineLabel = lineTitle.replace(fileZ, "all")
+    lineLabel += ", " + dataPortion
+    
+    maxHist = 1.*allHist[-1]
+    minHist = 1.*allHist[-1]
+    for iHist in xrange(len(allHist)-1):
+      maxHist = np.maximum(maxHist, allHist[iHist])
+      minHist = np.minimum(minHist, allHist[iHist])
 
-    sampleName = sample.fullName
-    lineTitle = sampleName
-
-    if sample.dataType == "observation":
-      boxVol = vp.getSurveyProps(sample.maskFile, 
-                                 sample.zBoundary[0], sample.zBoundary[1], 
-                                 sample.zRange[0], sample.zRange[1], "all",
-                                 selectionFuncFile=None)[0]
-                                 #selectionFuncFile=sample.selFunFile)[0]
-      boxVol *= obsFudgeFactor
+    trim = (maxHist > 1) 
+    minHist = minHist[trim]
+    maxHist = maxHist[trim]
+    binCentersToUse = binCenters[trim]
+    if dataPortion == "central":
+      hatch = '/'
     else:
-      boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1] - 
-                                          sample.zBoundaryMpc[0])
+      hatch = None
+    fill_between(binCentersToUse, minHist, maxHist,
+             label=lineLabel, color=colorList[iSample],
+             alpha=0.5, hatch=hatch
+             )
 
-    boxVol *= 1.e-9 # Mpc->Gpc
+  else:
 
-    filename = workDir+"/"+sampleDirList[iSample]+"/centers_nocut_"+dataPortion+"_"+\
-               sampleName+".out"
-    if not os.access(filename, os.F_OK):
-      print "File not found: ", filename
-      continue
+    hist, binCenters, lineLabel = loadData(sampleDir, dataPortion)
+    trim = (hist > 1) 
+    hist = hist[trim]
+    binCentersToUse = binCenters[trim]
+    if lineLabel == -1: continue
+    lineLabel += ", " + dataPortion
+    if dataPortion == "central":
+      lineStyle = '--'
+    else:
+      lineStyle = '-'
+    plt.plot(binCentersToUse, hist, lineStyle,
+              label=lineLabel, color=colorList[iSample],
+              linewidth=linewidth)
+    
 
-    data = np.loadtxt(filename, comments="#")
-    if data.ndim == 1:
-      print " Too few!"
-      continue
-    data = data[:,4]
-    indices = np.arange(0, len(data), 1)
-    numVoids = indices[::-1]/boxVol
-    voidSizes = np.sort(data)
-
-    sizeList.append(voidSizes)
-    myErrorBarsX = []
-    errorBarsY = []
-    errorBarsDY = []
-    errorBarsIdx = []
-    for errorBarLoc in errorBarsX:
-      nearestIdx = (np.abs(voidSizes-errorBarLoc)).argmin()
-      if nearestIdx == 0: continue
-      myErrorBarsX.append(errorBarLoc)
-      errorBarsIdx.append(nearestIdx)
-      errorBarsY.append(numVoids[nearestIdx])
-      errorBarsDY.append(np.sqrt(numVoids[nearestIdx]))
-
-    thisPlot = plt.plot(voidSizes, numVoids, '-',
-             color=colorList[iSample],
-             linewidth=linewidth, label=lineTitle)
-    plt.errorbar(myErrorBarsX, errorBarsY, errorBarsDY,
-             ecolor=colorList[iSample],
-             fmt=None, label='_nolegend_', capsize=0)
-
-    hist, bin_edges = np.histogram(data, bins=40, range=(0,100))
-    #allData.append(hist)
-
-    binCenters = 0.5*(bin_edges[1:] + bin_edges[:-1])
-    #plt.plot(binCenters, hist, '-',
-    #         label=lineTitle, color=colorList[iSample],
-    #         linewidth=linewidth)
-
-  plt.legend(title = "Samples", loc = "upper right", prop={'size':8})
-  #plt.title(plotTitle)
-
-  # compute K-S statistic for all pairs of sets
-  for (i,sample1) in enumerate(dataSampleList):
-    for (j,sample2) in enumerate(dataSampleList):
-      if j <= i: continue
-      ks, pval = ks_2samp(sizeList[i][:], sizeList[j][:])
-      print sample1.fullName, sample2.fullName, pval
-
+plt.legend(title = "Samples", loc = "upper right", prop={'size':8})
+plt.title("Number func - "+plotTitle)
 
 plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
 plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
 plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")
-
-#dataFile = figDir+"/data_"+plotName+".dat"
-#fp = open(dataFile, 'w')
-#fp.write("# R [Mpc/h], N [h^3 Gpc^-3]\n")
-#fp.write("# ")
-#for sample in dataSampleList:
-#  fp.write(sample.fullName+" ")
-#fp.write("\n")
-#for i in xrange(100):
-#  fp.write(str(bin_edges[i]) + " ")
-#  for iSample in xrange(len(dataSampleList)):
-#    fp.write(str(allData[iSample][i])+" ")
-#  fp.write("\n")
-#fp.close()
 
 if args.showPlot:
   os.system("display %s" % figDir+"/fig_"+plotName+".png")
