@@ -18,16 +18,17 @@ struct ZoneDensityPair
 {
   int h;
   double density;
+  double core;
 
   bool operator<(const ZoneDensityPair& p2) const
   {
-    return density > p2.density;
+    return (density > p2.density) || (density==p2.density && core > p2.core);
   }
 };
 
 typedef priority_queue<ZoneDensityPair> ZoneQueue;
 
-static void build_process_queue(ZoneQueue& q, ZONE *z, char *inyet, int h)
+static void build_process_queue(ZoneQueue& q, ZONE *z, PARTICLE *p, char *inyet, int h)
 {
   ZoneDensityPair zdp;
   ZONE& z_h = z[h];
@@ -38,6 +39,7 @@ static void build_process_queue(ZoneQueue& q, ZONE *z, char *inyet, int h)
    {
      zdp.h = z_h.adj[za];
      zdp.density = z_h.slv[za];
+     zdp.core = p[z[zdp.h].core].dens;
      if (inyet[zdp.h] == 0)
        {
 	 q.push(zdp);
@@ -72,32 +74,34 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
     for (int h = 0; h < numZones; h++)
       {
         int nhlcount = 0;
-        float lowvol, z_cur_core_dens;
+        float previous_lowvol = BIGFLT, lowvol, z_cur_core_dens;
         bool beaten;
         priority_queue<ZoneDensityPair> to_process;
 	int link0;
+        int save_nhl;
+        pid_t save_npjoin;
 
         for (int hl = 0; hl < nhl; hl++)
           inyet[zonelist[hl]] = 0;
         
         zonelist[0] = h;
         inyet[h] = 1;
-        nhl = 1;
-        z[h].npjoin = z[h].np;
+        save_nhl = nhl = 1;
+        save_npjoin = z[h].npjoin = z[h].np;
         z_cur_core_dens = p[z[h].core].dens;
 
-        build_process_queue(to_process, z, inyet, h);
+        build_process_queue(to_process, z, p, inyet, h);
 	
         do {
           /* Find the lowest-volume (highest-density) adjacency */
-          int nl = 0;
-          
           beaten = false;
           
           if (to_process.empty())
             {
               beaten = true;
               z[h].leak = maxvol;
+              save_npjoin = z[h].npjoin;
+              save_nhl = nhl;
               continue;
             }
 
@@ -111,13 +115,21 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
 
 	  if (to_process.empty())
 	    {
+              save_npjoin = z[h].npjoin;
+              save_nhl = nhl;
 	      beaten = true;
 	      z[h].leak = maxvol;
 	      continue;
 	    }
 
-          nl++;
-          
+          /* See if there's a beater */
+          if (previous_lowvol != lowvol)
+            {
+              save_npjoin = z[h].npjoin;
+              save_nhl = nhl;
+              previous_lowvol = lowvol;
+            }
+
 	  if (lowvol > voltol)
             {
               beaten = true;
@@ -177,16 +189,17 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
 	  if (beaten) {
 	    z[h].leak = lowvol;
 	  } else {
+
 	    for (int h2 = 0; h2 < nhl2; h2++) {
 	      int new_h = zonelist2[h2];
 	      
               zonelist[nhl] = new_h;
               assert(inyet[new_h] == 0);
+              z[h].npjoin += z[new_h].np;
               inyet[new_h] = 1;
               if (inyet2[new_h] != 2)
-		build_process_queue(to_process, z, inyet, new_h);
+                build_process_queue(to_process, z, p, inyet, new_h);
               nhl++;
-              z[h].npjoin += z[new_h].np;
             }
           }
 	  
@@ -201,6 +214,12 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
           }
 	}
 	while((lowvol < BIGFLT) && (!beaten));
+
+        if (!beaten)
+          { 
+            save_npjoin = z[h].npjoin;
+            save_nhl = nhl;
+          }
 	
 	z[h].denscontrast = z[h].leak/p[z[h].core].dens;
         if (z[h].denscontrast < 1.) 
@@ -214,15 +233,16 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
           FF;
         }
         /* Calculate volume */
+        z[h].npjoin = save_npjoin;
         z[h].voljoin = 0.;
-        z[h].zonelist = new int[nhl];
-        z[h].numzones = nhl;
-        for (int q = 0; q < nhl; q++) {
+        z[h].zonelist = new int[save_nhl];
+        z[h].numzones = save_nhl;
+        for (int q = 0; q < save_nhl; q++) {
           z[h].voljoin += z[zonelist[q]].vol;
           z[h].zonelist[q] = zonelist[q];
         }
         
-        z[h].nhl = nhl;
+        z[h].nhl = save_nhl;
       }
     delete[] zonelist;
     delete[] zonelist2;
