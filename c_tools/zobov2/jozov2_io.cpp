@@ -60,21 +60,21 @@ void readAdjacencyFile(const string& adjfile, PARTICLE*& p, pid_t& np)
 		    cout << format("OVERFLOW for particle %d (pending %d). List of accepted:") % i % j << endl;
                     for (int q = 0; q < p[i].nadj; q++)
                       cout << format("  %d") % p[i].adj[q] << endl;
-                    throw FileError();
+//                    throw FileError();
                   }
-                
+                else               
                 if (p[j].ncnt == p[j].nadj)
                   {
 		    cout << format("OVERFLOW for particle %d (pending %d). List of accepted:") % j % i << endl;
                     for (int q = 0; q < p[j].nadj; q++)
                       cout << format("  %d\n") % p[j].adj[q] << endl;
-                    throw FileError();
+//                    throw FileError();
                   }
-                
+                else{
                 p[i].adj[p[i].ncnt] = j;
                 p[j].adj[p[j].ncnt] = i;
                 p[i].ncnt++; 
-                p[j].ncnt++;
+                p[j].ncnt++; }
               }
             else
               {
