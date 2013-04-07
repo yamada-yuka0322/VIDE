@@ -19,7 +19,9 @@
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #+
 
-# does full void analysis. Also generates 2d/1d stacked plots and hubble diagram
+# Stage 1 : generate particles
+# Stage 2 : find voids
+# Stage 3 : prune catalog
 
 from void_python_tools.backend import *
 from void_python_tools.plotting import *
@@ -144,10 +146,10 @@ if (startCatalogStage <= 4) and (endCatalogStage >= 4):
   sys.stdout.flush()
 
   for thisDataPortion in dataPortions:
-    plotRedshiftDistribution(workDir, dataSampleList, figDir, showPlot=False, 
-                             dataPortion=thisDataPortion, setName=setName)
-    plotSizeDistribution(workDir, dataSampleList, figDir, showPlot=False, 
-                             dataPortion=thisDataPortion, setName=setName)
+    #plotRedshiftDistribution(workDir, dataSampleList, figDir, showPlot=False, 
+    #                         dataPortion=thisDataPortion, setName=setName)
+    #plotSizeDistribution(workDir, dataSampleList, figDir, showPlot=False, 
+    #                         dataPortion=thisDataPortion, setName=setName)
     plotNumberDistribution(workDir, dataSampleList, figDir, showPlot=False, 
                              dataPortion=thisDataPortion, setName=setName)
     plotVoidDistribution(workDir, dataSampleList, figDir, showPlot=False, 
