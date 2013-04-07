@@ -56,6 +56,10 @@ parser.add_argument('--parm', dest='parm',
 args = parser.parse_args()
 
 
+defaultsFile = "@CMAKE_BINARY_DIR@/python_tools/pipeline_source/defaults.py"
+parms = imp.load_source("name", defaultsFile)
+globals().update(vars(parms))
+
 filename = args.parm
 print " Loading parameters from", filename
 if not os.access(filename, os.F_OK):
@@ -109,16 +113,16 @@ def writeScript(setName, dataFileNameBase, dataFormat,
   scriptFileName = scriptDir + "/" + setName + ".py"
   scriptFile = open(scriptFileName, 'w')
 
-  scriptFile.write("""#!/usr/bin/env/python
+  header = """#!/usr/bin/env/python
 import os
 from void_python_tools.backend.classes import *
 
-continueRun = False # set to True to enable restarting aborted jobs
-startCatalogStage = 1
-endCatalogStage   = 3
+continueRun = {continueRun} # set to True to enable restarting aborted jobs
+startCatalogStage = {startCatalogStage}
+endCatalogStage   = {endCatalogStage}
                
-startAPStage = 1
-endAPStage = 1
+startAPStage = {startAPStage}
+endAPStage = {endAPStage}
 
 regenerateFlag = False
 ZOBOV_PATH = "@CMAKE_BINARY_DIR@/zobov/"
@@ -130,10 +134,16 @@ ranSeed = 101010
 useLCDM = False
 bias = 1.16
 
-dataPortions = ["central"]
+dataPortions = {dataPortions}
 dataSampleList = []
-""")
+           """
 
+  scriptFile.write(header.format(startCatalogStage=startCatalogStage,
+                                 endCatalogStage=endCatalogStage,
+                                 startAPStage=startAPStage,
+                                 endAPStage=endAPStage,
+                                 continueRun=continueRun,
+                                 dataPortions=dataPortions))
 
   dataInfo = """
 setName = "{setName}"
@@ -175,6 +185,8 @@ newSample = Sample(dataFile = "{dataFile}",
                    useLightCone = {useLightCone},
                    subsample = "{subsample}")
 dataSampleList.append(newSample)
+newSample.addStack(0.0, 5.0, 10, 15, False, False)
+newSample.addStack(0.0, 5.0, 15, 20, False, False)
 newSample.addStack(0.0, 5.0, 20, 25, False, False)
 newSample.addStack(0.0, 5.0, 30, 35, False, False)
 newSample.addStack(0.0, 5.0, 40, 45, False, False)
@@ -693,6 +705,8 @@ if (args.hod or args.all) and haloFileBase != "":
       outFileName = catalogDir+"/"+sampleName+".dat"
       os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
       os.system("rm %s/hod.*" % catalogDir)
+      os.system("rm ./hod.par")
+      os.system("rm ./hod-usedvalues")
 
     if dataFormat == "sdf": os.system("rm %s" % haloFile)
 
