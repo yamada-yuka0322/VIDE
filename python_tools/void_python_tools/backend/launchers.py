@@ -278,7 +278,7 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
     cmd = "./%s >> %s 2>&1" % (vozScript, logFile)
     os.system(cmd)
 
-    cmd = "%s/jozov %s %s %s %s %s %g %s >> %s 2>&1" % \
+    cmd = "%s/../c_tools/zobov2/jozov2 %s %s %s %s %s %g %s >> %s 2>&1" % \
           (binPath, \
            zobovDir+"/adj_"+sampleName+".dat", \
            zobovDir+"/vol_"+sampleName+".dat", \
@@ -973,12 +973,12 @@ def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None):
     fp.write(numVoids+"\n")
     fp.close()
 
-    if sample.zRange[0] > stack.zMax or sample.zRange[1] < stack.zMin:
-      print "outside sample redshift range; skipping!"
-      fp = open(voidDir+"/NOVOID", "w")
-      fp.write("outside z range: profile\n")
-      fp.close()
-      return
+    #if sample.zRange[0] > stack.zMax or sample.zRange[1] < stack.zMin:
+    #  print "outside sample redshift range; skipping!"
+    #  fp = open(voidDir+"/NOVOID", "w")
+    #  fp.write("outside z range: profile\n")
+    #  fp.close()
+    #  return
 
     if sample.profileBinSize == "auto":
       density = 0.5 * 50 / Rcircular / 2
@@ -1025,9 +1025,9 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
       fp.close()
       return
 
-    if stack.zMin < sample.zRange[0] or stack.zMax > sample.zRange[1]:
-      print "outside sample redshift range; skipping!"
-      return
+    #if stack.zMin < sample.zRange[0] or stack.zMax > sample.zRange[1]:
+    #  print "outside sample redshift range; skipping!"
+    #  return
 
     if sample.partOfCombo or not sample.includeInHubble:
       print "sample not needed for further analysis; skipping!"
@@ -1071,7 +1071,7 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
       #badChain = (args[0][0] > 0.5 or args[0][1] > stack.rMax or \
       #            args[0][2] > stack.rMax) and \
       #           (ntries < maxtries)
-      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="symmetric")
+      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="symmetric", nBootstraps=500)
       badChain = False
       ntries += 1
 
@@ -1091,10 +1091,10 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     else:
       rescaleFactor = 1.0
 
-    # TEST - plotting raw galaxy counts
-    #vp.draw_fit(*args, delta_tick=50, vmax=1.0, delta_v=0.01,
-    vp.draw_fit(*args, delta_tick=0.2, vmax=1.0, delta_v=0.01,
-                nocontour=True, model_max=1.0, delta_model=0.1,
+    vp.draw_fit(*args, delta_tick=0.2, vmax=10.0, delta_v=0.1,
+                nocontour=True, model_max=10.0, delta_model=1.0,
+    #vp.draw_fit(*args, delta_tick=0.2, vmax=1.0, delta_v=0.01,
+    #            nocontour=True, model_max=1.0, delta_model=0.1,
                 plotTitle=plotTitle, show_ratio=showRatio,
                 showContours=showContours,
                 rescaleFactor=rescaleFactor)
