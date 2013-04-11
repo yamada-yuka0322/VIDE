@@ -267,7 +267,7 @@ def plotNumberDistribution(workDir=None, sampleList=None, figDir=None,
 
     boxVol *= 1.e-9
 
-    filename = workDir+"/sample_"+sampleName+"/centers_nocut_"+dataPortion+"_"+\
+    filename = workDir+"/sample_"+sampleName+"/untrimmed_centers_"+dataPortion+"_"+\
                sampleName+".out"
     if not os.access(filename, os.F_OK):
       print "File not found: ", filename
@@ -300,6 +300,7 @@ def plotVoidDistribution(workDir=None, sampleList=None, figDir=None,
                      plotNameBase="dv", 
                      showPlot=False, dataPortion=None, setName=None):
 
+  #plt.ioff()
   Nmesh = 256
  
   for (iSample,sample) in enumerate(sampleList):
@@ -311,7 +312,7 @@ def plotVoidDistribution(workDir=None, sampleList=None, figDir=None,
   
     plotName = plotNameBase+"_"+sampleName
 
-    filename = workDir+"/sample_"+sampleName+"/centers_nocut_"+dataPortion+"_"+\
+    filename = workDir+"/sample_"+sampleName+"/untrimmed_centers_"+dataPortion+"_"+\
                sampleName+".out"
 
     if not os.access(filename, os.F_OK):
