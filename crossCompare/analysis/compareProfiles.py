@@ -50,69 +50,77 @@ globals().update(vars(parms))
 if not os.access(dataDir, os.F_OK):
   os.makedirs(dataDir)
 
-mergerFileBase = dataDir + "/" + mergerNameBase
+if not os.access(logDir, os.F_OK):
+  os.makedirs(logDir)
 
-baseIDList = []
+mergerFileBase = dataDir + "/" + mergerNameBase
 
 # get list of base voids
 with open(workDir+baseSampleDir+"/sample_info.dat", 'rb') as input:
   baseSample = pickle.load(input)
   baseSampleName = baseSample.fullName
-  baseVoidList = np.loadtxt(workDir+baseSampleDir+"/centers_nocut_central_"+\
+  baseVoidList = np.loadtxt(workDir+baseSampleDir+"/untrimmed_centers_central_"+\
                     baseSampleName+".out")
 
 for stack in baseSample.stacks:
   print " Stack:", stack.rMin    
 
   accepted = (baseVoidList[:,4] > stack.rMin) & (baseVoidList[:,4] < stack.rMax)
-  baseIDList = baseVoidList[accepted][:,7]
+  baseIDList = baseVoidList[:,7][accepted]
 
   for (iSample, sampleDir) in enumerate(sampleDirList):
     with open(workDir+sampleDir+"/sample_info.dat", 'rb') as input:
       sample = pickle.load(input)
 
-    print "  Working with", sample.fullName, "...",
+    print "  Working with", sample.fullName, "..."
     sys.stdout.flush()
     sampleName = sample.fullName
 
     # get list of appropriate voids
-    if sample == baseSample:
+    if sample.fullName == baseSample.fullName:
       idList = baseIDList
     else:
-      idList = 2
       matchList = np.loadtxt(mergerFileBase+"_"+baseSampleName+"_"+sampleName+\
                             "_summary.out")
-      accepted = (matchList[:,0] == baseIDList).any()
-      idList = matchList[accepted][:,8]
+      idList = []
+      for i,testID in enumerate(matchList[:,8]):
+        if np.any(testID == baseIDList):
+          idList.append(matchList[i,0])
+      idList = np.array(idList)
+      
+    idList = idList.astype(int)
 
+    print "    Found", len(idList), "voids to work with"
+ 
     voidBaseDir = workDir+"/"+sampleDir+"stacks"
         
     runSuffix = getStackSuffix(stack.zMin, stack.zMax, stack.rMin, 
-                               stack.rMax, thisDataPortion, 
+                               stack.rMax, dataPortion, 
                                customLine="selected")
-    stack.rMin = 0.
-    stack.rMax = 1000.
-
     voidDir = voidBaseDir+"_"+runSuffix
 
     if not os.access(voidDir,os.F_OK): os.makedirs(voidDir)
 
+    if len(idList) == 0:
+      print "   No voids here anyway, skipping..."
+      continue
+  
     print "    Stacking voids...",
     sys.stdout.flush()
         
     STACK_PATH = CTOOLS_PATH+"/stacking/stackVoidsZero"
 
     launchStack(sample, stack, STACK_PATH, 
-                   thisDataPortion=thisDataPortion,
+                   thisDataPortion=dataPortion,
                    logDir=logDir, voidDir=voidDir, 
                    zobovDir=workDir+"/"+sampleDir,
-                   freshStack=freshStack, INCOHERENT=False,
+                   freshStack=True, INCOHERENT=False,
                    ranSeed=101010, summaryFile=None, 
-                   continueRun=continueRun,
+                   continueRun=False,
                    dataType=sample.dataType,
-                   idList=idList)
- 
-    print "   Profiling stacks...",
+                   idList=idList, rescaleOverride="")
+
+    print "    Profiling stacks...",
     sys.stdout.flush()
     logFile = logDir+"/profile_"+sampleName+"_"+runSuffix+".out"
     launchProfile(sample, stack, voidDir=voidDir, 

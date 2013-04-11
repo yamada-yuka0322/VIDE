@@ -157,13 +157,15 @@ for (iSample,sampleDir) in enumerate(sampleDirList):
     minHist = minHist[trim]
     maxHist = maxHist[trim]
     binCentersToUse = binCenters[trim]
+    alpha = 0.75
     if dataPortion == "central":
-      hatch = '/'
+      hatch = '//'
     else:
       hatch = None
     fill_between(binCentersToUse, minHist, maxHist,
              label=lineLabel, color=colorList[iSample],
-             alpha=0.5, hatch=hatch
+             alpha=alpha, 
+             hatch=hatch
              )
 
   else:

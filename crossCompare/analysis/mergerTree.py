@@ -66,7 +66,7 @@ for (iSample, sampleDir) in enumerate(sampleDirList):
   sampleName = sample.fullName
 
   binPath = CTOOLS_PATH+"/analysis/voidOverlap"
-  logFile = os.getcwd()+"/mergerTree.log"
+  logFile = logDir+"/mergertree_"+baseSample.fullName+"_"+sampleName+".out"
   stepOutputFileName = outFileName + "_" + baseSample.fullName + "_" + \
                        sampleName + "_"
   #stepOutputFileName = os.getcwd()+"/data/overlap_"
@@ -77,6 +77,7 @@ for (iSample, sampleDir) in enumerate(sampleDirList):
                     continueRun=False, workDir=workDir,
                     outputFile=stepOutputFileName,
                     matchMethod="useID")
+                    #matchMethod="prox")
 
   # attach columns to summary file
   #if iSample == 1:
