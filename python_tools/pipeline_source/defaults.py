@@ -32,6 +32,9 @@ endAPStage = 5
 continueRun = True
 dataPortions = ["central"]
 
+# auto for AP analysis, "fixed" for catalog comparison
+stackMode = "fixed"
+
 # directory for the input simulation/observational particle files
 catalogDir = os.getenv("HOME")+"/workspace/Voids/catalog/"
 
@@ -60,11 +63,16 @@ useLightCone = False
 doPecVel = False
 
 # common filename of particle files
+# use a placeholder (such as NNNNN as shown below) to select the different
+#   filenames. For example, if we have partFile01, partFile02, etc., 
+#   then particleFileBase = 'partFileNN'
+#        particleFileDummy = 'NN'
+#        fileNums = ["01", "02"] 
 particleFileBase = "mf_4s_1G_512_NNNNN"
 particleFileDummy = 'NNNNN'
 
 # list of file numbers for the particle files
-# to get particle file name, we take particleFileBase+fileNum
+# to get particle file name, we replace particleFileDummy with fileNum
 fileNums = ["0.667", "0.500"]
 
 # redshift of each file in the above list
@@ -80,9 +88,15 @@ numSubvolumes = 1
 # prefix to give all outputs
 prefix = "mt_"
 
-# list of desired subsamples - these are in unts of h Mpc^-3!
+# list of desired subsamples - see subSamplingMode parameter
 subSamples = [1.0]
+
 doSubSampling = True # do the subsampling in preparation script?
+                     # if False, generateMock will do the subsampling
+
+# if 'absolute', subSamples are given in particles per cubic Mpc/h
+# if 'relative', subSamples are given as a fraction of input particles
+subSampleMode = "absolute" 
 
 # common filename of halo files, leave blank to ignore halos
 haloFileBase = "mf_4s_1G_512_bgc2_NNNNN.sdf"

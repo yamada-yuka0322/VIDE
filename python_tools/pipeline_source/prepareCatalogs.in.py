@@ -87,13 +87,22 @@ def getNickName(sampleName):
   
   if "ss" in splitName[1]:
     nickName = "Subsample = " + splitName[1].replace("ss","")
-    nickName += ", z = " + splitName[2].replace("z","")
+    if "pv" in splitName[2]: 
+      nickName += ", z = " + splitName[3].replace("z","") + ", Pev.Vel."
+    else:
+      nickName += ", z = " + splitName[2].replace("z","")
   elif "hod" in splitName[1]:
     nickName = "HOD = " + splitName[2]
-    nickName += ", z = " + splitName[3].replace("z","")
+    if "pv" in splitName[3]: 
+      nickName += ", z = " + splitName[4].replace("z","") + ", Pec.Vel."
+    else:
+      nickName += ", z = " + splitName[3].replace("z","")
   elif "halos" in splitName[1]:
     nickName = "Halos, min mass = " + splitName[2].replace("min","")
-    nickName += ", z = " + splitName[3].replace("z","")
+    if "pv" in splitName[3]: 
+      nickName += ", z = " + splitName[4].replace("z","") + ", Pec.Vel."
+    else:
+      nickName += ", z = " + splitName[3].replace("z","")
   else:
     nickName = sampleName
 
@@ -185,6 +194,12 @@ newSample = Sample(dataFile = "{dataFile}",
                    useLightCone = {useLightCone},
                    subsample = "{subsample}")
 dataSampleList.append(newSample)
+  """
+
+  if stackMode == "fixed":
+    stackInfo = """
+# {zMin}, {zMax}, {minRadius}
+newSample.addStack(0.0, 5.0, 5 , 10, False, False)
 newSample.addStack(0.0, 5.0, 10, 15, False, False)
 newSample.addStack(0.0, 5.0, 15, 20, False, False)
 newSample.addStack(0.0, 5.0, 20, 25, False, False)
@@ -195,13 +210,22 @@ newSample.addStack(0.0, 5.0, 60, 65, False, False)
 newSample.addStack(0.0, 5.0, 70, 75, False, False)
 newSample.addStack(0.0, 5.0, 80, 85, False, False)
 newSample.addStack(0.0, 5.0, 90, 95, False, False)
-#newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False)
-#newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False)
-#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False)
-#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False)
-#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False)
-#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False)
+  """
+
+  elif stackMode == "auto":
+    stackInfo = """
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False)
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False)
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False)
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False)
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False)
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False)
                """
+  else:
+    stackInfo = """
+# {zMin}, {zMax}, {minRadius}
+"""
+
   for (iFile, redshift) in enumerate(redshifts):
     fileNum = fileNums[iFile]
 
@@ -271,6 +295,11 @@ newSample.addStack(0.0, 5.0, 90, 95, False, False)
                                          useLightCone=useLightCone,
                                          subsample=str(subsample).strip('[]')))
 
+          scriptFile.write(stackInfo.format(zMin=sliceMin,
+                                           zMax=sliceMax,
+                                           minRadius=minRadius))
+
+
   scriptFile.close()
   return
 
@@ -293,7 +322,13 @@ for iSubSample in xrange(len(subSamples)):
 
   keepFractionList = []
   for subSample in subSampleList:
-    keepFractionList.append(float(subSample) / baseResolution)
+    if subSampleMode == 'absolute':
+      keepFractionList.append(float(subSample) / baseResolution)
+    elif subSampleMode == 'relative':
+      keepFractionList.append(float(subSample))
+    else:
+      print "Unrecognized subSampleMode = ", subSampleMode
+      exit(-1)
   thisSubSample = subSamples[iSubSample]
   maxKeep = keepFractionList[-1] * numPart
   minRadius = int(np.ceil(lbox/maxKeep**(1./3)))
