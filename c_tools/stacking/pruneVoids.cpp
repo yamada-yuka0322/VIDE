@@ -190,6 +190,13 @@ int main(int argc, char **argv) {
   ranges[2][0] = f_info.get_att("range_z_min")->as_double(0);
   ranges[2][1] = f_info.get_att("range_z_max")->as_double(0);
 
+  printf(" Range xmin %e\n", ranges[0][0]);
+  printf(" Range xmax %e\n", ranges[0][1]);
+  printf(" Range ymin %e\n", ranges[1][0]);
+  printf(" Range ymax %e\n", ranges[1][1]);
+  printf(" Range zmin %e\n", ranges[2][0]);
+  printf(" Range zmax %e\n", ranges[2][1]);
+
   boxLen[0] = ranges[0][1] - ranges[0][0];
   boxLen[1] = ranges[1][1] - ranges[1][0];
   boxLen[2] = ranges[2][1] - ranges[2][0];
@@ -271,7 +278,9 @@ int main(int argc, char **argv) {
 
     voids[i-1].isLeaf = true;
     voids[i-1].hasHighCentralDen = false;
-  
+    voids[i-1].numChildren = 0;
+    voids[i-1].parentID = -1;  
+
     voids[i-1].eval = gsl_vector_alloc(3);
     voids[i-1].evec = gsl_matrix_alloc(3,3);
   }
@@ -329,25 +338,26 @@ int main(int argc, char **argv) {
   free(temp);
 
   // load voids *again* using Guilhem's code so we can get tree
-  printf(" Re-loading voids and building tree..\n");
-  ZobovRep zobovCat;
-  if (!loadZobov(args.voidDesc_arg, args.zone2Part_arg,
-                 args.void2Zone_arg, 
-                 0, zobovCat)) {
-     printf("Error loading catalog!\n");
-     return -1;
-  }
-  VoidTree *tree;
-  tree = new VoidTree(zobovCat);
-  zobovCat.allZones.erase(zobovCat.allZones.begin(), zobovCat.allZones.end());
-  //zobovCat.allZones.erase(zobovCat.allVoids.begin(), zobovCat.allVoids.end());
+  if (!args.isObservation_flag) {
+    printf(" Re-loading voids and building tree..\n");
+    ZobovRep zobovCat;
+    if (!loadZobov(args.voidDesc_arg, args.zone2Part_arg,
+                   args.void2Zone_arg, 
+                   0, zobovCat)) {
+       printf("Error loading catalog!\n");
+       return -1;
+    }
+    VoidTree *tree;
+    tree = new VoidTree(zobovCat);
+    zobovCat.allZones.erase(zobovCat.allZones.begin(), zobovCat.allZones.end());
  
-  // copy tree information to our own data structures
-  for (iVoid = 0; iVoid < numVoids; iVoid++) {
-    voidID = voids[iVoid].voidID;
-    voids[iVoid].parentID = tree->getParent(voidID);
-    voids[iVoid].numChildren = tree->getChildren(voidID).size();
-  }
+    // copy tree information to our own data structures
+    for (iVoid = 0; iVoid < numVoids; iVoid++) {
+      voidID = voids[iVoid].voidID;
+      voids[iVoid].parentID = tree->getParent(voidID);
+      voids[iVoid].numChildren = tree->getChildren(voidID).size();
+    }
+  } // end re-load
 
   // check boundaries
   printf(" Computing void properties...\n");
@@ -606,7 +616,8 @@ int main(int argc, char **argv) {
   // toss out voids that are obviously wrong
   int iGood = 0;
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
-    if (voids[iVoid].densCon > 1.e4) {
+    if (voids[iVoid].densCon > 1.e4 || isnan(voids[iVoid].vol) || 
+         isinf(voids[iVoid].vol)) {
       numWrong++;
     } else {
       voids[iGood++] = voids[iVoid];
@@ -630,7 +641,8 @@ int main(int argc, char **argv) {
   iGood = 0;
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
     // *always* clean out near edges since there are no mocks there
-    if (tolerance*voids[iVoid].maxRadius > voids[iVoid].nearestEdge) {
+    if (tolerance*voids[iVoid].maxRadius > voids[iVoid].nearestEdge || 
+        tolerance*voids[iVoid].radius > voids[iVoid].nearestEdge) {
       numNearZ++;
     } else {
       voids[iGood++] = voids[iVoid];
