@@ -134,15 +134,11 @@ bool loadZobov(const char *descName, const char *adjName, const char *voidsName,
     }
 
   cout << "Loading description" << endl;
-  int lineid = 1;
 
   string line;
   getline(descFile, line);
-  lineid++;
   getline(descFile, line);
-  lineid++;
   getline(descFile, line);
-  lineid++;
   while (!descFile.eof())
     {
       istringstream lineStream(line.c_str());
@@ -164,7 +160,7 @@ bool loadZobov(const char *descName, const char *adjName, const char *voidsName,
 	   >> probability;
       if (!lineStream)
 	{
-	  cerr << "Error in text stream at line " << lineid << endl;
+	  cerr << "Error in text stream" << endl;
 	  abort();
 	}
       
@@ -191,7 +187,6 @@ bool loadZobov(const char *descName, const char *adjName, const char *voidsName,
 	       << actualNumber << ")" << endl;
 	}
       getline(descFile, line);
-      lineid++;
     }
 
   cout << "Done loading" << endl;
