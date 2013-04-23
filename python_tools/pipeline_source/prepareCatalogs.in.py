@@ -390,7 +390,7 @@ for iSubSample in xrange(len(subSamples)):
                     dataFileNameList=partFileList)
        
 
-  if (args.subsample or args.all) and doSubSample:
+  if (args.subsample or args.all) and doSubSampling:
     print " Doing subsample", thisSubSample
     sys.stdout.flush()
 
