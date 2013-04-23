@@ -199,27 +199,27 @@ dataSampleList.append(newSample)
   if stackMode == "fixed":
     stackInfo = """
 # {zMin}, {zMax}, {minRadius}
-newSample.addStack(0.0, 5.0, 5 , 10, False, False)
-newSample.addStack(0.0, 5.0, 10, 15, False, False)
-newSample.addStack(0.0, 5.0, 15, 20, False, False)
-newSample.addStack(0.0, 5.0, 20, 25, False, False)
-newSample.addStack(0.0, 5.0, 30, 35, False, False)
-newSample.addStack(0.0, 5.0, 40, 45, False, False)
-newSample.addStack(0.0, 5.0, 50, 55, False, False)
-newSample.addStack(0.0, 5.0, 60, 65, False, False)
-newSample.addStack(0.0, 5.0, 70, 75, False, False)
-newSample.addStack(0.0, 5.0, 80, 85, False, False)
-newSample.addStack(0.0, 5.0, 90, 95, False, False)
+newSample.addStack(0.0, 5.0, 5 , 10, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 10, 15, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 15, 20, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 20, 25, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 30, 35, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 40, 45, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 50, 55, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 60, 65, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 70, 75, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 80, 85, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 90, 95, False, False, rescaleMode="rv")
   """
 
   elif stackMode == "auto":
     stackInfo = """
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False)
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False, rescaleMode="rv")
                """
   else:
     stackInfo = """
@@ -390,7 +390,7 @@ for iSubSample in xrange(len(subSamples)):
                     dataFileNameList=partFileList)
        
 
-  if args.subsample or args.all:
+  if (args.subsample or args.all) and doSubSample:
     print " Doing subsample", thisSubSample
     sys.stdout.flush()
 
