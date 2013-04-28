@@ -63,6 +63,7 @@ typedef struct matchProps {
   int matchID;
   float commonVol;
   float dist;
+  float merit;
 } MATCHPROPS;
 
 typedef struct voidStruct {
@@ -71,6 +72,7 @@ typedef struct voidStruct {
   float maxRadius, nearestMock, centralDen, redshift, redshiftInMpc;
   float nearestEdge;
   float barycenter[3];
+  float ellipticity;
   std::vector<MATCHPROPS> matches;
   int numMatches;
   int numBigMatches;
@@ -89,12 +91,14 @@ typedef struct catalog {
 void loadCatalog(const char *partFile, const char *volFile, 
                  const char *voidFile, const char *zoneFile,
                  const char *infoFile, const char *centerFile,
+                 const char *shapeFile,
                  const char *zonePartFile, CATALOG& catalog);
 
 float getDist(CATALOG& catalog1, CATALOG& catalog2, int& iVoid1, int& iVoid2,
                bool periodicX, bool periodicY, bool operiodicZ);
 
-void sortMatches(std::vector<MATCHPROPS>& matches);
+void sortMatches(std::vector<MATCHPROPS>& matches, 
+                 CATALOG& catalog2, int mode);
 
 // ----------------------------------------------------------------------------
 
@@ -110,7 +114,8 @@ int main(int argc, char **argv) {
   float closestMatchDist;
   float commonVolRatio;
   MATCHPROPS newMatch;
-  int MAX_MATCHES = 10;
+  int MAX_MATCHES = 100;
+  float matchDist = 1.5;
 
   CATALOG catalog1, catalog2;
 
@@ -137,10 +142,12 @@ int main(int argc, char **argv) {
 
   loadCatalog(args.partFile1_arg, args.volFile1_arg, args.voidFile1_arg,
               args.zoneFile1_arg, args.infoFile1_arg, args.centerFile1_arg,
+              args.shapeFile1_arg,
               args.zonePartFile1_arg, catalog1);
 
   loadCatalog(args.partFile2_arg, args.volFile2_arg, args.voidFile2_arg,
               args.zoneFile2_arg, args.infoFile2_arg, args.centerFile2_arg,
+              args.shapeFile2_arg,
               args.zonePartFile2_arg, catalog2);
 
   // check for periodic box
@@ -167,6 +174,8 @@ int main(int argc, char **argv) {
       newMatch.matchID = iVoid2;
       newMatch.commonVol = 0;
       newMatch.dist = rdist; 
+
+      if (rdist/catalog1.voids[iVoid1].radius > 1.5) continue;
 
       if (catalog1.voids[iVoid1].matches.size() < MAX_MATCHES) {
         catalog1.voids[iVoid1].matches.push_back(newMatch);
@@ -231,12 +240,14 @@ int main(int argc, char **argv) {
                          catalog1.numPartTot, 1./3.);
                 r2 = pow(3./4./M_PI*catalog2.part[partID2].volume / 
                          catalog2.numPartTot, 1./3.);
-                if (rdist <= 0.1*r1 || rdist <= 0.1*r2) match = true;
+                if (rdist <= matchDist*(r1+r2)) match = true;
+                //if (rdist <= matchDist*r1 || rdist <= matchDist*r2) match = true;
               }
        
               if (match) {
                 catalog1.voids[iVoid1].matches[iMatch].commonVol += 
                   catalog2.part[partID2].volume;
+//printf("ADDING %d %e\n", partID2, catalog2.part[partID2].volume);
               } // end if match
 
             } // end p2
@@ -244,11 +255,24 @@ int main(int argc, char **argv) {
         } // end p1
       } // end iZ1
     } // end iVoid2
+
+    for (iMatch = 0; iMatch < catalog1.voids[iVoid1].matches.size(); iMatch++) {
+      int matchID = catalog1.voids[iVoid1].matches[iMatch].matchID;
+      catalog1.voids[iVoid1].matches[iMatch].merit = 
+        pow(catalog1.voids[iVoid1].matches[iMatch].commonVol,2) / 
+        catalog1.voids[iVoid1].vol /
+        catalog2.voids[matchID].vol;
+    }
+//    sortMatches(catalog1.voids[iVoid1].matches, catalog2);
+//printf("BEST VOL %e\n", catalog2.voids[catalog1.voids[iVoid1].matches[0].matchID].vol/catalog1.voids[iVoid1].vol);
   } // end match finding
 
   printf(" Sorting matches...\n");
   for (iVoid1 = 0; iVoid1 < catalog1.numVoids; iVoid1++) {
-    sortMatches(catalog1.voids[iVoid1].matches);
+    sortMatches(catalog1.voids[iVoid1].matches, catalog2, 0);
+    if (catalog1.voids[iVoid1].matches.size() > 0 && 
+        catalog1.voids[iVoid1].matches[0].merit < 1.e-6)
+      sortMatches(catalog1.voids[iVoid1].matches, catalog2, 1);
   }
 
   // count up significant matches
@@ -270,13 +294,15 @@ int main(int argc, char **argv) {
   filename = string(args.outfile_arg);
   filename = filename.append("summary.out");
   fp = fopen(filename.c_str(), "w");
-  fprintf(fp, "# void ID, radius, radius ratio, common volume ratio, common volume ratio 2, relative dist, num matches, num significant matches, match ID\n");
+  fprintf(fp, "# void ID, radius, radius ratio, common volume ratio (to original), common volume ratio (to progenitor), relative dist, num matches, num significant matches, match ID, merit, ellipticity ratio\n");
   for (iVoid1 = 0; iVoid1 < catalog1.numVoids; iVoid1++) {
     int voidID = catalog1.voids[iVoid1].voidID;
     if (catalog1.voids[iVoid1].numMatches > 0) {
       iVoid2 = catalog1.voids[iVoid1].matches[0].matchID;
       float rRatio = catalog2.voids[iVoid2].radius / 
                      catalog1.voids[iVoid1].radius;
+      float ellipRatio = catalog2.voids[iVoid2].ellipticity / 
+                         catalog1.voids[iVoid1].ellipticity;
       commonVolRatio = catalog1.voids[iVoid1].matches[0].commonVol / 
                        //catalog1.voids[iVoid1].numPart;
                        catalog1.voids[iVoid1].vol;
@@ -285,7 +311,8 @@ int main(int argc, char **argv) {
       rdist = catalog1.voids[iVoid1].matches[0].dist;
       rdist /= catalog1.voids[iVoid1].radius;
 
-      fprintf(fp, "%d %.4f %.4f %.4f %.4f %.4f %d %d %d\n", voidID, 
+      fprintf(fp, "%d %.4f %.4f %e %e %.4f %d %d %d %e %e\n", voidID, 
+      //fprintf(fp, "%d %.4f %.4f %.4f %.4f %.4f %d %d %d\n", voidID, 
                                    catalog1.voids[iVoid1].radiusMpc,
                                    rRatio, 
                                    commonVolRatio,
@@ -293,10 +320,12 @@ int main(int argc, char **argv) {
                                    rdist, 
                                    catalog1.voids[iVoid1].numMatches,
                                    catalog1.voids[iVoid1].numBigMatches,
-                                   catalog2.voids[iVoid2].voidID);
+                                   catalog2.voids[iVoid2].voidID,
+                                   catalog1.voids[iVoid1].matches[0].merit,
+                                   ellipRatio);
 
     } else {
-      fprintf(fp, "%d %.2f 0.0 0.0 0.0 0.0 0 0\n", voidID, 
+      fprintf(fp, "%d %.4f 0.0 0.0 0.0 0.0 0.0 0 0 0 0.0\n", voidID, 
                                            catalog1.voids[iVoid1].radiusMpc);
     }
   } // end printing
@@ -339,6 +368,7 @@ int main(int argc, char **argv) {
 void loadCatalog(const char *partFile, const char *volFile, 
                  const char *voidFile, const char *zoneFile,
                  const char *infoFile, const char *centerFile,
+                 const char *shapeFile,
                  const char *zonePartFile, CATALOG& catalog) {
 
   int i, p, numPartTot, numZonesTot, dummy, iVoid, iZ, numVolTot;
@@ -435,7 +465,7 @@ void loadCatalog(const char *partFile, const char *volFile,
   fgets(line, sizeof(line), fp);
   sscanf(line, "%d %s %d %s", &junkInt, junkStr, &catalog.numVoids, junkStr);
   fgets(line, sizeof(line), fp);
-
+  
   catalog.voids.resize(catalog.numVoids);
   i = 0;
   while (fgets(line, sizeof(line), fp) != NULL) {
@@ -474,12 +504,16 @@ void loadCatalog(const char *partFile, const char *volFile,
   float tempFloat;
   int   tempInt;
   iVoid = 0;
+  //fgets(line, sizeof(line), fp);
   while (fgets(line, sizeof(line), fp) != NULL) {
-    sscanf(line, "%f %f %f %f %f %f %f %d %f %d %d %d\n", 
-           &tempBary[0], &tempBary[1], &tempBary[2],
-           &tempFloat, &tempFloat, &tempFloat, &tempFloat, &tempInt,
-           &tempFloat, &tempInt, &tempInt);
+    sscanf(line, "%d %f %f %f\n", 
+           &tempInt, &tempBary[0], &tempBary[1], &tempBary[2]);
+    //sscanf(line, "%f %f %f %f %f %f %f %d %f %d %d %d %d\n", 
+    //       &tempBary[0], &tempBary[1], &tempBary[2],
+    //       &tempFloat, &tempFloat, &tempFloat, &tempFloat, &tempInt,
+    //       &tempFloat, &tempInt, &tempInt, &tempInt, &tempInt);
 
+//if (iVoid < 10) printf("BARY %d %d %e %e %e\n", iVoid, catalog.voids[iVoid].voidID, tempBary[0], tempBary[1], tempBary[2]);
     tempBary[0] = (tempBary[0] - ranges[0][0])/catalog.boxLen[0];
     tempBary[1] = (tempBary[1] - ranges[1][0])/catalog.boxLen[1];
     tempBary[2] = (tempBary[2] - ranges[2][0])/catalog.boxLen[2];
@@ -489,6 +523,25 @@ void loadCatalog(const char *partFile, const char *volFile,
     iVoid++;
   }
   fclose(fp);
+
+  printf(" Loading shapes\n");
+  fp = fopen(shapeFile, "r");
+  iVoid = 0;
+  float tempEllip;
+  fgets(line, sizeof(line), fp);
+  while (fgets(line, sizeof(line), fp) != NULL) {
+    sscanf(line, "%d %f %f %f %f %f %f %f %f %f %f %f %f %f\n", 
+           &tempInt, &tempEllip, &tempFloat, &tempFloat, &tempFloat,
+           &tempFloat, &tempFloat, &tempFloat,
+           &tempFloat, &tempFloat, &tempFloat,
+           &tempFloat, &tempFloat, &tempFloat);
+
+//if (iVoid < 10) printf("SHAPE %d %d %e\n", iVoid, catalog.voids[iVoid].voidID, tempEllip);
+    catalog.voids[iVoid].ellipticity = tempEllip;
+    iVoid++;
+  }
+  fclose(fp);
+
 
   // load up the zone membership for each void
   printf(" Loading zone-void membership info...\n");
@@ -557,11 +610,13 @@ float getDist(CATALOG& catalog1, CATALOG& catalog2, int& iVoid1, int& iVoid2,
 
 
 // ----------------------------------------------------------------------------
-void sortMatches(std::vector<MATCHPROPS>& matches) {
+void sortMatches(std::vector<MATCHPROPS>& matches, 
+                 CATALOG& catalog2, int mode) {
 
   //printf("SORTING %d\n", matches.size());
   MATCHPROPS tempMatch;
   bool swapped;
+  int matchID, matchID2;
 
   if (matches.size() <= 1) return;
 
@@ -569,8 +624,10 @@ void sortMatches(std::vector<MATCHPROPS>& matches) {
   while (swapped) {
     swapped = false;
     for (int iMatch = 0; iMatch < matches.size() - 1; iMatch++) {
-      if (matches[iMatch].dist > matches[iMatch+1].dist) {
-      //if (matches[iMatch].commonVol < matches[iMatch+1].commonVol) {
+      matchID = matches[iMatch].matchID;
+      matchID2 = matches[iMatch+1].matchID;
+      if ((mode == 0 && matches[iMatch].merit < matches[iMatch+1].merit) ||
+          (mode == 1 && matches[iMatch].dist > matches[iMatch+1].dist)) {
         tempMatch = matches[iMatch+1];
         matches[iMatch+1] = matches[iMatch];
         matches[iMatch] = tempMatch;
