@@ -777,7 +777,7 @@ int main(int argc, char **argv) {
                 args.isObservation_flag, boxLen, false, true);
   }
 
-  prefix = "trimmed_nodencut";
+  prefix = "trimmed_nodencut_";
   for (int i = 0; i < 2; i++) {
     dataPortion = dataPortions[i]; 
   
