@@ -189,6 +189,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       %s
       %s
       %s
+      joggleParticles
       """ % (dataFileLine, outputFile,
              outputFile+".par",
              includePecVelString,
