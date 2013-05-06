@@ -164,7 +164,6 @@ void joggleParticles(SimuData *data) {
     data->Pos[1][i] -= 1.e-3*gsl_rng_uniform(rng); 
     data->Pos[2][i] -= 1.e-3*gsl_rng_uniform(rng);
   }
-  }
 } // end joggleParticles
 
 void generateOutput(SimuData *data, int axis, 
@@ -738,8 +737,8 @@ int main(int argc, char **argv)
       delete[] efac;
     }
 
-  if (args_info.jogglePartices_give)
-    joggleParticles(simuOut)   
+  if (args_info.joggleParticles_flag)
+    joggleParticles(simuOut);
  
   saveBox(simuOut, args_info.outputParameter_arg, args_info);
   generateOutput(simuOut, args_info.axis_arg, 
