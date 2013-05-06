@@ -154,15 +154,17 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
 
 // slightly perturb particle positions
 void joggleParticles(SimuData *data) {
-  gsl_rng *rng;
-  gsl_rng_set(rng, 31415926535);
+  cout << "Joggling particle positions..." << endl;
+  gsl_rng *myRng = gsl_rng_alloc(gsl_rng_taus);
+  int seed = 314159;
+  gsl_rng_set(myRng, seed);
   for (uint32_t i = 0; i < data->NumPart; i++) {
-    data->Pos[0][i] += 1.e-3*gsl_rng_uniform(rng);
-    data->Pos[1][i] += 1.e-3*gsl_rng_uniform(rng); 
-    data->Pos[2][i] += 1.e-3*gsl_rng_uniform(rng);
-    data->Pos[0][i] -= 1.e-3*gsl_rng_uniform(rng);
-    data->Pos[1][i] -= 1.e-3*gsl_rng_uniform(rng); 
-    data->Pos[2][i] -= 1.e-3*gsl_rng_uniform(rng);
+    data->Pos[0][i] += 1.e-3*gsl_rng_uniform(myRng);
+    data->Pos[1][i] += 1.e-3*gsl_rng_uniform(myRng); 
+    data->Pos[2][i] += 1.e-3*gsl_rng_uniform(myRng);
+    data->Pos[0][i] -= 1.e-3*gsl_rng_uniform(myRng);
+    data->Pos[1][i] -= 1.e-3*gsl_rng_uniform(myRng); 
+    data->Pos[2][i] -= 1.e-3*gsl_rng_uniform(myRng);
   }
 } // end joggleParticles
 
