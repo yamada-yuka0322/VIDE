@@ -361,7 +361,7 @@ def launchPrune(sample, binPath,
       print "done"
     else:
       print "FAILED!"
-      exit(-1)
+      #exit(-1)
 
   else:
     print "already done!"
@@ -407,14 +407,14 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
            str(sampleName2)
     cmd += " --volFile2=" + sample2Dir+"/vol_" + \
            str(sampleName2)+".dat"
-    cmd += " --voidFile2=" + sample2Dir+"/untrimmed_voidDesc_" + \
+    cmd += " --voidFile2=" + sample2Dir+"/voidDesc_" + \
            thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --infoFile2=" + sample2Dir+"/zobov_slice_" + \
            str(sampleName2)+".par"
     cmd += " --centerFile2=" + sample2Dir + \
-           "/untrimmed_barycenters_"+thisDataPortion+"_"+str(sampleName2)+".out"
+           "/barycenters_"+thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --shapeFile2=" + sample1Dir + \
-           "/untrimmed_shapes_"+thisDataPortion+"_"+str(sampleName1)+".out"
+           "/shapes_"+thisDataPortion+"_"+str(sampleName1)+".out"
     cmd += " --zoneFile2=" + sample2Dir+"/voidZone_" + \
            str(sampleName2)+".dat"
     cmd += " --zonePartFile2=" + sample2Dir+"/voidPart_" + \
