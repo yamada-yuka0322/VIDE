@@ -41,3 +41,4 @@ option "subsample_seed" - "Seed for random number generation to select the subsa
 option "resubsample" - "Resubsampling factor compared to the subsampled simulation" double optional 
 option "resubsample_seed" - "Seed for resubsampling from a subsampled simulation" int optional default="20132011"
 
+option "joggleParticles"	- "Slightly joggle the input particle positions" flag off
