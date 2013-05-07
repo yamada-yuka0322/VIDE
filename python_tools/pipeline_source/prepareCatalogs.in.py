@@ -536,9 +536,12 @@ if (args.script or args.all) and haloFileBase != "":
     #inFile.close()
 
     #minRadius = 2*int(np.ceil(lbox/numPart**(1./3.)))
-    minRadies = 10
-   
-    strMinHaloMass = "%.2e" % minHaloMass
+    minRadius = 10
+  
+    if minHaloMass != "none": 
+      strMinHaloMass = "%.2e" % minHaloMass
+    else:
+      strMinHaloMass = "none"
  
     setName = prefix+"halos_min"+strMinHaloMass
     fileList = []
@@ -594,7 +597,10 @@ if (args.halos or args.all) and haloFileBase != "":
             numPart += 1
         inFile.close()
 
-      strMinHaloMass = "%.2e" % minHaloMass
+      if minHaloMass != "none": 
+        strMinHaloMass = "%.2e" % minHaloMass
+      else:
+        strMinHaloMass = "none"
 
       sampleName = prefix+"halos_min"+strMinHaloMass+"_z"+redshifts[iRedshift]
       outFileName = catalogDir+"/"+sampleName+".dat"
