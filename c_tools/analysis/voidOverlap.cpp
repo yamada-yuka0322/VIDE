@@ -386,7 +386,7 @@ int main(int argc, char **argv) {
                                    catalog1.voids[iVoid1].densCon);
 
     } else {
-      fprintf(fp, "%d %.4f 0.0 0.0 0.0 0.0 0.0 0 0 0 0.0\n", voidID, 
+      fprintf(fp, "%d %.4f 0.0 0.0 0.0 0.0 0.0 0 0 0 0.0 0.0\n", voidID, 
                                            catalog1.voids[iVoid1].radiusMpc);
     }
   } // end printing
