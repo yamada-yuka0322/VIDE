@@ -578,6 +578,8 @@ int main(int argc, char **argv) {
 
     // compute eigenvalues and vectors for orientation and shape
     double inertia[9];
+    for (int i = 0; i < 9; i++) inertia[i] = 0.;
+
     for (int p = 0; p < voids[iVoid].numPart; p++) {
       dist[0] = voidPart[p].x - voids[iVoid].barycenter[0];
       dist[1] = voidPart[p].y - voids[iVoid].barycenter[1];
@@ -938,7 +940,7 @@ void outputVoids(string outputDir, string sampleName, string prefix,
              outVoid.radius,
              outVoid.voidID);
 
-     fprintf(fpShapes, "%d %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f\n", 
+     fprintf(fpShapes, "%d %.6f %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e\n", 
              outVoid.voidID,
              outVoid.ellip,
              gsl_vector_get(outVoid.eval, 0),
