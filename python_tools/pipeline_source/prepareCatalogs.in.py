@@ -84,23 +84,32 @@ def getSampleName(setName, redshift, useVel, iSlice=-1, iVol=-1):
 def getNickName(sampleName):
 
   splitName = sampleName.split('_')
-  
+
+  nickName = datasetName  
+
   if "ss" in splitName[1]:
-    nickName = "Subsample = " + splitName[1].replace("ss","")
+    nickName += " SS " + splitName[1].replace("ss","")
+    #nickName = "Subsample = " + splitName[1].replace("ss","")
     if "pv" in splitName[2]: 
-      nickName += ", z = " + splitName[3].replace("z","") + ", Pev.Vel."
+      nickName += " (w/ PV)"
+      nickName += ", z = " + splitName[3].replace("z","") + " (w/ PV)"
     else:
       nickName += ", z = " + splitName[2].replace("z","")
   elif "hod" in splitName[1]:
-    nickName = "HOD = " + splitName[2]
+    nickName += " HOD " + splitName[2]
     if "pv" in splitName[3]: 
-      nickName += ", z = " + splitName[4].replace("z","") + ", Pec.Vel."
+      nickName += " (w/ PV)"
+      nickName += ", z = " + splitName[4].replace("z","") + " (w/ PV)"
     else:
       nickName += ", z = " + splitName[3].replace("z","")
   elif "halos" in splitName[1]:
-    nickName = "Halos, min mass = " + splitName[2].replace("min","")
+    if "none" in splitName[2]:
+      nickName += " All Halos"
+    else:
+      nickName += " Halos > " + splitName[2].replace("min","")
     if "pv" in splitName[3]: 
-      nickName += ", z = " + splitName[4].replace("z","") + ", Pec.Vel."
+      nickName += " (w/ PV)"
+      nickName += ", z = " + splitName[4].replace("z","") + " (w/ PV)"
     else:
       nickName += ", z = " + splitName[3].replace("z","")
   else:
@@ -588,6 +597,9 @@ if (args.halos or args.all) and haloFileBase != "":
           if "nhalos" in line:
             numPart = int(line.split()[3].strip(';'))
             break
+          if "npart" in line:
+            numPart = int(line.split()[3].strip(';'))
+            break
         inFile.close()
       else:
         for (iLine, line) in enumerate(inFile):
@@ -614,8 +626,10 @@ if (args.halos or args.all) and haloFileBase != "":
 
       if dataFormat == "sdf":
         SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
-        if minHaloMass == "none": minHaloMass = 0.0
-        command = "%s -a 200000 %s mass id x y z vz vy vx | awk '{if ($1>%g) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, minHaloMass, outFileName )
+        if minHaloMass == "none":
+          command = "%s -a 200000 %s mass ident x y z vz vy vx | awk '{print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, outFileName )
+        else:
+          command = "%s -a 200000 %s mass ident x y z vz vy vx | awk '{if ($1>%g) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, minHaloMass, outFileName )
         os.system(command)
         outFile = open(outFileName, 'a')
         outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")

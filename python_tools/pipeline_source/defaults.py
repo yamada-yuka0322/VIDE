@@ -23,6 +23,8 @@ import os
 # -----------------------------------------------------------------------------
 # DEFAULT CONFIGURATION
 
+datasetName = ""
+
 startCatalogStage = 1
 endCatalogStage = 3
 
