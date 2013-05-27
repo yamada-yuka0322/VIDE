@@ -84,9 +84,8 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
     parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
 
-    file(parmFile, mode="w").write(conf)
-
     if regenerate or not (continueRun and jobSuccessful(logFile, "Done!\n")):
+      file(parmFile, mode="w").write(conf)
       cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
       os.system(cmd)
       if jobSuccessful(logFile, "Done!\n"):
@@ -98,8 +97,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     else:
       print "already done!"
 
-    if os.access(parmFile, os.F_OK):
-      os.unlink(parmFile)
+    if os.access(parmFile, os.F_OK): os.unlink(parmFile)
 
     if os.access("contour_map.fits", os.F_OK):
       os.system("mv %s %s" % ("contour_map.fits", zobovDir))
@@ -316,18 +314,20 @@ def launchPrune(sample, binPath,
     totalPart = open(zobovDir+"/total_particles.txt", "r").read()
     maxDen = 0.2*float(mockIndex)/float(totalPart)
     observationLine = " --isObservation"
-    periodicLine = " --periodic=''"
+    #periodicLine = " --periodic=''"
   else:
     mockIndex = -1
     maxDen = 0.2
     observationLine = ""
 
-    periodicLine = " --periodic='"
-    if sample.numSubvolumes == 1: periodicLine += "xy"
-    if np.abs(sample.zBoundaryMpc[1]  - sample.zBoundaryMpc[0] - \
-       sample.boxLen) <= 1.e-1: 
-      periodicLine += "z"
-    periodicLine += "' "
+    #periodicLine = " --periodic='"
+    #if sample.numSubvolumes == 1: periodicLine += "xy"
+    #if np.abs(sample.zBoundaryMpc[1]  - sample.zBoundaryMpc[0] - \
+    #   sample.boxLen) <= 1.e-1: 
+    #  periodicLine += "z"
+    #periodicLine += "' "
+
+  periodicLine = " --periodic='" + getPeriodic(sample) + "'"
 
   if not (continueRun and (jobSuccessful(logFile, "NetCDF: Not a valid ID\n") \
           or jobSuccessful(logFile, "Done!\n"))):
@@ -361,7 +361,7 @@ def launchPrune(sample, binPath,
       print "done"
     else:
       print "FAILED!"
-      exit(-1)
+      #exit(-1)
 
   else:
     print "already done!"
@@ -377,12 +377,12 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
   sampleName1 = sample1.fullName
   sampleName2 = sample2.fullName
 
-  periodicLine = " --periodic='"
-  if sample1.dataType != "observation":
-    if sample1.numSubvolumes == 1: periodicLine += "xy"
-    if np.abs(sample1.zBoundaryMpc[1]  - sample1.zBoundaryMpc[0] - sample1.boxLen) <= 1.e-1: 
-      periodicLine += "z"
-  periodicLine += "' "
+  periodicLine = " --periodic='" + getPeriodic(sample1) + "' "
+  #if sample1.dataType != "observation":
+  #  if sample1.numSubvolumes == 1: periodicLine += "xy"
+  #  if np.abs(sample1.zBoundaryMpc[1]  - sample1.zBoundaryMpc[0] - sample1.boxLen) <= 1.e-1: 
+  #    periodicLine += "z"
+  #periodicLine += "' "
 
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
     cmd = binPath
@@ -390,12 +390,14 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
            str(sampleName1)
     cmd += " --volFile1=" + sample1Dir+"/vol_" + \
            str(sampleName1)+".dat"
-    cmd += " --voidFile1=" + sample1Dir+"/untrimmed_voidDesc_" + \
+    cmd += " --voidFile1=" + sample1Dir+"/trimmed_nodencut_voidDesc_" + \
            thisDataPortion+"_"+str(sampleName1)+".out"
     cmd += " --infoFile1=" + sample1Dir+"/zobov_slice_" + \
            str(sampleName1)+".par"
     cmd += " --centerFile1=" + sample1Dir + \
-           "/untrimmed_centers_"+thisDataPortion+"_"+str(sampleName1)+".out"
+           "/trimmed_nodencut_barycenters_"+thisDataPortion+"_"+str(sampleName1)+".out"
+    cmd += " --shapeFile1=" + sample1Dir + \
+           "/trimmed_nodencut_shapes_"+thisDataPortion+"_"+str(sampleName1)+".out"
     cmd += " --zoneFile1=" + sample1Dir+"/voidZone_" + \
            str(sampleName1)+".dat"
     cmd += " --zonePartFile1=" + sample1Dir+"/voidPart_" + \
@@ -405,12 +407,14 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
            str(sampleName2)
     cmd += " --volFile2=" + sample2Dir+"/vol_" + \
            str(sampleName2)+".dat"
-    cmd += " --voidFile2=" + sample2Dir+"/untrimmed_voidDesc_" + \
+    cmd += " --voidFile2=" + sample2Dir+"/trimmed_nodencut_voidDesc_" + \
            thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --infoFile2=" + sample2Dir+"/zobov_slice_" + \
            str(sampleName2)+".par"
     cmd += " --centerFile2=" + sample2Dir + \
-           "/untrimmed_centers_"+thisDataPortion+"_"+str(sampleName2)+".out"
+           "/trimmed_nodencut_barycenters_"+thisDataPortion+"_"+str(sampleName2)+".out"
+    cmd += " --shapeFile2=" + sample1Dir + \
+           "/trimmed_nodencut_shapes_"+thisDataPortion+"_"+str(sampleName1)+".out"
     cmd += " --zoneFile2=" + sample2Dir+"/voidZone_" + \
            str(sampleName2)+".dat"
     cmd += " --zonePartFile2=" + sample2Dir+"/voidPart_" + \
@@ -506,6 +510,17 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     rMinToUse = stack.rMin
     rMaxToUse = stack.rMax
 
+  periodicLine = "periodic='" + getPeriodic(sample) + "'"
+  #if sample.dataType == "observation":
+  #  periodicLine = "periodic=''"
+  #else:
+  #  periodicLine = "periodic='"
+  #  if sample.numSubvolumes == 1: periodicLine += "xy"
+  #  if np.abs(sample.zBoundaryMpc[1]  - sample.zBoundaryMpc[0] - \
+  #     sample.boxLen) <= 1.e-1:
+  #    periodicLine += "z"
+  #  periodicLine += "' "
+
   conf="""
   desc %s
   partzone %s
@@ -527,6 +542,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   dataPortion %s
   barycenters %s
   boundaryDistances %s
+  %s
   %s
   %s
   """ % \
@@ -551,11 +567,11 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
    zobovDir+"/barycenters_"+thisDataPortion+"_"+sampleName+".out",
    zobovDir+"/boundaryDistances_"+thisDataPortion+"_"+sampleName+".out",
    rescaleFlag,
-   idListFlag 
+   idListFlag,
+   periodicLine
    )
 
   parmFile = os.getcwd()+("/%sstack_"%prefixRun)+sample.fullName+".par"
-
   fp = file(parmFile, mode="w")
   fp.write(conf)
 
@@ -584,6 +600,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
 
   else:
     print "already done!"
+    if os.access(parmFile, os.F_OK): os.unlink(parmFile)
     return
 
   minDist = None
@@ -662,7 +679,17 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
       nbar = 1.0
   else:
     nbar = 1.0
-    boxVol = sample.boxLen**3
+ 
+    iX = float(sample.mySubvolume[0])
+    iY = float(sample.mySubvolume[1])
+    xMin = iX/sample.numSubvolumes * sample.boxLen
+    yMin = iY/sample.numSubvolumes * sample.boxLen
+    xMax = (iX+1)/sample.numSubvolumes * sample.boxLen
+    yMax = (iY+1)/sample.numSubvolumes * sample.boxLen
+    zMin = sample.zBoundaryMpc[0]
+    zMax = sample.zBoundaryMpc[1]
+    
+    boxVol = (xMax-xMin)*(yMax-yMin)*(zMax-zMin)
 
   summaryLine = runSuffix + " " + \
                 thisDataPortion + " " + \
@@ -1091,10 +1118,8 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     else:
       rescaleFactor = 1.0
 
-    vp.draw_fit(*args, delta_tick=0.2, vmax=10.0, delta_v=0.1,
-                nocontour=True, model_max=10.0, delta_model=1.0,
-    #vp.draw_fit(*args, delta_tick=0.2, vmax=1.0, delta_v=0.01,
-    #            nocontour=True, model_max=1.0, delta_model=0.1,
+    vp.draw_fit(*args, delta_tick=0.2, vmax=1.0, delta_v=0.01,
+                nocontour=True, model_max=1.0, delta_model=0.1,
                 plotTitle=plotTitle, show_ratio=showRatio,
                 showContours=showContours,
                 rescaleFactor=rescaleFactor)
@@ -1513,14 +1538,20 @@ def launchLikelihood(dataPortions=None, logDir=None, workDir=None,
 
 # -----------------------------------------------------------------------------
 def launchEstimateErrorBars(workDir=None, nullDir=None, numNulls=None,
-                            dataPortion=None):
+                            dataPortion=None, nullDirList=None):
 
   IVALUE = 0
   IERROR = 1
   
   # open first null file to get sizes
-  nullFile = nullDir + "/" + str(1) + "/calculatedExpansions_" + \
-             str(dataPortion) + ".txt"
+  if nullDirList == None:
+    nullFile = nullDir + "/" + str(1) + "/calculatedExpansions_" + \
+               str(dataPortion) + ".txt"
+  else:
+    nullFile = nullDirList[0] + "/calculatedExpansions_" + str(dataPortion) + \
+               ".txt"
+    numNulls = len(nullDirList)
+
   fp = open(nullFile, "r")
   binLine = fp.readline()
   numSamples = int(binLine.split(" ")[0])
@@ -1534,8 +1565,13 @@ def launchEstimateErrorBars(workDir=None, nullDir=None, numNulls=None,
   nullData = np.zeros([numNulls, numBins, 2])
   
   for iNull in xrange(numNulls):
-    nullFile = nullDir + "/" + str(iNull) + "/calculatedExpansions_" + \
-               str(dataPortion) + ".txt"
+    if nullDirList == None:
+      nullFile = nullDir + "/" + str(iNull) + "/calculatedExpansions_" + \
+                 str(dataPortion) + ".txt"
+    else:
+      nullFile = nullDirList[iNull] + "/calculatedExpansions_" + \
+                 str(dataPortion) + ".txt"
+
     fp = open(nullFile, "r")
   
     binLine = fp.readline()

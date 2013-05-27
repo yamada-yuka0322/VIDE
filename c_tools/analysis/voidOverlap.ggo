@@ -11,6 +11,7 @@ option "infoFile1" -	"Extra info file for catalog 1"	string yes
 option "zoneFile1" - "Zone file for catalog 1"	string yes
 option "zonePartFile1" -	"Zone-particle file for catalog 1"	string yes
 option "centerFile1" - "Barycenter file for catalog 1" string yes
+option "shapeFile1" - "Shape file for catalog 1" string yes
 
 # void data for file 2
 option "partFile2" - "Particle file for catalog 2"	string yes
@@ -20,6 +21,7 @@ option "infoFile2" -	"Extra info file for catalog 2"	string yes
 option "zoneFile2" - "Zone file for catalog 2"	string yes
 option "zonePartFile2"	- "Zone-particle file for catalog 2"	string yes
 option "centerFile2" - "Barycenter file for catalog 2" string yes
+option "shapeFile2" - "Shape file for catalog 2" string yes
 
 # options
 option "outfile" - "Output file" string yes

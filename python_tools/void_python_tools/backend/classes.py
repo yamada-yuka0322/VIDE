@@ -20,6 +20,7 @@
 # classes and routines used to support scripts
 
 import os
+from numpy import abs
 
 LIGHT_SPEED = 299792.458
 
@@ -187,6 +188,15 @@ def jobSuccessful(logFile, doneString):
 def getStackSuffix(zMin, zMax, rMin, rMax, dataPortion, customLine=""):
   return "z"+str(zMin)+"-"+str(zMax)+"_"+str(rMin)+"-"+str(rMax)+\
            "Mpc"+customLine+"_"+dataPortion
+
+def getPeriodic(sample):
+  periodicLine = ""
+  if sample.dataType != "observation":
+    if sample.numSubvolumes == 1: periodicLine += "xy"
+    if abs(sample.zBoundaryMpc[1]  - sample.zBoundaryMpc[0] - \
+              sample.boxLen) <= 1.e-1:
+      periodicLine += "z"
+  return periodicLine
 
 def my_import(name):
     mod = __import__(name)

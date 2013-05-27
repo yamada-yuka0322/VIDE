@@ -81,6 +81,9 @@ redshifts = ["0.5", "1.0"]
 # how many independent slices along the z-axis?
 numSlices = 1
 
+# how many slices for analysis?
+numAPSlices = 1
+
 # how many subdivisions along the x- and y- axis?
 #   ( = 2 will make 4 subvolumes for each slice, = 3 will make 9, etc.)
 numSubvolumes = 1

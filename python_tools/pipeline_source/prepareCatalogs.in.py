@@ -199,27 +199,27 @@ dataSampleList.append(newSample)
   if stackMode == "fixed":
     stackInfo = """
 # {zMin}, {zMax}, {minRadius}
-newSample.addStack(0.0, 5.0, 5 , 10, False, False)
-newSample.addStack(0.0, 5.0, 10, 15, False, False)
-newSample.addStack(0.0, 5.0, 15, 20, False, False)
-newSample.addStack(0.0, 5.0, 20, 25, False, False)
-newSample.addStack(0.0, 5.0, 30, 35, False, False)
-newSample.addStack(0.0, 5.0, 40, 45, False, False)
-newSample.addStack(0.0, 5.0, 50, 55, False, False)
-newSample.addStack(0.0, 5.0, 60, 65, False, False)
-newSample.addStack(0.0, 5.0, 70, 75, False, False)
-newSample.addStack(0.0, 5.0, 80, 85, False, False)
-newSample.addStack(0.0, 5.0, 90, 95, False, False)
+newSample.addStack(0.0, 5.0, 5 , 10, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 10, 15, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 15, 20, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 20, 25, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 30, 35, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 40, 45, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 50, 55, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 60, 65, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 70, 75, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 80, 85, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 90, 95, False, False, rescaleMode="rv")
   """
 
   elif stackMode == "auto":
     stackInfo = """
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False)
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False)
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False, rescaleMode="rv")
                """
   else:
     stackInfo = """
@@ -259,8 +259,8 @@ newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, Fal
 
       sliceMin = "%0.2f" % sliceMin
       sliceMax = "%0.2f" % sliceMax
-      sliceMinMpc = "%0.1f" % sliceMinMpc
-      sliceMaxMpc = "%0.1f" % sliceMaxMpc
+      sliceMinMpc = "%0.2f" % sliceMinMpc
+      sliceMaxMpc = "%0.2f" % sliceMaxMpc
 
       if (dataFileNameList != None):
         dataFileName = dataFileNameList[iFile]
@@ -295,9 +295,15 @@ newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, Fal
                                          useLightCone=useLightCone,
                                          subsample=str(subsample).strip('[]')))
 
-          scriptFile.write(stackInfo.format(zMin=sliceMin,
-                                           zMax=sliceMax,
-                                           minRadius=minRadius))
+          for iAPSlice in xrange(numAPSlices):
+            sliceWidth = float(sliceMax) - float(sliceMin)
+            sliceAPMin = float(sliceMin) + iAPSlice*sliceWidth/numAPSlices
+            sliceAPMax = float(sliceMin) + (iAPSlice+1)*sliceWidth/numAPSlices
+            sliceAPMin = "%0.2f" % sliceAPMin
+            sliceAPMax = "%0.2f" % sliceAPMax
+            scriptFile.write(stackInfo.format(zMin=sliceAPMin,
+                                              zMax=sliceAPMax,
+                                              minRadius=minRadius))
 
 
   scriptFile.close()
@@ -390,7 +396,7 @@ for iSubSample in xrange(len(subSamples)):
                     dataFileNameList=partFileList)
        
 
-  if args.subsample or args.all:
+  if (args.subsample or args.all) and doSubSampling:
     print " Doing subsample", thisSubSample
     sys.stdout.flush()
 
@@ -422,7 +428,7 @@ for iSubSample in xrange(len(subSamples)):
           rescale_position = hubble/1000./scale
           shift = lbox/2.
           rescale_velocity = 3.08567802e16/3.1558149984e16
-          command = "%s %s x y z vz vy vx | awk '{print $1*%g+%g, $2*%g+%g, $3*%g+%g, $4*%g, $5*%g, $6*%g}' > %s" % (SDFcvt_PATH, dataFile,
+          command = "%s %s x y z vz vy vx mass | awk '{print $1*%g+%g, $2*%g+%g, $3*%g+%g, $4*%g, $5*%g, $6*%g, $7}' > %s" % (SDFcvt_PATH, dataFile,
                                      rescale_position,
                                      shift,
                                      rescale_position,
@@ -470,12 +476,14 @@ for iSubSample in xrange(len(subSamples)):
             vz = float(line[3])
             vy = float(line[4])
             vx = float(line[5])
+            mass = float(line[6])
             uniqueID = i
-            outFile.write("%d %e %e %e %e %e %e\n" %(uniqueID,x,y,z,vz,vy,vx))
+            outFile.write("%d %e %e %e %e %e %e %e\n" %(uniqueID,x,y,z,
+                                                     vz,vy,vx,mass))
           else:
             outFile.write(line)
 
-        outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
+        outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
         inFile.close()
         outFile.close()
 
@@ -497,9 +505,9 @@ for iSubSample in xrange(len(subSamples)):
           y  = np.random.uniform()*lbox
           z  = np.random.uniform()*lbox
 
-          outFile.write("%d %e %e %e 0. 0. 0.\n" % (i, x,y,z))
+          outFile.write("%d %e %e %e 0. 0. 0. 0.\n" % (i, x,y,z))
 
-        outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
+        outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
         outFile.close()
 
   prevSubSample = thisSubSample
@@ -597,10 +605,10 @@ if (args.halos or args.all) and haloFileBase != "":
       if dataFormat == "sdf":
         SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
         if minHaloMass == "none": minHaloMass = 0.0
-        command = "%s %s mass id x y z vz vy vx | awk '{if ($1>%g) print $2, $3, $4, $5, $6, $7, $8}'>>%s" % (SDFcvt_PATH, dataFile, minHaloMass, outFileName )
+        command = "%s %s mass id x y z vz vy vx | awk '{if ($1>%g) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, minHaloMass, outFileName )
         os.system(command)
         outFile = open(outFileName, 'a')
-        outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
+        outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
         outFile.close()
       else:
         outFile = open(outFileName, 'a')
@@ -615,11 +623,13 @@ if (args.halos or args.all) and haloFileBase != "":
             vz = float(line[haloFileVZCol])
             vy = float(line[haloFileVYCol])
             vx = float(line[haloFileVXCol])
+            mass = float(line[haloFileMCol])
 
             # write to output file
-            outFile.write("%d %e %e %e %e %e %e\n" %(iHalo,x,y,z,vz,vy,vx))
+            outFile.write("%d %e %e %e %e %e %e %e\n" %(iHalo,x,y,z,
+                                                        vz,vy,vx,mass))
 
-        outFile.write("-99 -99 -99 -99 -99 -99 -99\n")
+        outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
         outFile.close()
         inFile.close()
 

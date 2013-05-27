@@ -152,6 +152,22 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
 
 }
 
+// slightly perturb particle positions
+void joggleParticles(SimuData *data) {
+  cout << "Joggling particle positions..." << endl;
+  gsl_rng *myRng = gsl_rng_alloc(gsl_rng_taus);
+  int seed = 314159;
+  gsl_rng_set(myRng, seed);
+  for (uint32_t i = 0; i < data->NumPart; i++) {
+    data->Pos[0][i] += 1.e-3*gsl_rng_uniform(myRng);
+    data->Pos[1][i] += 1.e-3*gsl_rng_uniform(myRng); 
+    data->Pos[2][i] += 1.e-3*gsl_rng_uniform(myRng);
+    data->Pos[0][i] -= 1.e-3*gsl_rng_uniform(myRng);
+    data->Pos[1][i] -= 1.e-3*gsl_rng_uniform(myRng); 
+    data->Pos[2][i] -= 1.e-3*gsl_rng_uniform(myRng);
+  }
+} // end joggleParticles
+
 void generateOutput(SimuData *data, int axis, 
 		    const std::string& fname)
 {
@@ -652,11 +668,11 @@ int main(int argc, char **argv)
     {
       loader = flashLoader(args_info.flash_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID, preselector); 
   }
+#ifdef SDF_SUPPORT
   else if (args_info.multidark_given)
     {
       loader = multidarkLoader(args_info.multidark_arg, preselector);      
     }
-#ifdef SDF_SUPPORT
   else if (args_info.sdf_given)
     {
       loader = sdfLoader(args_info.sdf_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID, args_info.sdf_splitting_arg, preselector);
@@ -723,6 +739,9 @@ int main(int argc, char **argv)
       delete[] efac;
     }
 
+  if (args_info.joggleParticles_flag)
+    joggleParticles(simuOut);
+ 
   saveBox(simuOut, args_info.outputParameter_arg, args_info);
   generateOutput(simuOut, args_info.axis_arg, 
                  args_info.output_arg);

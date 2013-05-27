@@ -75,10 +75,11 @@ typedef struct voidStruct {
   float center[3], barycenter[3];
   int accepted;
   int voidType;
-  int parentID, numChildren;
+  int parentID, numChildren, level;
   bool isLeaf, hasHighCentralDen;
   gsl_vector *eval;
   gsl_matrix *evec;
+  float ellip;
 } VOID;
 
 void openFiles(string outputDir, string sampleName, 
@@ -98,7 +99,7 @@ void outputVoids(string outputDir, string sampleName, string prefix,
                 string dataPortion, int mockIndex, 
                 vector<VOID> voids, 
                 bool isObservation, double *boxLen,
-                bool doTrim);
+                bool doTrim, bool doCentralDenCut);
 
 int main(int argc, char **argv) {
 
@@ -280,9 +281,11 @@ int main(int argc, char **argv) {
     voids[i-1].hasHighCentralDen = false;
     voids[i-1].numChildren = 0;
     voids[i-1].parentID = -1;  
+    voids[i-1].level = 0;  
 
     voids[i-1].eval = gsl_vector_alloc(3);
     voids[i-1].evec = gsl_matrix_alloc(3,3);
+    voids[i-1].ellip = 0;
   }
   fclose(fp);
 
@@ -356,6 +359,15 @@ int main(int argc, char **argv) {
       voidID = voids[iVoid].voidID;
       voids[iVoid].parentID = tree->getParent(voidID);
       voids[iVoid].numChildren = tree->getChildren(voidID).size();
+
+      // compute level in tree
+      int level = 0;
+      int parentID = tree->getParent(voidID);
+      while (parentID != -1) {
+        level++;
+        parentID = tree->getParent(parentID);
+      }
+      voids[iVoid].level = level;
     }
   } // end re-load
 
@@ -571,6 +583,13 @@ int main(int argc, char **argv) {
       dist[1] = voidPart[p].y - voids[iVoid].barycenter[1];
       dist[2] = voidPart[p].z - voids[iVoid].barycenter[2];
 
+      if (periodicX && fabs(dist[0]) > boxLen[0]/2.)
+          dist[0] = dist[0] - copysign(boxLen[0], dist[0]);
+      if (periodicY && fabs(dist[1]) > boxLen[1]/2.)
+          dist[1] = dist[1] - copysign(boxLen[1], dist[1]);
+      if (periodicZ && fabs(dist[2]) > boxLen[2]/2.)
+          dist[2] = dist[2] - copysign(boxLen[2], dist[2]);
+
       for (int i = 0; i < 3; i++) {
       for (int j = i; j < 3; j++) {
         if (i == j) inertia[i*3+j] += dist[0]*dist[0] + dist[1]*dist[1] + 
@@ -585,6 +604,20 @@ int main(int argc, char **argv) {
 
     gsl_matrix_view m = gsl_matrix_view_array(inertia, 3, 3);
     gsl_eigen_symmv(&m.matrix, voids[iVoid].eval, voids[iVoid].evec, eigw);
+   
+    float a = sqrt(2.5*(gsl_vector_get(voids[iVoid].eval,1) +
+                        gsl_vector_get(voids[iVoid].eval,2) - 
+                        gsl_vector_get(voids[iVoid].eval,0)));
+    float b = sqrt(2.5*(gsl_vector_get(voids[iVoid].eval,2) +
+                        gsl_vector_get(voids[iVoid].eval,0) - 
+                        gsl_vector_get(voids[iVoid].eval,1)));
+    float c = sqrt(2.5*(gsl_vector_get(voids[iVoid].eval,0) +
+                        gsl_vector_get(voids[iVoid].eval,1) - 
+                        gsl_vector_get(voids[iVoid].eval,2)));
+    float ca = c/a;
+    float cb = c/b;
+    voids[iVoid].ellip = 1.0 - c/a;
+
   } // iVoid
 
   gsl_eigen_symmv_free(eigw);
@@ -665,34 +698,17 @@ int main(int argc, char **argv) {
   voids.resize(iGood);
   printf("  4th filter: rejected %d below redshift boundaries\n", numNearZ); 
 
-  numAreParents = 0;
-  iGood = 0;
-  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
-    if (voids[iVoid].numChildren > 0) {
-      numAreParents++;
-      voids[iVoid].isLeaf = false;
-     } else {
-      //voids[iGood++] = voids[iVoid];
-      voids[iVoid].isLeaf = true;
-    }
-  }
-
-// TEST - grabbing only top-level voids
+  // take only top-level voids
   numAreParents = 0;
   iGood = 0;
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
     if (voids[iVoid].parentID != -1) {
       numAreParents++;
-      voids[iVoid].isLeaf = false;
-     } else {
-      //voids[iGood++] = voids[iVoid];
       voids[iVoid].isLeaf = true;
+     } else {
+      voids[iVoid].isLeaf = false;
     }
   }
-// END TEST
-
-  //voids.resize(iGood);
-  //printf("  5th filter: rejected %d that are not leaf nodes\n", numAreParents); 
 
 
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
@@ -721,7 +737,6 @@ int main(int argc, char **argv) {
   printf("   We have %d too high central density\n", numHighDen); 
   printf("   We have %d that are not leaf nodes\n", numAreParents); 
  
-  printf(" Output trimmed catalog...\n");
   
   outputDir = string(args.outputDir_arg);
   sampleName = (string(args.sampleName_arg)+".out");
@@ -729,6 +744,7 @@ int main(int argc, char **argv) {
   dataPortions[0] = "central";
   dataPortions[1] = "all";
 
+  printf(" Output fully trimmed catalog...\n");
   prefix = "";
   for (int i = 0; i < 2; i++) {
     dataPortion = dataPortions[i]; 
@@ -736,10 +752,10 @@ int main(int argc, char **argv) {
     outputVoids(outputDir, sampleName, prefix, dataPortion,
                 mockIndex,
                 voids,
-                args.isObservation_flag, boxLen, true);
+                args.isObservation_flag, boxLen, true, true);
   }
 
-  printf(" Output untrimmed catalog...\n");
+  printf(" Output fully untrimmed catalog...\n");
   prefix = "untrimmed_";
   for (int i = 0; i < 2; i++) {
     dataPortion = dataPortions[i]; 
@@ -747,8 +763,32 @@ int main(int argc, char **argv) {
     outputVoids(outputDir, sampleName, prefix, dataPortion,
                 mockIndex,
                 voids,
-                args.isObservation_flag, boxLen, false);
+                args.isObservation_flag, boxLen, false, false);
   }
+
+  printf(" Output partially-trimmed catalogs...\n");
+  prefix = "untrimmed_dencut_";
+  for (int i = 0; i < 2; i++) {
+    dataPortion = dataPortions[i]; 
+  
+    outputVoids(outputDir, sampleName, prefix, dataPortion,
+                mockIndex,
+                voids,
+                args.isObservation_flag, boxLen, false, true);
+  }
+
+  prefix = "trimmed_nodencut_";
+  for (int i = 0; i < 2; i++) {
+    dataPortion = dataPortions[i]; 
+  
+    outputVoids(outputDir, sampleName, prefix, dataPortion,
+                mockIndex,
+                voids,
+                args.isObservation_flag, boxLen, true, false);
+  }
+
+
+
 
 
   clock2 = clock();
@@ -776,7 +816,7 @@ void openFiles(string outputDir, string sampleName,
   *fpBarycenter = fopen((outputDir+"/"+prefix+"barycenters_"+dataPortion+"_"+sampleName).c_str(), "w");
 
   *fpCenters = fopen((outputDir+"/"+prefix+"centers_"+dataPortion+"_"+sampleName).c_str(), "w");
-  fprintf(*fpCenters, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part, parent ID, number of children\n");
+  fprintf(*fpCenters, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part, parent ID, tree level, number of children, central density\n");
 
   *fpDistances = fopen((outputDir+"/"+prefix+"boundaryDistances_"+dataPortion+"_"+sampleName).c_str(), "w");
 
@@ -807,7 +847,8 @@ void closeFiles(FILE* fpZobov, FILE* fpCenters,
 void outputVoids(string outputDir, string sampleName, string prefix, 
                 string dataPortion, int mockIndex,
                 vector<VOID> voids, 
-                bool isObservation, double *boxLen, bool doTrim) {
+                bool isObservation, double *boxLen, bool doTrim,
+                bool doCentralDenCut) {
 
     int iVoid;
     VOID outVoid;
@@ -829,8 +870,11 @@ void outputVoids(string outputDir, string sampleName, string prefix,
         continue;
       } 
 
-      //if (doTrim && (outVoid.hasHighCentralDen)) {
-      if (doTrim && (outVoid.hasHighCentralDen || !outVoid.isLeaf)) {
+      if (doTrim && outVoid.isLeaf) {
+         continue;
+       } 
+
+      if (doCentralDenCut && outVoid.hasHighCentralDen) {
          continue;
        } 
 
@@ -869,7 +913,7 @@ void outputVoids(string outputDir, string sampleName, string prefix,
              outVoid.voidID, 
              outVoid.nearestMock);
 
-       fprintf(fpCenters, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f %d %d %d\n",
+       fprintf(fpCenters, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f %d %d %d %d %.2f\n",
              outCenter[0],
              outCenter[1],
              outCenter[2],
@@ -881,7 +925,9 @@ void outputVoids(string outputDir, string sampleName, string prefix,
              outVoid.densCon,
              outVoid.numPart,
              outVoid.parentID,
-             outVoid.numChildren);
+             outVoid.level,
+             outVoid.numChildren,
+             outVoid.centralDen);
      
      fprintf(fpSkyPositions, "%.2f %.2f %.5f %.2f %d\n",
              atan((outVoid.barycenter[1]-boxLen[1]/2.) / 
@@ -892,8 +938,9 @@ void outputVoids(string outputDir, string sampleName, string prefix,
              outVoid.radius,
              outVoid.voidID);
 
-     fprintf(fpShapes, "%d %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f\n", 
+     fprintf(fpShapes, "%d %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f\n", 
              outVoid.voidID,
+             outVoid.ellip,
              gsl_vector_get(outVoid.eval, 0),
              gsl_vector_get(outVoid.eval, 1),
              gsl_vector_get(outVoid.eval, 2),
