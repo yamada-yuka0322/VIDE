@@ -668,11 +668,11 @@ int main(int argc, char **argv)
     {
       loader = flashLoader(args_info.flash_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID, preselector); 
   }
+#ifdef SDF_SUPPORT
   else if (args_info.multidark_given)
     {
       loader = multidarkLoader(args_info.multidark_arg, preselector);      
     }
-#ifdef SDF_SUPPORT
   else if (args_info.sdf_given)
     {
       loader = sdfLoader(args_info.sdf_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID, args_info.sdf_splitting_arg, preselector);
