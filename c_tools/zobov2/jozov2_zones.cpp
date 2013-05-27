@@ -178,6 +178,13 @@ void buildZones(PARTICLE *p, pid_t np, pid_t *&jumped,
     {
       if (numinh[i] > 0) {
         z[h].core = i;
+        z[h].vol = 0;
+        z[h].np = z[h].npjoin = z[h].nadj = z[h].nhl = 0;
+        z[h].leak = 0;
+        z[h].adj = 0;
+        z[h].slv = 0;
+        z[h].denscontrast = 0;
+        z[h].vol = z[h].voljoin = 0;
         zonenum[i] = h;
         h++;
       } else {
