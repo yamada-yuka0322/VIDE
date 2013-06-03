@@ -29,6 +29,7 @@ import sys
 import void_python_tools as vp
 import argparse
 import imp
+import subprocess
 
 # -----------------------------------------------------------------------------
 
@@ -81,7 +82,7 @@ def getSampleName(setName, redshift, useVel, iSlice=-1, iVol=-1):
   return sampleName
 
 #------------------------------------------------------------------------------
-def getNickName(sampleName):
+def getNickName(setName, sampleName):
 
   splitName = sampleName.split('_')
 
@@ -91,14 +92,12 @@ def getNickName(sampleName):
     nickName += " SS " + splitName[1].replace("ss","")
     #nickName = "Subsample = " + splitName[1].replace("ss","")
     if "pv" in splitName[2]: 
-      nickName += " (w/ PV)"
       nickName += ", z = " + splitName[3].replace("z","") + " (w/ PV)"
     else:
       nickName += ", z = " + splitName[2].replace("z","")
   elif "hod" in splitName[1]:
     nickName += " HOD " + splitName[2]
     if "pv" in splitName[3]: 
-      nickName += " (w/ PV)"
       nickName += ", z = " + splitName[4].replace("z","") + " (w/ PV)"
     else:
       nickName += ", z = " + splitName[3].replace("z","")
@@ -108,12 +107,13 @@ def getNickName(sampleName):
     else:
       nickName += " Halos > " + splitName[2].replace("min","")
     if "pv" in splitName[3]: 
-      nickName += " (w/ PV)"
       nickName += ", z = " + splitName[4].replace("z","") + " (w/ PV)"
     else:
       nickName += ", z = " + splitName[3].replace("z","")
   else:
     nickName = sampleName
+
+  if "ran" in setName: nickName = "Random" + nickName
 
   return nickName
 
@@ -283,7 +283,7 @@ newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, Fal
 
           sampleName = getSampleName(setName, sliceMin, useVel,
                                      iSlice=iSlice, iVol=mySubvolume)
-          nickName = getNickName(sampleName)
+          nickName = getNickName(setName, sampleName)
 
 
           scriptFile.write(sampleInfo.format(dataFile=dataFileName,
@@ -530,22 +530,30 @@ if (args.script or args.all) and haloFileBase != "":
     sys.stdout.flush()
 
     # estimate number of halos to get density
-    #if haloFileDummy == '':
-    #  dataFile = catalogDir+haloFileBase+fileNums[0]
-    #else:
-    #  dataFile = catalogDir+haloFileBase.replace(haloFileDummy, fileNums[0])
-    #
-    #inFile = open(dataFile, 'r')
-    #numPart = 0
-    #for (iLine, line) in enumerate(inFile): 
-    #  if iLine < haloFileNumComLines: continue
-    #  line = line.split(haloFileColSep)
-    #  if minHaloMass == "none" or float(line[haloFileMCol]) > minHaloMass:
-    #    numPart += 1
-    #inFile.close()
+    if haloFileDummy == '':
+      dataFile = catalogDir+haloFileBase+fileNums[0]
+    else:
+      dataFile = catalogDir+haloFileBase.replace(haloFileDummy, 
+                                                 fileNums[0])
+    numPart = 0
+    if dataFormat == "sdf":
+      SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
+      if minHaloMass == "none":
+        command = "%s -a 200000 %s mass | wc" % (SDFcvt_PATH, dataFile)
+      else:
+        command = "%s -a 200000 %s mass | awk '{if ($1>%g) print $1}' | wc" % (SDFcvt_PATH, dataFile, minHaloMass)
+      numPart = subprocess.check_output(command, shell=True)
+      numPart = int(numPart.split()[0])
+    else:
+      inFile = open(dataFile, 'r')
+      for (iHalo,line) in enumerate(inFile):
+        if iHalo < haloFileNumComLines: continue
+        line = line.split(haloFileColSep)
+        if minHaloMass == "none" or float(line[haloFileMCol]) > minHaloMass:
+          numPart += 1
+        inFile.close()
 
-    #minRadius = 2*int(np.ceil(lbox/numPart**(1./3.)))
-    minRadius = 10
+    minRadius = int(np.ceil(lbox/numPart**(1./3.)))
   
     if minHaloMass != "none": 
       strMinHaloMass = "%.2e" % minHaloMass
@@ -712,15 +720,38 @@ if (args.script or args.all) and haloFileBase != "":
       fileList.append(outFileName) 
 
     print "  ", thisHod['name']
+
+    # estimate number of halos to get density
+    if haloFileDummy == '':
+      dataFile = catalogDir+haloFileBase+fileNums[0]
+    else:
+      dataFile = catalogDir+haloFileBase.replace(haloFileDummy,
+                                                 fileNums[0])
+    numPart = 0
+    if dataFormat == "sdf":
+      SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
+      command = "%s -a 200000 %s mass | awk '{if ($1>%g) print $1}' | wc" % (SDFcvt_PATH, dataFile, thisHod['Mcut'])
+      numPart = subprocess.check_output(command, shell=True)
+      numPart = int(numPart.split()[0])
+    else:
+      inFile = open(dataFile, 'r')
+      for (iHalo,line) in enumerate(inFile):
+        if iHalo < haloFileNumComLines: continue
+        line = line.split(haloFileColSep)
+        if float(line[haloFileMCol]) > thisHod['Mcut']: numPart += 1
+        inFile.close()
+
+    minRadius = int(np.ceil(lbox/numPart**(1./3.)))
+
     setName = prefix+"hod_"+thisHod['name']
     writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
                 scriptDir, catalogDir, fileNums, redshifts, 
-                numSubvolumes, numSlices, False, lbox, 15, omegaM,
+                numSubvolumes, numSlices, False, lbox, minRadius, omegaM,
                 dataFileNameList = fileList)
     if doPecVel:
       writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
                   scriptDir, catalogDir, fileNums, redshifts, 
-                  numSubvolumes, numSlices, True, lbox, 15, omegaM,
+                  numSubvolumes, numSlices, True, lbox, minRadius, omegaM,
                   dataFileNameList = fileList)
 
 if (args.hod or args.all) and haloFileBase != "":
