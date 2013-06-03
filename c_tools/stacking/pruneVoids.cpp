@@ -616,9 +616,11 @@ int main(int argc, char **argv) {
     float c = sqrt(2.5*(gsl_vector_get(voids[iVoid].eval,0) +
                         gsl_vector_get(voids[iVoid].eval,1) - 
                         gsl_vector_get(voids[iVoid].eval,2)));
-    float ca = c/a;
+    float ca;
     float cb = c/b;
-    voids[iVoid].ellip = 1.0 - c/a;
+    if (a < c)  ca = a/c;
+    if (a >= c) ca = c/a;
+    voids[iVoid].ellip = fabs(1.0 - ca);
 
   } // iVoid
 
