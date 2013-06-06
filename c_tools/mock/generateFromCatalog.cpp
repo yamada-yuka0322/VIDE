@@ -193,6 +193,19 @@ void generateGalaxiesInCube(NYU_VData& data, ParticleData& output_data,
 	}
 //printf("INSERT GAL %d %e %e %e\n", output_data.id_gal[i], p.xyz[0], p.xyz[1], p.xyz[2]);
     }
+
+  // normalize box
+  float left = 1.e99;
+  float right = -1.e99;
+  for (int j = 0; j < 3; j++) {
+    if (output_data.box[j][1] < left) left = output_data.box[j][1];
+    if (output_data.box[j][0] > right) right = output_data.box[j][0];
+  }
+  for (int j = 0; j < 3; j++) {
+    output_data.box[j][1] = left;
+    output_data.box[j][0] = right;
+  }
+
   cout << format("Galaxy position generated: %d galaxies") % output_data.pos.size() << endl;
   cout << format("box is %g < x < %g;  %g < y < %g;   %g < z < %g") 
     % (1e-2*output_data.box[0][1]) % (1e-2*output_data.box[0][0])
