@@ -618,9 +618,25 @@ int main(int argc, char **argv) {
                         gsl_vector_get(voids[iVoid].eval,2)));
     float ca;
     float cb = c/b;
-    if (a < c)  ca = a/c;
-    if (a >= c) ca = c/a;
-    voids[iVoid].ellip = fabs(1.0 - ca);
+
+    float smallest = 1.e99;
+    float largest = 0.;
+    for (int i = 0; i < 3; i++) {
+      if (gsl_vector_get(voids[iVoid].eval,i) < smallest) 
+        smallest = gsl_vector_get(voids[iVoid].eval,i);
+      if (gsl_vector_get(voids[iVoid].eval,i) > largest) 
+        largest = gsl_vector_get(voids[iVoid].eval,i);
+    }
+    // TEST
+    voids[iVoid].ellip = 1.0 - sqrt(sqrt(fabs(smallest/largest)));
+
+    //if (a < c)  ca = a/c;
+    //if (a >= c) ca = c/a;
+    //voids[iVoid].ellip = fabs(1.0 - ca);
+
+    //if (a < c)  ca = a*a/(c*c);
+    //if (a >= c) ca = (c*c)/(a*a);
+    //voids[iVoid].ellip = sqrt(fabs(1.0 - ca));
 
   } // iVoid
 
