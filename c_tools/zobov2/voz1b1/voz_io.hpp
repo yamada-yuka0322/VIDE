@@ -7,6 +7,7 @@ struct PositionData
 {
   float *xyz[3];
   pid_t np;
+  float xyz_min[3], xyz_max[3];
   
   void destroy()
   {

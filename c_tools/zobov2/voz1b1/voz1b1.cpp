@@ -1,10 +1,13 @@
+#include <boost/format.hpp>
 #include <iostream>
+#include <fstream>
 #include <CosmoTool/miniargs.hpp>
 #include <cmath>
 #include "libqhull/qhull_a.h"
 #include "voz.h"
 #include "voz_io.hpp"
 
+using boost::format;
 using namespace std;
 
 #define DL for (d=0;d<3;d++)
@@ -19,33 +22,208 @@ bool checkParameters(int *numdiv, int *b)
   return true;
 }
 
+struct BoxData
+{
+  float width[3], totwidth[3];
+  float width2[3], totwidth2[3];
+  float bf, s[3], g[3], c[3];
+  coordT *parts;
+  pid_t *orig;
+  pid_t nvpall, nvp, nvpbuf;
+  bool guard_added;
+  double xyz_min[3], xyz_max[3];
+
+  void prepareBox(const PositionData& pdata);
+
+  void checkParticle(float *xyz, bool& in_main, bool& in_buf);
+};
+
+void BoxData::checkParticle(double *xyz, bool& in_main, bool& in_buf)
+{
+  in_main = in_buf = true;
+  for (int d = 0; d < 3; d++)
+    {
+      xyz[d] -= (double)c[d];
+      if (xyz[d] > width2[d])
+        xyz[d] -= width[d];
+      if (xyz[d] < -width2[d])
+        xyz[d] += width[d];
+
+      in_buf = in_buf && (fabs(xyz[d]) < totwidth2[d]);
+      in_main = in_main && (fabs(xyz[d]) <= width2[d]);
+    }
+}
+
+void BoxData::prepareBox(const PositionData& pdata, int *b_id)
+{
+  guard_added = false;
+
+  for (int i = 0; i < 3; i++)
+    {
+      float s;
+      width[i] = (pdata.xyz_max[i] - pdata.xyz_min[i])/(float)numdiv;
+      width2[i] = 0.5*width;
+
+      totwidth[i] = width+2.*bf;
+      totwidth2[i] = width2 + bf;
+
+      s[i] = width[i]/(float)NGUARD;
+      if ((bf*bf - 2.*s[i]*s[i]) < 0.)
+        {
+          printf("bf = %f, s = %f.\n",bf,s[i]);
+          printf("Not enough guard points for given border.\nIncrease guards to >= %f\n.",
+                 sqrt(2.)*width/bf);
+          exit(0);
+        }
+      g[i] = (bf / 2.)*(1. + sqrt(1 - 2.*s[i]*s[i]/(bf*bf)));
+      cout << format("s[%d] = %f, bf = %f, g[%d] = %f.") % s[i] % i % bf % g[i] % i << endl;
+
+      c[i] = b_id[i] * width[i];
+    }
+  cout.flush();
+
+  cout << format("c: %f,%f,%f") % c[0] % c[1] % c[2] << endl;
+
+  /* Assign temporary array*/
+  nvpbuf = 0; /* Number of particles to tesselate, including buffer */
+  nvp = 0; /* Without the buffer */
+
+  for (pid_t i=0; i < np; i++)
+    {
+      double xyz[3] = { pdata.xyz[0][i], pdata.xyz[1][i], pdata.xyz[2][i] };
+      bool is_it_in_buf, is_it_in_main;
+
+      checkParticle(xyz, is_it_in_buf, is_it_in_main);
+
+      if (isitinbuf)
+        nvpbuf++;
+      if (isitinmain)
+        nvp++;
+    }
+
+  nvpbuf += 6*(NGUARD+1)*(NGUARD+1); /* number of guard points */
+
+  parts = new coordT[3*nvpbuf];
+  orig = new pid_t[nvpuf];
+
+  if (parts == 0)
+    {
+      cout << "Unable to allocate parts" << endl;
+      exit(0);
+    }
+  if (orig == 0)
+    {
+      cout << "Unable to allocate orig" << endl;
+      exit(0);
+    }
+
+  nvp = 0; nvpall = 0; /* nvp = number of particles without buffer */
+
+  for (int j = 0; j < 3; j++)
+    {
+      xyz_min[j] = -std::numeric_limits<double>::max();
+      xyz_max[j] = std::numeric_limits<double>::max();
+    }
+  for (pid_t i = 0; i < np; i++)
+    {
+      bool is_it_in_main, is_it_in_buf;
+      double xyz[3] = { pdata.xyz[0][i], pdata.xyz[1][i], pdata.xyz[2][i] };
+
+      checkParticle(xyz, is_it_in_main, is_it_in_buf);
+
+      if (is_it_in_main) {
+        for (int j = 0; j < 3; j++)
+          {
+            parts[3*nvp+j] = xyz[j];
+            xyz_min[j] = min(xyz_min[j], xyz[j]);
+            xyz_max[j] = max(xyz_max[j], xyz[j]);
+          }
+        orig[nvp] = i;
+        nvp++;
+      }
+  }
+  printf("nvp = %d\n",nvp);
+  printf("x: %f,%f; y: %f,%f; z:%f,%f\n",xmin,xmax,ymin,ymax,zmin,zmax);
+  nvpbuf = nvp;
+  for (pid_t i = 0; i < np; i++)
+    {
+      bool is_it_in_main, is_it_in_buf;
+      double xyz[3] = { pdata.xyz[0][i], pdata.xyz[1][i], pdata.xyz[2][i] };
+
+      checkParticle(xyz, is_it_in_main, is_it_in_buf);
+
+      if (isitinbuf && !isitinmain)
+        {
+          for (int j = 0; j < 3; j++)
+            {
+              parts[3*nvpbuf+j] = xyz[j];
+              xyz_min[j] = min(xyz_min[j], xyz[j]);
+              xyz_max[j] = max(xyz_max[j], xyz[j]);
+            }
+          orig[nvpbuf] = i;
+
+          nvpbuf++;
+        }
+    }
+  cout << format("nvpbuf = %d") % nvpbuf << endl;
+  cout << format("x: %f,%f; y: %f,%f; z:%f,%f\n") % xyz_min[0] % xyz_max[0] % xyz_min[1] % xyz_max[1] % xyz_min[2] % xyz_max[2] << endl;
+  nvpall = nvpbuf;
+
+  double predict = 1;
+  for (int j = 0; j < 3; j++)
+    predict *= (width[j]+2*bf);
+  predict *= np;
+  cout << format("There should be ~ %g points; there are %d\n") % predict % nvpbuf << endl;
+}
+
+void BoxData::addGuardPoints()
+{
+  int rot_g[3][3]  = { {0, 0, 1}, {0,1,0}, {1,0,0} };
+  int rot_si[3][3] = { {1, 0, 0}, {1,0,0}, {0,1,0} };
+  int rot_sj[3][3] = { {0, 1, 0}, {0,0,1}, {0,0,1} };
+
+  for (int k = 0; k < 3; k++)
+    {
+
+      /* Add guard points */
+      for (i=0; i<=NGUARD; i++)
+        {
+          for (j=0; j<=NGUARD; j++)
+            {
+              /* Bottom */
+              for (int a = 0; a < 3; a++)
+                parts[3*nvpall+a] = -width2[a] + (realT)i * s[a] * rot_si[k][a] + (realT)j * s[a] * rot_sj[k][a] - rot_g[k][a] * g[a];
+
+              nvpall++;
+
+              /* Top */
+              for (int a = 0; a < 3; a++)
+                parts[3*nvpall+a] = (2*rot_g[k][a]-1)*width2[a] + (realT)i * s[a] * rot_si[k][a] + (realT)j * s[a] * rot_sj[k][a] + rot_g[k][a] * g[a];
+
+              nvpall++;
+            }
+        }
+    }
+}
+
 
 int main(int argc, char *argv[]) {
-  const float BF = std::numeric_limits<float>::max();
-
-  int exitcode;
-  pid_t i, j, np;
   PositionData pdata;
-  coordT rtemp[3], *parts;
+  BoxData boxdata;
+
   coordT deladjs[3*MAXVERVER], points[3*MAXVERVER];
   pointT intpoints[3*MAXVERVER];
-  FILE *pos, *out;
-  char *posfile, outfile[200], *suffix, *outDir;
+  string outfile;
+  ofstream out;
+
+  char *suffix, *outDir;
   PARTADJ *adjs;
   float *vols;
-  realT predict, xmin,xmax,ymin,ymax,zmin,zmax;
   pid_t *orig;
- 
-  int isitinbuf;
-  char isitinmain, d;
-  pid_t nvp, nvpall, nvpbuf;
-  realT width, width2, totwidth, totwidth2, bf, s, g;
   double border, boxsize[3];
-  realT c[3];
-  int b[3];
-  int numdiv[3];
+  int b[3], numdiv[3];
   double totalvol;
-  
+
   CosmoTool::MiniArgDesc args[] = {
     { "POSITION FILE", MINIARG_STRING, &posfile },
     { "BORDER SIZE", MINIARG_DOUBLE, &border },
@@ -68,7 +246,7 @@ int main(int argc, char *argv[]) {
 
   if (!checkParameters(numdiv, b))
     return 2;
-  
+
   /* Boxsize should be the range in r, yielding a range 0-1 */
   if (!pdata.readFrom(posfile))
     return 3;
@@ -77,180 +255,29 @@ int main(int argc, char *argv[]) {
 
   pdata.findExtrema();
 
-  (cout << boost::format("np: %d, x: %f,%f; y: %f,%f; z: %f,%f") 
+  (cout << boost::format("np: %d, x: %f,%f; y: %f,%f; z: %f,%f")
     % pdata.np
     % xyz_min[0] % xyz_max[0]
     % xyz_min[1] % xyz_max[1]
     % xyz_min[2] % xyz_max[2]).flush();
 
 
-  width = 1./(float)numdiv;
-  width2 = 0.5*width;
-  if (border > 0.) bf = border;
-  else bf = 0.1;
-      /* In units of 0-1, the thickness of each subregion's buffer*/
-  totwidth = width+2.*bf;
-  totwidth2 = width2 + bf;
-  
-  s = width/(float)NGUARD;
-  if ((bf*bf - 2.*s*s) < 0.) {
-    printf("bf = %f, s = %f.\n",bf,s);
-    printf("Not enough guard points for given border.\nIncrease guards to >= %f\n.",
-	   sqrt(2.)*width/bf);
-    exit(0);
-  }
-  g = (bf / 2.)*(1. + sqrt(1 - 2.*s*s/(bf*bf)));
-  printf("s = %f, bf = %f, g = %f.\n",s,bf,g);
+  if (border > 0.)
+    boxdata.bf = border;
+  else
+    boxdata.bf = 0.1;
 
-  fflush(stdout);
-
-  adjs = (PARTADJ *)malloc(np*sizeof(PARTADJ));
-  if (adjs == NULL) {
-    printf("Unable to allocate adjs\n");
-    exit(0);
-  }
-  
-  DL c[d] = ((float)b[d])*width;
-  printf("c: %f,%f,%f\n",c[0],c[1],c[2]);
-  /* Assign temporary array*/
-  nvpbuf = 0; /* Number of particles to tesselate, including
-		 buffer */
-  nvp = 0; /* Without the buffer */
-  for (i=0; i<np; i++) {
-    isitinbuf = 1;
-    isitinmain = 1;
-    DL {
-      rtemp[d] = (double)r[i][d] - (double)c[d];
-      if (rtemp[d] > 0.5) rtemp[d] --;
-      if (rtemp[d] < -0.5) rtemp[d] ++;
-      isitinbuf = isitinbuf && (fabs(rtemp[d]) < totwidth2);
-      isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
-    }
-  
-    if (isitinbuf) nvpbuf++;
-    if (isitinmain) nvp++;
-  }
-  
-  nvpbuf += 6*(NGUARD+1)*(NGUARD+1); /* number of guard
-					points */
-
-  parts = (coordT *)malloc(3*nvpbuf*sizeof(coordT));
-  orig = (pid_t *)malloc(nvpbuf*sizeof(pid_t));
-
-  if (parts == NULL) {
-    printf("Unable to allocate parts\n");
-    fflush(stdout);
-  }
-  if (orig == NULL) {
-    printf("Unable to allocate orig\n");
-    fflush(stdout);
-  }
-
-  nvp = 0; nvpall = 0; /* nvp = number of particles without buffer */
-  xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
-  for (i=0; i<np; i++) {
-    isitinmain = 1;
-    DL {
-      rtemp[d] = (realT)r[i][d] - (realT)c[d];
-      if (rtemp[d] > 0.5) rtemp[d] --;
-      if (rtemp[d] < -0.5) rtemp[d] ++;
-      isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
-    }
-    if (isitinmain) {
-      parts[3*nvp] = rtemp[0];
-      parts[3*nvp+1] = rtemp[1];
-      parts[3*nvp+2] = rtemp[2];
-      orig[nvp] = i;
-      nvp++;
-      if (rtemp[0] < xmin) xmin = rtemp[0];
-      if (rtemp[0] > xmax) xmax = rtemp[0];
-      if (rtemp[1] < ymin) ymin = rtemp[1];
-      if (rtemp[1] > ymax) ymax = rtemp[1];
-      if (rtemp[2] < zmin) zmin = rtemp[2];
-      if (rtemp[2] > zmax) zmax = rtemp[2];
-    }
-  }
-  printf("nvp = %d\n",nvp);
-  printf("x: %f,%f; y: %f,%f; z:%f,%f\n",xmin,xmax,ymin,ymax,zmin,zmax);
-  nvpbuf = nvp;
-  for (i=0; i<np; i++) {
-    isitinbuf = 1;
-    isitinmain = 1;
-
-    DL {
-      rtemp[d] = (realT)r[i][d] - (realT)c[d];
-      if (rtemp[d] > 0.5) rtemp[d] --;
-      if (rtemp[d] < -0.5) rtemp[d] ++;
-      isitinbuf = isitinbuf && (fabs(rtemp[d])<totwidth2);
-      isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
-    }
-    if (isitinbuf && !isitinmain) {
-      /*printf("%3.3f ",sqrt(rtemp[0]*rtemp[0] + rtemp[1]*rtemp[1] +
-	rtemp[2]*rtemp[2]));
-	printf("|%2.2f,%2.2f,%2.2f,%f,%f",r[i][0],r[i][1],r[i][2],width2,totwidth2);*/
-      parts[3*nvpbuf] = rtemp[0];
-      parts[3*nvpbuf+1] = rtemp[1];
-      parts[3*nvpbuf+2] = rtemp[2];
-      orig[nvpbuf] = i;
-
-      nvpbuf++;
-      if (rtemp[0] < xmin) xmin = rtemp[0];
-      if (rtemp[0] > xmax) xmax = rtemp[0];
-      if (rtemp[1] < ymin) ymin = rtemp[1];
-      if (rtemp[1] > ymax) ymax = rtemp[1];
-      if (rtemp[2] < zmin) zmin = rtemp[2];
-      if (rtemp[2] > zmax) zmax = rtemp[2];
-    }
-  }
-  printf("nvpbuf = %d\n",nvpbuf);
-  printf("x: %f,%f; y: %f,%f; z:%f,%f\n",xmin,xmax,ymin,ymax,zmin,zmax);
-  nvpall = nvpbuf;
-  predict = pow(width+2.*bf,3)*(float)np;
-  printf("There should be ~ %f points; there are %d\n",predict,nvpbuf);
-
+  boxdata.prepareBox(pdata);
   pdata.destroy();
-  
-  /* Add guard points */
-  for (i=0; i<NGUARD+1; i++) {
-    for (j=0; j<NGUARD+1; j++) {
-      /* Bottom */
-      parts[3*nvpall]   = -width2 + (realT)i * s;
-      parts[3*nvpall+1] = -width2 + (realT)j * s;
-      parts[3*nvpall+2] = -width2 - g;
-      nvpall++;
-      /* Top */
-      parts[3*nvpall]   = -width2 + (realT)i * s;
-      parts[3*nvpall+1] = -width2 + (realT)j * s;
-      parts[3*nvpall+2] = width2 + g;
-      nvpall++;
+  boxdata.addGuardPoints();
+
+  adjs = new PARTADJ[np];
+  if (adjs == 0)
+    {
+      cout << "Unable to allocate adjs" << endl;
+      return 0;
     }
-  }
-  for (i=0; i<NGUARD+1; i++) { /* Don't want to overdo the corners*/
-    for (j=0; j<NGUARD+1; j++) {
-      parts[3*nvpall]   = -width2 + (realT)i * s;
-      parts[3*nvpall+1] = -width2 - g;
-      parts[3*nvpall+2] = -width2 + (realT)j * s;
-      nvpall++;
-      
-      parts[3*nvpall]   = -width2 + (realT)i * s;
-      parts[3*nvpall+1] = width2 + g;
-      parts[3*nvpall+2] = -width2 + (realT)j * s;
-      nvpall++;
-    }
-  }
-  for (i=0; i<NGUARD+1; i++) {
-    for (j=0; j<NGUARD+1; j++) {
-      parts[3*nvpall]   = -width2 - g;
-      parts[3*nvpall+1] = -width2 + (realT)i * s;
-      parts[3*nvpall+2] = -width2 + (realT)j * s;
-      nvpall++;
-      
-      parts[3*nvpall]   = width2 + g;
-      parts[3*nvpall+1] = -width2 + (realT)i * s;
-      parts[3*nvpall+2] = -width2 + (realT)j * s;
-      nvpall++;
-    }
-  }
+
   xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
   for (i=nvpbuf;i<nvpall;i++) {
     if (parts[3*i] < xmin) xmin = parts[3*i];
@@ -260,78 +287,88 @@ int main(int argc, char *argv[]) {
     if (parts[3*i+2] < zmin) zmin = parts[3*i+2];
     if (parts[3*i+2] > zmax) zmax = parts[3*i+2];
   }
-  
-  printf("Added guard points to total %d points (should be %d)\n",nvpall,
-	 nvpbuf + 6*(NGUARD+1)*(NGUARD+1));
-  printf("x: %f,%f; y: %f,%f; z:%f,%f\n",xmin,xmax,ymin,ymax,zmin,zmax);
-  
+
+  cout << format("Added guard points to total %d points (should be %d)")
+            % boxdata.nvpall % (boxdata.nvpbuf + 6*(NGUARD+1)*(NGUARD+1)) << endl;
+  cout << format("x: %f,%f; y: %f,%f; z:%f,%f") % boxdata.xyz_min[0] % boxdata.xyz_max[0] % boxdata.xyz_min[1] % boxdata.xyz_max[1] % boxdata.xyz_min[2] % boxdata.xyz_max[2] << endl;
+
   /* Do tesselation*/
   printf("File read.  Tessellating ...\n"); fflush(stdout);
-  exitcode = delaunadj(parts, nvp, nvpbuf, nvpall, &adjs);
+  exitcode = delaunadj(boxdata.parts, boxdata.nvp, boxdata.nvpbuf, boxdata.nvpall, &adjs);
   if (exitcode != 0)
    {
      printf("Error while tesselating. Stopping here."); fflush(stdout);
-     exit(1);
+     return 4;
    }
-  
+
   /* Now calculate volumes*/
   printf("Now finding volumes ...\n"); fflush(stdout);
-  vols = (float *)malloc(nvp*sizeof(float));
-  
-  for (i=0; i<nvp; i++) { /* Just the original particles
-			     Assign adjacency coordinate array*/
-    /* Volumes */
-    for (j = 0; j < adjs[i].nadj; j++)
-      DL {
-	deladjs[3*j + d] = parts[3*adjs[i].adj[j]+d] - parts[3*i+d];
-	if (deladjs[3*j+d] < -0.5) deladjs[3*j+d]++;
-	if (deladjs[3*j+d] > 0.5) deladjs[3*j+d]--;
-      }
-    
-    exitcode = vorvol(deladjs, points, intpoints, adjs[i].nadj, &(vols[i]));
-    vols[i] *= (float)np;
-    if (i % 1000 == 0)
-      printf("%d: %d, %f\n",i,adjs[i].nadj,vols[i]);
-  }
+  vols = new float[nvp];
+
+  for (pid_t i = 0; i < nvp; i++)
+    { /* Just the original particles
+       * Assign adjacency coordinate array*/
+      /* Volumes */
+      for (int j = 0; j < adjs[i].nadj; j++)
+        {
+          for (int d = 0; d < 3; d++)
+            {
+              deladjs[3*j + d] = parts[3*adjs[i].adj[j]+d] - parts[3*i+d];
+
+              if (deladjs[3*j+d] < -boxdata.width2[d])
+                deladjs[3*j+d] += boxdata.width[d];
+              if (deladjs[3*j+d] > boxdata.width2[d])
+                deladjs[3*j+d] -= boxdata.width[d];
+            }
+        }
+
+      exitcode = vorvol(deladjs, points, intpoints, adjs[i].nadj, &(vols[i]));
+      vols[i] *= np/V0;
+      if ((i % 1000) == 0)
+        cout << format("%d: %d, %f") % i % adjs[i].nadj % vols[i] << endl;
+    }
 
   /* Get the adjacencies back to their original values */
-
-  for (i=0; i<nvp; i++)
-    for (j = 0; j < adjs[i].nadj; j++)
+  for (pid_t i=0; i<nvp; i++)
+    for (int j=0; j < adjs[i].nadj; j++)
       adjs[i].adj[j] = orig[adjs[i].adj[j]];
-  
+
   totalvol = 0.;
-  for (i=0;i<nvp; i++) {
-    totalvol += (double)vols[i];
-  }
-  printf("Average volume = %g\n",totalvol/(float)nvp);
- 
+  for (pid_t i=0;i<nvp; i++)
+    totalvol += vols[i];
+
+  cout << format("Average volume = %g") % (totalvol/nvp) << endl;
+
   /* Now the output!
      First number of particles */
-  sprintf(outfile,"%s/part.%s.%02d.%02d.%02d",outDir,suffix,b[0],b[1],b[2]);
+  outfile = str(format("%s/part.%s.%02d.%02d.%02d") % outDir % suffix % b[0] % b[1] % b[2]);
 
-  printf("Output to %s\n\n",outfile);
-  out = fopen(outfile,"w");
-  if (out == NULL) {
-    printf("Unable to open %s\n",outfile);
-    exit(0);
-  }
-  fwrite(&np,1, sizeof(int),out);
-  fwrite(&nvp,1, sizeof(int),out);
-  printf("nvp = %d\n",nvp);
+  cout << format("Output to %s") %outfile << endl << endl;
+  out.open(outfile.c_str());
+  if (!out)
+    {
+      cout << format("Unable to open %s") % outfile << endl;
+      return 0;
+    }
+  out.write((char *)&pdata.np, sizeof(pid_t));
+  out.write((char *)&boxdata.nvp, sizeof(pid_t));
+  cout << format("nvp = %d") % nvp << endl;
 
   /* Tell us where the original particles were */
-  fwrite(orig,sizeof(pid_t),nvp,out);
+  out.write((char *)boxdata.orig, sizeof(pid_t)*boxdata.nvp);
   /* Volumes*/
-  fwrite(vols,sizeof(float),nvp,out);
+  out.write((char *)vols,sizeof(float)*nvp);
   /* Adjacencies */
-  for (i=0;i<nvp;i++) {
-    fwrite(&(adjs[i].nadj),1,sizeof(pid_t),out);
-    if (adjs[i].nadj > 0)
-      fwrite(adjs[i].adj,adjs[i].nadj,sizeof(pid_t),out);
-    else printf("0");
-  }
-  fclose(out);
-  
+  for (pid_t i = 0; i < nvp; i++)
+    {
+      out.write((char*)&adjs[i].nadj, sizeof(pid_t));
+      if (adjs[i].nadj > 0)
+        out.write((char *)adjs[i].adj, adjs[i].nadj*sizeof(pid_t));
+      else
+        (cout << "0").flush();
+    }
+  out.close();
+  delete[] adjs;
+
   return(0);
 }
