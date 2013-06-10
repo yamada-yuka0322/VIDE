@@ -7,6 +7,10 @@
 #include "voz.h"
 #include "voz_io.hpp"
 
+using CosmoTool::MINIARG_STRING;
+using CosmoTool::MINIARG_DOUBLE;
+using CosmoTool::MINIARG_INT;
+using CosmoTool::MINIARG_NULL;
 using boost::format;
 using namespace std;
 
@@ -33,9 +37,9 @@ struct BoxData
   bool guard_added;
   double xyz_min[3], xyz_max[3];
 
-  void prepareBox(const PositionData& pdata);
+  void prepareBox(const PositionData& pdata, int *b_id, int *numdivs);
 
-  void checkParticle(float *xyz, bool& in_main, bool& in_buf);
+  void checkParticle(double *xyz, bool& in_main, bool& in_buf);
 };
 
 void BoxData::checkParticle(double *xyz, bool& in_main, bool& in_buf)
@@ -54,25 +58,24 @@ void BoxData::checkParticle(double *xyz, bool& in_main, bool& in_buf)
     }
 }
 
-void BoxData::prepareBox(const PositionData& pdata, int *b_id)
+void BoxData::prepareBox(const PositionData& pdata, int *b_id, int *numdivs)
 {
   guard_added = false;
 
   for (int i = 0; i < 3; i++)
     {
-      float s;
-      width[i] = (pdata.xyz_max[i] - pdata.xyz_min[i])/(float)numdiv;
-      width2[i] = 0.5*width;
+      width[i] = (pdata.xyz_max[i] - pdata.xyz_min[i])/numdivs[i];
+      width2[i] = 0.5*width[i];
 
-      totwidth[i] = width+2.*bf;
-      totwidth2[i] = width2 + bf;
+      totwidth[i] = width[i]+2.*bf;
+      totwidth2[i] = width2[i] + bf;
 
       s[i] = width[i]/(float)NGUARD;
       if ((bf*bf - 2.*s[i]*s[i]) < 0.)
         {
           printf("bf = %f, s = %f.\n",bf,s[i]);
           printf("Not enough guard points for given border.\nIncrease guards to >= %f\n.",
-                 sqrt(2.)*width/bf);
+                 sqrt(2.)*width[i]/bf);
           exit(0);
         }
       g[i] = (bf / 2.)*(1. + sqrt(1 - 2.*s[i]*s[i]/(bf*bf)));
@@ -88,23 +91,23 @@ void BoxData::prepareBox(const PositionData& pdata, int *b_id)
   nvpbuf = 0; /* Number of particles to tesselate, including buffer */
   nvp = 0; /* Without the buffer */
 
-  for (pid_t i=0; i < np; i++)
+  for (pid_t i = 0; i < pdata.np; i++)
     {
       double xyz[3] = { pdata.xyz[0][i], pdata.xyz[1][i], pdata.xyz[2][i] };
       bool is_it_in_buf, is_it_in_main;
 
       checkParticle(xyz, is_it_in_buf, is_it_in_main);
 
-      if (isitinbuf)
+      if (is_it_in_buf)
         nvpbuf++;
-      if (isitinmain)
+      if (is_it_in_main)
         nvp++;
     }
 
   nvpbuf += 6*(NGUARD+1)*(NGUARD+1); /* number of guard points */
 
   parts = new coordT[3*nvpbuf];
-  orig = new pid_t[nvpuf];
+  orig = new pid_t[nvpbuf];
 
   if (parts == 0)
     {
@@ -124,7 +127,7 @@ void BoxData::prepareBox(const PositionData& pdata, int *b_id)
       xyz_min[j] = -std::numeric_limits<double>::max();
       xyz_max[j] = std::numeric_limits<double>::max();
     }
-  for (pid_t i = 0; i < np; i++)
+  for (pid_t i = 0; i < pdata.np; i++)
     {
       bool is_it_in_main, is_it_in_buf;
       double xyz[3] = { pdata.xyz[0][i], pdata.xyz[1][i], pdata.xyz[2][i] };
@@ -142,17 +145,17 @@ void BoxData::prepareBox(const PositionData& pdata, int *b_id)
         nvp++;
       }
   }
-  printf("nvp = %d\n",nvp);
-  printf("x: %f,%f; y: %f,%f; z:%f,%f\n",xmin,xmax,ymin,ymax,zmin,zmax);
+  cout << format("nvp = %d") %nvp << endl;
+  cout << format("x: %f,%f; y: %f,%f; z:%f,%f") % xyz_min[0] % xyz_max[0] % xyz_min[1] % xyz_max[1] % xyz_min[2] % xyz_max[2] << endl;
   nvpbuf = nvp;
-  for (pid_t i = 0; i < np; i++)
+  for (pid_t i = 0; i < pdata.np; i++)
     {
       bool is_it_in_main, is_it_in_buf;
       double xyz[3] = { pdata.xyz[0][i], pdata.xyz[1][i], pdata.xyz[2][i] };
 
       checkParticle(xyz, is_it_in_main, is_it_in_buf);
 
-      if (isitinbuf && !isitinmain)
+      if (is_it_in_buf && !is_it_in_main)
         {
           for (int j = 0; j < 3; j++)
             {
@@ -172,7 +175,7 @@ void BoxData::prepareBox(const PositionData& pdata, int *b_id)
   double predict = 1;
   for (int j = 0; j < 3; j++)
     predict *= (width[j]+2*bf);
-  predict *= np;
+  predict *= pdata.np;
   cout << format("There should be ~ %g points; there are %d\n") % predict % nvpbuf << endl;
 }
 
@@ -216,7 +219,7 @@ int main(int argc, char *argv[]) {
   string outfile;
   ofstream out;
 
-  char *suffix, *outDir;
+  char *suffix, *outDir, *posfile;
   PARTADJ *adjs;
   float *vols;
   pid_t *orig;
@@ -225,20 +228,20 @@ int main(int argc, char *argv[]) {
   double totalvol;
 
   CosmoTool::MiniArgDesc args[] = {
-    { "POSITION FILE", MINIARG_STRING, &posfile },
-    { "BORDER SIZE", MINIARG_DOUBLE, &border },
-    { "BOX_X", MINIARG_DOUBLE, &boxsize[0] },
-    { "BOX_Y", MINIARG_DOUBLE, &boxsize[1] },
-    { "BOX_Z", MINIARG_DOUBLE, &boxsize[2] },
-    { "SUFFIX", MINIARG_STRING, &suffix },
-    { "NUM_DIVISION_X", MINIARG_INT, &numdiv[0] },
-    { "NUM_DIVISION_Y", MINIARG_INT, &numdiv[1] },
-    { "NUM_DIVISION_Z", MINIARG_INT, &numdiv[2] },
-    { "B0", MINIARG_INT, &b[0] },
-    { "B1", MINIARG_INT, &b[1] },
-    { "B2", MINIARG_INT, &b[2] },
-    { "OUTPUT DIRECTORY", MINIARG_STRING, &outDir },
-    { 0, MINIARG_NULL, 0 }
+    { "POSITION FILE", &posfile, MINIARG_STRING },
+    { "BORDER SIZE", &border, MINIARG_DOUBLE },
+    { "BOX_X", &boxsize[0], MINIARG_DOUBLE },
+    { "BOX_Y", &boxsize[1], MINIARG_DOUBLE },
+    { "BOX_Z", &boxsize[2], MINIARG_DOUBLE },
+    { "SUFFIX", &suffix, MINIARG_STRING },
+    { "NUM_DIVISION_X", &numdiv[0], MINIARG_INT },
+    { "NUM_DIVISION_Y", &numdiv[1], MINIARG_INT },
+    { "NUM_DIVISION_Z", &numdiv[2], MINIARG_INT },
+    { "B0", &b[0], MINIARG_INT },
+    { "B1", &b[1], MINIARG_INT },
+    { "B2", &b[2], MINIARG_INT },
+    { "OUTPUT DIRECTORY", &outDir, MINIARG_STRING },
+    { 0, 0, MINIARG_NULL }
   };
 
   if (!CosmoTool::parseMiniArgs(argc, argv, args))
@@ -257,9 +260,9 @@ int main(int argc, char *argv[]) {
 
   (cout << boost::format("np: %d, x: %f,%f; y: %f,%f; z: %f,%f")
     % pdata.np
-    % xyz_min[0] % xyz_max[0]
-    % xyz_min[1] % xyz_max[1]
-    % xyz_min[2] % xyz_max[2]).flush();
+    % pdata.xyz_min[0] % pdata.xyz_max[0]
+    % pdata.xyz_min[1] % pdata.xyz_max[1]
+    % pdata.xyz_min[2] % pdata.xyz_max[2]).flush();
 
 
   if (border > 0.)
