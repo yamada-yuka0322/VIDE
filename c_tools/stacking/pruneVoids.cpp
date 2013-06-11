@@ -578,6 +578,8 @@ int main(int argc, char **argv) {
 
     // compute eigenvalues and vectors for orientation and shape
     double inertia[9];
+    for (int i = 0; i < 9; i++) inertia[i] = 0.;
+
     for (int p = 0; p < voids[iVoid].numPart; p++) {
       dist[0] = voidPart[p].x - voids[iVoid].barycenter[0];
       dist[1] = voidPart[p].y - voids[iVoid].barycenter[1];
@@ -614,9 +616,11 @@ int main(int argc, char **argv) {
     float c = sqrt(2.5*(gsl_vector_get(voids[iVoid].eval,0) +
                         gsl_vector_get(voids[iVoid].eval,1) - 
                         gsl_vector_get(voids[iVoid].eval,2)));
-    float ca = c/a;
+    float ca;
     float cb = c/b;
-    voids[iVoid].ellip = 1.0 - c/a;
+    if (a < c)  ca = a/c;
+    if (a >= c) ca = c/a;
+    voids[iVoid].ellip = fabs(1.0 - ca);
 
   } // iVoid
 
@@ -938,7 +942,7 @@ void outputVoids(string outputDir, string sampleName, string prefix,
              outVoid.radius,
              outVoid.voidID);
 
-     fprintf(fpShapes, "%d %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f\n", 
+     fprintf(fpShapes, "%d %.6f %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e\n", 
              outVoid.voidID,
              outVoid.ellip,
              gsl_vector_get(outVoid.eval, 0),

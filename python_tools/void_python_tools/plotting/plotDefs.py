@@ -20,9 +20,8 @@
 LIGHT_SPEED = 299792.458 
 
 colorList = ['r', 'b', 'g', 'y', 'c', 'm', 
-             'brown', 'grey',
-             'darkred', 'orange', 'pink', 'darkblue',
-             'lightblue', 'chocolate',
+             'darkred', 'grey',
+             'orange', 'darkblue',
              'indigo', 'lightseagreen', 'maroon', 'olive',
              'royalblue', 'palevioletred', 'seagreen', 'tomato',
              'aquamarine', 'darkslateblue',
