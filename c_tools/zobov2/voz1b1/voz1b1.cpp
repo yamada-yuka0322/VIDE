@@ -1,3 +1,4 @@
+#include <cassert>
 #include <boost/format.hpp>
 #include <iostream>
 #include <fstream>
@@ -59,10 +60,12 @@ void BoxData::checkParticle(double *xyz, bool& in_main, bool& in_buf)
       in_buf = in_buf && (fabs(xyz[d]) < totwidth2[d]);
       in_main = in_main && (fabs(xyz[d]) <= width2[d]);
     }
+  assert(!in_main || in_buf);
 }
 
 void BoxData::prepareBox(const PositionData& pdata, int *b_id, int *numdivs)
 {
+  double BF = std::numeric_limits<double>::max();
   guard_added = false;
 
   for (int i = 0; i < 3; i++)
@@ -82,7 +85,7 @@ void BoxData::prepareBox(const PositionData& pdata, int *b_id, int *numdivs)
           exit(0);
         }
       g[i] = (bf / 2.)*(1. + sqrt(1 - 2.*s[i]*s[i]/(bf*bf)));
-      cout << format("s[%d] = %f, bf = %f, g[%d] = %f.") % s[i] % i % bf % g[i] % i << endl;
+      cout << format("s[%d] = %f, bf = %f, g[%d] = %f.") % i%  s[i] % bf % i % g[i] << endl;
 
       c[i] = b_id[i] * width[i];
     }
@@ -99,18 +102,20 @@ void BoxData::prepareBox(const PositionData& pdata, int *b_id, int *numdivs)
       double xyz[3] = { pdata.xyz[0][i], pdata.xyz[1][i], pdata.xyz[2][i] };
       bool is_it_in_buf, is_it_in_main;
 
-      checkParticle(xyz, is_it_in_buf, is_it_in_main);
+      checkParticle(xyz, is_it_in_main, is_it_in_buf);
 
       if (is_it_in_buf)
         nvpbuf++;
       if (is_it_in_main)
         nvp++;
+      assert(nvp <= nvpbuf);
     }
 
   nvpbuf += 6*(NGUARD+1)*(NGUARD+1); /* number of guard points */
+  nvpall = nvpbuf;
 
-  parts = new coordT[3*nvpbuf];
-  orig = new pid_t[nvpbuf];
+  parts = new coordT[3*nvpall];
+  orig = new pid_t[nvpall];
 
   if (parts == 0)
     {
@@ -123,12 +128,12 @@ void BoxData::prepareBox(const PositionData& pdata, int *b_id, int *numdivs)
       exit(0);
     }
 
-  nvp = 0; nvpall = 0; /* nvp = number of particles without buffer */
+  nvp = 0; /* nvp = number of particles without buffer */
 
   for (int j = 0; j < 3; j++)
     {
-      xyz_min[j] = -std::numeric_limits<double>::max();
-      xyz_max[j] = std::numeric_limits<double>::max();
+      xyz_min[j] = BF;
+      xyz_max[j] = -BF;
     }
   for (pid_t i = 0; i < pdata.np; i++)
     {
@@ -138,6 +143,7 @@ void BoxData::prepareBox(const PositionData& pdata, int *b_id, int *numdivs)
       checkParticle(xyz, is_it_in_main, is_it_in_buf);
 
       if (is_it_in_main) {
+        assert(nvp < nvpall);
         for (int j = 0; j < 3; j++)
           {
             parts[3*nvp+j] = xyz[j];
@@ -160,6 +166,7 @@ void BoxData::prepareBox(const PositionData& pdata, int *b_id, int *numdivs)
 
       if (is_it_in_buf && !is_it_in_main)
         {
+          assert(nvpbuf < nvpall);
           for (int j = 0; j < 3; j++)
             {
               parts[3*nvpbuf+j] = xyz[j];
@@ -173,7 +180,6 @@ void BoxData::prepareBox(const PositionData& pdata, int *b_id, int *numdivs)
     }
   cout << format("nvpbuf = %d") % nvpbuf << endl;
   cout << format("x: %f,%f; y: %f,%f; z:%f,%f\n") % xyz_min[0] % xyz_max[0] % xyz_min[1] % xyz_max[1] % xyz_min[2] % xyz_max[2] << endl;
-  nvpall = nvpbuf;
 
   double predict = 1;
   for (int j = 0; j < 3; j++)
@@ -188,6 +194,8 @@ void BoxData::addGuardPoints()
   int rot_si[3][3] = { {1, 0, 0}, {1,0,0}, {0,1,0} };
   int rot_sj[3][3] = { {0, 1, 0}, {0,0,1}, {0,0,1} };
 
+  pid_t nvpcur = nvpbuf;
+
   for (int k = 0; k < 3; k++)
     {
 
@@ -196,17 +204,19 @@ void BoxData::addGuardPoints()
         {
           for (int j=0; j <= NGUARD; j++)
             {
+              assert(nvpcur < nvpall);
               /* Bottom */
               for (int a = 0; a < 3; a++)
-                parts[3*nvpall+a] = -width2[a] + (realT)i * s[a] * rot_si[k][a] + (realT)j * s[a] * rot_sj[k][a] - rot_g[k][a] * g[a];
+                parts[3*nvpcur+a] = -width2[a] + (realT)i * s[a] * rot_si[k][a] + (realT)j * s[a] * rot_sj[k][a] - rot_g[k][a] * g[a];
 
-              nvpall++;
+              nvpcur++;
 
+              assert(nvpcur < nvpall);
               /* Top */
               for (int a = 0; a < 3; a++)
-                parts[3*nvpall+a] = (2*rot_g[k][a]-1)*width2[a] + (realT)i * s[a] * rot_si[k][a] + (realT)j * s[a] * rot_sj[k][a] + rot_g[k][a] * g[a];
+                parts[3*nvpcur+a] = (2*rot_g[k][a]-1)*width2[a] + (realT)i * s[a] * rot_si[k][a] + (realT)j * s[a] * rot_sj[k][a] + rot_g[k][a] * g[a];
 
-              nvpall++;
+              nvpcur++;
             }
         }
     }
@@ -218,15 +228,15 @@ void BoxData::findBoundary()
 
   for (int j = 0; j < 3; j++)
     {
-      xyz_min[j] = -BF;
-      xyz_max[j] = BF;
+      xyz_min[j] = BF;
+      xyz_max[j] = -BF;
     }
 
   for (pid_t i = nvpbuf; i < nvpall; i++) {
     for (int j = 0; j < 3; j++)
       {
         xyz_min[j] = std::min(xyz_min[j], parts[3*i+j]);
-        xyz_max[j] = std::min(xyz_max[j], parts[3*i+j]);
+        xyz_max[j] = std::max(xyz_max[j], parts[3*i+j]);
       }
   }
 }
@@ -271,7 +281,6 @@ int main(int argc, char *argv[]) {
   char *suffix, *outDir, *posfile;
   PARTADJ *adjs;
   float *vols;
-  pid_t *orig;
   double border, boxsize[3];
   int b[3], numdiv[3];
   double totalvol;
@@ -375,7 +384,7 @@ int main(int argc, char *argv[]) {
   /* Get the adjacencies back to their original values */
   for (pid_t i=0; i<boxdata.nvp; i++)
     for (int j=0; j < adjs[i].nadj; j++)
-      adjs[i].adj[j] = orig[adjs[i].adj[j]];
+      adjs[i].adj[j] = boxdata.orig[adjs[i].adj[j]];
 
   totalvol = 0.;
   for (pid_t i=0;i<boxdata.nvp; i++)
