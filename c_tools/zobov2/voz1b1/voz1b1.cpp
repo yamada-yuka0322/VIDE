@@ -26,6 +26,7 @@ bool checkParameters(int *numdiv, int *b)
   return true;
 }
 
+
 struct BoxData
 {
   float width[3], totwidth[3];
@@ -40,6 +41,8 @@ struct BoxData
   void prepareBox(const PositionData& pdata, int *b_id, int *numdivs);
 
   void checkParticle(double *xyz, bool& in_main, bool& in_buf);
+  void addGuardPoints();
+  void findBoundary();
 };
 
 void BoxData::checkParticle(double *xyz, bool& in_main, bool& in_buf)
@@ -189,9 +192,9 @@ void BoxData::addGuardPoints()
     {
 
       /* Add guard points */
-      for (i=0; i<=NGUARD; i++)
+      for (int i=0; i <= NGUARD; i++)
         {
-          for (j=0; j<=NGUARD; j++)
+          for (int j=0; j <= NGUARD; j++)
             {
               /* Bottom */
               for (int a = 0; a < 3; a++)
@@ -209,6 +212,52 @@ void BoxData::addGuardPoints()
     }
 }
 
+void BoxData::findBoundary()
+{
+  double BF = std::numeric_limits<double>::max();
+
+  for (int j = 0; j < 3; j++)
+    {
+      xyz_min[j] = -BF;
+      xyz_max[j] = BF;
+    }
+
+  for (pid_t i = nvpbuf; i < nvpall; i++) {
+    for (int j = 0; j < 3; j++)
+      {
+        xyz_min[j] = std::min(xyz_min[j], parts[3*i+j]);
+        xyz_max[j] = std::min(xyz_max[j], parts[3*i+j]);
+      }
+  }
+}
+
+void saveTesselation(const string& outfile, PositionData& pdata, BoxData& boxdata, PARTADJ *adjs, float *vols)
+{
+  ofstream out(outfile.c_str());
+  if (!out)
+    {
+      cout << format("Unable to open %s") % outfile << endl;
+      exit(0);
+    }
+  out.write((char *)&pdata.np, sizeof(pid_t));
+  out.write((char *)&boxdata.nvp, sizeof(pid_t));
+  cout << format("nvp = %d") % boxdata.nvp << endl;
+
+  /* Tell us where the original particles were */
+  out.write((char *)boxdata.orig, sizeof(pid_t)*boxdata.nvp);
+  /* Volumes*/
+  out.write((char *)vols,sizeof(float)*boxdata.nvp);
+  /* Adjacencies */
+  for (pid_t i = 0; i < boxdata.nvp; i++)
+    {
+      out.write((char*)&adjs[i].nadj, sizeof(pid_t));
+      if (adjs[i].nadj > 0)
+        out.write((char *)adjs[i].adj, adjs[i].nadj*sizeof(pid_t));
+      else
+        (cout << "0").flush();
+    }
+  out.close();
+}
 
 int main(int argc, char *argv[]) {
   PositionData pdata;
@@ -270,26 +319,18 @@ int main(int argc, char *argv[]) {
   else
     boxdata.bf = 0.1;
 
-  boxdata.prepareBox(pdata);
+  boxdata.prepareBox(pdata, b, numdiv);
   pdata.destroy();
   boxdata.addGuardPoints();
 
-  adjs = new PARTADJ[np];
+  adjs = new PARTADJ[boxdata.nvpall];
   if (adjs == 0)
     {
       cout << "Unable to allocate adjs" << endl;
       return 0;
     }
 
-  xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
-  for (i=nvpbuf;i<nvpall;i++) {
-    if (parts[3*i] < xmin) xmin = parts[3*i];
-    if (parts[3*i] > xmax) xmax = parts[3*i];
-    if (parts[3*i+1] < ymin) ymin = parts[3*i+1];
-    if (parts[3*i+1] > ymax) ymax = parts[3*i+1];
-    if (parts[3*i+2] < zmin) zmin = parts[3*i+2];
-    if (parts[3*i+2] > zmax) zmax = parts[3*i+2];
-  }
+  boxdata.findBoundary();
 
   cout << format("Added guard points to total %d points (should be %d)")
             % boxdata.nvpall % (boxdata.nvpbuf + 6*(NGUARD+1)*(NGUARD+1)) << endl;
@@ -297,7 +338,7 @@ int main(int argc, char *argv[]) {
 
   /* Do tesselation*/
   printf("File read.  Tessellating ...\n"); fflush(stdout);
-  exitcode = delaunadj(boxdata.parts, boxdata.nvp, boxdata.nvpbuf, boxdata.nvpall, &adjs);
+  int exitcode = delaunadj(boxdata.parts, boxdata.nvp, boxdata.nvpbuf, boxdata.nvpall, &adjs);
   if (exitcode != 0)
    {
      printf("Error while tesselating. Stopping here."); fflush(stdout);
@@ -306,9 +347,9 @@ int main(int argc, char *argv[]) {
 
   /* Now calculate volumes*/
   printf("Now finding volumes ...\n"); fflush(stdout);
-  vols = new float[nvp];
+  vols = new float[boxdata.nvp];
 
-  for (pid_t i = 0; i < nvp; i++)
+  for (pid_t i = 0; i < boxdata.nvp; i++)
     { /* Just the original particles
        * Assign adjacency coordinate array*/
       /* Volumes */
@@ -316,7 +357,7 @@ int main(int argc, char *argv[]) {
         {
           for (int d = 0; d < 3; d++)
             {
-              deladjs[3*j + d] = parts[3*adjs[i].adj[j]+d] - parts[3*i+d];
+              deladjs[3*j + d] = boxdata.parts[3*adjs[i].adj[j]+d] - boxdata.parts[3*i+d];
 
               if (deladjs[3*j+d] < -boxdata.width2[d])
                 deladjs[3*j+d] += boxdata.width[d];
@@ -326,51 +367,28 @@ int main(int argc, char *argv[]) {
         }
 
       exitcode = vorvol(deladjs, points, intpoints, adjs[i].nadj, &(vols[i]));
-      vols[i] *= np/V0;
+      vols[i] *= pdata.np/pdata.V0;
       if ((i % 1000) == 0)
         cout << format("%d: %d, %f") % i % adjs[i].nadj % vols[i] << endl;
     }
 
   /* Get the adjacencies back to their original values */
-  for (pid_t i=0; i<nvp; i++)
+  for (pid_t i=0; i<boxdata.nvp; i++)
     for (int j=0; j < adjs[i].nadj; j++)
       adjs[i].adj[j] = orig[adjs[i].adj[j]];
 
   totalvol = 0.;
-  for (pid_t i=0;i<nvp; i++)
+  for (pid_t i=0;i<boxdata.nvp; i++)
     totalvol += vols[i];
 
-  cout << format("Average volume = %g") % (totalvol/nvp) << endl;
+  cout << format("Average volume = %g") % (totalvol/boxdata.nvp) << endl;
 
   /* Now the output!
      First number of particles */
   outfile = str(format("%s/part.%s.%02d.%02d.%02d") % outDir % suffix % b[0] % b[1] % b[2]);
 
   cout << format("Output to %s") %outfile << endl << endl;
-  out.open(outfile.c_str());
-  if (!out)
-    {
-      cout << format("Unable to open %s") % outfile << endl;
-      return 0;
-    }
-  out.write((char *)&pdata.np, sizeof(pid_t));
-  out.write((char *)&boxdata.nvp, sizeof(pid_t));
-  cout << format("nvp = %d") % nvp << endl;
-
-  /* Tell us where the original particles were */
-  out.write((char *)boxdata.orig, sizeof(pid_t)*boxdata.nvp);
-  /* Volumes*/
-  out.write((char *)vols,sizeof(float)*nvp);
-  /* Adjacencies */
-  for (pid_t i = 0; i < nvp; i++)
-    {
-      out.write((char*)&adjs[i].nadj, sizeof(pid_t));
-      if (adjs[i].nadj > 0)
-        out.write((char *)adjs[i].adj, adjs[i].nadj*sizeof(pid_t));
-      else
-        (cout << "0").flush();
-    }
-  out.close();
+  saveTesselation(outfile, pdata, boxdata, adjs, vols);
   delete[] adjs;
 
   return(0);
