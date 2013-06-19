@@ -105,7 +105,7 @@ def getNickName(setName, sampleName):
     if "none" in splitName[2]:
       nickName += " All Halos"
     else:
-      nickName += " Halos > " + splitName[2].replace("min","")
+      nickName += " Halos > " + splitName[2].replace("min","").replace("+","")
     if "pv" in splitName[3]: 
       nickName += ", z = " + splitName[4].replace("z","") + " (w/ PV)"
     else:
@@ -539,9 +539,9 @@ if (args.script or args.all) and haloFileBase != "":
     if dataFormat == "sdf":
       SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
       if minHaloMass == "none":
-        command = "%s -a 200000 %s mass | wc" % (SDFcvt_PATH, dataFile)
+        command = "%s -a 200000 %s mass parent_id | awk '{if ($2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile)
       else:
-        command = "%s -a 200000 %s mass | awk '{if ($1>%g) print $1}' | wc" % (SDFcvt_PATH, dataFile, minHaloMass)
+        command = "%s -a 200000 %s mass parent_id | awk '{if ($1>%g && $2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile, minHaloMass)
       numPart = subprocess.check_output(command, shell=True)
       numPart = int(numPart.split()[0])
     else:
@@ -635,9 +635,9 @@ if (args.halos or args.all) and haloFileBase != "":
       if dataFormat == "sdf":
         SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
         if minHaloMass == "none":
-          command = "%s -a 200000 %s mass ident x y z vz vy vx | awk '{print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, outFileName )
+          command = "%s -a 200000 %s mass ident x y z vz vy vx parent_id | awk '{if ($9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, outFileName )
         else:
-          command = "%s -a 200000 %s mass ident x y z vz vy vx | awk '{if ($1>%g) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, minHaloMass, outFileName )
+          command = "%s -a 200000 %s mass ident x y z vz vy vx parent_id | awk '{if ($1>%g && $9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, minHaloMass, outFileName )
         os.system(command)
         outFile = open(outFileName, 'a')
         outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
@@ -730,7 +730,7 @@ if (args.script or args.all) and haloFileBase != "":
     numPart = 0
     if dataFormat == "sdf":
       SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
-      command = "%s -a 200000 %s mass | awk '{if ($1>%g) print $1}' | wc" % (SDFcvt_PATH, dataFile, thisHod['Mcut'])
+      command = "%s -a 200000 %s mass parent_id | awk '{if ($1>%g && $2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile, thisHod['Mcut'])
       numPart = subprocess.check_output(command, shell=True)
       numPart = int(numPart.split()[0])
     else:
@@ -771,7 +771,7 @@ if (args.hod or args.all) and haloFileBase != "":
       inFile = haloFile
       outFile = haloFile+"_temp"
       SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
-      command = "%s -a 200000 %s mass x y z vx vy vz>>%s" % (SDFcvt_PATH, inFile, outFile)
+      command = "%s -a 200000 %s mass x y z vx vy vz parent_id | awk '{if ($8 ==-1) print $1, $2, $3, $4, $5, $6, $7}'>>%s" % (SDFcvt_PATH, inFile, outFile)
       os.system(command)
       haloFile = outFile
 
