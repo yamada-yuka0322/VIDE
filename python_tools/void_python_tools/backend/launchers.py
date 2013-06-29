@@ -390,14 +390,14 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
            str(sampleName1)
     cmd += " --volFile1=" + sample1Dir+"/vol_" + \
            str(sampleName1)+".dat"
-    cmd += " --voidFile1=" + sample1Dir+"/trimmed_nodencut_voidDesc_" + \
+    cmd += " --voidFile1=" + sample1Dir+"/voidDesc_" + \
            thisDataPortion+"_"+str(sampleName1)+".out"
     cmd += " --infoFile1=" + sample1Dir+"/zobov_slice_" + \
            str(sampleName1)+".par"
     cmd += " --centerFile1=" + sample1Dir + \
-           "/trimmed_nodencut_barycenters_"+thisDataPortion+"_"+str(sampleName1)+".out"
+           "/barycenters_"+thisDataPortion+"_"+str(sampleName1)+".out"
     cmd += " --shapeFile1=" + sample1Dir + \
-           "/trimmed_nodencut_shapes_"+thisDataPortion+"_"+str(sampleName1)+".out"
+           "/shapes_"+thisDataPortion+"_"+str(sampleName1)+".out"
     cmd += " --zoneFile1=" + sample1Dir+"/voidZone_" + \
            str(sampleName1)+".dat"
     cmd += " --zonePartFile1=" + sample1Dir+"/voidPart_" + \
