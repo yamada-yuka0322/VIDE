@@ -1,10 +1,6 @@
 *~
 *.o
 *.prog
-voz1b1
-jozov
-vozinit
-voztie
 .mydepend
 ./pipeline/miscTools/*.out
 

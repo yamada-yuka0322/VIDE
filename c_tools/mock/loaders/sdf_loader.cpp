@@ -166,7 +166,7 @@ public:
       }
     if (load_flags & NEED_VELOCITY)
       {
-        const char *name_template[3] = { "x", "y", "z" };
+        const char *name_template[3] = { "vx", "vy", "vz" };
         for (int q = 0; q < 3; q++)
           {
             d->Vel[q] = new float[numPartToLoad];
