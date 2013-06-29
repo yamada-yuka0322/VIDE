@@ -797,7 +797,8 @@ if (args.hod or args.all) and haloFileBase != "":
                                      workDir=catalogDir))
       parFile.close()
 
-      tempFile = "./hod.out"
+      sampleName = getSampleName(prefix+"hod_"+thisHod['name'], redshift, False)
+      tempFile = "./hod.out_"+sampleName
       os.system(hodPath+" "+parFileName+">& " + tempFile)
       for line in open(tempFile):
         if "MLO" in line:
@@ -805,7 +806,6 @@ if (args.hod or args.all) and haloFileBase != "":
           break
       os.unlink(tempFile)
 
-      sampleName = getSampleName(prefix+"hod_"+thisHod['name'], redshift, False)
       outFileName = catalogDir+"/"+sampleName+".dat"
       os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
       os.system("rm %s/hod.*" % catalogDir)
