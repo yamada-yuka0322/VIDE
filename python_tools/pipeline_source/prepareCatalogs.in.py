@@ -553,7 +553,11 @@ if (args.script or args.all) and haloFileBase != "":
           numPart += 1
         inFile.close()
 
-    minRadius = int(np.ceil(lbox/numPart**(1./3.)))
+    meanDen = lbox/numPart**(1./3.)
+    if meanDen < 1: 
+      minRadius = 4
+    else:
+      minRadius = int(np.ceil(meanDen))
   
     if minHaloMass != "none": 
       strMinHaloMass = "%.2e" % minHaloMass
