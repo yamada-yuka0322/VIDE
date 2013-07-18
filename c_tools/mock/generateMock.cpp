@@ -141,7 +141,7 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
             expfact[i] = z / z_old; 
 	  // Add peculiar velocity
 	  if (pecvel)
-	    z += v/100;
+	    z += v/(100*e_computer(z0));
        }
       catch(const InvalidRangeException& e) {
        cout << "Trying to interpolate out of the tabulated range." << endl;
