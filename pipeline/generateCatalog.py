@@ -137,7 +137,8 @@ for sample in dataSampleList:
     PRUNE_PATH = CTOOLS_PATH+"/stacking/pruneVoids"
 
     launchPrune(sample, PRUNE_PATH, 
-                logFile=logFile, zobovDir=zobovDir, continueRun=continueRun)
+                logFile=logFile, zobovDir=zobovDir, 
+                useLCDM=useLCDM, continueRun=continueRun)
 
 # -------------------------------------------------------------------------
 if (startCatalogStage <= 4) and (endCatalogStage >= 4):

@@ -301,7 +301,7 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
 # -----------------------------------------------------------------------------
 def launchPrune(sample, binPath, 
                 summaryFile=None, logFile=None, zobovDir=None, 
-                continueRun=None):
+                continueRun=None, useLCDM=False):
 
   sampleName = sample.fullName
 
@@ -329,6 +329,11 @@ def launchPrune(sample, binPath,
 
   periodicLine = " --periodic='" + getPeriodic(sample) + "'"
 
+  if useLCDM:
+    useLCDMFlag = "--useLCDM"
+  else:
+    useLCDMFlag = ""
+
   if not (continueRun and (jobSuccessful(logFile, "NetCDF: Not a valid ID\n") \
           or jobSuccessful(logFile, "Done!\n"))):
     cmd = binPath
@@ -348,6 +353,7 @@ def launchPrune(sample, binPath,
     cmd += " --numVoids=" + str(numVoids)
     cmd += observationLine
     cmd += periodicLine
+    cmd += useLCDMFlag
     cmd += " --outputDir=" + zobovDir
     cmd += " --sampleName=" + str(sampleName)
     cmd += " &> " + logFile

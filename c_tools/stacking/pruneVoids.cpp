@@ -43,6 +43,8 @@
 #include "assert.h"
 #include "voidTree.hpp"
 #include "loadZobov.hpp"
+#include <gsl/gsl_integration.h>
+#include <gsl/gsl_interp.h>
 
 #define LIGHT_SPEED 299792.458
 #define MPC2Z 100./LIGHT_SPEED
@@ -81,6 +83,32 @@ typedef struct voidStruct {
   gsl_matrix *evec;
   float ellip;
 } VOID;
+
+// this defines the expansion function that we will integrate
+// Laveaux & Wandelt (2012) Eq. 24
+struct my_expan_params { double Om; double w0; double wa; };
+double expanFun (double z, void * p) {
+  struct my_expan_params * params = (struct my_expan_params *)p;
+  double Om = (params->Om);
+  double w0 = (params->w0);
+  double wa = (params->wa);
+
+  //const double h0 = 1.0;
+  const double h0 = 0.71;
+  double ez;
+
+  double wz = w0 + wa*z/(1+z);
+
+  ez = Om*pow(1+z,3) + (1.-Om);
+  //ez = Om*pow(1+z,3) + pow(h0,2) * (1.-Om)*pow(1+z,3+3*wz);
+
+  ez = sqrt(ez);
+  //ez = sqrt(ez)/h0;
+
+  ez = 1./ez;
+
+  return  ez;
+}
 
 void openFiles(string outputDir, string sampleName, 
                string prefix, string dataPortion, 
@@ -127,7 +155,34 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  int i, p, p2, numPartTot, numZonesTot, dummy, iVoid, iZ;
+  // initialize cosmology integrator and interpolator
+  gsl_function expanF;
+  expanF.function = &expanFun;
+  struct my_expan_params expanParams;
+  expanParams.Om = 0.27;
+  expanParams.w0 = -1.0;
+  expanParams.wa = 0.0;
+  expanF.params = &expanParams;
+  double result, error;
+  size_t nEval;
+
+  int iZ, numZ = 4000;
+  double maxZ = 2.0, z, *dL, *redshifts;
+  dL = (double *) malloc(numZ * sizeof(double));  
+  redshifts = (double *) malloc(numZ * sizeof(double));
+  for (iZ = 0; iZ < numZ; iZ++) {
+    z = iZ * maxZ/numZ;
+    gsl_integration_qng(&expanF, 0.0, z, 1.e-6, 1.e-6, &result, &error, &nEval);
+    dL[iZ] = result*LIGHT_SPEED/100.;
+    //printf("HERE %e %e\n", z, dL[iZ]);
+    redshifts[iZ] = z;
+  }
+  gsl_interp *interp = gsl_interp_alloc(gsl_interp_linear, 4000);
+  gsl_interp_init(interp, dL, redshifts, numZ);
+  gsl_interp_accel *acc = gsl_interp_accel_alloc();
+
+ 
+  int i, p, p2, numPartTot, numZonesTot, dummy, iVoid;
   int numVoids, mockIndex;
   double tolerance;
   FILE *fp;
@@ -541,11 +596,21 @@ int main(int argc, char **argv) {
                              pow(voids[iVoid].barycenter[1] - boxLen[1]/2.,2) + 
                              pow(voids[iVoid].barycenter[2] - boxLen[2]/2.,2));
       voids[iVoid].redshiftInMpc = voids[iVoid].redshiftInMpc;
-      redshift = voids[iVoid].redshiftInMpc;
-      nearestEdge = fabs(redshift-args.zMax_arg*LIGHT_SPEED/100.); 
+
+
+      if (args.useLCDM_flag) {
+        redshift = gsl_interp_eval(interp, dL, redshifts,
+                 voids[iVoid].redshiftInMpc, acc);
+        //printf("HELLO %e %e\n", redshift, args.zMax_arg);
+        nearestEdge = fabs((redshift-args.zMax_arg)*LIGHT_SPEED/100.); 
+        voids[iVoid].redshift = redshift;
+      } else {
+        redshift = voids[iVoid].redshiftInMpc;
+        nearestEdge = fabs(redshift-args.zMax_arg*LIGHT_SPEED/100.); 
+        voids[iVoid].redshift = voids[iVoid].redshiftInMpc/LIGHT_SPEED*100.;
+      }
       //nearestEdge = fmin(fabs(redshift-args.zMin_arg*LIGHT_SPEED/100.), 
       //                   fabs(redshift-args.zMax_arg*LIGHT_SPEED/100.)); 
-      voids[iVoid].redshift = voids[iVoid].redshiftInMpc/LIGHT_SPEED*100.;
 
     } else {
 
@@ -844,7 +909,7 @@ void openFiles(string outputDir, string sampleName,
   fprintf(*fpSkyPositions, "# RA, dec, redshift, radius (Mpc/h), void ID\n");
 
   *fpShapes = fopen((outputDir+"/"+prefix+"shapes_"+dataPortion+"_"+sampleName).c_str(), "w");
-  fprintf(*fpShapes, "# void ID, eig(1), eig(2), eig(3), eigv(1)-x, eiv(1)-y, eigv(1)-z, eigv(2)-x, eigv(2)-y, eigv(2)-z, eigv(3)-x, eigv(3)-y, eigv(3)-z\n");
+  fprintf(*fpShapes, "# void ID, ellip, eig(1), eig(2), eig(3), eigv(1)-x, eiv(1)-y, eigv(1)-z, eigv(2)-x, eigv(2)-y, eigv(2)-z, eigv(3)-x, eigv(3)-y, eigv(3)-z\n");
   
 } // end openFiles
 
