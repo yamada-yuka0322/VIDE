@@ -114,9 +114,10 @@ int main(int argc, char **argv) {
   float closestMatchDist;
   float commonVolRatio;
   MATCHPROPS newMatch;
-  int MAX_MATCHES = 100;
+  int MAX_MATCHES = 300;
   float matchDist = 0.25;
   bool alreadyMatched;
+  int clock1, clock2;
 
   CATALOG catalog1, catalog2;
 
@@ -168,6 +169,9 @@ int main(int argc, char **argv) {
   // find closest voids
   printf(" Finding nearest matches...\n");
   for (iVoid1 = 0; iVoid1 < catalog1.numVoids; iVoid1++) {
+    printf("  Matching for void %d of %d...", iVoid1, catalog1.numVoids);
+    fflush(stdout);
+    clock1 = clock();
     for (iVoid2 = 0; iVoid2 < catalog2.numVoids; iVoid2++) {
       rdist = getDist(catalog1, catalog2, iVoid1, iVoid2, 
                       periodicX, periodicY, periodicZ);
@@ -178,7 +182,7 @@ int main(int argc, char **argv) {
       newMatch.dist = rdist; 
 
       //if (rdist > 1.5) continue;
-      if (rdist/catalog1.voids[iVoid1].radius > 2.0) continue;
+      if (rdist/catalog1.voids[iVoid1].radius > 1.5) continue;
 
       // see if center is contained in void
       match = false;
@@ -203,7 +207,7 @@ int main(int argc, char **argv) {
 
           r1 = pow(3./4./M_PI*catalog1.part[partID1].volume / 
                    catalog1.numPartTot, 1./3.);
-          if (rdist <= matchDist*4*r1) {
+          if (rdist <= matchDist*8*r1) {
             match = true;
             break;
           }
@@ -229,6 +233,10 @@ int main(int argc, char **argv) {
        //   catalog1.voids[iVoid1].matches[farthestMatchID] = newMatch;
       //}
     }
+
+    clock2 = clock();
+    printf("Time: %f sec\n", (1.*clock2-clock1)/CLOCKS_PER_SEC);
+    clock1 = clock();
   } 
 
   // pick the closest matches to speed up computation
@@ -238,14 +246,15 @@ int main(int argc, char **argv) {
     
     if (numPotential > MAX_MATCHES) {
       sortMatches(catalog1.voids[iVoid1].matches, catalog2, 1);
+      catalog1.voids[iVoid1].matches.resize(MAX_MATCHES); 
     }
-
-    catalog1.voids[iVoid1].matches.resize(MAX_MATCHES); 
   }
 
   printf(" Determining overlap...\n");
   for (iVoid1 = 0; iVoid1 < catalog1.numVoids; iVoid1++) {
-    printf("  Working on void %d of %d...\n", iVoid1+1, catalog1.numVoids); 
+    printf("  Working on void %d of %d...", iVoid1+1, catalog1.numVoids); 
+    fflush(stdout);
+    clock1 = clock();
     voidID1 = catalog1.voids[iVoid1].voidID;
 
     for (iMatch = 0; iMatch < catalog1.voids[iVoid1].matches.size();iMatch++) {
@@ -325,6 +334,9 @@ int main(int argc, char **argv) {
         //catalog2.voids[matchID].vol;
     }
 //    sortMatches(catalog1.voids[iVoid1].matches, catalog2);
+    clock2 = clock();
+    printf("Time: %f sec\n", (1.*clock2-clock1)/CLOCKS_PER_SEC);
+    clock1 = clock();
 //printf("BEST VOL %e\n", catalog2.voids[catalog1.voids[iVoid1].matches[0].matchID].vol/catalog1.voids[iVoid1].vol);
   } // end match finding
 
