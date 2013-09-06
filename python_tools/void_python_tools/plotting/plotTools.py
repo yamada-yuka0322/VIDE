@@ -33,6 +33,9 @@ def plotRedshiftDistribution(workDir=None, sampleList=None, figDir=None,
                      plotNameBase="zdist", 
                      showPlot=False, dataPortion=None, setName=None):
 
+  plt.ioff()
+  maptplotlib.pyplot.switch_backed('Agg')
+
   plt.clf()
   plt.xlabel("Redshift")
   plt.ylabel("Number of Voids")
@@ -94,6 +97,10 @@ def plotRedshiftDistribution(workDir=None, sampleList=None, figDir=None,
 def plotSizeDistribution(workDir=None, sampleList=None, figDir=None, 
                      plotNameBase="sizedist", 
                      showPlot=False, dataPortion=None, setName=None):
+
+
+  plt.ioff()
+  maptplotlib.pyplot.switch_backed('Agg')
 
   plt.clf()
   plt.xlabel("Void Radius (Mpc/h)")
@@ -157,6 +164,10 @@ def plot1dProfiles(workDir=None, sampleList=None, figDir=None,
                    plotNameBase="1dprofile", 
                    showPlot=False, dataPortion=None, setName=None):
 
+
+  plt.ioff()
+  maptplotlib.pyplot.switch_backed('Agg')
+
   plt.clf()
   plt.xlabel(r"$R/R_{v,\mathrm{max}}$")
   plt.ylabel(r"$n / \bar n$")
@@ -208,6 +219,9 @@ def plotMarg1d(workDir=None, sampleList=None, figDir=None,
                plotNameBase="marg1d", 
                showPlot=False, dataPortion=None, setName=None):
 
+    plt.ioff()
+    maptplotlib.pyplot.switch_backed('Agg')
+
     plotNames = ("Om", "w0", "wa")
     plotTitles = ("$\Omega_M$", "$w_0$", "$w_a$")
     files = ("Om", "w0", "wa")
@@ -240,6 +254,9 @@ def plotMarg1d(workDir=None, sampleList=None, figDir=None,
 def plotNumberDistribution(workDir=None, sampleList=None, figDir=None, 
                      plotNameBase="numberdist", 
                      showPlot=False, dataPortion=None, setName=None):
+
+  plt.ioff()
+  maptplotlib.pyplot.switch_backed('Agg')
 
   plt.clf()
   plt.xlabel("Void Radius (Mpc/h)")
@@ -300,7 +317,8 @@ def plotVoidDistribution(workDir=None, sampleList=None, figDir=None,
                      plotNameBase="dv", 
                      showPlot=False, dataPortion=None, setName=None):
 
-  #plt.ioff()
+  plt.ioff()
+  maptplotlib.pyplot.switch_backed('Agg')
   Nmesh = 256
  
   for (iSample,sample) in enumerate(sampleList):
