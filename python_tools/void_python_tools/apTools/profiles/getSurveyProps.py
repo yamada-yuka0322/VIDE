@@ -20,16 +20,24 @@
 import numpy as np
 import healpy as healpy
 import scipy.integrate
+import void_python_tools as ct
 
 __all__=['getSurveyProps']
    
 # returns the volume and galaxy density for a given redshit slice
-def getSurveyProps(maskFile, zmin, zmax, selFunMin, selFunMax, portion, selectionFuncFile=None):
+def getSurveyProps(maskFile, zmin, zmax, selFunMin, selFunMax, portion, selectionFuncFile=None, useLCDM=False):
+
+  LIGHT_SPEED = 299792.458
 
   mask = healpy.read_map(maskFile)
   area = (1.*np.size(np.where(mask > 0)) / np.size(mask)) * 4.*np.pi
-  zmin = zmin * 3000
-  zmax = zmax * 3000
+
+  if useLCDM:
+    zmin = LIGHT_SPEED/100.*ct.angularDiameter(zmin, Om=0.27)
+    zmax = LIGHT_SPEED/100.*ct.angularDiameter(zmax, Om=0.27)
+  else:
+    zmin = zmin * 3000
+    zmax = zmax * 3000
   volume = area * (zmax**3  - zmin**3) / 3
 
   if selectionFuncFile != None:

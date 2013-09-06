@@ -330,7 +330,7 @@ def launchPrune(sample, binPath,
   periodicLine = " --periodic='" + getPeriodic(sample) + "'"
 
   if useLCDM:
-    useLCDMFlag = "--useLCDM"
+    useLCDMFlag = " --useLCDM"
   else:
     useLCDMFlag = ""
 
