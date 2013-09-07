@@ -2,6 +2,8 @@
 
 # plots cumulative distributions of number counts
 
+import matplotlib
+matplotlib.use('Agg')
 from void_python_tools.backend import *
 from void_python_tools.plotting import *
 import void_python_tools.apTools as vp
@@ -11,11 +13,12 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
+import svdw
+from scipy.optimize import curve_fit
+from scipy.interpolate import interp1d
+from globalOptions import *
 
 # ------------------------------------------------------------------------------
-
-obsFudgeFactor = 1.0 # what fraction of the volume are we *reall* capturing?
-#obsFudgeFactor = .66 # what fraction of the volume are we *reall* capturing?
 
 histBinWidth = 1 # Mpc
 
@@ -35,9 +38,20 @@ parser.add_argument('--xmin', dest='xmin', default=20.,
 args = parser.parse_args()
 
 # ------------------------------------------------------------------------------
+def svdwFunc(r, scaleFactor):
+  radius, cumu_ps = svdw.getSvdW(.01, 100, 100, scaleFactor=scaleFactor)
+  cumu_ps += 0.1
+  cumu_ps = np.log10(cumu_ps)
+  interped = interp1d(radius, cumu_ps)
+  interpVal = interped(r)
+  interpVal[interpVal<1.0] = 1.0
+  #print "HELLO", r, interpVal
+  return interpVal
+
+# ------------------------------------------------------------------------------
 
 
-def loadData(sampleDir, dataPortion):
+def loadData(sampleDir, dataPortion, treePortion='all'):
   with open(workDir+sampleDir+"/sample_info.dat", 'rb') as input:
     sample = pickle.load(input)
 
@@ -51,10 +65,18 @@ def loadData(sampleDir, dataPortion):
     print " Too few!"
     return -1, -1, -1
 
+  if treePortion == "parents":
+    filter = data[:,10] == -1
+    data = data[filter]
+  elif treePortion == "children":
+    filter = data[:,10] != -1
+    data = data[filter]
+
   data = data[:,4]
   indices = np.arange(0, len(data), 1)
   sorted = np.sort(data)
 
+ 
   if sample.dataType == "observation":
     boxVol = vp.getSurveyProps(sample.maskFile,
                                sample.zBoundary[0], sample.zBoundary[1],
@@ -90,7 +112,7 @@ def loadData(sampleDir, dataPortion):
 
   hist = np.log10(hist)
 
-  lineTitle = sample.nickName
+  lineTitle = sample.nickName[:-10]
 
   return hist, binCenters, lineTitle
 
@@ -122,16 +144,18 @@ if not os.access(figDir, os.F_OK):
   os.makedirs(figDir)
 
 plt.clf()
-plt.xlabel("Void Radius [Mpc/h]")
-plt.ylabel(r"log (N > R [$h^3$ Gpc$^{-3}$])")
+plt.xlabel(r"$R_{eff}$ [$h^{-1}$Mpc]", fontsize=14)
+plt.ylabel(r"log ($n$ > $R_{eff}$ [$h^3$ Gpc$^{-3}$])", fontsize=14)
 #plt.yscale('log')
-#plt.xlim(xmax=args.xmax)
-#plt.xlim(xmin=args.xmin)
-#plt.ylim(ymin=-1)
-#plt.ylim(ymax=6)
+plt.xlim(xmin=5.)
+plt.xlim(xmax=100.)
+plt.ylim(ymin=1)
+plt.ylim(ymax=5)
 
 plotNameBase = "numberfunc"
 plotName = plotNameBase + "_" + plotLabel
+
+sampleDirList.append(baseSampleDir)
 
 for (iSample,sampleDir) in enumerate(sampleDirList):
  for dataPortion in dataPortions:
@@ -145,7 +169,7 @@ for (iSample,sampleDir) in enumerate(sampleDirList):
       allHist.append(hist)
    
     lineLabel = lineTitle.replace(fileZ, "all")
-    lineLabel += ", " + dataPortion
+    if dataPortion != 'all': lineLabel += ", " + dataPortion
     
     maxHist = 1.*allHist[-1]
     minHist = 1.*allHist[-1]
@@ -170,23 +194,87 @@ for (iSample,sampleDir) in enumerate(sampleDirList):
 
   else:
 
-    hist, binCenters, lineLabel = loadData(sampleDir, dataPortion)
-    trim = (hist > 1) 
-    hist = hist[trim]
-    binCentersToUse = binCenters[trim]
-    if lineLabel == -1: continue
-    lineLabel += ", " + dataPortion
-    if dataPortion == "central":
-      lineStyle = '--'
-    else:
-      lineStyle = '-'
-    plt.plot(binCentersToUse, hist, lineStyle,
-              label=lineLabel, color=colorList[iSample],
-              linewidth=linewidth)
-    
+    #treeList = ["children", "parents", "all"]
+    treeList = ["all"]
+    for (iTree,treeItem) in enumerate(treeList):
+      hist, binCenters, lineLabel = loadData(sampleDir, dataPortion, treePortion=treeItem)
+      trim = (hist > 1) 
+      hist = hist[trim]
+      binCentersToUse = binCenters[trim]
+      if lineLabel == -1: continue
+      if dataPortion != 'all': lineLabel += ", " + dataPortion
 
-plt.legend(title = "Samples", loc = "upper right", prop={'size':8})
-plt.title("Number func - "+plotTitle)
+      if treeItem != "all": lineLabel += ", " + treeItem
+      iColor = iSample + iTree
+
+      if dataPortion == "central":
+        lineStyle = '--'
+      else:
+        lineStyle = '-'
+
+      if "DM" in lineLabel: lineColor = colorList[0]
+      if "Halos" in lineLabel: lineColor = colorList[1]
+      if "HOD" in lineLabel: lineColor = colorList[2]
+
+      if "FullDen" in lineLabel:  
+        lineColor = colorList[4]
+        lineStyle = '-'
+        linewidth = 5
+   
+      if "HighDen" in lineLabel or "HighRes" in lineLabel or \
+         "All" in lineLabel: 
+        lineStyle = "-"
+        linewidth = 5
+      if "LowDen" in lineLabel or "LowRes" in lineLabel or \
+         "1.20" in lineLabel: 
+          lineStyle = "--"
+          linewidth = 5
+     
+      plt.plot(binCentersToUse, hist, lineStyle,
+                label=lineLabel, color=lineColor,
+                linewidth=linewidth)
+
+      #if doTheory and "LowRes" in sampleDir:
+      #  popt, pcov = curve_fit(svdwFunc, binCentersToUse, hist, p0=25.)
+      #  radius, cumu_ps = svdw.getSvdW(.01, 100, 100, scaleFactor=popt[0])
+      #  cumu_ps = np.log10(cumu_ps)
+      #  print "HELLO", binCentersToUse, hist, cumu_ps
+      #  plt.plot(radius, cumu_ps, color='black', label="SVdW/%g" % popt[0])
+
+# and now the theoretical curve
+if doTheory:
+  #radius, cumu_ps = svdw.getSvdW(.01, 100, 100)
+  #cumu_ps = np.log10(cumu_ps)
+  #plt.plot(radius, cumu_ps, color='black', label="SVdW" )
+
+  iLine = 0
+  scaleFactorList = []
+  #scaleFactorList = [10, 5]
+  for scaleFactor in scaleFactorList:
+    #radius, cumu_ps = svdw.getSvdW(.01, 100, 100, scaleFactor=scaleFactor)
+    #cumu_ps = np.log10(cumu_ps)
+    #plt.plot(radius, cumu_ps, lineList[iLine], color='black', label="SVdW/%g" % scaleFactor)
+    iLine += 1
+ 
+  dvList = [-.07]
+  iLine = 0
+  for dv in dvList:
+    radius, cumu_ps = svdw.getSvdW(.01, 100, 1000, d_v=dv)
+    cumu_ps = np.log10(cumu_ps)
+    plt.plot(radius, cumu_ps, lineList[iLine], color='black', label=r"SVdW $\delta_v$=%g" % dv, linewidth=3)
+    iLine += 1
+   
+  dvList = [-.015]
+  for dv in dvList:
+    radius, cumu_ps = svdw.getSvdW(.01, 100, 1000, d_v=dv)
+    #radius, cumu_ps = svdw.getSvdW(.01, 100, 100, d_v=dv)
+    cumu_ps = np.log10(cumu_ps)
+    plt.plot(radius, cumu_ps, lineList[iLine], color='black', label="SVdW $\delta_v$=%g" % dv, linewidth=3)
+    iLine += 1
+
+plt.legend(loc = "best", fancybox=True, prop={'size':12})
+#plt.legend(title = "Samples", loc = "upper right", prop={'size':8})
+#plt.title("Number func - "+plotTitle)
 
 plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
 plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
