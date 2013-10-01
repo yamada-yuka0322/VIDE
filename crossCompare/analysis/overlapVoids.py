@@ -50,6 +50,9 @@ globals().update(vars(parms))
 if not os.access(outputDir, os.F_OK):
   os.makedirs(outputDir)
 
+if not os.access(logDir, os.F_OK):
+  os.makedirs(logDir)
+
 outFileName = outputDir + "/" + "voidOverlap" #+ ".dat"
 
 with open(workDir+baseSampleDir+"/sample_info.dat", 'rb') as input:
