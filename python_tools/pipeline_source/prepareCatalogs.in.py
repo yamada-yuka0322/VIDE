@@ -551,7 +551,7 @@ if (args.script or args.all) and haloFileBase != "":
         line = line.split(haloFileColSep)
         if minHaloMass == "none" or float(line[haloFileMCol]) > minHaloMass:
           numPart += 1
-        inFile.close()
+      inFile.close()
 
     meanDen = lbox/numPart**(1./3.)
     if meanDen < 1: 
@@ -731,8 +731,8 @@ if (args.script or args.all) and haloFileBase != "":
     else:
       dataFile = catalogDir+haloFileBase.replace(haloFileDummy,
                                                  fileNums[0])
-    numPart = 0
     if dataFormat == "sdf":
+      numPart = 0
       SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
       command = "%s -a 200000 %s mass parent_id | awk '{if ($1>%g && $2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile, thisHod['Mcut'])
       numPart = subprocess.check_output(command, shell=True)
@@ -743,9 +743,9 @@ if (args.script or args.all) and haloFileBase != "":
         if iHalo < haloFileNumComLines: continue
         line = line.split(haloFileColSep)
         if float(line[haloFileMCol]) > thisHod['Mcut']: numPart += 1
-        inFile.close()
+      inFile.close()
 
-    minRadius = int(np.ceil(lbox/numPart**(1./3.)))
+    minRadius = int(np.ceil(float(lbox)/numPart**(1./3.)))
 
     setName = prefix+"hod_"+thisHod['name']
     writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
