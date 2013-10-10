@@ -14,6 +14,8 @@ option "void2Zone" - "Zone file from ZOBOV" string required
 
 option "partVol" - "Particle volume file from ZOBOV" string required
 
+option "partAdj" - "Adjacency file from ZOBOV" string required
+
 option "zone2Part" - "Particle file from ZOBOV" string required
 option "mockIndex" - "Beginning index of mock particles" int required
 

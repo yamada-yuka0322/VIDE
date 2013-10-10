@@ -57,6 +57,8 @@ using namespace std;
 
 typedef struct partStruct {
   float x, y, z, vol;
+  int nadj, ncnt;
+  int *adj;
 } PART;
 
 typedef struct zoneStruct {
@@ -71,8 +73,10 @@ typedef struct voidZoneStruct {
 
 typedef struct voidStruct {
   float vol, coreDens, zoneVol, densCon, voidProb, radius;
+  float rescaledCoreDens;
   int voidID, numPart, numZones, coreParticle, zoneNumPart;
   float maxRadius, nearestMock, centralDen, redshift, redshiftInMpc;
+  float nearestMockFromCore, nearestGalFromCore;
   float nearestEdge;
   float center[3], barycenter[3];
   int accepted;
@@ -393,7 +397,56 @@ int main(int argc, char **argv) {
     part[p].vol = temp[0];
   }
   fclose(fp);
-  free(temp);
+
+// GUILHEM LOOK HERE
+  // and finally finally adjacencies
+  printf(" Loading particle adjacencies...\n");
+  fp = fopen(args.partAdj_arg, "r");
+  fread(&mask_index, 1, 4, fp);
+  if (mask_index != mockIndex) {
+    printf("NON-MATCHING MOCK INDICES!? %d %d\n", mask_index, mockIndex);
+    exit(-1);
+  } 
+  int tempInt;
+  for (p = 0; p < mask_index; p++) {
+    fread(&tempInt, 1, 4, fp);
+    part[p].nadj = tempInt;
+    part[p].ncnt = 0;
+    if (part[p].nadj > 0)
+      part[p].adj = (int *) malloc(part[p].nadj * sizeof(int));
+  }
+  for (p = 0; p < mask_index; p++) {
+    fread(&tempInt, 1, 4, fp);
+    int nin = tempInt;
+    if (nin > 0) {
+      for (int nAdj = 0; nAdj < nin; nAdj++) {
+        int tempAdj;
+        fread(&tempAdj, 1, 4, fp);
+
+        // this bit has been readjusted just in case we are 
+        //   accidentally still linking to mock particles
+
+        //if (tempAdj < mask_index) {
+          assert(p < tempAdj);
+          //if (part[p].ncnt == part[p].nadj) {
+          //  printf("OVERFLOW %d\n", p);
+          //} else if (part[tempAdj].ncnt == part[tempAdj].nadj) {
+          //  printf("OVERFLOW %d\n", tempAdj);
+          //} else {
+            part[p].adj[part[p].ncnt] = tempAdj;
+            part[p].ncnt++;
+          if (tempAdj < mask_index) {
+            part[tempAdj].adj[part[tempAdj].ncnt] = p;
+            part[tempAdj].ncnt++;
+          }
+          //}
+        //} 
+      }
+//printf("ADJ %d %d %d %d %d\n", p, nin, part[p].nadj, nAdj, tempInt);
+    }
+  }
+// END GUILHEM LOOK HERE
+  fclose(fp);
 
   // load voids *again* using Guilhem's code so we can get tree
   if (!args.isObservation_flag) {
@@ -466,6 +519,19 @@ int main(int argc, char **argv) {
         voidPart[i].z = part[partID].z;
         voidPart[i].vol = part[partID].vol;
 
+// GUILHEM LOOK HERE
+        // testing for edge contamination
+        if (part[partID].vol < 1.e-27)  {
+           printf("CONTAMINATED!! %d %d\n", iVoid, partID);
+        } else {
+           //printf("NORMAL!! %d %d %e\n", iVoid, partID, part[partID].vol);
+        }
+        for (int iAdj = 0; iAdj < part[partID].ncnt; iAdj++) {
+          if (part[partID].adj[iAdj] > mockIndex) {
+            printf("CONTAMINATED!! %d %d %d\n", iVoid, partID, iAdj);
+          } 
+        }
+// END GUILHEM LOOK HERE
         i++;
       }
     }
@@ -537,6 +603,32 @@ int main(int argc, char **argv) {
     }
     voids[iVoid].centralDen = numCentral / (volNorm*4./3. * M_PI * 
                                             pow(centralRad, 3.));
+
+    coreParticle = voids[iVoid].coreParticle;
+    voids[iVoid].rescaledCoreDens = 1./part[coreParticle].vol*volNorm;
+      // compute distance from core to nearest mock
+      minDist = 1.e99;
+      for (p = mockIndex; p < numPartTot; p++) {
+        dist[0] = part[coreParticle].x - part[p].x;
+        dist[1] = part[coreParticle].y - part[p].y;
+        dist[2] = part[coreParticle].z - part[p].z;
+
+        dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
+        if (dist2 < minDist) minDist = dist2;
+      }
+      voids[iVoid].nearestMockFromCore = sqrt(minDist);
+ 
+      // compute distance from core to nearest mock
+      minDist = 1.e99;
+      for (p = 0; p < mockIndex; p++) {
+        dist[0] = part[coreParticle].x - part[p].x;
+        dist[1] = part[coreParticle].y - part[p].y;
+        dist[2] = part[coreParticle].z - part[p].z;
+
+        dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
+        if (dist2 < minDist && dist2 > 1.e-10) minDist = dist2;
+      }
+      voids[iVoid].nearestGalFromCore = sqrt(minDist);
 
     // compute maximum extent
 /*
@@ -994,9 +1086,13 @@ void outputVoids(string outputDir, string sampleName, string prefix,
              outVoid.barycenter[1],
              outVoid.barycenter[2]);
 
-     fprintf(fpDistances, "%d %e\n", 
+     fprintf(fpDistances, "%d %e %e %e %e %e\n", 
              outVoid.voidID, 
-             outVoid.nearestMock);
+             outVoid.nearestMock,
+             outVoid.radius,
+             outVoid.rescaledCoreDens,
+             outVoid.nearestMockFromCore,
+             outVoid.nearestGalFromCore);
 
        fprintf(fpCenters, "%.2f %.2f %.2f %.2f %.2f %.5f %.2f %d %f %d %d %d %d %.2f\n",
              outCenter[0],

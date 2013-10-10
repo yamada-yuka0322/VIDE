@@ -342,6 +342,7 @@ def launchPrune(sample, binPath,
     cmd += " --void2Zone="+zobovDir+"/voidZone_"+str(sampleName)+".dat"
     cmd += " --zone2Part=" + zobovDir+"/voidPart_"+str(sampleName)+".dat"
     cmd += " --partVol=" + zobovDir+"/vol_"+str(sampleName)+".dat"
+    cmd += " --partAdj=" + zobovDir+"/adj_"+str(sampleName)+".dat"
     cmd += " --extraInfo=" + zobovDir+"/zobov_slice_"+str(sampleName)+\
            ".par"
     cmd += " --tolerance=1.0"
