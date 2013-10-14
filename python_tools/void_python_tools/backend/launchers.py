@@ -234,6 +234,41 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     if os.access(parmFile, os.F_OK):
       os.unlink(parmFile)
 
+    if os.access("mask_index.txt", os.F_OK):
+      os.system("mv %s %s" % ("mask_index.txt", zobovDir))
+      os.system("mv %s %s" % ("total_particles.txt", zobovDir))
+      #os.system("mv %s %s" % ("sample_info.txt", zobovDir))
+
+  # add to sample info file
+  if sample.dataType == "observation":
+    (boxVol, nbar) = vp.getSurveyProps(sample.maskFile, sample.zRange[0],
+     sample.zRange[1], sample.zRange[0], sample.zRange[1], "all", 
+     useLCDM=useLCDM)
+  else:
+    iX = float(sample.mySubvolume[0])
+    iY = float(sample.mySubvolume[1])
+    xMin = iX/sample.numSubvolumes * sample.boxLen
+    yMin = iY/sample.numSubvolumes * sample.boxLen
+    xMax = (iX+1)/sample.numSubvolumes * sample.boxLen
+    yMax = (iY+1)/sample.numSubvolumes * sample.boxLen
+    zMin = sample.zBoundaryMpc[0]
+    zMax = sample.zBoundaryMpc[1]
+
+    boxVol = (xMax-xMin)*(yMax-yMin)*(zMax-zMin)
+
+  numTracers = int(open(zobovDir+"/mask_index.txt", "r").read())
+  numTotal = int(open(zobovDir+"/total_particles.txt", "r").read())
+ 
+  meanSep = (1.*numTracers/boxVol)**(-1/3.) 
+
+  fp = open(zobovDir+"/sample_info.txt", 'a')
+  fp.write("Estimated volume (cubic Mpc/h): %g\n" % boxVol)
+  fp.write("Number of real (non-boundary) tracers: %d\n" % numTracers)
+  fp.write("Total number of tracers: %d\n" % numTotal)
+  fp.write("Estimated mean tracer separation (Mpc/h): %g\n" % meanSep)
+  fp.write("Minimum void size actually used (Mpc/h): %g\n" % sample.minVoidRadius)
+  fp.close()
+  
 # -----------------------------------------------------------------------------
 def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
                  numZobovDivisions=None, numZobovThreads=None):

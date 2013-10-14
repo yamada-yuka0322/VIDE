@@ -354,6 +354,18 @@ void createBox(SimuData *simu, vector<long>& targets, vector<long>& snapshot_spl
   cout << "Number of accepted particles: " << boxed->NumPart << endl; 
   cout << "Rescaling factors = " << mul[0] << " " << mul[1] << " " << mul[2] << endl;
 
+  // PMS
+  FILE *fp = fopen("mask_index.txt", "w");
+  fprintf(fp, "%d", boxed->NumPart);
+  fclose(fp);
+
+  fp = fopen("total_particles.txt", "w");
+  fprintf(fp, "%d", boxed->NumPart);
+  fclose(fp);
+  printf("Done!\n");
+  // END PMS
+
+
   long *uniqueID = new long[boxed->NumPart];
   long *particle_id = new long[boxed->NumPart];
   double *expansion_fac = new double[boxed->NumPart];

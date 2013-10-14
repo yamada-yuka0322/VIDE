@@ -27,6 +27,7 @@ from void_python_tools.backend import *
 from void_python_tools.plotting import *
 import imp
 import pickle
+import void_python_tools.apTools as vp
 
 # ------------------------------------------------------------------------------
 
@@ -85,7 +86,8 @@ for sample in dataSampleList:
   fp.write("Sample nickname: %s\n" % sample.nickName)
   fp.write("Data type: %s\n" % sample.dataType)
   fp.write("Redshift range: %f - %f\n" %(sample.zBoundary[0],sample.zBoundary[1]))
-  fp.write("Estimated mean particle separation: %g\n" % sample.minVoidRadius)
+
+  #fp.write("Estimated mean particle separation: %g\n" % sample.minVoidRadius)
 
   if (sample.dataType == "simulation"):
     fp.write("Particles placed on lightcone: %g\n" % sample.useLightCone)
