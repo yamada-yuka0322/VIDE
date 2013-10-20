@@ -398,7 +398,7 @@ int main(int argc, char **argv) {
   }
   fclose(fp);
 
-// GUILHEM LOOK HERE
+/*
   // and finally finally adjacencies
   printf(" Loading particle adjacencies...\n");
   fp = fopen(args.partAdj_arg, "r");
@@ -445,8 +445,8 @@ int main(int argc, char **argv) {
 //printf("ADJ %d %d %d %d %d\n", p, nin, part[p].nadj, nAdj, tempInt);
     }
   }
-// END GUILHEM LOOK HERE
   fclose(fp);
+*/
 
   // load voids *again* using Guilhem's code so we can get tree
   if (!args.isObservation_flag) {
@@ -519,7 +519,7 @@ int main(int argc, char **argv) {
         voidPart[i].z = part[partID].z;
         voidPart[i].vol = part[partID].vol;
 
-// GUILHEM LOOK HERE
+/*
         // testing for edge contamination
         if (part[partID].vol < 1.e-27)  {
            printf("CONTAMINATED!! %d %d\n", iVoid, partID);
@@ -531,7 +531,7 @@ int main(int argc, char **argv) {
             printf("CONTAMINATED!! %d %d %d\n", iVoid, partID, iAdj);
           } 
         }
-// END GUILHEM LOOK HERE
+*/
         i++;
       }
     }
@@ -605,7 +605,9 @@ int main(int argc, char **argv) {
                                             pow(centralRad, 3.));
 
     coreParticle = voids[iVoid].coreParticle;
-    voids[iVoid].rescaledCoreDens = 1./part[coreParticle].vol*volNorm;
+    voids[iVoid].rescaledCoreDens = voids[iVoid].coreDens*(pow(1.*mockIndex/numPartTot,3));
+    //voids[iVoid].rescaledCoreDens = part[coreParticle].vol;///(numPartTot/boxLen[0]/boxLen[1]/boxLen[2]);
+    //voids[iVoid].rescaledCoreDens = 1./part[coreParticle].vol*volNorm;
       // compute distance from core to nearest mock
       minDist = 1.e99;
       for (p = mockIndex; p < numPartTot; p++) {
