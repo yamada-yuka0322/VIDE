@@ -205,7 +205,8 @@ int main(int argc, char **argv) {
   int mask_index;
   double ranges[3][2], boxLen[3], mul; 
   double volNorm, radius;
-  int clock1, clock2;
+  int clock1, clock2, clock3, clock4;
+  double interval;
   int periodicX=0, periodicY=0, periodicZ=0;
   string dataPortions[2];
 
@@ -262,6 +263,7 @@ int main(int argc, char **argv) {
   boxLen[2] = ranges[2][1] - ranges[2][0];
  
   // read in all particle positions
+  clock3 = clock();
   printf("\n Loading particles...\n");
   fp = fopen(args.partFile_arg, "r");
   fread(&dummy, 1, 4, fp); 
@@ -303,11 +305,15 @@ int main(int argc, char **argv) {
   }
   fclose(fp); 
 
-  printf(" Read %d particles...\n", numPartTot);
+  clock4 = clock();
+  interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
+  printf(" Read %d particles (%.2f sec)...\n", numPartTot, interval);
+  
 
   if (mockIndex == -1) mockIndex = numPartTot;
   
   // read in desired voids
+  clock3 = clock();
   printf(" Loading voids...\n");
   fp = fopen(args.voidDesc_arg ,"r");
   fgets(line, sizeof(line), fp);
@@ -448,7 +454,12 @@ int main(int argc, char **argv) {
   fclose(fp);
 */
 
+  clock4 = clock();
+  interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
+  printf(" Read voids (%.2f sec)...\n", interval);
+
   // load voids *again* using Guilhem's code so we can get tree
+  clock3 = clock();
   if (!args.isObservation_flag) {
     printf(" Re-loading voids and building tree..\n");
     ZobovRep zobovCat;
@@ -478,6 +489,9 @@ int main(int argc, char **argv) {
       voids[iVoid].level = level;
     }
   } // end re-load
+  clock4 = clock();
+  interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
+  printf(" Re-read voids (%.2f sec)...\n", interval);
 
   // check boundaries
   printf(" Computing void properties...\n");
@@ -501,6 +515,7 @@ int main(int argc, char **argv) {
     voids[iVoid].center[2] = part[voids[iVoid].coreParticle].z;
  
     // first load up particles into a buffer 
+    clock3 = clock();
     i = 0;
     for (iZ = 0; iZ < void2Zones[voidID].numZones; iZ++) {
       zoneID = void2Zones[voidID].zoneIDs[iZ];
@@ -536,7 +551,12 @@ int main(int argc, char **argv) {
       }
     }
 
+    clock4 = clock();
+    interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
+    //printf("   %.2f for buffer\n", interval);
+
     // compute barycenters
+    clock3 = clock();
     double weight = 0.;
     voids[iVoid].barycenter[0] = 0.;
     voids[iVoid].barycenter[1] = 0.;
@@ -584,8 +604,12 @@ int main(int argc, char **argv) {
       if (voids[iVoid].barycenter[2] < 0)
         voids[iVoid].barycenter[2] = boxLen[2] + voids[iVoid].barycenter[2];
     }
+    clock4 = clock();
+    interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
+    //printf("   %.2f for barycenter\n", interval);
 
     // compute central density
+    clock3 = clock();
     centralRad = voids[iVoid].radius/args.centralRadFrac_arg;
     centralDen = 0.;
     int numCentral = 0;
@@ -604,33 +628,35 @@ int main(int argc, char **argv) {
     voids[iVoid].centralDen = numCentral / (volNorm*4./3. * M_PI * 
                                             pow(centralRad, 3.));
 
-    coreParticle = voids[iVoid].coreParticle;
-    voids[iVoid].rescaledCoreDens = voids[iVoid].coreDens*(pow(1.*mockIndex/numPartTot,3));
-    //voids[iVoid].rescaledCoreDens = part[coreParticle].vol;///(numPartTot/boxLen[0]/boxLen[1]/boxLen[2]);
-    //voids[iVoid].rescaledCoreDens = 1./part[coreParticle].vol*volNorm;
-      // compute distance from core to nearest mock
-      minDist = 1.e99;
-      for (p = mockIndex; p < numPartTot; p++) {
-        dist[0] = part[coreParticle].x - part[p].x;
-        dist[1] = part[coreParticle].y - part[p].y;
-        dist[2] = part[coreParticle].z - part[p].z;
+    clock4 = clock();
+    interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
+    //printf("   %.2f for central density\n", interval);
 
-        dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
-        if (dist2 < minDist) minDist = dist2;
-      }
-      voids[iVoid].nearestMockFromCore = sqrt(minDist);
- 
-      // compute distance from core to nearest mock
-      minDist = 1.e99;
-      for (p = 0; p < mockIndex; p++) {
-        dist[0] = part[coreParticle].x - part[p].x;
-        dist[1] = part[coreParticle].y - part[p].y;
-        dist[2] = part[coreParticle].z - part[p].z;
-
-        dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
-        if (dist2 < minDist && dist2 > 1.e-10) minDist = dist2;
-      }
-      voids[iVoid].nearestGalFromCore = sqrt(minDist);
+    //coreParticle = voids[iVoid].coreParticle;
+    //voids[iVoid].rescaledCoreDens = voids[iVoid].coreDens*(pow(1.*mockIndex/numPartTot,3));
+    //  // compute distance from core to nearest mock
+    //  minDist = 1.e99;
+    //  for (p = mockIndex; p < numPartTot; p++) {
+    //    dist[0] = part[coreParticle].x - part[p].x;
+    //    dist[1] = part[coreParticle].y - part[p].y;
+    //    dist[2] = part[coreParticle].z - part[p].z;
+    //
+    //    dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
+    //    if (dist2 < minDist) minDist = dist2;
+    //  }
+    //  voids[iVoid].nearestMockFromCore = sqrt(minDist);
+    // 
+    //  // compute distance from core to nearest mock
+    //  minDist = 1.e99;
+    //  for (p = 0; p < mockIndex; p++) {
+    //    dist[0] = part[coreParticle].x - part[p].x;
+    //    dist[1] = part[coreParticle].y - part[p].y;
+    //    dist[2] = part[coreParticle].z - part[p].z;
+    //
+    //    dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
+    //    if (dist2 < minDist && dist2 > 1.e-10) minDist = dist2;
+    //  }
+    //  voids[iVoid].nearestGalFromCore = sqrt(minDist);
 
     // compute maximum extent
 /*
@@ -650,6 +676,8 @@ int main(int argc, char **argv) {
       voids[iVoid].maxRadius = sqrt(maxDist)/2.;
     } else {
 */
+
+      clock3 = clock();
       maxDist = 0.;
       for (p = 0; p < voids[iVoid].numPart; p++) {
   
@@ -665,8 +693,12 @@ int main(int argc, char **argv) {
         if (dist2 > maxDist) maxDist = dist2;
       }
       voids[iVoid].maxRadius = sqrt(maxDist);
+      clock4 = clock();
+      interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
+      //printf("   %.2f for maximum extent\n", interval);
 //    }
-    
+   
+    clock3 = clock(); 
     if (args.isObservation_flag) {
       // compute distance from center to nearest mock
       minDist = 1.e99;
@@ -735,7 +767,12 @@ int main(int argc, char **argv) {
 
     voids[iVoid].nearestEdge = nearestEdge;
 
+    clock4 = clock();
+    interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
+    //printf("   %.2f for nearest edge\n", interval);
+
     // compute eigenvalues and vectors for orientation and shape
+    clock3 = clock();
     double inertia[9];
     for (int i = 0; i < 9; i++) inertia[i] = 0.;
 
@@ -797,6 +834,9 @@ int main(int argc, char **argv) {
     //if (a >= c) ca = (c*c)/(a*a);
     //voids[iVoid].ellip = sqrt(fabs(1.0 - ca));
 
+    clock4 = clock();
+    interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
+    //printf("   %.2f for ellipticity\n", interval);
   } // iVoid
 
   gsl_eigen_symmv_free(eigw);
