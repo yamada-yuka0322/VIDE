@@ -58,7 +58,7 @@ class Sample:
   dataType = "observation"
   dataFormat = "sdss"
   dataFile = "lss.dr72dim.dat"
-  dataUNit = 1
+  dataUnit = 1
   fullName = "lss.dr72dim.dat"
   nickName = "dim"
   zobovDir = ""
@@ -72,11 +72,13 @@ class Sample:
   minVoidRadius = 5
   fakeDensity = 0.01
   profileBinSize = 2 # Mpc
+  autoNumInStack = -1 # set to >0 to automatically generate stacks of size N
   volumeLimited = True
   includeInHubble = True
   partOfCombo  = False
   isCombo = False
   useLCDM = False # if True, convert population to comoving coordinates
+  
   comboList = []
 
   # applies to simulations only
@@ -99,7 +101,7 @@ class Sample:
                numSubvolumes=1, mySubvolume=1, dataFormat="sdss",
                useLCDM=False,
                dataType="observation",
-               subsample=1.0, useLightCone=True):
+               subsample=1.0, useLightCone=True, autoNumInStack=-1):
     self.dataFile = dataFile
     self.fullName = fullName
     self.nickName = nickName
@@ -129,6 +131,7 @@ class Sample:
     self.useLightCone = useLightCone
     self.dataUnit = dataUnit
     self.useLCDM = useLCDM
+    self.autoNumInStack = autoNumInStack
 
     self.stacks = []
 
