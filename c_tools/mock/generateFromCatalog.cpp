@@ -369,7 +369,7 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
   fp = fopen("mock_sphere.txt", "w");
 
   for (int q = 0; q < 0; q++) {
-    //for (int p = 0; p < full_mask_list.size(); p++) {
+  //for (int q = 0; q < full_mask_list.size(); q++) {
     vec3 v = mask.pix2vec(full_mask_list[q]);
 	  
     Position p;
