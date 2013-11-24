@@ -455,8 +455,8 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
            str(sampleName2)+".par"
     cmd += " --centerFile2=" + sample2Dir + \
            "/trimmed_nodencut_barycenters_"+thisDataPortion+"_"+str(sampleName2)+".out"
-    cmd += " --shapeFile2=" + sample1Dir + \
-           "/trimmed_nodencut_shapes_"+thisDataPortion+"_"+str(sampleName1)+".out"
+    cmd += " --shapeFile2=" + sample2Dir + \
+           "/trimmed_nodencut_shapes_"+thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --zoneFile2=" + sample2Dir+"/voidZone_" + \
            str(sampleName2)+".dat"
     cmd += " --zonePartFile2=" + sample2Dir+"/voidPart_" + \
