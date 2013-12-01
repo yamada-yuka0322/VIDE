@@ -681,9 +681,9 @@ if (args.halos or args.all) and haloFileBase != "":
           if iHalo < haloFileNumComLines: continue
           line = line.split(haloFileColSep)
           if minHaloMass == "none" or float(line[haloFileMCol]) > minHaloMass:
-            x  = float(line[haloFileXCol])
-            y  = float(line[haloFileYCol])
-            z  = float(line[haloFileZCol])
+            x  = float(line[haloFileXCol]) * haloFilePosRescale
+            y  = float(line[haloFileYCol]) * haloFilePosRescale
+            z  = float(line[haloFileZCol]) * haloFilePosRescale
             vz = float(line[haloFileVZCol])
             vy = float(line[haloFileVYCol])
             vx = float(line[haloFileVXCol])

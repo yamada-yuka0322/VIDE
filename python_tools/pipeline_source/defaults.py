@@ -121,6 +121,7 @@ haloFileVYCol = 4
 haloFileVZCol = 5
 haloFileColSep = ','
 haloFileNumComLines = 0
+haloFilePosRescale = 1.0 # rescaling necessary to get Mpc/h
 
 # adjust these two parameters given the memory contraints on your system:
 #   numZobovDivisions: how many sub-volumes per dimension will zobov process
