@@ -22,7 +22,8 @@ int main(int argc, char *argv[]) {
   int p; 
   int nvp, nvpall, nvpbuf, nvpmin, nvpmax, nvpbufmin, nvpbufmax; /* yes, the insurance */
   float width, width2, totwidth, totwidth2, bf, s, g;
-  float border, boxsize;
+  float widthX, widthY, widthZ;
+  float border, boxsize, boxsizeX, boxsizeY, boxsizeZ;
   float c[3];
   int numGuards;
   int b[3];
@@ -34,12 +35,12 @@ int main(int argc, char *argv[]) {
     printf("arg1: position file\n");
     printf("arg2: buffer size (default 0.1)\n");
     printf("arg3: box size\n");
-    printf("arg4: number of divisions (default 2)\n");
-    printf("arg5: suffix describing this run\n");
-    printf("arg6: number of parallel threads\n");
-    printf("arg7: location of voboz executables\n");
-    printf("arg8: output directory\n");
-    printf("arg9: index of mock galaxies\n\n");
+    printf("arg6: number of divisions (default 2)\n");
+    printf("arg7: suffix describing this run\n");
+    printf("arg8: number of parallel threads\n");
+    printf("arg9: location of voboz executables\n");
+    printf("arg10: output directory\n");
+    printf("arg11: index of mock galaxies\n\n");
     exit(0);
   }
   posfile = argv[1];
@@ -81,7 +82,8 @@ int main(int argc, char *argv[]) {
   np = posread(posfile,&rfloat,1./boxsize);
   /* Boxsize should be the range in r, yielding a range 0-1 */
 
-  width = 1./(float)numdiv;
+  width = boxsize/(float)numdiv;
+  //width = 1./(float)numdiv;
   width2 = 0.5*width;
   if (border > 0.) bf = border;
   else bf = 0.1;
@@ -171,12 +173,10 @@ int main(int argc, char *argv[]) {
   for (b[0]=0;b[0]<numdiv; b[0]++) {
    for (b[1] = 0; b[1] < numdiv; b[1]++) {
     for (b[2] = 0; b[2] < numdiv; b[2]++) {
-// TEST
-      fprintf(scr,"%s/voz1b1 %s %f %f,%f,%f %s %d %d %d %d %s&\n",
+      fprintf(scr,"%s/voz1b1 %s %f %f %s %d %d %d %d %s&\n",
         vobozPath,
-	      posfile,border,boxsize,boxsize,boxsize,suffix,numdiv,b[0],b[1],b[2], 
+	      posfile,border,boxsize,suffix,numdiv,b[0],b[1],b[2], 
         outDir);
-// END TEST
       p++;
       if ((p == numThreads)) { fprintf(scr, "wait\n"); p = 0; }
     }

@@ -1,5 +1,5 @@
 #+
-#   VIDE -- Void IDEntification pipeline -- ./pipeline/datasets/mergertree.py
+#   VIDE -- Void IDentification and Examination -- ./pipeline/datasets/mergertree.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
 #   Copyright (C) 2011-2013 P. M. Sutter
 #

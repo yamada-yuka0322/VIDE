@@ -1,5 +1,5 @@
 #+
-#   VIDE -- Void IDEntification pipeline -- ./python_tools/void_python_tools/plotting/plotTools.py
+#   VIDE -- Void IDentification and Examination -- ./python_tools/void_python_tools/plotting/plotTools.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
 #   Copyright (C) 2011-2013 P. M. Sutter
 #

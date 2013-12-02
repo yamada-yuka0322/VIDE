@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #+
-#   VIDE -- Void IDEntification pipeline -- ./pipeline/apAnalysis.py
+#   VIDE -- Void IDentification and Examination -- ./pipeline/apAnalysis.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
 #   Copyright (C) 2011-2013 P. M. Sutter
 #

@@ -1,5 +1,5 @@
 /*+
-    VIDE -- Void IDEntification pipeline -- ./c_tools/mock/generateMock.cpp
+    VIDE -- Void IDentification and Examination -- ./c_tools/mock/generateMock.cpp
     Copyright (C) 2010-2013 Guilhem Lavaux
     Copyright (C) 2011-2013 P. M. Sutter
 

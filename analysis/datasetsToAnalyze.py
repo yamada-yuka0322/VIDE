@@ -1,5 +1,5 @@
 #+
-#   VIDE -- Void IDEntification pipeline -- ./crossCompare/analysis/datasetsToAnalyze.py
+#   VIDE -- Void IDentification and Examination -- ./crossCompare/analysis/datasetsToAnalyze.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
 #   Copyright (C) 2011-2013 P. M. Sutter
 #

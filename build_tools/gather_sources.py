@@ -1,5 +1,5 @@
 #+
-#   VIDE -- Void IDEntification pipeline -- ./build_tools/gather_sources.py
+#   VIDE -- Void IDentification and Examination -- ./build_tools/gather_sources.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
 #   Copyright (C) 2011-2013 P. M. Sutter
 #
@@ -40,7 +40,7 @@ def apply_license(license, relimit, filename):
 
 def apply_python_license(filename):
   license="""#+
-#   VIDE -- Void IDEntification pipeline -- @FILENAME@
+#   VIDE -- Void IDentification and Examination -- @FILENAME@
 #   Copyright (C) 2010-2013 Guilhem Lavaux
 #   Copyright (C) 2011-2013 P. M. Sutter
 #
@@ -67,7 +67,7 @@ def apply_python_license(filename):
 
 def apply_cpp_license(filename):
   license="""/*+
-    VIDE -- Void IDEntification pipeline -- @FILENAME@
+    VIDE -- Void IDentification and Examination -- @FILENAME@
     Copyright (C) 2010-2013 Guilhem Lavaux
     Copyright (C) 2011-2013 P. M. Sutter
 

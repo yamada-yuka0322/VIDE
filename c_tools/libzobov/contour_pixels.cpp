@@ -1,5 +1,5 @@
 /*+
-    VIDE -- Void IDEntification pipeline -- ./c_tools/libzobov/contour_pixels.cpp
+    VIDE -- Void IDentification and Examination -- ./c_tools/libzobov/contour_pixels.cpp
     Copyright (C) 2010-2013 Guilhem Lavaux
     Copyright (C) 2011-2013 P. M. Sutter
 
