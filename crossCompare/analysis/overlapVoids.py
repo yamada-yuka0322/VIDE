@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #+
-#   VIDE -- Void IDEntification pipeline -- ./crossCompare/analysis/mergerTree.py
+#   VIDE -- Void IDentification and Examination -- ./crossCompare/analysis/mergerTree.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
 #   Copyright (C) 2011-2013 P. M. Sutter
 #

@@ -1,5 +1,5 @@
 #+
-#   VIDE -- Void IDEntification pipeline -- ./python_tools/void_python_tools/backend/launchers.py
+#   VIDE -- Void IDentification and Examination -- ./python_tools/void_python_tools/backend/launchers.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
 #   Copyright (C) 2011-2013 P. M. Sutter
 #
@@ -35,6 +35,7 @@ import sys
 from   pylab import figure
 from   netCDF4 import Dataset
 from void_python_tools.backend.classes import *
+import pickle
 import void_python_tools.apTools as vp
 
 NetCDFFile = Dataset
@@ -261,7 +262,26 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
  
   meanSep = (1.*numTracers/boxVol)**(-1/3.) 
 
-  fp = open(zobovDir+"/sample_info.txt", 'a')
+  # save this sample's information
+  with open(zobovDir+"/sample_info.dat", 'w') as output:
+    pickle.dump(sample, output, pickle.HIGHEST_PROTOCOL)
+
+  fp = open(zobovDir+"/sample_info.txt", 'w')
+  fp.write("Sample name: %s\n" % sample.fullName)
+  fp.write("Sample nickname: %s\n" % sample.nickName)
+  fp.write("Data type: %s\n" % sample.dataType)
+  fp.write("Redshift range: %f - %f\n" %(sample.zBoundary[0],sample.zBoundary[1]))
+  if (sample.dataType == "simulation"):
+    fp.write("Particles placed on lightcone: %g\n" % sample.useLightCone)
+    fp.write("Peculiar velocities included: %g\n" % sample.usePecVel)
+    if (len(sample.subsample) == 1):
+      fp.write("Additional subsampling fraction: %s\n" % sample.subsample)
+    else:
+      fp.write("Additional subsampling fraction: %s\n" % sample.subsample[-1])
+    fp.write("Simulation box length (Mpc/h): %g\n" % sample.boxLen)
+    fp.write("Simulation Omega_M: %g\n" % sample.omegaM)
+    fp.write("Number of simulation subvolumes: %s\n" % sample.numSubvolumes)
+    fp.write("My subvolume index: %s\n" % sample.mySubvolume)
   fp.write("Estimated volume (cubic Mpc/h): %g\n" % boxVol)
   fp.write("Number of real (non-boundary) tracers: %d\n" % numTracers)
   fp.write("Total number of tracers: %d\n" % numTotal)
@@ -310,8 +330,9 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
 
     cmd = "./%s >> %s 2>&1" % (vozScript, logFile)
     os.system(cmd)
+#cmd = "%s/../c_tools/zobov2/jozov2/jozov2 %s %s %s %s %s %g %s >> %s 2>&1" % \
 
-    cmd = "%s/../c_tools/zobov2/jozov2/jozov2 %s %s %s %s %s %g %s >> %s 2>&1" % \
+    cmd = "%s/jozov %s %s %s %s %s %g %s >> %s 2>&1" % \
           (binPath, \
            zobovDir+"/adj_"+sampleName+".dat", \
            zobovDir+"/vol_"+sampleName+".dat", \
@@ -455,8 +476,8 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
            str(sampleName2)+".par"
     cmd += " --centerFile2=" + sample2Dir + \
            "/trimmed_nodencut_barycenters_"+thisDataPortion+"_"+str(sampleName2)+".out"
-    cmd += " --shapeFile2=" + sample1Dir + \
-           "/trimmed_nodencut_shapes_"+thisDataPortion+"_"+str(sampleName1)+".out"
+    cmd += " --shapeFile2=" + sample2Dir + \
+           "/trimmed_nodencut_shapes_"+thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --zoneFile2=" + sample2Dir+"/voidZone_" + \
            str(sampleName2)+".dat"
     cmd += " --zonePartFile2=" + sample2Dir+"/voidPart_" + \

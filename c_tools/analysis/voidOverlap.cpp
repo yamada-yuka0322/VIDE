@@ -1,5 +1,5 @@
 /*+
-    VIDE -- Void IDEntification pipeline -- ./c_tools/analysis/voidOverlap.cpp
+    VIDE -- Void IDentification and Examination -- ./c_tools/analysis/voidOverlap.cpp
     Copyright (C) 2010-2013 Guilhem Lavaux
     Copyright (C) 2011-2013 P. M. Sutter
 
@@ -73,6 +73,7 @@ typedef struct voidStruct {
   float nearestEdge;
   float barycenter[3];
   float ellipticity;
+  float eigv1[3], eigv2[3], eigv3[3], eig[3];
   std::vector<MATCHPROPS> matches;
   int numMatches;
   int numBigMatches;
@@ -375,6 +376,87 @@ int main(int argc, char **argv) {
                      catalog1.voids[iVoid1].radius;
       float ellipRatio = catalog2.voids[iVoid2].ellipticity / 
                          catalog1.voids[iVoid1].ellipticity;
+
+      // find angles between major axes, etc.
+     int iMaj1, iMed1, iMin1;
+     int iMaj2, iMed2, iMin2;
+     float eig1[3], eig2[3];
+     float eigv1[6], eigv2[6];
+     float cosThetaMaj, cosThetaMed, cosThetaMin;
+ 
+     for (int i = 0; i < 3; i++) {
+       eig1[i] = catalog1.voids[iVoid1].eig[i];
+       eigv1[0,i] = catalog1.voids[iVoid1].eigv1[i];
+       eigv1[1,i] = catalog1.voids[iVoid1].eigv2[i];
+       eigv1[2,i] = catalog1.voids[iVoid1].eigv3[i];
+       eig2[i] = catalog2.voids[iVoid2].eig[i];
+       eigv2[0,i] = catalog2.voids[iVoid2].eigv1[i];
+       eigv2[1,i] = catalog2.voids[iVoid2].eigv2[i];
+       eigv2[2,i] = catalog2.voids[iVoid2].eigv3[i];
+     }
+  
+     if (eig1[0] > eig1[1] && eig1[0] > eig1[2]) iMaj1 = 0;
+     if (eig1[1] > eig1[2] && eig1[1] > eig1[0]) iMaj1 = 1;
+     if (eig1[2] > eig1[1] && eig1[2] > eig1[0]) iMaj1 = 2;
+     if (eig1[0] > eig1[1] && eig1[0] < eig1[2]) iMed1 = 0;
+     if (eig1[1] > eig1[2] && eig1[1] < eig1[0]) iMed1 = 1;
+     if (eig1[2] > eig1[1] && eig1[2] < eig1[0]) iMed1 = 2;
+     if (eig1[0] < eig1[1] && eig1[0] < eig1[2]) iMin1 = 0;
+     if (eig1[1] < eig1[2] && eig1[1] < eig1[0]) iMin1 = 1;
+     if (eig1[2] < eig1[1] && eig1[2] < eig1[0]) iMin1 = 2;
+
+     if (eig2[0] > eig2[1] && eig2[0] > eig2[2]) iMaj2 = 0;
+     if (eig2[1] > eig2[2] && eig2[1] > eig2[0]) iMaj2 = 1;
+     if (eig2[2] > eig2[1] && eig2[2] > eig2[0]) iMaj2 = 2;
+     if (eig2[0] > eig2[1] && eig2[0] < eig2[2]) iMed2 = 0;
+     if (eig2[1] > eig2[2] && eig2[1] < eig2[0]) iMed2 = 1;
+     if (eig2[2] > eig2[1] && eig2[2] < eig2[0]) iMed2 = 2;
+     if (eig2[0] < eig2[1] && eig2[0] < eig2[2]) iMin2 = 0;
+     if (eig2[1] < eig2[2] && eig2[1] < eig2[0]) iMin2 = 1;
+     if (eig2[2] < eig2[1] && eig2[2] < eig2[0]) iMin2 = 2;
+
+//printf("EIG CHECK %d %d %e %e %e %d %e %e %e %d\n", iVoid1, iVoid2, eig1[0], eig1[1], eig1[2], iMin1, eig2[0], eig2[1], eig2[2], iMin2);
+     cosThetaMaj = (eigv1[iMaj1,0]*eigv2[iMaj2,0] + 
+                          eigv1[iMaj1,1]*eigv2[iMaj2,1] +    
+                          eigv1[iMaj1,2]*eigv2[iMaj2,2]);
+//printf("EIG CHECK %d %d %e %e %e %e %e %e %e\n", iVoid1, iVoid2, eigv1[iMaj1,0], eigv1[iMaj1,1], eigv1[iMaj1,2], eigv2[iMaj2,0], eigv2[iMaj2,1], eigv2[iMaj2,2], cosThetaMaj);
+
+  
+     if (fabs(cosThetaMaj) > 0.) cosThetaMaj = acos(fabs(cosThetaMaj));
+
+     float majAxisRatio = eig2[iMaj2]/eig1[iMaj1];
+     float minAxisRatio = eig2[iMin2]/eig1[iMin1];
+
+// TEST 
+/*
+  if (catalog1.voids[iVoid1].voidID == 267 &&
+      catalog2.voids[iVoid2].voidID == 346) {
+
+    int voidID1 = catalog1.voids[iVoid1].voidID;
+    for (iZ1 = 0; iZ1 < catalog1.void2Zones[voidID1].numZones; iZ1++) {
+      zoneID1 = catalog1.void2Zones[voidID1].zoneIDs[iZ1];
+      for (p1 = 0; p1 < catalog1.zones2Parts[zoneID1].numPart; p1++) {
+        partID1 = catalog1.zones2Parts[zoneID1].partIDs[p1];     
+        printf("VOID1 %e %e %e\n", catalog1.part[partID1].x,
+                                       catalog1.part[partID1].y,
+                                       catalog1.part[partID1].z);
+      }
+    }
+
+    int voidID2 = catalog2.voids[iVoid2].voidID;
+    for (iZ2 = 0; iZ2 < catalog2.void2Zones[voidID2].numZones; iZ2++) {
+      zoneID2 = catalog2.void2Zones[voidID2].zoneIDs[iZ2];
+      for (p2 = 0; p2 < catalog2.zones2Parts[zoneID2].numPart; p2++) {
+        partID2 = catalog2.zones2Parts[zoneID2].partIDs[p2];     
+        printf("VOID1 %e %e %e\n", catalog2.part[partID2].x,
+                                       catalog2.part[partID2].y,
+                                       catalog2.part[partID2].z);
+      }
+    }
+  
+  }
+*/
+// END TEST
       commonVolRatio = catalog1.voids[iVoid1].matches[0].commonVolOrig / 
                        //catalog1.voids[iVoid1].numPart;
                        catalog1.voids[iVoid1].vol;
@@ -383,7 +465,7 @@ int main(int argc, char **argv) {
       rdist = catalog1.voids[iVoid1].matches[0].dist;
       rdist /= catalog1.voids[iVoid1].radius;
 
-      fprintf(fp, "%d %.4f %.4f %e %e %.4f %d %d %d %e %e %e\n", voidID, 
+      fprintf(fp, "%d %.4f %.4f %e %e %.4f %d %d %d %e %e %e %e %e %e\n", voidID, 
       //fprintf(fp, "%d %.4f %.4f %.4f %.4f %.4f %d %d %d\n", voidID, 
                                    catalog1.voids[iVoid1].radiusMpc,
                                    rRatio, 
@@ -395,10 +477,14 @@ int main(int argc, char **argv) {
                                    catalog2.voids[iVoid2].voidID,
                                    catalog1.voids[iVoid1].matches[0].merit,
                                    ellipRatio,
-                                   catalog1.voids[iVoid1].densCon);
+                                   catalog1.voids[iVoid1].densCon,
+                                   cosThetaMaj,
+                                   majAxisRatio,
+                                   minAxisRatio
+                                   );
 
     } else {
-      fprintf(fp, "%d %.4f 0.0 0.0 0.0 0.0 0.0 0 0 0 0.0 0.0\n", voidID, 
+      fprintf(fp, "%d %.4f 0.0 0.0 0.0 0.0 0.0 0 0 0 0.0 0.0 0.0 0.0 0.0\n", voidID, 
                                            catalog1.voids[iVoid1].radiusMpc);
     }
   } // end printing
@@ -601,17 +687,29 @@ void loadCatalog(const char *partFile, const char *volFile,
   printf(" Loading shapes\n");
   fp = fopen(shapeFile, "r");
   iVoid = 0;
-  float tempEllip;
+  float tempEllip, eig[3], eigv1[3], eigv2[3], eigv3[3];
   fgets(line, sizeof(line), fp);
   while (fgets(line, sizeof(line), fp) != NULL) {
     sscanf(line, "%d %f %f %f %f %f %f %f %f %f %f %f %f %f\n", 
-           &tempInt, &tempEllip, &tempFloat, &tempFloat, &tempFloat,
-           &tempFloat, &tempFloat, &tempFloat,
-           &tempFloat, &tempFloat, &tempFloat,
-           &tempFloat, &tempFloat, &tempFloat);
+           &tempInt, &tempEllip, &eig[0], &eig[1], &eig[2],
+           &eigv1[0], &eigv1[1], &eigv1[2],
+           &eigv2[0], &eigv2[1], &eigv2[2],
+           &eigv3[0], &eigv3[1], &eigv3[2]);
 
 //if (iVoid < 10) printf("SHAPE %d %d %e\n", iVoid, catalog.voids[iVoid].voidID, tempEllip);
     catalog.voids[iVoid].ellipticity = tempEllip;
+    catalog.voids[iVoid].eig[0] = eig[0];
+    catalog.voids[iVoid].eig[1] = eig[1];
+    catalog.voids[iVoid].eig[2] = eig[2];
+    catalog.voids[iVoid].eigv1[0] = eigv1[0];
+    catalog.voids[iVoid].eigv1[1] = eigv1[1];
+    catalog.voids[iVoid].eigv1[2] = eigv1[2];
+    catalog.voids[iVoid].eigv2[0] = eigv2[0];
+    catalog.voids[iVoid].eigv2[1] = eigv2[1];
+    catalog.voids[iVoid].eigv2[2] = eigv2[2];
+    catalog.voids[iVoid].eigv3[0] = eigv3[0];
+    catalog.voids[iVoid].eigv3[1] = eigv3[1];
+    catalog.voids[iVoid].eigv3[2] = eigv3[2];
     iVoid++;
   }
   fclose(fp);

@@ -1,5 +1,5 @@
 #+
-#   VIDE -- Void IDEntification pipeline -- ./pipeline/datasets/mergertree.py
+#   VIDE -- Void IDentification and Examination -- ./pipeline/datasets/mergertree.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
 #   Copyright (C) 2011-2013 P. M. Sutter
 #
@@ -121,6 +121,7 @@ haloFileVYCol = 4
 haloFileVZCol = 5
 haloFileColSep = ','
 haloFileNumComLines = 0
+haloFilePosRescale = 1.0 # rescaling necessary to get Mpc/h
 
 # adjust these two parameters given the memory contraints on your system:
 #   numZobovDivisions: how many sub-volumes per dimension will zobov process

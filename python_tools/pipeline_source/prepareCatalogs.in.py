@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #+
-#   VIDE -- Void IDEntification pipeline -- ./python_tools/pipeline_source/prepareCatalogs.in.py
+#   VIDE -- Void IDentification and Examination -- ./python_tools/pipeline_source/prepareCatalogs.in.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
 #   Copyright (C) 2011-2013 P. M. Sutter
 #
@@ -143,6 +143,7 @@ startAPStage = {startAPStage}
 endAPStage = {endAPStage}
 
 regenerateFlag = False
+#ZOBOV_PATH = "@CMAKE_BINARY_DIR@/c_tools/zobov2/"
 ZOBOV_PATH = "@CMAKE_BINARY_DIR@/zobov/"
 CTOOLS_PATH = "@CMAKE_BINARY_DIR@/c_tools/"
 freshStack = True
@@ -180,6 +181,7 @@ numZobovThreads = {numZobovThreads}
                                    numZobovDivisions=numZobovDivisions,
                                    numZobovThreads=numZobovThreads))
 
+
   sampleInfo = """
 newSample = Sample(dataFile = "{dataFile}",
                    dataFormat = "{dataFormat}",
@@ -195,6 +197,7 @@ newSample = Sample(dataFile = "{dataFile}",
                    profileBinSize = "auto",
                    includeInHubble = True,
                    partOfCombo = False,
+                   {autoStack}
                    isCombo = False,
                    boxLen = {boxLen},
                    usePecVel = {usePecVel},
@@ -212,24 +215,46 @@ newSample.addStack(0.0, 5.0, 5 , 10, False, False, rescaleMode="rv")
 newSample.addStack(0.0, 5.0, 10, 15, False, False, rescaleMode="rv")
 newSample.addStack(0.0, 5.0, 15, 20, False, False, rescaleMode="rv")
 newSample.addStack(0.0, 5.0, 20, 25, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 25, 30, False, False, rescaleMode="rv")
 newSample.addStack(0.0, 5.0, 30, 35, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 35, 40, False, False, rescaleMode="rv")
 newSample.addStack(0.0, 5.0, 40, 45, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 45, 50, False, False, rescaleMode="rv")
 newSample.addStack(0.0, 5.0, 50, 55, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 55, 60, False, False, rescaleMode="rv")
 newSample.addStack(0.0, 5.0, 60, 65, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 65, 70, False, False, rescaleMode="rv")
 newSample.addStack(0.0, 5.0, 70, 75, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 75, 80, False, False, rescaleMode="rv")
 newSample.addStack(0.0, 5.0, 80, 85, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 85, 90, False, False, rescaleMode="rv")
 newSample.addStack(0.0, 5.0, 90, 95, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 95, 100, False, False, rescaleMode="rv")
   """
 
-  elif stackMode == "auto":
-    stackInfo = """
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False, rescaleMode="rv")
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False, rescaleMode="rv")
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False, rescaleMode="rv")
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False, rescaleMode="rv")
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False, rescaleMode="rv")
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False, rescaleMode="rv")
-               """
+  elif stackMode == "log":
+    stackInfo = ""
+    rMin = 10
+    rMax = 100
+    rStart = rMin
+    rEnd = rMin
+    dlogR = 0.25
+    while rEnd < rMax:
+      rEnd = (1+0.5*dlogR)*rStart/(1-0.5*dlogR)
+    
+      stackInfo += """newSample.addStack({zMin}, {zMax}"""+ ", %g, %g, True, False, rescaleMode='rv')" % (rStart, rEnd)
+      
+      rStart = rEnd
+
+#  elif stackMode == "auto":
+#    stackInfo = """
+#newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False, rescaleMode="rv")
+#newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False, rescaleMode="rv")
+#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False, rescaleMode="rv")
+#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False, rescaleMode="rv")
+#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False, rescaleMode="rv")
+#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False, rescaleMode="rv")
+#               """
   else:
     stackInfo = """
 # {zMin}, {zMax}, {minRadius}
@@ -286,6 +311,8 @@ newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, Fal
           nickName = getNickName(setName, sampleName)
 
 
+          autoStack = ""
+          if stackMode == "auto": autoStack = "autoNumInStack = 400,"
           scriptFile.write(sampleInfo.format(dataFile=dataFileName,
                                          dataFormat=dataFormat,
                                          dataUnit=dataUnit,
@@ -297,6 +324,7 @@ newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, Fal
                                          zMaxMpc=sliceMaxMpc,
                                          omegaM=Om,
                                          boxLen=lbox,
+                                         autoStack=autoStack,
                                          usePecVel=useVel,
                                          minRadius=minRadius,
                                          numSubvolumes=numSubvolumes,
@@ -653,9 +681,9 @@ if (args.halos or args.all) and haloFileBase != "":
           if iHalo < haloFileNumComLines: continue
           line = line.split(haloFileColSep)
           if minHaloMass == "none" or float(line[haloFileMCol]) > minHaloMass:
-            x  = float(line[haloFileXCol])
-            y  = float(line[haloFileYCol])
-            z  = float(line[haloFileZCol])
+            x  = float(line[haloFileXCol]) * haloFilePosRescale
+            y  = float(line[haloFileYCol]) * haloFilePosRescale
+            z  = float(line[haloFileZCol]) * haloFilePosRescale
             vz = float(line[haloFileVZCol])
             vy = float(line[haloFileVYCol])
             vx = float(line[haloFileVXCol])

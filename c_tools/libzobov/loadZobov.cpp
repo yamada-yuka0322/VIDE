@@ -1,5 +1,5 @@
 /*+
-    VIDE -- Void IDEntification pipeline -- ./c_tools/libzobov/loadZobov.cpp
+    VIDE -- Void IDentification and Examination -- ./c_tools/libzobov/loadZobov.cpp
     Copyright (C) 2010-2013 Guilhem Lavaux
     Copyright (C) 2011-2013 P. M. Sutter
 
@@ -167,7 +167,14 @@ bool loadZobov(const char *descName, const char *adjName, const char *voidsName,
 	  cerr << "Error in text stream at line " << lineid << endl;
 	  abort();
 	}
-      
+    
+/*  
+    sscanf(line.c_str(), "%d %d %d %f %f %d %d %f %d %f %f\n", &orderId, &volId,
+           &coreParticle, &coreDensity, &volumeZone, &numParticlesInZone, 
+           &numZonesInVoid,
+           &volumeVoid, &numInVoid, &densityContrast, &probability);
+*/
+
       z.allVoids[volId].proba = probability;
       z.allVoids[volId].volume = volumeVoid;
       z.allVoids[volId].numParticles = numInVoid;
