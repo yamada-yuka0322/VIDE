@@ -1102,12 +1102,11 @@ void outputVoids(string outputDir, string sampleName, string prefix,
      outCenter[1] = outVoid.barycenter[1];
      outCenter[2] = outVoid.barycenter[2];
 
-     if (isObservation) {
-       outCenter[0] = (outVoid.barycenter[0]-boxLen[0]/2.)*100.;
-       outCenter[1] = (outVoid.barycenter[1]-boxLen[1]/2.)*100.;
-       outCenter[2] = (outVoid.barycenter[2]-boxLen[2]/2.)*100.;
-     }
-
+     //if (isObservation) {
+     //  outCenter[0] = (outVoid.barycenter[0]-boxLen[0]/2.)*100.;
+     //  outCenter[1] = (outVoid.barycenter[1]-boxLen[1]/2.)*100.;
+     //  outCenter[2] = (outVoid.barycenter[2]-boxLen[2]/2.)*100.;
+     //}
 
      fprintf(fpZobov, "%d %d %d %f %f %d %d %f %d %f %f\n", 
              iVoid, 

@@ -1,5 +1,5 @@
 #+
-#   VIDE -- Void IDentification and Examination -- ./python_tools/void_python_tools/__init__.py
+#   VIDE -- Void IDentification and Examination -- ./python_tools/void_python_tools/plotting/__init__.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
 #   Copyright (C) 2011-2013 P. M. Sutter
 #
@@ -17,8 +17,4 @@
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #+
-from void_python_tools.backend  import *
-from void_python_tools.apTools  import *
-from void_python_tools.plotting import *
-from void_python_tools.xcor     import *
-from void_python_tools.partUtil import *
+from partUtil import *
