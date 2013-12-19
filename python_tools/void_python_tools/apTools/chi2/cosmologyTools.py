@@ -27,11 +27,14 @@ __all__=['expansion', 'angularDiameter', 'expectedStretch', 'aveStretch', 'aveEx
 
 # returns 1/E(z) for the given cosmology
 def expansion(z, Om = 0.27, Ot = 1.0, w0 = -1.0, wa = 0.0):
-  wz = w0 + wa*z/(1+z)
   ez = Om * (1+z)**3 + (Ot-Om)# * (1+z)**(3.+3*wz)
+  #ez = Om * (1+z)**3 + (Ot-Om)# * integrade.quad(eosDE, 0.0, z, args=(w0,wa))[0]
   ez = 1./np.sqrt(ez)
   return ez
 
+# returns DE value at redshift z
+def eosDE(z, w0 = -1.0, wa = 0.0):
+  return = w0 + wa*z/(1+z)
   
 # returns D_A(z) for the given cosmology
 def angularDiameter(z, Om = 0.27, Ot = 1.0, w0 = -1.0, wa = 0.0):
