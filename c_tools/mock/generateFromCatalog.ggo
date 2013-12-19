@@ -14,4 +14,4 @@ option "zMax" - "Maximum redshift of data" double required
 option "output"	- "Filename of particle datafile" string required
 option "params" - "Output parameters of the datacube" string required
 
-option "useLCDM" - "Convert to real space using LCDM cosmology" flag off
+option "useComoving" - "Convert to real space using LCDM cosmology" flag off

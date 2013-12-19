@@ -150,7 +150,7 @@ freshStack = True
 errorBars = "CALCULATED"
 numIncoherentRuns = 100
 ranSeed = 101010
-useLCDM = False
+useComoving = False
 bias = 1.16
 
 dataPortions = {dataPortions}

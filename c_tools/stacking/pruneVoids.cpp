@@ -724,7 +724,7 @@ int main(int argc, char **argv) {
       voids[iVoid].redshiftInMpc = voids[iVoid].redshiftInMpc;
 
 
-      if (args.useLCDM_flag) {
+      if (args.useComoving_flag) {
         redshift = gsl_interp_eval(interp, dL, redshifts,
                  voids[iVoid].redshiftInMpc, acc);
         //printf("HELLO %e %e\n", redshift, args.zMax_arg);

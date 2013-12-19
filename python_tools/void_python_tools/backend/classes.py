@@ -77,7 +77,7 @@ class Sample:
   includeInHubble = True
   partOfCombo  = False
   isCombo = False
-  useLCDM = False # if True, convert population to comoving coordinates
+  useComoving = False # if True, convert population to comoving coordinates
   
   comboList = []
 
@@ -99,7 +99,7 @@ class Sample:
                comboList=(), profileBinSize=2.0, skyFraction=0.19,
                boxLen=1024, usePecVel=False, omegaM=0.27, 
                numSubvolumes=1, mySubvolume=1, dataFormat="sdss",
-               useLCDM=False,
+               useComoving=False,
                dataType="observation",
                subsample=1.0, useLightCone=True, autoNumInStack=-1):
     self.dataFile = dataFile
@@ -130,7 +130,7 @@ class Sample:
     self.subsample = subsample
     self.useLightCone = useLightCone
     self.dataUnit = dataUnit
-    self.useLCDM = useLCDM
+    self.useComoving = useComoving
     self.autoNumInStack = autoNumInStack
 
     self.stacks = []

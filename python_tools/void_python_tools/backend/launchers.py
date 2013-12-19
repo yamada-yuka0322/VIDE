@@ -43,7 +43,7 @@ ncFloat = 'f8' # Double precision
 
 # -----------------------------------------------------------------------------
 def launchGenerate(sample, binPath, workDir=None, inputDataDir=None, 
-                   zobovDir=None, figDir=None, logFile=None, useLCDM=False,
+                   zobovDir=None, figDir=None, logFile=None, useComoving=False,
                    continueRun=None,regenerate=False):
 
   if sample.dataType == "observation":
@@ -63,10 +63,10 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
     maskFile = sample.maskFile
 
-    if useLCDM:
-      useLCDMFlag = "useLCDM"
+    if useComoving:
+      useComovingFlag = "useComoving"
     else:
-      useLCDMFlag = ""
+      useComovingFlag = ""
 
     conf="""
       catalog %s
@@ -81,7 +81,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       """ % (datafile, maskFile, outputFile,
              zobovDir+"/zobov_slice_"+sampleName+".par",
              sample.zBoundary[0], sample.zBoundary[1], sample.fakeDensity,
-             useLCDMFlag, inputParameterFlag)
+             useComovingFlag, inputParameterFlag)
 
     parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
 
@@ -244,7 +244,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
   if sample.dataType == "observation":
     (boxVol, nbar) = vp.getSurveyProps(sample.maskFile, sample.zRange[0],
      sample.zRange[1], sample.zRange[0], sample.zRange[1], "all", 
-     useLCDM=useLCDM)
+     useComoving=useComoving)
   else:
     iX = float(sample.mySubvolume[0])
     iY = float(sample.mySubvolume[1])
@@ -357,7 +357,7 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
 # -----------------------------------------------------------------------------
 def launchPrune(sample, binPath, 
                 summaryFile=None, logFile=None, zobovDir=None, 
-                continueRun=None, useLCDM=False):
+                continueRun=None, useComoving=False):
 
   sampleName = sample.fullName
 
@@ -385,10 +385,10 @@ def launchPrune(sample, binPath,
 
   periodicLine = " --periodic='" + getPeriodic(sample) + "'"
 
-  if useLCDM:
-    useLCDMFlag = " --useLCDM"
+  if useComoving:
+    useComovingFlag = " --useComoving"
   else:
-    useLCDMFlag = ""
+    useComovingFlag = ""
 
   if not (continueRun and (jobSuccessful(logFile, "NetCDF: Not a valid ID\n") \
           or jobSuccessful(logFile, "Done!\n"))):
@@ -410,7 +410,7 @@ def launchPrune(sample, binPath,
     cmd += " --numVoids=" + str(numVoids)
     cmd += observationLine
     cmd += periodicLine
-    cmd += useLCDMFlag
+    cmd += useComovingFlag
     cmd += " --outputDir=" + zobovDir
     cmd += " --sampleName=" + str(sampleName)
     cmd += " &> " + logFile
@@ -1460,7 +1460,6 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
       sys.stdout = open(logFile, 'w')
       sys.stderr = open(logFile, 'a')
       if doPlot:
-        print "DOING PLOT"
         if INCOHERENT:
           #plotTitle = "all samples, incoherent "+\
           #            thisDataPortion+" voids"
@@ -1486,7 +1485,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
         else:
           #plotTitle = "all samples, "+thisDataPortion+\
           #            " voids (systematics corrected)"
-          plotTitle = setName + "(sysematics corrected)"
+          plotTitle = setName + "(systematics corrected)"
         vp.do_all_obs(zbase, allExpList, aveDistList,
                       rlist, plotTitle=plotTitle, sampleNames=shortSampleNames,
                       plotAve=True, mulfac = 1.16, 
