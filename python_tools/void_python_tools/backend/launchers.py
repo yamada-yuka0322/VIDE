@@ -330,9 +330,8 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
 
     cmd = "./%s >> %s 2>&1" % (vozScript, logFile)
     os.system(cmd)
-#cmd = "%s/../c_tools/zobov2/jozov2/jozov2 %s %s %s %s %s %g %s >> %s 2>&1" % \
-
-    cmd = "%s/jozov %s %s %s %s %s %g %s >> %s 2>&1" % \
+#    cmd = "%s/jozov %s %s %s %s %s %g %s >> %s 2>&1" % \
+    cmd = "%s/../c_tools/zobov2/jozov2/jozov2 %s %s %s %s %s %g %s >> %s 2>&1" % \
           (binPath, \
            zobovDir+"/adj_"+sampleName+".dat", \
            zobovDir+"/vol_"+sampleName+".dat", \

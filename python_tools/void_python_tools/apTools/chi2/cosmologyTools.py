@@ -34,7 +34,7 @@ def expansion(z, Om = 0.27, Ot = 1.0, w0 = -1.0, wa = 0.0):
 
 # returns DE value at redshift z
 def eosDE(z, w0 = -1.0, wa = 0.0):
-  return = w0 + wa*z/(1+z)
+  return w0 + wa*z/(1+z)
   
 # returns D_A(z) for the given cosmology
 def angularDiameter(z, Om = 0.27, Ot = 1.0, w0 = -1.0, wa = 0.0):
