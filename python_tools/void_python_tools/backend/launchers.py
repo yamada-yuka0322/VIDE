@@ -583,6 +583,9 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   #    periodicLine += "z"
   #  periodicLine += "' "
 
+  launchDir = os.getcwd()
+  os.chdir(voidDir)
+
   conf="""
   desc %s
   partzone %s
@@ -649,19 +652,21 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     fp.write("doExtraction\n")
   fp.close()
 
+  jobString = "   "+runSuffix+":"
+
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
     cmd = "%s --configFile=%s &> %s" % \
           (binPath, parmFile, logFile)
     os.system(cmd)
 
     if jobSuccessful(logFile, "Done!\n"):
-      print "done"
+      print jobString, "Stacking voids done"
     else:
-      print "FAILED!"
+      print jobString, "Stacking voids FAILED!"
       exit(-1)
 
   else:
-    print "already done!"
+    print jobString, "Stacking voids already done!"
     if os.access(parmFile, os.F_OK): os.unlink(parmFile)
     return
 
@@ -693,7 +698,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     os.unlink(voidDir+"/NOVOID")
 
   if (numVoids == "0"):
-    print "    No voids found; skipping!"
+    print jobString, "No voids found; skipping!"
     fp = open(voidDir+"/NOVOID", "w")
     fp.write("no voids found\n")
     fp.close()
@@ -704,7 +709,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     if "EMPTY STACK" in line:
       emptyStack = True
   if emptyStack:
-    print "    Stack is empty; skipping!"
+    print jobString, "Stack is empty; skipping!"
     fp = open(voidDir+"/NOVOID", "w")
     fp.write("empty stack\n")
     fp.close()
@@ -771,29 +776,31 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
       fp.write(str(normalization)+"\n")
     fp.close()
 
-    os.system("mv %s %s" % ("tree.data", treeFile))
-    os.system("mv %s %s" % ("void_indexes.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("posx.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("posy.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("posz.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("z_void_indexes.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("z_posx.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("z_posy.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("z_posz.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("redshifts.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("indexes.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("kdtree_stackvoids.dat", voidDir+"/"))
-    os.system("mv %s %s" % ("centers.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("z_centers.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("sky_positions.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("check.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("tracer.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("normalizations.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("boundaryDistances.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("tree.data", treeFile))
+    #os.system("mv %s %s" % ("void_indexes.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("posx.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("posy.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("posz.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("z_void_indexes.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("z_posx.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("z_posy.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("z_posz.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("redshifts.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("indexes.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("kdtree_stackvoids.dat", voidDir+"/"))
+    #os.system("mv %s %s" % ("centers.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("z_centers.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("sky_positions.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("check.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("tracer.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("normalizations.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("boundaryDistances.txt", voidDir+"/"))
 
   if os.access(idListFile, os.F_OK): os.unlink(idListFile)
 
   if os.access(parmFile, os.F_OK): os.unlink(parmFile)
+
+  os.chdir(launchDir)
 
   return
  
@@ -805,6 +812,7 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
 
     runSuffix = getStackSuffix(stack.zMin, stack.zMax, stack.rMin,
                                stack.rMax, thisDataPortion)
+    jobString = "   "+runSuffix+":"
 
     sys.stdout = open(logFile, 'w')
     sys.stderr = open(logFile, 'a')
@@ -1030,21 +1038,26 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
     sys.stderr = sys.__stderr__
 
     if jobSuccessful(logFile, "Done!\n"):
-      print "done"
+      print jobString, "Combining stacks done"
     else:
-      print "FAILED!"
+      print jobString, "Combining stacks FAILED!"
       exit(-1)
 
   #else:
   #  print "already done!"
 
 # -----------------------------------------------------------------------------
-def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None):
+def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None,
+                  thisDataPortion=None):
 
   sampleName = sample.fullName
 
+  runSuffix = getStackSuffix(stack.zMin, stack.zMax, stack.rMin,
+                             stack.rMax, thisDataPortion)
+  jobString = "   "+runSuffix+":"
+
   if os.access(voidDir+"/NOVOID", os.F_OK):
-    print "no stack here; skipping!"
+    print jobString, "Profile no stack here; skipping!"
     return
 
   numVoids = open(voidDir+"/num_voids.txt", "r").readline()
@@ -1083,13 +1096,13 @@ def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None):
     sys.stderr = sys.__stderr__
 
     if jobSuccessful(logFile, "Done!\n"):
-      print "done", numVoids
+      print jobString, "Profiling stacks done, (N_v=", numVoids,")"
     else:
-      print "FAILED!"
+      print jobString, "Profiling stacks FAILED!"
       exit(-1)
 
   else:
-    print "already done!"
+    print jobString, "Profiling stacks already done!"
 
 
 # -----------------------------------------------------------------------------
@@ -1101,14 +1114,16 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
   runSuffix = getStackSuffix(stack.zMin, stack.zMax, stack.rMin,
                              stack.rMax, thisDataPortion)
 
+  jobString = "   "+runSuffix+":"
+
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
     if os.access(voidDir+"/NOVOID", os.F_OK):
-      print "no voids here; skipping!"
+      print jobString, "Fitting no voids here; skipping!"
       return
 
     numVoids = int(open(voidDir+"/num_voids.txt", "r").readline())
     if numVoids < 10:
-      print "not enough voids to fit; skipping!"
+      print jobString, "Fitting not enough voids to fit; skipping!"
       fp = open(voidDir+"/NOFIT", "w")
       fp.write("not enough voids: %d \n" % numVoids)
       fp.close()
@@ -1119,18 +1134,18 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     #  return
 
     if sample.partOfCombo or not sample.includeInHubble:
-      print "sample not needed for further analysis; skipping!"
+      print jobString, "Fitting sample not needed for further analysis; skipping!"
       fp = open(voidDir+"/NOFIT", "w")
       fp.write("sample not needed for hubble\n")
       fp.close()
       return
 
     if not stack.includeInHubble:
-      print "radius not needed for further analysis; skipping!"
+      print jobString, "Fitting radius not needed for further analysis; skipping!"
       return
 
     if not stack.includeInHubble:
-      print "redshift not needed for further analysis; skipping!"
+      print jobString, "Fitting redshift not needed for further analysis; skipping!"
       return
 
     if os.access(figDir+"/stackedVoid_"+sampleName+"_"+\
@@ -1195,9 +1210,9 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
     if jobSuccessful(logFile, "Done!\n"):
-      print "done (", ntries, " tries)"
+      print jobString, "Fitting done (", ntries, " tries)"
     else:
-      print "FAILED!"
+      print jobString, "Fitting FAILED!"
       exit(-1)
 
     # record the measured stretch  
@@ -1209,14 +1224,14 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     if os.access(voidDir+"/NOFIT", os.F_OK):
       os.unlink(voidDir+"/NOFIT")
     if ntries > maxtries:
-      print "    No reliable fit found; skipping!"
+      print jobString, "    No reliable fit found; skipping!"
       fp = open(voidDir+"/NOFIT", "w")
       fp.write("bad ellipticity fit\n")
       fp.close()
       return
 
   else:
-    print "already done!"
+    print jobString, "already done!"
 
 
 # -----------------------------------------------------------------------------
