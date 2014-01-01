@@ -32,6 +32,8 @@ import shutil
 import glob
 import subprocess
 import sys
+import matplotlib
+matplotlib.use('Agg')
 from   pylab import figure
 from   netCDF4 import Dataset
 from void_python_tools.backend.classes import *
@@ -1192,6 +1194,7 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     figure(1).savefig(figDir+"/stackedVoid_"+sampleName+\
                       "_"+runSuffix+".png")
 
+    print "Done!"
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
     if jobSuccessful(logFile, "Done!\n"):
