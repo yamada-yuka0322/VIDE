@@ -831,7 +831,8 @@ if (args.hod or args.all) and haloFileBase != "":
 
       sampleName = getSampleName(prefix+"hod_"+thisHod['name'], redshift, False)
       tempFile = "./hod.out_"+sampleName
-      os.system(hodPath+" "+parFileName+">& " + tempFile)
+      HOD_PATH = "@CMAKE_BINARY_DIR@/c_tools/hod/hod"
+      os.system(HOD_PATH+" "+parFileName+">& " + tempFile)
       for line in open(tempFile):
         if "MLO" in line:
           print "     (minimum halo mass = ", line.split()[1], ")"
