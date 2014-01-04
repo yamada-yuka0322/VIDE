@@ -87,8 +87,12 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
     if regenerate or not (continueRun and jobSuccessful(logFile, "Done!\n")):
       file(parmFile, mode="w").write(conf)
-      cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
-      os.system(cmd)
+      arg1 = "-configFile=%s" % parmFile 
+      log = open(logFile, 'w')
+      subprocess.call([binPath, arg1], stdout=log, stderr=log)
+      log.close()
+      #cmd = "%s --configFile=%s >& %s" % (binPath,parmFile,logFile)
+      #os.system(cmd)
       if jobSuccessful(logFile, "Done!\n"):
         print "done"
       else:
@@ -204,10 +208,16 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       file(parmFile, mode="w").write(conf)
 
       if (prevSubSample == -1):
-        cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
+        #cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
+        log = open(logFile, 'w')
       else:
-        cmd = "%s --configFile=%s &>> %s" % (binPath,parmFile,logFile)
-      os.system(cmd)
+        #cmd = "%s --configFile=%s &>> %s" % (binPath,parmFile,logFile)
+        log = open(logFile, 'a')
+      arg1 = "--configFile=%s" % parmFile 
+      subprocess.call([binPath, arg1], stdout=log, stderr=log)
+      #subprocess.call([binPath, arg1], stdout=log, stderr=log)
+      log.close()
+      #os.system(cmd)
  
       # remove intermediate files
       if (prevSubSample != -1):
@@ -322,24 +332,49 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
     if os.access(zobovDir+"/voidDesc_"+sampleName+".out", os.F_OK):
       os.unlink(zobovDir+"/voidDesc_"+sampleName+".out")
 
-    cmd = "%s/vozinit %s 0.1 1.0 %g %s %g %s %s %s &> %s" % \
-          (binPath, datafile,  numZobovDivisions, \
-                      "_"+sampleName, numZobovThreads, \
-                      binPath, zobovDir, maskIndex, logFile)
-    os.system(cmd)
+    #cmd = "%s/vozinit %s 0.1 1.0 %g %s %g %s %s %s &> %s" % \
+    #      (binPath, datafile,  numZobovDivisions, \
+    #                  "_"+sampleName, numZobovThreads, \
+    #                  binPath, zobovDir, maskIndex, logFile)
+    #os.system(cmd)
+    cmd = [binPath+"/vozinit", datafile, "0.1", "1.0", str(numZobovDivisions), \
+                      "_"+sampleName, str(numZobovThreads), \
+                      binPath, zobovDir, str(maskIndex)]
+    log = open(logFile, 'w')
+    subprocess.call(cmd, stdout=log, stderr=log)
+    log.close()
 
-    cmd = "./%s >> %s 2>&1" % (vozScript, logFile)
-    os.system(cmd)
+    #cmd = "./%s >> %s 2>&1" % (vozScript, logFile)
+    #os.system(cmd)
+    cmd = ["./%s" % vozScript]
+    log = open(logFile, 'a')
+    subprocess.call(cmd, stdout=log, stderr=log)
+    log.close()
+
 #    cmd = "%s/jozov %s %s %s %s %s %g %s >> %s 2>&1" % \
-    cmd = "%s/../c_tools/zobov2/jozov2/jozov2 %s %s %s %s %s %g %s >> %s 2>&1" % \
-          (binPath, \
+    #cmd = "%s/../c_tools/zobov2/jozov2/jozov2 %s %s %s %s %s %g %s >> %s 2>&1" % \
+    #      (binPath, \
+    #       zobovDir+"/adj_"+sampleName+".dat", \
+    #       zobovDir+"/vol_"+sampleName+".dat", \
+    #       zobovDir+"/voidPart_"+sampleName+".dat", \
+    #       zobovDir+"/voidZone_"+sampleName+".dat", \
+    #       zobovDir+"/voidDesc_"+sampleName+".out", \
+    #       maxDen, maskIndex, logFile)
+    #os.system(cmd)
+    cmd = [binPath+"../c_tools/zobov2/jozov2/jozov2", \
            zobovDir+"/adj_"+sampleName+".dat", \
            zobovDir+"/vol_"+sampleName+".dat", \
            zobovDir+"/voidPart_"+sampleName+".dat", \
            zobovDir+"/voidZone_"+sampleName+".dat", \
            zobovDir+"/voidDesc_"+sampleName+".out", \
-           maxDen, maskIndex, logFile)
-    os.system(cmd)
+           str(maxDen), str(maskIndex)]
+    log = open(logFile, 'a')
+    subprocess.call(cmd, stdout=log, stderr=log)
+    log.close()
+
+    # don't need the subbox files
+    for fileName in glob.glob(zobovDir+"/part._"+sampleName+".*"):
+      os.unlink(fileName)
 
     if jobSuccessful(logFile, "Done!\n"):
       print "done"
@@ -412,11 +447,14 @@ def launchPrune(sample, binPath,
     cmd += useComovingFlag
     cmd += " --outputDir=" + zobovDir
     cmd += " --sampleName=" + str(sampleName)
-    cmd += " &> " + logFile
-    f=file("run_prune.sh",mode="w")
-    f.write(cmd)
-    f.close()
-    os.system(cmd)
+    #cmd += " &> " + logFile
+    #f=file("run_prune.sh",mode="w")
+    #f.write(cmd)
+    #f.close()
+    #os.system(cmd)
+    log = open(logFile, 'w')
+    subprocess.call(cmd, stdout=log, stderr=log, shell=True)
+    log.close()
 
     if jobSuccessful(logFile, "NetCDF: Not a valid ID\n") or \
        jobSuccessful(logFile, "Done!\n"):
@@ -485,9 +523,12 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
     if matchMethod == "useID": cmd += " --useID"
     cmd += periodicLine
     cmd += " --outfile=" + outputFile
-    cmd += " &> " + logFile
-    open("temp.par",'w').write(cmd)
-    os.system(cmd)
+    #cmd += " &> " + logFile
+    #open("temp.par",'w').write(cmd)
+    #os.system(cmd)
+    log = open(logFile, 'w')
+    subprocess.call(cmd, stdout=log, stderr=log, shell=True)
+    log.close()
 
     if jobSuccessful(logFile, "Done!\n"):
       print "done"
@@ -650,9 +691,14 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   fp.close()
 
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
-    cmd = "%s --configFile=%s &> %s" % \
-          (binPath, parmFile, logFile)
-    os.system(cmd)
+    #cmd = "%s --configFile=%s &> %s" % \
+    #      (binPath, parmFile, logFile)
+    #os.system(cmd)
+    cmd = "%s --configFile=%s" % \
+          (binPath, parmFile)
+    log = open(logFile, 'w')
+    subprocess.call(cmd, stdout=log, stderr=log, shell=True)
+    log.close()
 
     if jobSuccessful(logFile, "Done!\n"):
       print "done"
@@ -1721,8 +1767,12 @@ def launchVelocityStack(sample, stack, binPath,
   parameters="--velocityField=%s --voidCenters=%s --Rmax=%e --L0=%e --numBins=%d" % (velField_file, voidCenters, Rmax, Boxsize, numBins)
 
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
-    cmd = "%s %s &> %s" % (binPath,parameters,logFile)
-    os.system(cmd)
+    #cmd = "%s %s &> %s" % (binPath,parameters,logFile)
+    #os.system(cmd)
+    cmd = "%s %s" % (binPath,parameters)
+    log = open(logFile, 'w')
+    subprocess.call(cmd, stdout=log, stderr=log, shell=True)
+    log.close()
     if jobSuccessful(logFile, "Done!\n"):
       print "done"
     else:
