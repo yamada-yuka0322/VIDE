@@ -472,7 +472,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
                       binPath, thisDataPortion=None, 
                       logFile=None, workDir=None,
                       continueRun=None, outputFile=None, 
-                      matchMethod=None):
+                      matchMethod=None, strictMatch=False):
 
   sampleName1 = sample1.fullName
   sampleName2 = sample2.fullName
@@ -483,6 +483,11 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
   #  if np.abs(sample1.zBoundaryMpc[1]  - sample1.zBoundaryMpc[0] - sample1.boxLen) <= 1.e-1: 
   #    periodicLine += "z"
   #periodicLine += "' "
+
+  if strictMatch:
+    matchPrefix = ""
+  else:
+    matchPrefix = "trimmed_nodencut_"
 
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
     cmd = binPath
@@ -507,14 +512,14 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
            str(sampleName2)
     cmd += " --volFile2=" + sample2Dir+"/vol_" + \
            str(sampleName2)+".dat"
-    cmd += " --voidFile2=" + sample2Dir+"/trimmed_nodencut_voidDesc_" + \
+    cmd += " --voidFile2=" + sample2Dir+"/"+matchPrefix+"voidDesc_" + \
            thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --infoFile2=" + sample2Dir+"/zobov_slice_" + \
            str(sampleName2)+".par"
     cmd += " --centerFile2=" + sample2Dir + \
-           "/trimmed_nodencut_barycenters_"+thisDataPortion+"_"+str(sampleName2)+".out"
+           "/"+matchPrefix+"barycenters_"+thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --shapeFile2=" + sample2Dir + \
-           "/trimmed_nodencut_shapes_"+thisDataPortion+"_"+str(sampleName2)+".out"
+           "/"+matchPrefix+"shapes_"+thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --zoneFile2=" + sample2Dir+"/voidZone_" + \
            str(sampleName2)+".dat"
     cmd += " --zonePartFile2=" + sample2Dir+"/voidPart_" + \
