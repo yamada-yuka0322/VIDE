@@ -476,9 +476,8 @@ for iSubSample in xrange(len(subSamples)):
                                      rescale_velocity,
                                      rescale_velocity,
                                      convertedFile )
-          os.system(command)
-
-          os.system(command)
+          #os.system(command)
+          subprocess.call(command, shell=True)
           dataFile = convertedFile
 
         inFile = open(dataFile, 'r')
@@ -670,7 +669,8 @@ if (args.halos or args.all) and haloFileBase != "":
           command = "%s -a 200000 %s mass ident x y z vz vy vx parent_id | awk '{if ($9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, outFileName )
         else:
           command = "%s -a 200000 %s mass ident x y z vz vy vx parent_id | awk '{if ($1>%g && $9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, minHaloMass, outFileName )
-        os.system(command)
+        #os.system(command)
+        subprocess.call(command, shell=True)
         outFile = open(outFileName, 'a')
         outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
         outFile.close()
@@ -804,7 +804,8 @@ if (args.hod or args.all) and haloFileBase != "":
       outFile = haloFile+"_temp"
       SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
       command = "%s -a 200000 %s mass x y z vx vy vz parent_id | awk '{if ($8 ==-1) print $1, $2, $3, $4, $5, $6, $7}'>>%s" % (SDFcvt_PATH, inFile, outFile)
-      os.system(command)
+      #os.system(command)
+      subprocess.call(command, shell=True)
       haloFile = outFile
 
     for thisHod in hodParmList:
@@ -831,8 +832,12 @@ if (args.hod or args.all) and haloFileBase != "":
 
       sampleName = getSampleName(prefix+"hod_"+thisHod['name'], redshift, False)
       tempFile = "./hod.out_"+sampleName
-      HOD_PATH = "@CMAKE_BINARY_DIR@/c_tools/hod/hod"
-      os.system(HOD_PATH+" "+parFileName+">& " + tempFile)
+      output = open(tempFile, 'w')
+      HOD_PATH = "/home/psutter2/projects/Voids/vide/c_tools/hod/hod"
+      #os.system(HOD_PATH+" "+parFileName+">& " + tempFile)
+      subprocess.call(HOD_PATH+" "+parFileName, stdout=output, stderr=output, shell=True)
+      output.close()
+   
       for line in open(tempFile):
         if "MLO" in line:
           print "     (minimum halo mass = ", line.split()[1], ")"
