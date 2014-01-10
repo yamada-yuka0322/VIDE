@@ -737,7 +737,7 @@ RESOLUTION {numPartPerSide}
 BOX_SIZE   {boxSize}
 
 % output
-root_filename {workDir}/hod
+root_filename {workDir}/hod_{sampleName}
                """
 
 if (args.script or args.all) and haloFileBase != "":
@@ -827,7 +827,8 @@ if (args.hod or args.all) and haloFileBase != "":
                                      haloFileFormat=dataFormat,
                                      numPartPerSide=numPart**(1/3.),
                                      boxSize=lbox,
-                                     workDir=catalogDir))
+                                     workDir=catalogDir,
+                                     sampleName=sampleName))
       parFile.close()
 
       sampleName = getSampleName(prefix+"hod_"+thisHod['name'], redshift, False)
@@ -845,7 +846,7 @@ if (args.hod or args.all) and haloFileBase != "":
       os.unlink(tempFile)
 
       outFileName = catalogDir+"/"+sampleName+".dat"
-      os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
+      os.system("mv %s/hod_%s.mock %s" % (catalogDir, sampleName, outFileName))
       os.system("rm %s/hod.*" % catalogDir)
       os.system("rm ./hod.par")
       os.system("rm ./hod-usedvalues")
