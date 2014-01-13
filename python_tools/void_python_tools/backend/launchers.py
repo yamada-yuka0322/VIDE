@@ -776,7 +776,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
       exit(-1)
 
     sys.stdout = open(logFile, 'a')
-    sys.stderr = open(logFile, 'a')
+    #sys.stderr = open(logFile, 'a')
     zMin = sample.zRange[0]
     zMax = sample.zRange[1]
     if not sample.volumeLimited:
@@ -788,8 +788,10 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
       zMaxForVol = sample.zBoundary[1]
       props = vp.getSurveyProps(maskFile, zMinForVol,
                                 zMaxForVol, zMin, zMax, "all")
+      props = ((1.0,1.0))
+      
     sys.stdout = sys.__stdout__
-    sys.stderr = sys.__stderr__
+    #sys.stderr = sys.__stderr__
   
     boxVol = props[0]
     nbar   = props[1]
@@ -866,7 +868,7 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
     jobString = "   "+runSuffix+":"
 
     sys.stdout = open(logFile, 'w')
-    sys.stderr = open(logFile, 'a')
+    #sys.stderr = open(logFile, 'a')
 
     if os.access(voidDir+"/num_voids.txt", os.F_OK):
       os.unlink(voidDir+"/num_voids.txt")
@@ -1086,7 +1088,7 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
     print "Done!"
 
     sys.stdout = sys.__stdout__
-    sys.stderr = sys.__stderr__
+    #sys.stderr = sys.__stderr__
 
     if jobSuccessful(logFile, "Done!\n"):
       print jobString, "Combining stacks done"
@@ -1139,12 +1141,12 @@ def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None,
       density = sample.profileBinSize
 
     sys.stdout = open(logFile, 'w')
-    sys.stderr = open(logFile, 'a')
+    #sys.stderr = open(logFile, 'a')
     vp.build_1d_profile(base_dir=voidDir, density=density,
                         rescaleMode=stack.rescaleMode)
     vp.build_2d_profile(base_dir=voidDir, density=density)
     sys.stdout = sys.__stdout__
-    sys.stderr = sys.__stderr__
+    #sys.stderr = sys.__stderr__
 
     if jobSuccessful(logFile, "Done!\n"):
       print jobString, "Profiling stacks done, (N_v=", numVoids,")"
@@ -1205,14 +1207,16 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
                 runSuffix+".eps")
 
     sys.stdout = open(logFile, 'w')
-    sys.stderr = open(logFile, 'a')
+    #sys.stderr = open(logFile, 'a')
 
     badChain = True
     ntries = 0
     maxtries = 5
     while badChain:
-      Rexpect = (stack.rMin+stack.rMax)/2
-      Rtruncate = stack.rMin*3. + 1 # TEST
+      ntries += 1
+
+      #Rexpect = (stack.rMin+stack.rMax)/2
+      #Rtruncate = stack.rMin*3. + 1 # TEST
       #if sample.dataType == "observation":
       #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
       #                                Niter=300000,
@@ -1220,15 +1224,16 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
       #                                Rextracut=Rtruncate)
       #else:
       #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-      #                                Niter=300000,
+      #                                Niter=500000,
       #                                Nburn=100000,
-      #                                Rextracut=Rtruncate)
+      #                               Rextracut=Rtruncate)
       #badChain = (args[0][0] > 0.5 or args[0][1] > stack.rMax or \
       #            args[0][2] > stack.rMax) and \
       #           (ntries < maxtries)
-      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="symmetric", nBootstraps=500)
+      #ret,fits,args = vp.compute_radial_inertia(voidDir, stack.rMax, mode="symmetric", nBootstraps=5)
+      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, nBootstraps=100, rMaxInertia=1.0)
+      #ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="symmetric", nBootstraps=500, rMaxInertia=1.5)
       badChain = False
-      ntries += 1
 
     #np.save(voidDir+"/chain.npy", ret)
     np.savetxt(voidDir+"/fits.out", fits)
@@ -1259,7 +1264,7 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
                       "_"+runSuffix+".png")
 
     sys.stdout = sys.__stdout__
-    sys.stderr = sys.__stderr__
+    #sys.stderr = sys.__stderr__
     if jobSuccessful(logFile, "Done!\n"):
       print jobString, "Fitting done (", ntries, " tries)"
     else:
@@ -1352,7 +1357,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
           aveDist = vp.aveStretchCone(stack.zMin, stack.zMax, 
                                       skyFrac = sample.skyFraction)
         else:
-          aveDist = vp.aveStretch(stack.zMin, stack.zMax)
+          aveDist = vp.aveStretch(stack.zMin, stack.zMax, Om=sample.omegaM)
 
         aveDistList[iZBin, 0] = stack.zMin
         aveDistList[iZBin, 1] = aveDist
@@ -1401,7 +1406,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
             aveDist = vp.aveStretchCone(zBin.zMin, zBin.zMax, 
                                         skyFrac = sample.skyFraction)
           else:
-            aveDist = vp.aveStretch(zBin.zMin, zBin.zMax)
+            aveDist = vp.aveStretch(zBin.zMin, zBin.zMax, Om=sample.omegaOm)
 
           expList[0, iR, iZBin, 2] = aveDist
 
@@ -1437,7 +1442,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
 
       if not (continueRun and jobSuccessful(logFile, "Done!\n")):
         sys.stdout = open(logFile, 'w')
-        sys.stderr = open(logFile, 'a')
+        #sys.stderr = open(logFile, 'a')
         plotTitle = "Sample: "+sample.nickName+", "+thisDataPortion+" voids"
         if doPlot:
           #vp.do_all_obs(zbase, expList, workDir+"/avedistortion_",
@@ -1453,7 +1458,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
           print "Skipping plot"
           print "Done!"
         sys.stdout = sys.__stdout__
-        sys.stderr = sys.__stderr__
+        #sys.stderr = sys.__stderr__
 
         if jobSuccessful(logFile, "Done!\n"):
           print "done"
@@ -1468,7 +1473,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
     print "      For data set combined...",
     sys.stdout.flush()
 
-    logFile = logDir+"/hubble_combined_"+thisDataPortion+".out"
+    logFile = logDir+"/hubble_combined_"+sampleName+"_"+thisDataPortion+".out"
 
     if not (continueRun and jobSuccessful(logFile, "Done!\n")):
 
@@ -1516,6 +1521,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
         aveDistList[iZ, 0] = zBin.zMin
         aveDistList[iZ, 1] = aveDist
         aveDistList[iZ, 2] = 0.00125
+      if plotZmax > 1.5: plotZmax = 1.5
 
 
       shortSampleNames = list()
@@ -1523,7 +1529,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
         if sample.includeInHubble:
           shortSampleNames.append(sample.nickName)
       sys.stdout = open(logFile, 'w')
-      sys.stderr = open(logFile, 'a')
+      #sys.stderr = open(logFile, 'a')
       if doPlot:
         if INCOHERENT:
           #plotTitle = "all samples, incoherent "+\
@@ -1536,12 +1542,15 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
         vp.do_all_obs(zbase, allExpList, aveDistList,
                       rlist, plotTitle=plotTitle, sampleNames=shortSampleNames,
                       plotAve=True, mulfac = 1.0, biasLine = 1.16, 
-                      plotZmin=plotZmin, plotZmax=plotZmax+0.2)
-        figure(1).savefig(figDir+"/hubble_combined_"+thisDataPortion+\
+                      plotZmin=plotZmin, plotZmax=plotZmax)
+        figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+ \
+                          thisDataPortion+\
                           ".eps",bbox_inches='tight')
-        figure(1).savefig(figDir+"/hubble_combined_"+thisDataPortion+\
+        figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+ \
+                          thisDataPortion+\
                           ".pdf",bbox_inches='tight')
-        figure(1).savefig(figDir+"/hubble_combined_"+thisDataPortion+\
+        figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+ \
+                          thisDataPortion+\
                           ".png",bbox_inches='tight')
 
         if INCOHERENT:
@@ -1554,18 +1563,21 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
         vp.do_all_obs(zbase, allExpList, aveDistList,
                       rlist, plotTitle=plotTitle, sampleNames=shortSampleNames,
                       plotAve=True, mulfac = 1.16, 
-                      plotZmin=plotZmin, plotZmax=plotZmax+0.2)
-        figure(1).savefig(figDir+"/hubble_combined_"+thisDataPortion+\
+                      plotZmin=plotZmin, plotZmax=plotZmax)
+        figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+\
+                          thisDataPortion+\
                           "_debiased.eps",bbox_inches='tight')
-        figure(1).savefig(figDir+"/hubble_combined_"+thisDataPortion+\
+        figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+\
+                          thisDataPortion+\
                           "_debiased.pdf",bbox_inches='tight')
-        figure(1).savefig(figDir+"/hubble_combined_"+thisDataPortion+\
+        figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+\
+                          thisDataPortion+\
                           "_debiased.png",bbox_inches='tight')
       else:
         print "Skipping plot"
         print "Done!"
       sys.stdout = sys.__stdout__
-      sys.stderr = sys.__stderr__
+      #sys.stderr = sys.__stderr__
 
       # save all expansion data to a single file 
       fp = file(workDir+'/calculatedExpansions_'+thisDataPortion+'.txt',
@@ -1603,8 +1615,13 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
               voidRedshifts = np.loadtxt(centersFile)
               if voidRedshifts.ndim > 1:
                 voidRedshifts = voidRedshifts[:,5]
+                np.savetxt(fp, voidRedshifts[None])
               else:
-                voidRedshifts = voidRedshifts[5]
+                if (len(voidRedshifts) > 0):
+                  voidRedshifts = voidRedshifts[5]
+                  np.savetxt(fp, voidRedshifts[None])
+                else:
+                  fp.write("-1\n")
               #fp.write(str(len(voidRedshifts))+" ")
               np.savetxt(fp, voidRedshifts[None])
             else:
@@ -1634,7 +1651,7 @@ def launchLikelihood(dataPortions=None, logDir=None, workDir=None,
     if not (continueRun and jobSuccessful(logFile, "Done!\n")):
 
       sys.stdout = open(logFile, 'w')
-      sys.stderr = open(logFile, 'a')
+      #sys.stderr = open(logFile, 'a')
 
       vp.build1dLikelihood(workDir+"/calculatedExpansions_"+\
                          thisDataPortion+".txt",
@@ -1651,7 +1668,7 @@ def launchLikelihood(dataPortions=None, logDir=None, workDir=None,
                     useBinAve = False)
 
       sys.stdout = sys.__stdout__
-      sys.stderr = sys.__stderr__
+      #sys.stderr = sys.__stderr__
 
       if jobSuccessful(logFile, "Done!\n"):
         print "done"
