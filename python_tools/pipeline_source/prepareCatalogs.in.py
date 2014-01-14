@@ -812,6 +812,8 @@ if (args.hod or args.all) and haloFileBase != "":
       print "   ", thisHod['name']
       sys.stdout.flush()
 
+      sampleName = getSampleName(prefix+"hod_"+thisHod['name'], redshift, False)
+
       parFileName = "./hod.par"
       parFile = open(parFileName, 'w')
       parFile.write(parFileText.format(omegaM=omegaM,
@@ -831,19 +833,29 @@ if (args.hod or args.all) and haloFileBase != "":
                                      sampleName=sampleName))
       parFile.close()
 
-      sampleName = getSampleName(prefix+"hod_"+thisHod['name'], redshift, False)
       tempFile = "./hod.out_"+sampleName
       output = open(tempFile, 'w')
-      HOD_PATH = "/home/psutter2/projects/Voids/vide/c_tools/hod/hod"
+      HOD_PATH = "@CMAKE_BINARY_DIR@/c_tools/hod/hod"
+      
       #os.system(HOD_PATH+" "+parFileName+">& " + tempFile)
-      subprocess.call(HOD_PATH+" "+parFileName, stdout=output, stderr=output, shell=True)
+      subprocess.call(HOD_PATH+" "+parFileName, stdout=output, stderr=output, 
+                      shell=True)
       output.close()
-   
+  
+      hodWorked = False 
       for line in open(tempFile):
         if "MLO" in line:
           print "     (minimum halo mass = ", line.split()[1], ")"
+          hodWorked = True 
           break
-      os.unlink(tempFile)
+
+      if hodWorked:
+        os.unlink(tempFile)
+      else:
+        print "HOD Failed! Log follows:"
+        for line in open(tempFile):
+          print line
+        exit(-1)
 
       outFileName = catalogDir+"/"+sampleName+".dat"
       os.system("mv %s/hod_%s.mock %s" % (catalogDir, sampleName, outFileName))
