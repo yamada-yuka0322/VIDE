@@ -476,9 +476,8 @@ for iSubSample in xrange(len(subSamples)):
                                      rescale_velocity,
                                      rescale_velocity,
                                      convertedFile )
-          os.system(command)
-
-          os.system(command)
+          #os.system(command)
+          subprocess.call(command, shell=True)
           dataFile = convertedFile
 
         inFile = open(dataFile, 'r')
@@ -670,7 +669,8 @@ if (args.halos or args.all) and haloFileBase != "":
           command = "%s -a 200000 %s mass ident x y z vz vy vx parent_id | awk '{if ($9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, outFileName )
         else:
           command = "%s -a 200000 %s mass ident x y z vz vy vx parent_id | awk '{if ($1>%g && $9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, minHaloMass, outFileName )
-        os.system(command)
+        #os.system(command)
+        subprocess.call(command, shell=True)
         outFile = open(outFileName, 'a')
         outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
         outFile.close()
@@ -737,7 +737,7 @@ RESOLUTION {numPartPerSide}
 BOX_SIZE   {boxSize}
 
 % output
-root_filename {workDir}/hod
+root_filename {workDir}/hod_{sampleName}
                """
 
 if (args.script or args.all) and haloFileBase != "":
@@ -804,7 +804,8 @@ if (args.hod or args.all) and haloFileBase != "":
       outFile = haloFile+"_temp"
       SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
       command = "%s -a 200000 %s mass x y z vx vy vz parent_id | awk '{if ($8 ==-1) print $1, $2, $3, $4, $5, $6, $7}'>>%s" % (SDFcvt_PATH, inFile, outFile)
-      os.system(command)
+      #os.system(command)
+      subprocess.call(command, shell=True)
       haloFile = outFile
 
     for thisHod in hodParmList:
@@ -826,12 +827,18 @@ if (args.hod or args.all) and haloFileBase != "":
                                      haloFileFormat=dataFormat,
                                      numPartPerSide=numPart**(1/3.),
                                      boxSize=lbox,
-                                     workDir=catalogDir))
+                                     workDir=catalogDir,
+                                     sampleName=sampleName))
       parFile.close()
 
       sampleName = getSampleName(prefix+"hod_"+thisHod['name'], redshift, False)
       tempFile = "./hod.out_"+sampleName
-      os.system(hodPath+" "+parFileName+">& " + tempFile)
+      output = open(tempFile, 'w')
+      HOD_PATH = "/home/psutter2/projects/Voids/vide/c_tools/hod/hod"
+      #os.system(HOD_PATH+" "+parFileName+">& " + tempFile)
+      subprocess.call(HOD_PATH+" "+parFileName, stdout=output, stderr=output, shell=True)
+      output.close()
+   
       for line in open(tempFile):
         if "MLO" in line:
           print "     (minimum halo mass = ", line.split()[1], ")"
@@ -839,7 +846,7 @@ if (args.hod or args.all) and haloFileBase != "":
       os.unlink(tempFile)
 
       outFileName = catalogDir+"/"+sampleName+".dat"
-      os.system("mv %s/hod.mock %s" % (catalogDir, outFileName))
+      os.system("mv %s/hod_%s.mock %s" % (catalogDir, sampleName, outFileName))
       os.system("rm %s/hod.*" % catalogDir)
       os.system("rm ./hod.par")
       os.system("rm ./hod-usedvalues")

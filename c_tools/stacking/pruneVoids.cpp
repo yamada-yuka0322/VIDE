@@ -587,21 +587,21 @@ int main(int argc, char **argv) {
     voids[iVoid].barycenter[2] += voids[iVoid].center[2];
 
     if (periodicX) {
-      if (voids[iVoid].barycenter[0] > boxLen[0])
+      if (voids[iVoid].barycenter[0] > ranges[0][1])
         voids[iVoid].barycenter[0] = voids[iVoid].barycenter[0] - boxLen[0];
-      if (voids[iVoid].barycenter[0] < 0)
+      if (voids[iVoid].barycenter[0] < ranges[0][0])
         voids[iVoid].barycenter[0] = boxLen[0] + voids[iVoid].barycenter[0];
     }
     if (periodicY) {
-      if (voids[iVoid].barycenter[1] > boxLen[1])
+      if (voids[iVoid].barycenter[1] > ranges[1][1])
         voids[iVoid].barycenter[1] = voids[iVoid].barycenter[1] - boxLen[1];
-      if (voids[iVoid].barycenter[1] < 0)
+      if (voids[iVoid].barycenter[1] < ranges[1][0])
         voids[iVoid].barycenter[1] = boxLen[1] + voids[iVoid].barycenter[1];
     }
     if (periodicZ) {
-      if (voids[iVoid].barycenter[2] > boxLen[2])
+      if (voids[iVoid].barycenter[2] > ranges[2][1])
         voids[iVoid].barycenter[2] = voids[iVoid].barycenter[2] - boxLen[2];
-      if (voids[iVoid].barycenter[2] < 0)
+      if (voids[iVoid].barycenter[2] < ranges[2][0])
         voids[iVoid].barycenter[2] = boxLen[2] + voids[iVoid].barycenter[2];
     }
     clock4 = clock();
@@ -850,7 +850,7 @@ int main(int argc, char **argv) {
   int numTooSmall = 0;
 
   printf(" Picking winners and losers...\n");
-  printf("  Starting with %d voids\n", voids.size());
+  printf("  Starting with %d voids\n", (int) voids.size());
 
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
     voids[iVoid].accepted = 1;
@@ -950,7 +950,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  printf("  Number kept: %d (out of %d)\n", voids.size(), numVoids);
+  printf("  Number kept: %d (out of %d)\n", (int) voids.size(), numVoids);
   printf("   We have %d edge voids\n", numEdge); 
   printf("   We have %d central voids\n", numCentral); 
   printf("   We have %d too high central density\n", numHighDen); 
