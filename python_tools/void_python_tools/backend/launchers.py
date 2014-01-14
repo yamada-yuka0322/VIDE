@@ -1451,11 +1451,14 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
           #vp.do_all_obs(zbase, expList, workDir+"/avedistortion_",
           vp.do_all_obs(zbase, expList, aveDistList,
                         rlist, plotTitle=plotTitle, plotAve=True)
-          figure(1).savefig(figDir+"/hubble_"+sampleName+"_"+thisDataPortion+\
+          figure(1).savefig(figDir+"/hubble_"+setName+"_"+sampleName+"_"+\
+                            thisDataPortion+\
                             ".eps",bbox_inches='tight')
-          figure(1).savefig(figDir+"/hubble_"+sampleName+"_"+thisDataPortion+\
+          figure(1).savefig(figDir+"/hubble_"+setName+"_"+sampleName+"_"+\
+                            thisDataPortion+\
                             ".pdf",bbox_inches='tight')
-          figure(1).savefig(figDir+"/hubble_"+sampleName+"_"+thisDataPortion+\
+          figure(1).savefig(figDir+"/hubble_"+setName+"_"+sampleName+"_"+\
+                            thisDataPortion+\
                             ".png",bbox_inches='tight')
         else:
           print "Skipping plot"
