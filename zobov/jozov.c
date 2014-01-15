@@ -131,7 +131,7 @@ int main(int argc,char **argv) {
               printf("OVERFLOW for particle %d (pending %d). List of accepted:\n", i, j);
               for (q=0;q<p[i].nadj;q++)
                 printf("  %d\n", p[i].adj[q]);
-              abort();
+              //abort();
             }
          if (p[j].ncnt == p[j].nadj)
             {
@@ -139,7 +139,7 @@ int main(int argc,char **argv) {
               printf("OVERFLOW for particle %d (pending %d). List of accepted:\n", j, i);
               for (q=0;q<p[j].nadj;q++)
                 printf("  %d\n", p[j].adj[q]);
-              abort();
+              //abort();
            }
 
           p[i].adj[p[i].ncnt] = j;
