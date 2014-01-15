@@ -87,7 +87,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
     if regenerate or not (continueRun and jobSuccessful(logFile, "Done!\n")):
       file(parmFile, mode="w").write(conf)
-      arg1 = "-configFile=%s" % parmFile 
+      arg1 = "--configFile=%s" % parmFile 
       log = open(logFile, 'w')
       subprocess.call([binPath, arg1], stdout=log, stderr=log)
       log.close()
@@ -209,12 +209,14 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
       if (prevSubSample == -1):
         #cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
+        cmd = "%s --configFile=%s" % (binPath,parmFile)
         log = open(logFile, 'w')
       else:
         #cmd = "%s --configFile=%s &>> %s" % (binPath,parmFile,logFile)
+        cmd = "%s --configFile=%s" % (binPath,parmFile)
         log = open(logFile, 'a')
       arg1 = "--configFile=%s" % parmFile 
-      subprocess.call([binPath, arg1], stdout=log, stderr=log)
+      subprocess.call(cmd, stdout=log, stderr=log, shell=True)
       #subprocess.call([binPath, arg1], stdout=log, stderr=log)
       log.close()
       #os.system(cmd)
@@ -254,7 +256,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
   if sample.dataType == "observation":
     (boxVol, nbar) = vp.getSurveyProps(sample.maskFile, sample.zRange[0],
      sample.zRange[1], sample.zRange[0], sample.zRange[1], "all", 
-     useComoving=useComoving)
+     useLCDM=useComoving)
   else:
     iX = float(sample.mySubvolume[0])
     iY = float(sample.mySubvolume[1])
@@ -1224,15 +1226,16 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
       #                                Rextracut=Rtruncate)
       #else:
       #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-      #                                Niter=500000,
+      #                                Niter=300000,
       #                                Nburn=100000,
       #                               Rextracut=Rtruncate)
       #badChain = (args[0][0] > 0.5 or args[0][1] > stack.rMax or \
       #            args[0][2] > stack.rMax) and \
       #           (ntries < maxtries)
       #ret,fits,args = vp.compute_radial_inertia(voidDir, stack.rMax, mode="symmetric", nBootstraps=5)
-      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, nBootstraps=100, rMaxInertia=1.0)
-      #ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="symmetric", nBootstraps=500, rMaxInertia=1.5)
+      #ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, nBootstraps=100, rMaxInertia=1.0)
+      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="2d", nBootstraps=500, rMaxInertia=0.7)
+      #ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="symmetric", nBootstraps=500, rMaxInertia=100)
       badChain = False
 
     #np.save(voidDir+"/chain.npy", ret)
@@ -1406,7 +1409,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
             aveDist = vp.aveStretchCone(zBin.zMin, zBin.zMax, 
                                         skyFrac = sample.skyFraction)
           else:
-            aveDist = vp.aveStretch(zBin.zMin, zBin.zMax, Om=sample.omegaOm)
+            aveDist = vp.aveStretch(zBin.zMin, zBin.zMax, Om=sample.omegaM)
 
           expList[0, iR, iZBin, 2] = aveDist
 
