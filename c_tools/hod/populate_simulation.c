@@ -63,7 +63,7 @@ void populate_simulation()
   FILE *fp,*fpa[9],*fp2,*fpb[9],*fpc[9],*fps[9],*fpt;
   int i,j,k,n,imass,n1,j_start=0,i1,galcnt[1000],halocnt[1000],imag;
   double mass,xg[3],vg[3],nsat,nc[10],ncen,mlo,mag,err1,err2,r,fac,sigv;
-  char aa[1000];
+  char aa[5000];
   float x1,xh[3],vh[3],vgf[3];
   long IDUM3 = -445;
 
@@ -74,7 +74,7 @@ void populate_simulation()
   int ngal,nsati[9],ALL_FILES=0,TRACK_GALAXIES=0,WARREN_MASS_CORRECTION=0,haloid;
   int nadded;
       FILE *fpBuh;
-      char buhFile[1000];
+      char buhFile[5000];
 
   nadded = 0;
 
@@ -565,7 +565,7 @@ void calc_nbody_two_halo(float **gal, int *id, int ngal)
   static float *rad, *xi;
   static int nr, flag = 0;
 
-  char fname[100];
+  char fname[5000];
   FILE *fp;
 
   sprintf(fname,"%s.nbody_2halo",Task.root_filename);
