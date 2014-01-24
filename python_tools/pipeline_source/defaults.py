@@ -109,10 +109,10 @@ haloFileDummy = 'NNNNN'
 
 # minimum halo mass cuts to apply for the halo catalog
 #   use "none" to get all halos
-minHaloMasses = [1.2e13]
+minHaloMasses = []
 
 # density threshold for halo catalogs
-haloDenList = [0.0002]
+haloDenList = []
 
 # locations of data in the halo catalog
 haloFileMCol  = 6

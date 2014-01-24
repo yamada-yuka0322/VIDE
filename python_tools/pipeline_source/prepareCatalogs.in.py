@@ -465,6 +465,7 @@ for iSubSample in xrange(len(subSamples)):
           rescale_position = hubble/1000./scale
           shift = lbox/2.
           rescale_velocity = 3.08567802e16/3.1558149984e16
+
           command = "%s -a 200000 %s x y z vz vy vx mass | awk '{print $1*%g+%g, $2*%g+%g, $3*%g+%g, $4*%g, $5*%g, $6*%g, $7}' > %s" % (SDFcvt_PATH, dataFile,
                                      rescale_position,
                                      shift,
@@ -565,10 +566,31 @@ if (args.script or args.all) and haloFileBase != "":
     numPart = 0
     if dataFormat == "sdf":
       SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
+      massTag = "mass"
+      for line in open(dataFile):
+        if "float m200b" in line: 
+          massTag = "m200b"
+          break
+        if "float mass" in line: 
+          massTag = "mass"
+          break
+
+      pidTag = ""
+      iLine = 0
+      for line in open(dataFile):
+        iLine += 1
+        if iLine > 100: break
+        if "parent_id" in line: 
+          pidTag = "parent_id"
+          break
+        if "pid" in line: 
+          pidTag = "pid"
+          break
+
       if minHaloMass == "none":
-        command = "%s -a 200000 %s mass parent_id | awk '{if ($2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile)
+        command = "%s -a 200000 %s %s %s | awk '{if ($2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile, massTag, pidTag)
       else:
-        command = "%s -a 200000 %s mass parent_id | awk '{if ($1>%g && $2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile, minHaloMass)
+        command = "%s -a 200000 %s %s %s | awk '{if ($1>%g && $2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile, massTag, pidTag, minHaloMass)
       numPart = subprocess.check_output(command, shell=True)
       numPart = int(numPart.split()[0])
     else:
@@ -673,11 +695,32 @@ if (args.halos or args.all) and haloFileBase != "" and len(minHaloMasses) > 0:
             idTag = "ident"
             break
 
+        massTag = "mass"
+        for line in open(dataFile):
+          if "float m200b" in line: 
+            massTag = "m200b"
+            break
+          if "float mass" in line: 
+            massTag = "mass"
+            break
+
+        pidTag = ""
+        iLine = 0
+        for line in open(dataFile):
+          iLine += 1
+          if iLine > 100: break
+          if "parent_id" in line: 
+            pidTag = "parent_id"
+            break
+          if "pid" in line: 
+            pidTag = "pid"
+            break
+
         SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
         if minHaloMass == "none":
-          command = "%s -a 200000 %s mass %s x y z vz vy vx parent_id | awk '{if ($9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, idTag, dataFile, outFileName )
+          command = "%s -a 200000 %s %s %s x y z vz vy vx %s | awk '{if ($9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, massTag, idTag, pidTag, outFileName )
         else:
-          command = "%s -a 200000 %s mass %s x y z vz vy vx parent_id | awk '{if ($1>%g && $9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, idTag, dataFile, minHaloMass, outFileName )
+          command = "%s -a 200000 %s %s %s x y z vz vy vx %s | awk '{if ($1>%g && $9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, massTag, idTag, minHaloMass, pidTag, outFileName )
         #os.system(command)
         subprocess.call(command, shell=True)
         outFile = open(outFileName, 'a')
@@ -809,8 +852,29 @@ if (args.halos or args.all) and haloFileBase != "":
             idTag = "ident"
             break
 
+        massTag = "mass"
+        for line in open(dataFile):
+          if "float m200b" in line: 
+            massTag = "m200b"
+            break
+          if "float mass" in line: 
+            massTag = "mass"
+            break
+
+        pidTag = ""
+        iLine = 0
+        for line in open(dataFile):
+          iLine += 1
+          if iLine > 100: break
+          if "parent_id" in line: 
+            pidTag = "parent_id"
+            break
+          if "pid" in line: 
+            pidTag = "pid"
+            break
+        print "TEST", massTag, pidTag
         SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
-        command = "%s -a 200000 %s mass %s x y z vz vy vx parent_id | sort -rg -k 1 | awk '{if ($9==-1 && NR < %d) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, idTag, numPartExpect, outFileName )
+        command = "%s -a 200000 %s %s %s x y z vz vy vx %s | sort -rg -k 1 | awk '{if ($9==-1 && NR < %d) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, massTag, idTag, pidTag, numPartExpect, outFileName )
         #os.system(command)
         subprocess.call(command, shell=True)
         outFile = open(outFileName, 'a')
@@ -945,8 +1009,30 @@ if (args.hod or args.all) and haloFileBase != "":
     if dataFormat == "sdf":
       inFile = haloFile
       outFile = haloFile+"_temp"
+
+      massTag = "mass"
+      for line in open(inFile):
+        if "float m200b" in line: 
+          massTag = "m200b"
+          break
+        if "float mass" in line: 
+          massTag = "mass"
+          break
+
+      pidTag = ""
+      iLine = 0
+      for line in open(inFile):
+        iLine += 1
+        if iLine > 100: break
+        if "parent_id" in line: 
+          pidTag = "parent_id"
+          break
+        if "pid" in line: 
+          pidTag = "pid"
+          break
+
       SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
-      command = "%s -a 200000 %s mass x y z vx vy vz parent_id | awk '{if ($8 ==-1) print $1, $2, $3, $4, $5, $6, $7}'>>%s" % (SDFcvt_PATH, inFile, outFile)
+      command = "%s -a 200000 %s %s x y z vx vy vz %s | awk '{if ($8 ==-1) print $1, $2, $3, $4, $5, $6, $7}'>>%s" % (SDFcvt_PATH, inFile, massTag, pidTag, outFile)
       #os.system(command)
       subprocess.call(command, shell=True)
       haloFile = outFile
@@ -1011,7 +1097,7 @@ if (args.hod or args.all) and haloFileBase != "":
       inFile.close()
 
       if numPartActual < numPartExpect:
-        print " ERROR: not enough halos to support that density! Maximum is %g" % (1.*numPartActual / lbox**3)
+        print " ERROR: not enough galaxies to support that density! Maximum is %g" % (1.*numPartActual / lbox**3)
         exit(-1)
 
       actualDen = 1.*numPartActual / lbox**3
