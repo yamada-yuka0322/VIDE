@@ -23,7 +23,7 @@ option "numVoids" - "Number of voids" int required
 
 option "isObservation" - "We are working with observational data" flag off
 
-option "useLCDM" - "Void positions are in comoving coordinates" flag off
+option "useComoving" - "Void positions are in comoving coordinates" flag off
 
 option "zMin" - "Minimum redshift of sample" double optional default="0.0"
 option "zMax" - "Maximum redshift of sample" double optional default="10.0"

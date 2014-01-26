@@ -32,6 +32,8 @@ import shutil
 import glob
 import subprocess
 import sys
+import matplotlib
+matplotlib.use('Agg')
 from   pylab import figure
 from   netCDF4 import Dataset
 from void_python_tools.backend.classes import *
@@ -43,7 +45,7 @@ ncFloat = 'f8' # Double precision
 
 # -----------------------------------------------------------------------------
 def launchGenerate(sample, binPath, workDir=None, inputDataDir=None, 
-                   zobovDir=None, figDir=None, logFile=None, useLCDM=False,
+                   zobovDir=None, figDir=None, logFile=None, useComoving=False,
                    continueRun=None,regenerate=False):
 
   if sample.dataType == "observation":
@@ -63,10 +65,10 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
     maskFile = sample.maskFile
 
-    if useLCDM:
-      useLCDMFlag = "useLCDM"
+    if useComoving:
+      useComovingFlag = "useComoving"
     else:
-      useLCDMFlag = ""
+      useComovingFlag = ""
 
     conf="""
       catalog %s
@@ -81,14 +83,18 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       """ % (datafile, maskFile, outputFile,
              zobovDir+"/zobov_slice_"+sampleName+".par",
              sample.zBoundary[0], sample.zBoundary[1], sample.fakeDensity,
-             useLCDMFlag, inputParameterFlag)
+             useComovingFlag, inputParameterFlag)
 
     parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
 
     if regenerate or not (continueRun and jobSuccessful(logFile, "Done!\n")):
       file(parmFile, mode="w").write(conf)
-      cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
-      os.system(cmd)
+      arg1 = "--configFile=%s" % parmFile 
+      log = open(logFile, 'w')
+      subprocess.call([binPath, arg1], stdout=log, stderr=log)
+      log.close()
+      #cmd = "%s --configFile=%s >& %s" % (binPath,parmFile,logFile)
+      #os.system(cmd)
       if jobSuccessful(logFile, "Done!\n"):
         print "done"
       else:
@@ -204,10 +210,18 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       file(parmFile, mode="w").write(conf)
 
       if (prevSubSample == -1):
-        cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
+        #cmd = "%s --configFile=%s &> %s" % (binPath,parmFile,logFile)
+        cmd = "%s --configFile=%s" % (binPath,parmFile)
+        log = open(logFile, 'w')
       else:
-        cmd = "%s --configFile=%s &>> %s" % (binPath,parmFile,logFile)
-      os.system(cmd)
+        #cmd = "%s --configFile=%s &>> %s" % (binPath,parmFile,logFile)
+        cmd = "%s --configFile=%s" % (binPath,parmFile)
+        log = open(logFile, 'a')
+      arg1 = "--configFile=%s" % parmFile 
+      subprocess.call(cmd, stdout=log, stderr=log, shell=True)
+      #subprocess.call([binPath, arg1], stdout=log, stderr=log)
+      log.close()
+      #os.system(cmd)
  
       # remove intermediate files
       if (prevSubSample != -1):
@@ -244,7 +258,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
   if sample.dataType == "observation":
     (boxVol, nbar) = vp.getSurveyProps(sample.maskFile, sample.zRange[0],
      sample.zRange[1], sample.zRange[0], sample.zRange[1], "all", 
-     useLCDM=useLCDM)
+     useLCDM=useComoving)
   else:
     iX = float(sample.mySubvolume[0])
     iY = float(sample.mySubvolume[1])
@@ -322,25 +336,49 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
     if os.access(zobovDir+"/voidDesc_"+sampleName+".out", os.F_OK):
       os.unlink(zobovDir+"/voidDesc_"+sampleName+".out")
 
-    cmd = "%s/vozinit %s 0.1 1.0 %g %s %g %s %s %s &> %s" % \
-          (binPath, datafile,  numZobovDivisions, \
-                      "_"+sampleName, numZobovThreads, \
-                      binPath, zobovDir, maskIndex, logFile)
-    os.system(cmd)
+    #cmd = "%s/vozinit %s 0.1 1.0 %g %s %g %s %s %s &> %s" % \
+    #      (binPath, datafile,  numZobovDivisions, \
+    #                  "_"+sampleName, numZobovThreads, \
+    #                  binPath, zobovDir, maskIndex, logFile)
+    #os.system(cmd)
+    cmd = [binPath+"/vozinit", datafile, "0.1", "1.0", str(numZobovDivisions), \
+                      "_"+sampleName, str(numZobovThreads), \
+                      binPath, zobovDir, str(maskIndex)]
+    log = open(logFile, 'w')
+    subprocess.call(cmd, stdout=log, stderr=log)
+    log.close()
 
-    cmd = "./%s >> %s 2>&1" % (vozScript, logFile)
-    os.system(cmd)
-#cmd = "%s/../c_tools/zobov2/jozov2/jozov2 %s %s %s %s %s %g %s >> %s 2>&1" % \
+    #cmd = "./%s >> %s 2>&1" % (vozScript, logFile)
+    #os.system(cmd)
+    cmd = ["./%s" % vozScript]
+    log = open(logFile, 'a')
+    subprocess.call(cmd, stdout=log, stderr=log)
+    log.close()
 
-    cmd = "%s/jozov %s %s %s %s %s %g %s >> %s 2>&1" % \
-          (binPath, \
+#    cmd = "%s/jozov %s %s %s %s %s %g %s >> %s 2>&1" % \
+    #cmd = "%s/../c_tools/zobov2/jozov2/jozov2 %s %s %s %s %s %g %s >> %s 2>&1" % \
+    #      (binPath, \
+    #       zobovDir+"/adj_"+sampleName+".dat", \
+    #       zobovDir+"/vol_"+sampleName+".dat", \
+    #       zobovDir+"/voidPart_"+sampleName+".dat", \
+    #       zobovDir+"/voidZone_"+sampleName+".dat", \
+    #       zobovDir+"/voidDesc_"+sampleName+".out", \
+    #       maxDen, maskIndex, logFile)
+    #os.system(cmd)
+    cmd = [binPath+"../c_tools/zobov2/jozov2/jozov2", \
            zobovDir+"/adj_"+sampleName+".dat", \
            zobovDir+"/vol_"+sampleName+".dat", \
            zobovDir+"/voidPart_"+sampleName+".dat", \
            zobovDir+"/voidZone_"+sampleName+".dat", \
            zobovDir+"/voidDesc_"+sampleName+".out", \
-           maxDen, maskIndex, logFile)
-    os.system(cmd)
+           str(maxDen), str(maskIndex)]
+    log = open(logFile, 'a')
+    subprocess.call(cmd, stdout=log, stderr=log)
+    log.close()
+
+    # don't need the subbox files
+    for fileName in glob.glob(zobovDir+"/part._"+sampleName+".*"):
+      os.unlink(fileName)
 
     if jobSuccessful(logFile, "Done!\n"):
       print "done"
@@ -357,7 +395,7 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
 # -----------------------------------------------------------------------------
 def launchPrune(sample, binPath, 
                 summaryFile=None, logFile=None, zobovDir=None, 
-                continueRun=None, useLCDM=False):
+                continueRun=None, useComoving=False):
 
   sampleName = sample.fullName
 
@@ -385,10 +423,10 @@ def launchPrune(sample, binPath,
 
   periodicLine = " --periodic='" + getPeriodic(sample) + "'"
 
-  if useLCDM:
-    useLCDMFlag = " --useLCDM"
+  if useComoving:
+    useComovingFlag = " --useComoving"
   else:
-    useLCDMFlag = ""
+    useComovingFlag = ""
 
   if not (continueRun and (jobSuccessful(logFile, "NetCDF: Not a valid ID\n") \
           or jobSuccessful(logFile, "Done!\n"))):
@@ -410,14 +448,17 @@ def launchPrune(sample, binPath,
     cmd += " --numVoids=" + str(numVoids)
     cmd += observationLine
     cmd += periodicLine
-    cmd += useLCDMFlag
+    cmd += useComovingFlag
     cmd += " --outputDir=" + zobovDir
     cmd += " --sampleName=" + str(sampleName)
-    cmd += " &> " + logFile
-    f=file("run_prune.sh",mode="w")
-    f.write(cmd)
-    f.close()
-    os.system(cmd)
+    #cmd += " &> " + logFile
+    #f=file("run_prune.sh",mode="w")
+    #f.write(cmd)
+    #f.close()
+    #os.system(cmd)
+    log = open(logFile, 'w')
+    subprocess.call(cmd, stdout=log, stderr=log, shell=True)
+    log.close()
 
     if jobSuccessful(logFile, "NetCDF: Not a valid ID\n") or \
        jobSuccessful(logFile, "Done!\n"):
@@ -435,7 +476,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
                       binPath, thisDataPortion=None, 
                       logFile=None, workDir=None,
                       continueRun=None, outputFile=None, 
-                      matchMethod=None):
+                      matchMethod=None, strictMatch=False):
 
   sampleName1 = sample1.fullName
   sampleName2 = sample2.fullName
@@ -446,6 +487,11 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
   #  if np.abs(sample1.zBoundaryMpc[1]  - sample1.zBoundaryMpc[0] - sample1.boxLen) <= 1.e-1: 
   #    periodicLine += "z"
   #periodicLine += "' "
+
+  if strictMatch:
+    matchPrefix = ""
+  else:
+    matchPrefix = "trimmed_nodencut_"
 
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
     cmd = binPath
@@ -470,14 +516,14 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
            str(sampleName2)
     cmd += " --volFile2=" + sample2Dir+"/vol_" + \
            str(sampleName2)+".dat"
-    cmd += " --voidFile2=" + sample2Dir+"/trimmed_nodencut_voidDesc_" + \
+    cmd += " --voidFile2=" + sample2Dir+"/"+matchPrefix+"voidDesc_" + \
            thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --infoFile2=" + sample2Dir+"/zobov_slice_" + \
            str(sampleName2)+".par"
     cmd += " --centerFile2=" + sample2Dir + \
-           "/trimmed_nodencut_barycenters_"+thisDataPortion+"_"+str(sampleName2)+".out"
+           "/"+matchPrefix+"barycenters_"+thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --shapeFile2=" + sample2Dir + \
-           "/trimmed_nodencut_shapes_"+thisDataPortion+"_"+str(sampleName2)+".out"
+           "/"+matchPrefix+"shapes_"+thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --zoneFile2=" + sample2Dir+"/voidZone_" + \
            str(sampleName2)+".dat"
     cmd += " --zonePartFile2=" + sample2Dir+"/voidPart_" + \
@@ -486,9 +532,12 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
     if matchMethod == "useID": cmd += " --useID"
     cmd += periodicLine
     cmd += " --outfile=" + outputFile
-    cmd += " &> " + logFile
-    open("temp.par",'w').write(cmd)
-    os.system(cmd)
+    #cmd += " &> " + logFile
+    #open("temp.par",'w').write(cmd)
+    #os.system(cmd)
+    log = open(logFile, 'w')
+    subprocess.call(cmd, stdout=log, stderr=log, shell=True)
+    log.close()
 
     if jobSuccessful(logFile, "Done!\n"):
       print "done"
@@ -584,6 +633,9 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   #    periodicLine += "z"
   #  periodicLine += "' "
 
+  launchDir = os.getcwd()
+  os.chdir(voidDir)
+
   conf="""
   desc %s
   partzone %s
@@ -650,19 +702,26 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     fp.write("doExtraction\n")
   fp.close()
 
+  jobString = "   "+runSuffix+":"
+
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
-    cmd = "%s --configFile=%s &> %s" % \
-          (binPath, parmFile, logFile)
-    os.system(cmd)
+    #cmd = "%s --configFile=%s &> %s" % \
+    #      (binPath, parmFile, logFile)
+    #os.system(cmd)
+    cmd = "%s --configFile=%s" % \
+          (binPath, parmFile)
+    log = open(logFile, 'w')
+    subprocess.call(cmd, stdout=log, stderr=log, shell=True)
+    log.close()
 
     if jobSuccessful(logFile, "Done!\n"):
-      print "done"
+      print jobString, "Stacking voids done"
     else:
-      print "FAILED!"
+      print jobString, "Stacking voids FAILED!"
       exit(-1)
 
   else:
-    print "already done!"
+    print jobString, "Stacking voids already done!"
     if os.access(parmFile, os.F_OK): os.unlink(parmFile)
     return
 
@@ -694,7 +753,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     os.unlink(voidDir+"/NOVOID")
 
   if (numVoids == "0"):
-    print "    No voids found; skipping!"
+    print jobString, "No voids found; skipping!"
     fp = open(voidDir+"/NOVOID", "w")
     fp.write("no voids found\n")
     fp.close()
@@ -705,7 +764,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     if "EMPTY STACK" in line:
       emptyStack = True
   if emptyStack:
-    print "    Stack is empty; skipping!"
+    print jobString, "Stack is empty; skipping!"
     fp = open(voidDir+"/NOVOID", "w")
     fp.write("empty stack\n")
     fp.close()
@@ -721,7 +780,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
       exit(-1)
 
     sys.stdout = open(logFile, 'a')
-    sys.stderr = open(logFile, 'a')
+    #sys.stderr = open(logFile, 'a')
     zMin = sample.zRange[0]
     zMax = sample.zRange[1]
     if not sample.volumeLimited:
@@ -733,8 +792,10 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
       zMaxForVol = sample.zBoundary[1]
       props = vp.getSurveyProps(maskFile, zMinForVol,
                                 zMaxForVol, zMin, zMax, "all")
+      props = ((1.0,1.0))
+      
     sys.stdout = sys.__stdout__
-    sys.stderr = sys.__stderr__
+    #sys.stderr = sys.__stderr__
   
     boxVol = props[0]
     nbar   = props[1]
@@ -772,29 +833,31 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
       fp.write(str(normalization)+"\n")
     fp.close()
 
-    os.system("mv %s %s" % ("tree.data", treeFile))
-    os.system("mv %s %s" % ("void_indexes.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("posx.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("posy.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("posz.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("z_void_indexes.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("z_posx.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("z_posy.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("z_posz.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("redshifts.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("indexes.nc", voidDir+"/"))
-    os.system("mv %s %s" % ("kdtree_stackvoids.dat", voidDir+"/"))
-    os.system("mv %s %s" % ("centers.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("z_centers.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("sky_positions.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("check.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("tracer.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("normalizations.txt", voidDir+"/"))
-    os.system("mv %s %s" % ("boundaryDistances.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("tree.data", treeFile))
+    #os.system("mv %s %s" % ("void_indexes.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("posx.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("posy.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("posz.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("z_void_indexes.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("z_posx.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("z_posy.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("z_posz.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("redshifts.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("indexes.nc", voidDir+"/"))
+    #os.system("mv %s %s" % ("kdtree_stackvoids.dat", voidDir+"/"))
+    #os.system("mv %s %s" % ("centers.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("z_centers.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("sky_positions.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("check.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("tracer.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("normalizations.txt", voidDir+"/"))
+    #os.system("mv %s %s" % ("boundaryDistances.txt", voidDir+"/"))
 
   if os.access(idListFile, os.F_OK): os.unlink(idListFile)
 
   if os.access(parmFile, os.F_OK): os.unlink(parmFile)
+
+  os.chdir(launchDir)
 
   return
  
@@ -806,9 +869,10 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
 
     runSuffix = getStackSuffix(stack.zMin, stack.zMax, stack.rMin,
                                stack.rMax, thisDataPortion)
+    jobString = "   "+runSuffix+":"
 
     sys.stdout = open(logFile, 'w')
-    sys.stderr = open(logFile, 'a')
+    #sys.stderr = open(logFile, 'a')
 
     if os.access(voidDir+"/num_voids.txt", os.F_OK):
       os.unlink(voidDir+"/num_voids.txt")
@@ -1028,24 +1092,29 @@ def launchCombine(sample, stack, voidDir=None, logFile=None,
     print "Done!"
 
     sys.stdout = sys.__stdout__
-    sys.stderr = sys.__stderr__
+    #sys.stderr = sys.__stderr__
 
     if jobSuccessful(logFile, "Done!\n"):
-      print "done"
+      print jobString, "Combining stacks done"
     else:
-      print "FAILED!"
+      print jobString, "Combining stacks FAILED!"
       exit(-1)
 
   #else:
   #  print "already done!"
 
 # -----------------------------------------------------------------------------
-def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None):
+def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None,
+                  thisDataPortion=None):
 
   sampleName = sample.fullName
 
+  runSuffix = getStackSuffix(stack.zMin, stack.zMax, stack.rMin,
+                             stack.rMax, thisDataPortion)
+  jobString = "   "+runSuffix+":"
+
   if os.access(voidDir+"/NOVOID", os.F_OK):
-    print "no stack here; skipping!"
+    print jobString, "Profile no stack here; skipping!"
     return
 
   numVoids = open(voidDir+"/num_voids.txt", "r").readline()
@@ -1076,21 +1145,21 @@ def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None):
       density = sample.profileBinSize
 
     sys.stdout = open(logFile, 'w')
-    sys.stderr = open(logFile, 'a')
+    #sys.stderr = open(logFile, 'a')
     vp.build_1d_profile(base_dir=voidDir, density=density,
                         rescaleMode=stack.rescaleMode)
     vp.build_2d_profile(base_dir=voidDir, density=density)
     sys.stdout = sys.__stdout__
-    sys.stderr = sys.__stderr__
+    #sys.stderr = sys.__stderr__
 
     if jobSuccessful(logFile, "Done!\n"):
-      print "done", numVoids
+      print jobString, "Profiling stacks done, (N_v=", numVoids,")"
     else:
-      print "FAILED!"
+      print jobString, "Profiling stacks FAILED!"
       exit(-1)
 
   else:
-    print "already done!"
+    print jobString, "Profiling stacks already done!"
 
 
 # -----------------------------------------------------------------------------
@@ -1102,14 +1171,16 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
   runSuffix = getStackSuffix(stack.zMin, stack.zMax, stack.rMin,
                              stack.rMax, thisDataPortion)
 
+  jobString = "   "+runSuffix+":"
+
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
     if os.access(voidDir+"/NOVOID", os.F_OK):
-      print "no voids here; skipping!"
+      print jobString, "Fitting no voids here; skipping!"
       return
 
     numVoids = int(open(voidDir+"/num_voids.txt", "r").readline())
     if numVoids < 10:
-      print "not enough voids to fit; skipping!"
+      print jobString, "Fitting not enough voids to fit; skipping!"
       fp = open(voidDir+"/NOFIT", "w")
       fp.write("not enough voids: %d \n" % numVoids)
       fp.close()
@@ -1120,18 +1191,18 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     #  return
 
     if sample.partOfCombo or not sample.includeInHubble:
-      print "sample not needed for further analysis; skipping!"
+      print jobString, "Fitting sample not needed for further analysis; skipping!"
       fp = open(voidDir+"/NOFIT", "w")
       fp.write("sample not needed for hubble\n")
       fp.close()
       return
 
     if not stack.includeInHubble:
-      print "radius not needed for further analysis; skipping!"
+      print jobString, "Fitting radius not needed for further analysis; skipping!"
       return
 
     if not stack.includeInHubble:
-      print "redshift not needed for further analysis; skipping!"
+      print jobString, "Fitting redshift not needed for further analysis; skipping!"
       return
 
     if os.access(figDir+"/stackedVoid_"+sampleName+"_"+\
@@ -1140,14 +1211,16 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
                 runSuffix+".eps")
 
     sys.stdout = open(logFile, 'w')
-    sys.stderr = open(logFile, 'a')
+    #sys.stderr = open(logFile, 'a')
 
     badChain = True
     ntries = 0
     maxtries = 5
     while badChain:
-      Rexpect = (stack.rMin+stack.rMax)/2
-      Rtruncate = stack.rMin*3. + 1 # TEST
+      ntries += 1
+
+      #Rexpect = (stack.rMin+stack.rMax)/2
+      #Rtruncate = stack.rMin*3. + 1 # TEST
       #if sample.dataType == "observation":
       #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
       #                                Niter=300000,
@@ -1157,13 +1230,15 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
       #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
       #                                Niter=300000,
       #                                Nburn=100000,
-      #                                Rextracut=Rtruncate)
+      #                               Rextracut=Rtruncate)
       #badChain = (args[0][0] > 0.5 or args[0][1] > stack.rMax or \
       #            args[0][2] > stack.rMax) and \
       #           (ntries < maxtries)
-      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="symmetric", nBootstraps=500)
+      #ret,fits,args = vp.compute_radial_inertia(voidDir, stack.rMax, mode="symmetric", nBootstraps=5)
+      #ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, nBootstraps=100, rMaxInertia=1.0)
+      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="2d", nBootstraps=500, rMaxInertia=0.7)
+      #ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="symmetric", nBootstraps=500, rMaxInertia=100)
       badChain = False
-      ntries += 1
 
     #np.save(voidDir+"/chain.npy", ret)
     np.savetxt(voidDir+"/fits.out", fits)
@@ -1193,12 +1268,13 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     figure(1).savefig(figDir+"/stackedVoid_"+sampleName+\
                       "_"+runSuffix+".png")
 
+    print "Done!"
     sys.stdout = sys.__stdout__
-    sys.stderr = sys.__stderr__
+    #sys.stderr = sys.__stderr__
     if jobSuccessful(logFile, "Done!\n"):
-      print "done (", ntries, " tries)"
+      print jobString, "Fitting done (", ntries, " tries)"
     else:
-      print "FAILED!"
+      print jobString, "Fitting FAILED!"
       exit(-1)
 
     # record the measured stretch  
@@ -1210,14 +1286,14 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     if os.access(voidDir+"/NOFIT", os.F_OK):
       os.unlink(voidDir+"/NOFIT")
     if ntries > maxtries:
-      print "    No reliable fit found; skipping!"
+      print jobString, "    No reliable fit found; skipping!"
       fp = open(voidDir+"/NOFIT", "w")
       fp.write("bad ellipticity fit\n")
       fp.close()
       return
 
   else:
-    print "already done!"
+    print jobString, "already done!"
 
 
 # -----------------------------------------------------------------------------
@@ -1287,7 +1363,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
           aveDist = vp.aveStretchCone(stack.zMin, stack.zMax, 
                                       skyFrac = sample.skyFraction)
         else:
-          aveDist = vp.aveStretch(stack.zMin, stack.zMax)
+          aveDist = vp.aveStretch(stack.zMin, stack.zMax, Om=sample.omegaM)
 
         aveDistList[iZBin, 0] = stack.zMin
         aveDistList[iZBin, 1] = aveDist
@@ -1336,7 +1412,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
             aveDist = vp.aveStretchCone(zBin.zMin, zBin.zMax, 
                                         skyFrac = sample.skyFraction)
           else:
-            aveDist = vp.aveStretch(zBin.zMin, zBin.zMax)
+            aveDist = vp.aveStretch(zBin.zMin, zBin.zMax, Om=sample.omegaM)
 
           expList[0, iR, iZBin, 2] = aveDist
 
@@ -1372,23 +1448,26 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
 
       if not (continueRun and jobSuccessful(logFile, "Done!\n")):
         sys.stdout = open(logFile, 'w')
-        sys.stderr = open(logFile, 'a')
+        #sys.stderr = open(logFile, 'a')
         plotTitle = "Sample: "+sample.nickName+", "+thisDataPortion+" voids"
         if doPlot:
           #vp.do_all_obs(zbase, expList, workDir+"/avedistortion_",
           vp.do_all_obs(zbase, expList, aveDistList,
                         rlist, plotTitle=plotTitle, plotAve=True)
-          figure(1).savefig(figDir+"/hubble_"+sampleName+"_"+thisDataPortion+\
+          figure(1).savefig(figDir+"/hubble_"+setName+"_"+sampleName+"_"+\
+                            thisDataPortion+\
                             ".eps",bbox_inches='tight')
-          figure(1).savefig(figDir+"/hubble_"+sampleName+"_"+thisDataPortion+\
+          figure(1).savefig(figDir+"/hubble_"+setName+"_"+sampleName+"_"+\
+                            thisDataPortion+\
                             ".pdf",bbox_inches='tight')
-          figure(1).savefig(figDir+"/hubble_"+sampleName+"_"+thisDataPortion+\
+          figure(1).savefig(figDir+"/hubble_"+setName+"_"+sampleName+"_"+\
+                            thisDataPortion+\
                             ".png",bbox_inches='tight')
         else:
           print "Skipping plot"
           print "Done!"
         sys.stdout = sys.__stdout__
-        sys.stderr = sys.__stderr__
+        #sys.stderr = sys.__stderr__
 
         if jobSuccessful(logFile, "Done!\n"):
           print "done"
@@ -1403,7 +1482,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
     print "      For data set combined...",
     sys.stdout.flush()
 
-    logFile = logDir+"/hubble_combined_"+thisDataPortion+".out"
+    logFile = logDir+"/hubble_combined_"+sampleName+"_"+thisDataPortion+".out"
 
     if not (continueRun and jobSuccessful(logFile, "Done!\n")):
 
@@ -1451,6 +1530,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
         aveDistList[iZ, 0] = zBin.zMin
         aveDistList[iZ, 1] = aveDist
         aveDistList[iZ, 2] = 0.00125
+      if plotZmax > 1.5: plotZmax = 1.5
 
 
       shortSampleNames = list()
@@ -1458,9 +1538,8 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
         if sample.includeInHubble:
           shortSampleNames.append(sample.nickName)
       sys.stdout = open(logFile, 'w')
-      sys.stderr = open(logFile, 'a')
+      #sys.stderr = open(logFile, 'a')
       if doPlot:
-        print "DOING PLOT"
         if INCOHERENT:
           #plotTitle = "all samples, incoherent "+\
           #            thisDataPortion+" voids"
@@ -1472,12 +1551,15 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
         vp.do_all_obs(zbase, allExpList, aveDistList,
                       rlist, plotTitle=plotTitle, sampleNames=shortSampleNames,
                       plotAve=True, mulfac = 1.0, biasLine = 1.16, 
-                      plotZmin=plotZmin, plotZmax=plotZmax+0.2)
-        figure(1).savefig(figDir+"/hubble_combined_"+thisDataPortion+\
+                      plotZmin=plotZmin, plotZmax=plotZmax)
+        figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+ \
+                          thisDataPortion+\
                           ".eps",bbox_inches='tight')
-        figure(1).savefig(figDir+"/hubble_combined_"+thisDataPortion+\
+        figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+ \
+                          thisDataPortion+\
                           ".pdf",bbox_inches='tight')
-        figure(1).savefig(figDir+"/hubble_combined_"+thisDataPortion+\
+        figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+ \
+                          thisDataPortion+\
                           ".png",bbox_inches='tight')
 
         if INCOHERENT:
@@ -1486,22 +1568,25 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
         else:
           #plotTitle = "all samples, "+thisDataPortion+\
           #            " voids (systematics corrected)"
-          plotTitle = setName + "(sysematics corrected)"
+          plotTitle = setName + "(systematics corrected)"
         vp.do_all_obs(zbase, allExpList, aveDistList,
                       rlist, plotTitle=plotTitle, sampleNames=shortSampleNames,
                       plotAve=True, mulfac = 1.16, 
-                      plotZmin=plotZmin, plotZmax=plotZmax+0.2)
-        figure(1).savefig(figDir+"/hubble_combined_"+thisDataPortion+\
+                      plotZmin=plotZmin, plotZmax=plotZmax)
+        figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+\
+                          thisDataPortion+\
                           "_debiased.eps",bbox_inches='tight')
-        figure(1).savefig(figDir+"/hubble_combined_"+thisDataPortion+\
+        figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+\
+                          thisDataPortion+\
                           "_debiased.pdf",bbox_inches='tight')
-        figure(1).savefig(figDir+"/hubble_combined_"+thisDataPortion+\
+        figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+\
+                          thisDataPortion+\
                           "_debiased.png",bbox_inches='tight')
       else:
         print "Skipping plot"
         print "Done!"
       sys.stdout = sys.__stdout__
-      sys.stderr = sys.__stderr__
+      #sys.stderr = sys.__stderr__
 
       # save all expansion data to a single file 
       fp = file(workDir+'/calculatedExpansions_'+thisDataPortion+'.txt',
@@ -1539,8 +1624,13 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
               voidRedshifts = np.loadtxt(centersFile)
               if voidRedshifts.ndim > 1:
                 voidRedshifts = voidRedshifts[:,5]
+                np.savetxt(fp, voidRedshifts[None])
               else:
-                voidRedshifts = voidRedshifts[5]
+                if (len(voidRedshifts) > 0):
+                  voidRedshifts = voidRedshifts[5]
+                  np.savetxt(fp, voidRedshifts[None])
+                else:
+                  fp.write("-1\n")
               #fp.write(str(len(voidRedshifts))+" ")
               np.savetxt(fp, voidRedshifts[None])
             else:
@@ -1570,7 +1660,7 @@ def launchLikelihood(dataPortions=None, logDir=None, workDir=None,
     if not (continueRun and jobSuccessful(logFile, "Done!\n")):
 
       sys.stdout = open(logFile, 'w')
-      sys.stderr = open(logFile, 'a')
+      #sys.stderr = open(logFile, 'a')
 
       vp.build1dLikelihood(workDir+"/calculatedExpansions_"+\
                          thisDataPortion+".txt",
@@ -1587,7 +1677,7 @@ def launchLikelihood(dataPortions=None, logDir=None, workDir=None,
                     useBinAve = False)
 
       sys.stdout = sys.__stdout__
-      sys.stderr = sys.__stderr__
+      #sys.stderr = sys.__stderr__
 
       if jobSuccessful(logFile, "Done!\n"):
         print "done"
@@ -1723,8 +1813,12 @@ def launchVelocityStack(sample, stack, binPath,
   parameters="--velocityField=%s --voidCenters=%s --Rmax=%e --L0=%e --numBins=%d" % (velField_file, voidCenters, Rmax, Boxsize, numBins)
 
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
-    cmd = "%s %s &> %s" % (binPath,parameters,logFile)
-    os.system(cmd)
+    #cmd = "%s %s &> %s" % (binPath,parameters,logFile)
+    #os.system(cmd)
+    cmd = "%s %s" % (binPath,parameters)
+    log = open(logFile, 'w')
+    subprocess.call(cmd, stdout=log, stderr=log, shell=True)
+    log.close()
     if jobSuccessful(logFile, "Done!\n"):
       print "done"
     else:

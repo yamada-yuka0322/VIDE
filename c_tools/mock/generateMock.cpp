@@ -116,6 +116,11 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
   baseComovingDistance = LIGHT_SPEED/100.* gslIntegrate(e_computer, 0, z0, 1e-3);
   cout << "Comoving distance = " << baseComovingDistance << " Mpc/h" << endl;
 
+  if (cosmo_flag) cout << "Will place particles on a lightcone..." << endl;
+
+  float minZ = 1.e99;
+  float maxZ = 0;
+
   for (uint32_t i = 0; i < data->NumPart; i++)
     {
       float& x = data->Pos[x0][i];
@@ -148,8 +153,11 @@ void metricTransform(SimuData *data, int axis, bool reshift, bool pecvel, double
        cout << "The offending value is z=" << reduced_red << endl;
        abort();
       }
+      if (z > maxZ) maxZ = z;
+      if (z < minZ) minZ = z;
     }
 
+    printf("Range of z: %.2f - %.2f\n", minZ, maxZ);
 }
 
 // slightly perturb particle positions

@@ -94,24 +94,24 @@ bool loadParticleInfo(ParticleInfo& info,
       
       offset = info.ranges[0][0];
       // TEST PMS NON-COBIC BOXES
-      mul = 1.0;
-      //mul = info.ranges[0][1] - info.ranges[0][0];
+      //mul = 1.0;
+      mul = info.ranges[0][1] - info.ranges[0][0];
       f.beginCheckpoint();
       for (int i = 0; i < numpart; i++)
 	info.particles[i].x = mul*f.readReal32();
       f.endCheckpoint();
       
       offset = info.ranges[1][0];
-      mul = 1.0;
-      //mul = info.ranges[1][1] - info.ranges[1][0];
+      //mul = 1.0;
+      mul = info.ranges[1][1] - info.ranges[1][0];
       f.beginCheckpoint();
       for (int i = 0; i < numpart; i++)
 	info.particles[i].y = mul*f.readReal32();
       f.endCheckpoint();
       
       offset = info.ranges[2][0];
-      mul = 1.0;
-      //mul = info.ranges[2][1] - info.ranges[2][0];
+      //mul = 1.0;
+      mul = info.ranges[2][1] - info.ranges[2][0];
       f.beginCheckpoint();
       for (int i = 0; i < numpart; i++)
 	info.particles[i].z = mul*f.readReal32();

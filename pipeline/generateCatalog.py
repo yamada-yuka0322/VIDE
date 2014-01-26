@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #+
-#   VIDE -- Void IDEntification pipeline -- ./pipeline/generateCatalog.py
+#   VIDE -- Void IDentification and Examination -- ./pipeline/generateCatalog.py
 #   Copyright (C) 2010-2013 Guilhem Lavaux
 #   Copyright (C) 2011-2013 P. M. Sutter
 #
@@ -91,7 +91,7 @@ for sample in dataSampleList:
 
     launchGenerate(sample, GENERATE_PATH, workDir=workDir, 
                    inputDataDir=inputDataDir, zobovDir=zobovDir,
-                   figDir=figDir, logFile=logFile, useLCDM=useLCDM,
+                   figDir=figDir, logFile=logFile, useComoving=sample.useComoving,
                    continueRun=continueRun, regenerate=regenerateFlag)
 
   # --------------------------------------------------------------------------
@@ -115,7 +115,7 @@ for sample in dataSampleList:
 
     launchPrune(sample, PRUNE_PATH, 
                 logFile=logFile, zobovDir=zobovDir, 
-                useLCDM=useLCDM, continueRun=continueRun)
+                useComoving=sample.useComoving, continueRun=continueRun)
 
 # -------------------------------------------------------------------------
 if (startCatalogStage <= 4) and (endCatalogStage >= 4):

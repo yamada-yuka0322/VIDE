@@ -115,7 +115,7 @@ void loadData(const string& fname, NYU_VData & data)
 }
 
 void generateGalaxiesInCube(NYU_VData& data, ParticleData& output_data, 
-                            bool useLCDM)
+                            bool useComoving)
 {
   double d2r = M_PI/180;
 
@@ -163,7 +163,7 @@ void generateGalaxiesInCube(NYU_VData& data, ParticleData& output_data,
       double ra = data[i].ra*d2r, dec = data[i].dec*d2r;
       Position& p = output_data.pos[i];
 
-      if (useLCDM) {
+      if (useComoving) {
         //double pos = gsl_interp_eval(interp, redshifts, dL, data[i].cz, acc);
         gsl_integration_qng(&expanF, 1.e-6, data[i].cz/LIGHT_SPEED,
                                         1.e-6, 
@@ -587,7 +587,7 @@ int main(int argc, char **argv)
   // We compute a cube holding all the galaxies + the survey surface mask
 
   cout << "Placing galaxies..." << endl;
-  generateGalaxiesInCube(data, output_data, args_info.useLCDM_flag);
+  generateGalaxiesInCube(data, output_data, args_info.useComoving_flag);
   generateSurfaceMask(args_info, mask, pixel_list, full_mask_list,
                       data, output_data);
   
