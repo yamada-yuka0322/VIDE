@@ -364,11 +364,11 @@ void createBox(SimuData *simu, vector<long>& targets, vector<long>& snapshot_spl
 
   // PMS
   FILE *fp = fopen("mask_index.txt", "w");
-  fprintf(fp, "%d", boxed->NumPart);
+  fprintf(fp, "%ld", boxed->NumPart);
   fclose(fp);
 
   fp = fopen("total_particles.txt", "w");
-  fprintf(fp, "%d", boxed->NumPart);
+  fprintf(fp, "%ld", boxed->NumPart);
   fclose(fp);
   printf("Done!\n");
   // END PMS
@@ -430,6 +430,9 @@ void saveBox(SimuData *&boxed, const std::string& outbox, generateMock_info& arg
   long *snapshot_split = boxed->as<long>("snapshot_split");
   int num_snapshots = *boxed->as<int>("num_snapshots");
   long *uniqueID = boxed->as<long>("uniqueID");
+  float *velX = boxed->Vel[0];
+  float *velY = boxed->Vel[1];
+  float *velZ = boxed->Vel[2];
 
   if (!f.is_valid())
     {
@@ -469,6 +472,13 @@ void saveBox(SimuData *&boxed, const std::string& outbox, generateMock_info& arg
       v5->put(tmp_int, boxed->NumPart);
       delete[] tmp_int;
     }
+
+  NcVar *v6 = f.add_var("vel_x", ncFloat, NumSnap_dim);
+  NcVar *v7 = f.add_var("vel_y", ncFloat, NumSnap_dim);
+  NcVar *v8 = f.add_var("vel_z", ncFloat, NumSnap_dim);
+  v6->put(velX, boxed->NumPart);
+  v7->put(velY, boxed->NumPart);
+  v8->put(velZ, boxed->NumPart);
 }
 
 void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& args_info)
