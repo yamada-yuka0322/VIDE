@@ -106,6 +106,30 @@ def loadPart(workDir, sampleDir, sample):
     return partData, boxLen, volNorm, isObservationData
 
 # -----------------------------------------------------------------------------
+def loadPartVel(workDir, sampleDir, sample):
+    #print "    Loading particle velocities..."
+    sys.stdout.flush()
+
+    infoFile = workDir+"/"+sampleDir+"/zobov_slice_"+sample.fullName+".par"
+    File = NetCDFFile(infoFile, 'r')
+    isObservation = getattr(File, 'is_observation')
+
+    if isObservation:
+      print "No velocities for observations!"
+      return -1
+   
+    vx = File.variables['vel_x'][0:]
+    vy = File.variables['vel_y'][0:]
+    vx = File.variables['vel_z'][0:]
+
+    File.close()
+
+    partVel = np.column_stack((vx,vy,vz))
+
+    return partVel
+
+
+# -----------------------------------------------------------------------------
 def shiftPart(inPart, newCenter, periodicLine, boxLen):
 
   part = inPart.copy()
