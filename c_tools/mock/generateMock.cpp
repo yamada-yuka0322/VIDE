@@ -473,9 +473,9 @@ void saveBox(SimuData *&boxed, const std::string& outbox, generateMock_info& arg
       delete[] tmp_int;
     }
 
-  NcVar *v6 = f.add_var("vel_x", ncFloat, NumSnap_dim);
-  NcVar *v7 = f.add_var("vel_y", ncFloat, NumSnap_dim);
-  NcVar *v8 = f.add_var("vel_z", ncFloat, NumSnap_dim);
+  NcVar *v6 = f.add_var("vel_x", ncFloat, NumPart_dim);
+  NcVar *v7 = f.add_var("vel_y", ncFloat, NumPart_dim);
+  NcVar *v8 = f.add_var("vel_z", ncFloat, NumPart_dim);
   v6->put(velX, boxed->NumPart);
   v7->put(velY, boxed->NumPart);
   v8->put(velZ, boxed->NumPart);
