@@ -25,16 +25,20 @@ from netCDF4 import Dataset
 import sys
 from void_python_tools.backend import *
 import void_python_tools.apTools as vp
+import pickle
 
 NetCDFFile = Dataset
 ncFloat = 'f8'
 
 # -----------------------------------------------------------------------------
-def loadPart(workDir, sampleDir, sample):
+def loadPart(sampleDir):
     #print "    Loading particle data..."
     sys.stdout.flush()
 
-    infoFile = workDir+"/"+sampleDir+"/zobov_slice_"+sample.fullName+".par"
+    with open(sampleDir+"/sample_info.dat", 'rb') as input:
+      sample = pickle.load(input)
+
+    infoFile = sampleDir+"/zobov_slice_"+sample.fullName+".par"
     File = NetCDFFile(infoFile, 'r')
     ranges = np.zeros((3,2))
     ranges[0][0] = getattr(File, 'range_x_min')
@@ -49,7 +53,7 @@ def loadPart(workDir, sampleDir, sample):
     mul = np.zeros((3))
     mul[:] = ranges[:,1] - ranges[:,0]
 
-    partFile = workDir+"/"+sampleDir+"/zobov_slice_"+sample.fullName
+    partFile = sampleDir+"/zobov_slice_"+sample.fullName
     iLine = 0
     partData = []
     part = np.zeros((3))
@@ -106,11 +110,14 @@ def loadPart(workDir, sampleDir, sample):
     return partData, boxLen, volNorm, isObservationData
 
 # -----------------------------------------------------------------------------
-def loadPartVel(workDir, sampleDir, sample):
+def loadPartVel(sampleDir):
     #print "    Loading particle velocities..."
     sys.stdout.flush()
 
-    infoFile = workDir+"/"+sampleDir+"/zobov_slice_"+sample.fullName+".par"
+    with open(sampleDir+"/sample_info.dat", 'rb') as input:
+      sample = pickle.load(input)
+
+    infoFile = sampleDir+"/zobov_slice_"+sample.fullName+".par"
     File = NetCDFFile(infoFile, 'r')
     isObservation = getattr(File, 'is_observation')
 
