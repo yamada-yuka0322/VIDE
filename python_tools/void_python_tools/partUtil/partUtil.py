@@ -120,7 +120,7 @@ def loadPartVel(workDir, sampleDir, sample):
    
     vx = File.variables['vel_x'][0:]
     vy = File.variables['vel_y'][0:]
-    vx = File.variables['vel_z'][0:]
+    vz = File.variables['vel_z'][0:]
 
     File.close()
 
