@@ -76,9 +76,10 @@ public:
     long estimated = (preproc == 0) ? simu->NumPart : preproc->getEstimatedPostprocessed(simu->NumPart);
     long allocated = estimated; 
 
-    for (int k = 0; k < 3; k++)
+    for (int k = 0; k < 3; k++) {
       simu->Pos[k] = new float[allocated];
-    simu->Vel[2] = new float[allocated];
+      simu->Vel[k] = new float[allocated];
+    }
     simu->Id = new long[allocated];
     long *uniqueID = new long[allocated];
     long *index = new long[allocated];
@@ -98,7 +99,7 @@ public:
       SingleParticle p;
 
       fp >> p.ID >> p.Pos[0] >> p.Pos[1]
-         >> p.Pos[2] >> p.Vel[2] >> tempData >> tempData >> tempData;
+         >> p.Pos[2] >> p.Vel[2] >> p.Vel[1] >> p.Vel[0] >> tempData;
 
       if (p.ID == -99 && 
           p.Pos[0] == -99 && p.Pos[1] == -99 && 

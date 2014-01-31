@@ -354,7 +354,8 @@ void createBox(SimuData *simu, vector<long>& targets, vector<long>& snapshot_spl
   for (int j = 0; j < 3; j++)
     {
       boxed->Pos[j] = new float[boxed->NumPart];
-      boxed->Vel[j] = 0;
+      boxed->Vel[j] = new float[boxed->NumPart];
+      //boxed->Vel[j] = 0;
       mul[j] = 1.0/(ranges[2*j+1] - ranges[2*j+0]);
     }
   cout << "Min range = " << ranges[0] << " " << ranges[2] << " " << ranges[4] << endl;
@@ -413,6 +414,7 @@ void buildBox(SimuData *simu, long num_targets, long loaded,
       for (int j = 0; j < 3; j++)
 	{
 	  boxed->Pos[j][loaded] = max(min((simu->Pos[j][pid]-ranges[j*2])*mul[j], double(1)), double(0));
+	  boxed->Vel[j][loaded] = simu->Vel[j][pid];
 	  assert(boxed->Pos[j][loaded] >= 0);
 	  assert(boxed->Pos[j][loaded] <= 1);
 	}
@@ -551,7 +553,8 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
   for (int j = 0; j < 3; j++)
     {
       boxed->Pos[j] = new float[boxed->NumPart];
-      boxed->Vel[j] = 0;
+      boxed->Vel[j] = new float[boxed->NumPart];
+      //boxed->Vel[j] = 0;
       mul[j] = 1.0/(ranges[2*j+1] - ranges[2*j+0]);
     }
   
