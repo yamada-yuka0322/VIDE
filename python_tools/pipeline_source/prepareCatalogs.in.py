@@ -706,7 +706,7 @@ if (args.halos or args.all) and haloFileBase != "" and len(minHaloMasses) > 0:
         if minHaloMass == "none":
           command = "%s -a 200000 %s %s %s x y z vz vy vx %s | awk '{if ($9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, massTag, idTag, pidTag, outFileName )
         else:
-          command = "%s -a 200000 %s %s %s x y z vz vy vx %s | awk '{if ($1>%g && $9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, massTag, idTag, minHaloMass, pidTag, outFileName )
+          command = "%s -a 200000 %s %s %s x y z vz vy vx %s | awk '{if ($1>%g && $9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, massTag, idTag, pidTag, minHaloMass, outFileName )
         #os.system(command)
         subprocess.call(command, shell=True)
         outFile = open(outFileName, 'a')
