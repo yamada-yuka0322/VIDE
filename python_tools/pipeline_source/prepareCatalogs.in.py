@@ -69,6 +69,39 @@ if not os.access(filename, os.F_OK):
 parms = imp.load_source("name", filename)
 globals().update(vars(parms))
 
+#------------------------------------------------------------------------------
+def getSDFTags(dataFile):
+  idTag = "id"
+  for line in open(dataFile):
+    if "int64_t id" in line: 
+      idTag = "id"
+      break
+    if "int64_t ident" in line: 
+      idTag = "ident"
+      break
+
+  massTag = "mass"
+  for line in open(dataFile):
+    if "float m200b" in line: 
+      massTag = "m200b"
+      break
+    if "float mass" in line: 
+      massTag = "mass"
+      break
+
+  pidTag = ""
+  iLine = 0
+  for line in open(dataFile):
+    iLine += 1
+    if iLine > 100: break
+    if "parent_id" in line: 
+      pidTag = "parent_id"
+      break
+    if "pid" in line: 
+      pidTag = "pid"
+      break
+
+  return idTag, massTag, pidTag
 
 #------------------------------------------------------------------------------
 def getSampleName(setName, redshift, useVel, iSlice=-1, iVol=-1):
@@ -566,26 +599,7 @@ if (args.script or args.all) and haloFileBase != "":
     numPart = 0
     if dataFormat == "sdf":
       SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
-      massTag = "mass"
-      for line in open(dataFile):
-        if "float m200b" in line: 
-          massTag = "m200b"
-          break
-        if "float mass" in line: 
-          massTag = "mass"
-          break
-
-      pidTag = ""
-      iLine = 0
-      for line in open(dataFile):
-        iLine += 1
-        if iLine > 100: break
-        if "parent_id" in line: 
-          pidTag = "parent_id"
-          break
-        if "pid" in line: 
-          pidTag = "pid"
-          break
+      idTag, massTag, pidTag = getSDFTags(dataFile)
 
       if minHaloMass == "none":
         command = "%s -a 200000 %s %s %s | awk '{if ($2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile, massTag, pidTag)
@@ -686,35 +700,7 @@ if (args.halos or args.all) and haloFileBase != "" and len(minHaloMasses) > 0:
       outFile.close()
 
       if dataFormat == "sdf":
-        idTag = "id"
-        for line in open(dataFile):
-          if "int64_t id" in line: 
-            idTag = "id"
-            break
-          if "int64_t ident" in line: 
-            idTag = "ident"
-            break
-
-        massTag = "mass"
-        for line in open(dataFile):
-          if "float m200b" in line: 
-            massTag = "m200b"
-            break
-          if "float mass" in line: 
-            massTag = "mass"
-            break
-
-        pidTag = ""
-        iLine = 0
-        for line in open(dataFile):
-          iLine += 1
-          if iLine > 100: break
-          if "parent_id" in line: 
-            pidTag = "parent_id"
-            break
-          if "pid" in line: 
-            pidTag = "pid"
-            break
+        idTag, massTag, pidTag = getSDFTags(dataFile)
 
         SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
         if minHaloMass == "none":
@@ -832,6 +818,7 @@ if (args.halos or args.all) and haloFileBase != "":
         print " ERROR: not enough halos to support that density! Maximum is %g" % (1.*numPart / lbox**3)
         exit(-1)
 
+
       sampleName = prefix+"halos_den"+str(haloDen)+"_z"+redshifts[iRedshift]
       outFileName = catalogDir+"/"+sampleName+".dat"
       outFile = open(outFileName, 'w')
@@ -843,48 +830,42 @@ if (args.halos or args.all) and haloFileBase != "":
       outFile.close()
 
       if dataFormat == "sdf":
-        idTag = "id"
-        for line in open(dataFile):
-          if "int64_t id" in line: 
-            idTag = "id"
-            break
-          if "int64_t ident" in line: 
-            idTag = "ident"
-            break
-
-        massTag = "mass"
-        for line in open(dataFile):
-          if "float m200b" in line: 
-            massTag = "m200b"
-            break
-          if "float mass" in line: 
-            massTag = "mass"
-            break
-
-        pidTag = ""
-        iLine = 0
-        for line in open(dataFile):
-          iLine += 1
-          if iLine > 100: break
-          if "parent_id" in line: 
-            pidTag = "parent_id"
-            break
-          if "pid" in line: 
-            pidTag = "pid"
-            break
-        print "TEST", massTag, pidTag
+        idTag, massTag, pidTag = getSDFTags(dataFile)
+      
+        tempFile = catalogDir+"/temp_"+sampleName+".dat" 
         SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
-        command = "%s -a 200000 %s %s %s x y z vz vy vx %s | sort -rg -k 1 | awk '{if ($9==-1 && NR < %d) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, massTag, idTag, pidTag, numPartExpect, outFileName )
+        command = "%s -a 200000 %s %s %s x y z vz vy vx %s | awk '{if ($9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, massTag, idTag, pidTag, tempFile )
         #os.system(command)
         subprocess.call(command, shell=True)
-        outFile = open(outFileName, 'a')
+
+        # do the check again since now we've filtered out subhalos
+        numPart = 0
+        for line in enumerate(tempFile):
+          numPart += 1
+ 
+        actualDen = 1.*numPart / lbox**3
+        keepFraction = haloDen / actualDen
+        if numPart < numPartExpect:
+          print " ERROR: not enough galaxies to support that density! Maximum is %g" % (1.*numPart / lbox**3)
+          exit(-1)
+        
+        numKept = 0
+        for (iLine,line) in enumerate(inFile):
+          if np.random.uniform() > keepFraction: continue
+          outFile.write(line)
+          numKept += 1 
+
         outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
         outFile.close()
       else:
+        actualDen = 1.*numPart / lbox**3
+        keepFraction = haloDen / actualDen
+
         inFile = open(dataFile, 'r')
-        haloList = []
+        outFile = open(outFileName, 'a')
         for (iHalo,line) in enumerate(inFile):
           if iHalo < haloFileNumComLines: continue
+          if np.random.uniform() > keepFraction: continue
           line = line.split(haloFileColSep)
           x  = float(line[haloFileXCol]) * haloFilePosRescale
           y  = float(line[haloFileYCol]) * haloFilePosRescale
@@ -893,30 +874,12 @@ if (args.halos or args.all) and haloFileBase != "":
           vy = float(line[haloFileVYCol])
           vx = float(line[haloFileVXCol])
           mass = float(line[haloFileMCol])
-          haloList.append((x,y,z,vz,vy,vx,mass))
-        inFile.close()
 
-        haloList = np.array(haloList)
-        haloMasses = haloList[:,6]
-        haloList = haloList[np.argsort(haloMasses)[::-1]]
-      
-        outFile = open(outFileName, 'a')
-        for iHalo in xrange(numPartExpect):
-            x = haloList[iHalo,0]
-            y = haloList[iHalo,1]
-            z = haloList[iHalo,2]
-            vz = haloList[iHalo,3]
-            vy = haloList[iHalo,4]
-            vx = haloList[iHalo,5]
-            mass = haloList[iHalo,6]
-
-            # write to output file
-            outFile.write("%d %e %e %e %e %e %e %e\n" %(iHalo,x,y,z,
-                                                        vz,vy,vx,mass))
-
+          outFile.write("%d %e %e %e %e %e %e %e\n" %(iHalo,x,y,z,
+                                                      vz,vy,vx,mass))
         outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
+        inFile.close()
         outFile.close()
-
 
 # -----------------------------------------------------------------------------
 # now the HOD
@@ -1010,26 +973,7 @@ if (args.hod or args.all) and haloFileBase != "":
       inFile = haloFile
       outFile = haloFile+"_temp"
 
-      massTag = "mass"
-      for line in open(inFile):
-        if "float m200b" in line: 
-          massTag = "m200b"
-          break
-        if "float mass" in line: 
-          massTag = "mass"
-          break
-
-      pidTag = ""
-      iLine = 0
-      for line in open(inFile):
-        iLine += 1
-        if iLine > 100: break
-        if "parent_id" in line: 
-          pidTag = "parent_id"
-          break
-        if "pid" in line: 
-          pidTag = "pid"
-          break
+      idTag, massTag, pidTag = getSDFTags(inFile)
 
       SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
       command = "%s -a 200000 %s %s x y z vx vy vz %s | awk '{if ($8 ==-1) print $1, $2, $3, $4, $5, $6, $7}'>>%s" % (SDFcvt_PATH, inFile, massTag, pidTag, outFile)
@@ -1106,14 +1050,17 @@ if (args.hod or args.all) and haloFileBase != "":
       inFile = open(catalogDir+"/hod_"+sampleName+".mock")
       outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
 
-      outFile.write("%f\n" %(lbox))
-      outFile.write("%s\n" %(omegaM))
-      outFile.write("%s\n" %(hubble))
-      outFile.write("%s\n" %(redshift))
-      outFile.write("%d\n" %(numPartExpect))
+      #outFile.write("%f\n" %(lbox))
+      #outFile.write("%s\n" %(omegaM))
+      #outFile.write("%s\n" %(hubble))
+      #outFile.write("%s\n" %(redshift))
+      #outFile.write("%d\n" %(numPartExpect))
 
       numKept = 0
       for (iLine,line) in enumerate(inFile):
+        if iLine < 5: 
+          outFile.write(line)
+          continue
         if np.random.uniform() > keepFraction: continue
         outFile.write(line) 
         numKept += 1

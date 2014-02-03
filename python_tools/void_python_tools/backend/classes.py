@@ -21,6 +21,8 @@
 
 import os
 from numpy import abs
+import matplotlib
+matplotlib.use('Agg')
 
 LIGHT_SPEED = 299792.458
 

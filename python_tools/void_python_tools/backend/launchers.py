@@ -325,6 +325,9 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
   else:
     maskIndex = -1
     maxDen = 0.2
+  # TEST
+  #maxDen = 1.e99
+  # END TEST
 
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
     for fileName in glob.glob(zobovDir+"/part._"+sampleName+".*"):
@@ -413,6 +416,9 @@ def launchPrune(sample, binPath,
     mockIndex = -1
     maxDen = 0.2
     observationLine = ""
+  # TEST
+  #maxDen = 1.e99
+  # END TEST
 
     #periodicLine = " --periodic='"
     #if sample.numSubvolumes == 1: periodicLine += "xy"
@@ -577,7 +583,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
 
   centralRadius = stack.rMin * 0.25
 
-  # restrict to relavent ranges of sample
+  # restrict to relevant ranges of sample
   zMin = max(sample.zRange[0],stack.zMin) * 3000
   zMax = min(sample.zRange[1],stack.zMax) * 3000
 
@@ -596,6 +602,9 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   else:
     maskIndex = 999999999
     maxDen = 0.2
+  # TEST
+  #maxDen = 1.e99
+  # END TEST
 
   if INCOHERENT:
     nullTestFlag = "INCOHERENT"
@@ -1219,8 +1228,8 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     while badChain:
       ntries += 1
 
-      #Rexpect = (stack.rMin+stack.rMax)/2
-      #Rtruncate = stack.rMin*3. + 1 # TEST
+      Rexpect = (stack.rMin+stack.rMax)/2
+      Rtruncate = stack.rMin*3. + 1 # TEST
       #if sample.dataType == "observation":
       #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
       #                                Niter=300000,
@@ -1231,11 +1240,9 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
       #                                Niter=300000,
       #                                Nburn=100000,
       #                               Rextracut=Rtruncate)
-      #badChain = (args[0][0] > 0.5 or args[0][1] > stack.rMax or \
-      #            args[0][2] > stack.rMax) and \
+      #badChain = (args[0][0] > 0.5 or args[0][1] > 2.*stack.rMax or \
+      #            args[0][2] > 2.*stack.rMax) and \
       #           (ntries < maxtries)
-      #ret,fits,args = vp.compute_radial_inertia(voidDir, stack.rMax, mode="symmetric", nBootstraps=5)
-      #ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, nBootstraps=100, rMaxInertia=1.0)
       ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="2d", nBootstraps=500, rMaxInertia=0.7)
       #ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="symmetric", nBootstraps=500, rMaxInertia=100)
       badChain = False
