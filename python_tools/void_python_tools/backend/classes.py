@@ -75,6 +75,7 @@ class Sample:
   fakeDensity = 0.01
   profileBinSize = 2 # Mpc
   autoNumInStack = -1 # set to >0 to automatically generate stacks of size N
+  autoPartInStack = -1 # set to >0 to automatically generate stacks with N particles
   volumeLimited = True
   includeInHubble = True
   partOfCombo  = False
@@ -103,7 +104,8 @@ class Sample:
                numSubvolumes=1, mySubvolume=1, dataFormat="sdss",
                useComoving=False,
                dataType="observation",
-               subsample=1.0, useLightCone=True, autoNumInStack=-1):
+               subsample=1.0, useLightCone=True, autoNumInStack=-1,
+               autoPartInStack=-1):
     self.dataFile = dataFile
     self.fullName = fullName
     self.nickName = nickName
@@ -134,6 +136,7 @@ class Sample:
     self.dataUnit = dataUnit
     self.useComoving = useComoving
     self.autoNumInStack = autoNumInStack
+    self.autoPartInStack = autoPartInStack
 
     self.stacks = []
 
