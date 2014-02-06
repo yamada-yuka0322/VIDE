@@ -25,16 +25,20 @@ from netCDF4 import Dataset
 import sys
 from void_python_tools.backend import *
 import void_python_tools.apTools as vp
+import pickle
 
 NetCDFFile = Dataset
 ncFloat = 'f8'
 
 # -----------------------------------------------------------------------------
-def loadPart(workDir, sampleDir, sample):
+def loadPart(sampleDir):
     #print "    Loading particle data..."
     sys.stdout.flush()
 
-    infoFile = workDir+"/"+sampleDir+"/zobov_slice_"+sample.fullName+".par"
+    with open(sampleDir+"/sample_info.dat", 'rb') as input:
+      sample = pickle.load(input)
+
+    infoFile = sampleDir+"/zobov_slice_"+sample.fullName+".par"
     File = NetCDFFile(infoFile, 'r')
     ranges = np.zeros((3,2))
     ranges[0][0] = getattr(File, 'range_x_min')
@@ -49,7 +53,7 @@ def loadPart(workDir, sampleDir, sample):
     mul = np.zeros((3))
     mul[:] = ranges[:,1] - ranges[:,0]
 
-    partFile = workDir+"/"+sampleDir+"/zobov_slice_"+sample.fullName
+    partFile = sampleDir+"/zobov_slice_"+sample.fullName
     iLine = 0
     partData = []
     part = np.zeros((3))
@@ -106,6 +110,33 @@ def loadPart(workDir, sampleDir, sample):
     return partData, boxLen, volNorm, isObservationData
 
 # -----------------------------------------------------------------------------
+def loadPartVel(sampleDir):
+    #print "    Loading particle velocities..."
+    sys.stdout.flush()
+
+    with open(sampleDir+"/sample_info.dat", 'rb') as input:
+      sample = pickle.load(input)
+
+    infoFile = sampleDir+"/zobov_slice_"+sample.fullName+".par"
+    File = NetCDFFile(infoFile, 'r')
+    isObservation = getattr(File, 'is_observation')
+
+    if isObservation:
+      print "No velocities for observations!"
+      return -1
+   
+    vx = File.variables['vel_x'][0:]
+    vy = File.variables['vel_y'][0:]
+    vz = File.variables['vel_z'][0:]
+
+    File.close()
+
+    partVel = np.column_stack((vx,vy,vz))
+
+    return partVel
+
+
+# -----------------------------------------------------------------------------
 def shiftPart(inPart, newCenter, periodicLine, boxLen):
 
   part = inPart.copy()
@@ -125,3 +156,146 @@ def shiftPart(inPart, newCenter, periodicLine, boxLen):
                             np.copysign(boxLen[2], part[shiftUs,2])
 
   return part
+
+# -----------------------------------------------------------------------------
+
+class Bunch:
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
+
+class Catalog:
+  numVoids = 0
+  numPartTot = 0
+  numZonesTot = 0
+  boxLen = np.zeros((3))
+  part = None
+  zones2Parts = None
+  void2Zones = None
+  voids = None
+
+# -----------------------------------------------------------------------------
+def loadVoidCatalog(sampleDir):
+  #print "    Loading particle data..."
+  sys.stdout.flush()
+
+  catalog = Catalog()
+  with open(sampleDir+"/sample_info.dat", 'rb') as input:
+    sample = pickle.load(input)
+
+  print "Loading info..."
+  infoFile = sampleDir+"/zobov_slice_"+sample.fullName+".par"
+  File = NetCDFFile(infoFile, 'r')
+  ranges = np.zeros((3,2))
+  ranges[0][0] = getattr(File, 'range_x_min')
+  ranges[0][1] = getattr(File, 'range_x_max')
+  ranges[1][0] = getattr(File, 'range_y_min')
+  ranges[1][1] = getattr(File, 'range_y_max')
+  ranges[2][0] = getattr(File, 'range_z_min')
+  ranges[2][1] = getattr(File, 'range_z_max')
+  catalog.boxLen[0] = ranges[0][1] - ranges[0][0]
+  catalog.boxLen[1] = ranges[1][1] - ranges[1][0]
+  catalog.boxLen[2] = ranges[2][1] - ranges[2][0]
+  File.close()
+
+  print "Loading all particles..."
+  partData, boxLen, volNorm, isObservationData = loadPart(sampleDir)
+  numPartTot = len(partData)
+  catalog.numPartTot = numPartTot
+  catalog.part = []
+  for i in xrange(len(partData)):
+    catalog.part.append(Bunch(x = partData[i][0], 
+                              y = partData[i][1],
+                              z = partData[i][2],
+                              volume = 0,
+                              ra = 0,
+                              dec = 0,
+                              redshift = 0,
+                              uniqueID = 0))
+      
+ 
+  print "Loading volumes..."
+  volFile = sampleDir+"/vol_"+sample.fullName+".dat"
+  File = file(volFile)
+  chk = np.fromfile(File, dtype=np.int32,count=1)
+  vols = np.fromfile(File, dtype=np.float32,count=numPartTot)
+  for ivol in xrange(len(vols)):
+    catalog.part[ivol].volume = vols[ivol] / volNorm
+
+  print "Loading voids..."
+  fileName = sampleDir+"/voidDesc_central_"+sample.fullName+".out"
+  catData = np.loadtxt(fileName, comments="#", skiprows=2)
+  catalog.voids = []
+  for line in catData:
+    catalog.voids.append(Bunch(iVoid = int(line[0]),
+                               voidID = int(line[1]),
+                               coreParticle = line[2],
+                               coreDens = line[3],
+                               zoneVol = line[4],
+                               zoneNumPart = line[5],
+                               numZones = int(line[6]),
+                               voidVol = line[7],
+                               numPart = int(line[8]),
+                               densCon = line[9],
+                               voidProp = line[10],
+                               radius = pow(line[7]/volNorm*3./4./np.pi, 1./3.),
+                               barycenter = np.zeros((3))))
+
+  print "Read %d voids" % len(catalog.voids)
+
+  print "Loading barycenters..."
+  iLine = 0
+  for line in open(sampleDir+"/barycenters_central_"+sample.fullName+".out"):
+    line = line.split()
+    catalog.voids[iLine].barycenter[0] = float(line[1])
+    catalog.voids[iLine].barycenter[1] = float(line[2])
+    catalog.voids[iLine].barycenter[2] = float(line[3])
+    iLine += 1
+
+
+  print "Loading zone-void membership info..."
+  zoneFile = sampleDir+"/voidZone_"+sample.fullName+".dat"
+  catalog.void2Zones = []
+  File = file(zoneFile)
+  numZonesTot = np.fromfile(File, dtype=np.int32,count=1)
+  catalog.numZonesTot = numZonesTot
+  for iZ in xrange(numZonesTot):
+    numZones = np.fromfile(File, dtype=np.int32,count=1)
+    catalog.void2Zones.append(Bunch(numZones = numZones,
+                                     zoneIDs = []))
+
+    for p in xrange(numZones):
+      zoneID = np.fromfile(File, dtype=np.int32,count=1)
+      catalog.void2Zones[iZ].zoneIDs.append(zoneID)
+
+
+  print "Loading particle-zone membership info..."
+  zonePartFile = sampleDir+"/voidPart_"+sample.fullName+".dat"
+  catalog.zones2Parts = []
+  File = file(zonePartFile)
+  chk = np.fromfile(File, dtype=np.int32,count=1)
+  numZonesTot = np.fromfile(File, dtype=np.int32,count=1)
+  for iZ in xrange(numZonesTot):
+    numPart = np.fromfile(File, dtype=np.int32,count=1)
+    catalog.zones2Parts.append(Bunch(numPart = numPart,
+                                     partIDs = []))
+
+    for p in xrange(numPart):
+      partID = np.fromfile(File, dtype=np.int32,count=1)
+      catalog.zones2Parts[iZ].partIDs.append(partID)
+
+  return catalog
+
+
+  
+# -----------------------------------------------------------------------------
+def getVoidPart(catalog, voidID):
+
+  partOut = []
+  for iZ in xrange(catalog.void2Zones[voidID].numZones):
+    zoneID = catalog.void2Zones[voidID].zoneIDs[iZ]
+    for p in xrange(catalog.zones2Parts[zoneID].numPart):
+      partID = catalog.zones2Parts[zoneID].partIDs[p]
+      partOut.append(catalog.part[partID])
+  
+  return partOut
+

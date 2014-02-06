@@ -69,6 +69,39 @@ if not os.access(filename, os.F_OK):
 parms = imp.load_source("name", filename)
 globals().update(vars(parms))
 
+#------------------------------------------------------------------------------
+def getSDFTags(dataFile):
+  idTag = "id"
+  for line in open(dataFile):
+    if "int64_t id" in line: 
+      idTag = "id"
+      break
+    if "int64_t ident" in line: 
+      idTag = "ident"
+      break
+
+  massTag = "mass"
+  for line in open(dataFile):
+    if "float m200b" in line: 
+      massTag = "m200b"
+      break
+    if "float mass" in line: 
+      massTag = "mass"
+      break
+
+  pidTag = ""
+  iLine = 0
+  for line in open(dataFile):
+    iLine += 1
+    if iLine > 100: break
+    if "parent_id" in line: 
+      pidTag = "parent_id"
+      break
+    if "pid" in line: 
+      pidTag = "pid"
+      break
+
+  return idTag, massTag, pidTag
 
 #------------------------------------------------------------------------------
 def getSampleName(setName, redshift, useVel, iSlice=-1, iVol=-1):
@@ -465,6 +498,7 @@ for iSubSample in xrange(len(subSamples)):
           rescale_position = hubble/1000./scale
           shift = lbox/2.
           rescale_velocity = 3.08567802e16/3.1558149984e16
+
           command = "%s -a 200000 %s x y z vz vy vx mass | awk '{print $1*%g+%g, $2*%g+%g, $3*%g+%g, $4*%g, $5*%g, $6*%g, $7}' > %s" % (SDFcvt_PATH, dataFile,
                                      rescale_position,
                                      shift,
@@ -549,7 +583,7 @@ for iSubSample in xrange(len(subSamples)):
   prevSubSample = thisSubSample
 
 # -----------------------------------------------------------------------------
-# now halos
+# now halos - filter on mass
 if (args.script or args.all) and haloFileBase != "":
 
   for minHaloMass in minHaloMasses:
@@ -565,10 +599,12 @@ if (args.script or args.all) and haloFileBase != "":
     numPart = 0
     if dataFormat == "sdf":
       SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
+      idTag, massTag, pidTag = getSDFTags(dataFile)
+
       if minHaloMass == "none":
-        command = "%s -a 200000 %s mass parent_id | awk '{if ($2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile)
+        command = "%s -a 200000 %s %s %s | awk '{if ($2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile, massTag, pidTag)
       else:
-        command = "%s -a 200000 %s mass parent_id | awk '{if ($1>%g && $2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile, minHaloMass)
+        command = "%s -a 200000 %s %s %s | awk '{if ($1>%g && $2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile, massTag, pidTag, minHaloMass)
       numPart = subprocess.check_output(command, shell=True)
       numPart = int(numPart.split()[0])
     else:
@@ -612,8 +648,8 @@ if (args.script or args.all) and haloFileBase != "":
                   numSubvolumes, numSlices, True, lbox, minRadius, omegaM,
                   dataFileNameList = fileList)
 
-if (args.halos or args.all) and haloFileBase != "":
-  print " Doing halos"
+if (args.halos or args.all) and haloFileBase != "" and len(minHaloMasses) > 0:
+  print " Doing halos - mass"
   sys.stdout.flush()
 
   for minHaloMass in minHaloMasses:
@@ -664,11 +700,13 @@ if (args.halos or args.all) and haloFileBase != "":
       outFile.close()
 
       if dataFormat == "sdf":
+        idTag, massTag, pidTag = getSDFTags(dataFile)
+
         SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
         if minHaloMass == "none":
-          command = "%s -a 200000 %s mass ident x y z vz vy vx parent_id | awk '{if ($9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, outFileName )
+          command = "%s -a 200000 %s %s %s x y z vz vy vx %s | awk '{if ($9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, massTag, idTag, pidTag, outFileName )
         else:
-          command = "%s -a 200000 %s mass ident x y z vz vy vx parent_id | awk '{if ($1>%g && $9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, minHaloMass, outFileName )
+          command = "%s -a 200000 %s %s %s x y z vz vy vx %s | awk '{if ($1>%g && $9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, massTag, idTag, pidTag, minHaloMass, outFileName )
         #os.system(command)
         subprocess.call(command, shell=True)
         outFile = open(outFileName, 'a')
@@ -696,6 +734,152 @@ if (args.halos or args.all) and haloFileBase != "":
         outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
         outFile.close()
         inFile.close()
+
+# -----------------------------------------------------------------------------
+# now halos - filter on density
+if (args.script or args.all) and haloFileBase != "":
+
+  for haloDen in haloDenList:
+    print " Doing halo script", haloDen
+    sys.stdout.flush()
+
+    # estimate number of halos to get density
+    if haloFileDummy == '':
+      dataFile = catalogDir+haloFileBase+fileNums[0]
+    else:
+      dataFile = catalogDir+haloFileBase.replace(haloFileDummy, 
+                                                 fileNums[0])
+
+    numPart = haloDen * lbox**3
+    meanDen = lbox/numPart**(1./3.)
+    if meanDen < 1: 
+      minRadius = 4
+    else:
+      minRadius = int(np.ceil(meanDen))
+  
+    setName = prefix+"halos_den"+str(haloDen)
+    fileList = []
+    for (iRedshift, redshift) in enumerate(redshifts):
+      sampleName = getSampleName(setName, redshift, False)
+      outFileName = sampleName+".dat"
+      fileList.append(outFileName) 
+
+    writeScript(setName, prefix+"halos_den"+str(haloDen)+"_z", "multidark",
+                scriptDir, catalogDir, fileNums, 
+                redshifts, 
+                numSubvolumes, numSlices, False, lbox, minRadius, omegaM,
+                dataFileNameList = fileList)
+   
+    if doPecVel:
+      writeScript(setName, prefix+"halos_den"+str(haloDen)+"_z", 
+                  "multidark",
+                  scriptDir, catalogDir, fileNums, 
+                  redshifts, 
+                  numSubvolumes, numSlices, True, lbox, minRadius, omegaM,
+                  dataFileNameList = fileList)
+
+if (args.halos or args.all) and haloFileBase != "":
+  print " Doing halos - density"
+  sys.stdout.flush()
+
+  for haloDen in haloDenList:
+    print "  halo density = ", haloDen
+    sys.stdout.flush()
+
+    for (iRedshift, redshift) in enumerate(redshifts):
+      print "   z = ", redshift
+      sys.stdout.flush()
+
+      if haloFileDummy == '':
+        dataFile = catalogDir+haloFileBase+fileNums[iRedshift]
+      else:
+        dataFile = catalogDir+haloFileBase.replace(haloFileDummy, 
+                                                   fileNums[iRedshift])
+      # check the actual density of halos
+      inFile = open(dataFile, 'r')
+      numPart = 0
+      if dataFormat == "sdf":
+        for line in inFile:
+          if "nhalos" in line:
+            numPart = int(line.split()[3].strip(';'))
+            break
+          if "npart" in line:
+            numPart = int(line.split()[3].strip(';'))
+            break
+        inFile.close()
+      else:
+        for (iLine, line) in enumerate(inFile):
+          if iLine < haloFileNumComLines: continue
+          numPart += 1
+        inFile.close()
+
+      numPartExpect = int(np.ceil(haloDen * lbox**3))
+      if numPart < numPartExpect:
+        print " ERROR: not enough halos to support that density! Maximum is %g" % (1.*numPart / lbox**3)
+        exit(-1)
+
+
+      sampleName = prefix+"halos_den"+str(haloDen)+"_z"+redshifts[iRedshift]
+      outFileName = catalogDir+"/"+sampleName+".dat"
+      outFile = open(outFileName, 'w')
+      outFile.write("%f\n" %(lbox))
+      outFile.write("%s\n" %(omegaM))
+      outFile.write("%s\n" %(hubble))
+      outFile.write("%s\n" %(redshift))
+      outFile.write("%d\n" %(numPartExpect))
+      outFile.close()
+
+      if dataFormat == "sdf":
+        idTag, massTag, pidTag = getSDFTags(dataFile)
+      
+        tempFile = catalogDir+"/temp_"+sampleName+".dat" 
+        SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
+        command = "%s -a 200000 %s %s %s x y z vz vy vx %s | awk '{if ($9==-1) print $2, $3, $4, $5, $6, $7, $8, $1}'>>%s" % (SDFcvt_PATH, dataFile, massTag, idTag, pidTag, tempFile )
+        #os.system(command)
+        subprocess.call(command, shell=True)
+
+        # do the check again since now we've filtered out subhalos
+        numPart = 0
+        for line in enumerate(tempFile):
+          numPart += 1
+ 
+        actualDen = 1.*numPart / lbox**3
+        keepFraction = haloDen / actualDen
+        if numPart < numPartExpect:
+          print " ERROR: not enough galaxies to support that density! Maximum is %g" % (1.*numPart / lbox**3)
+          exit(-1)
+        
+        numKept = 0
+        for (iLine,line) in enumerate(inFile):
+          if np.random.uniform() > keepFraction: continue
+          outFile.write(line)
+          numKept += 1 
+
+        outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
+        outFile.close()
+      else:
+        actualDen = 1.*numPart / lbox**3
+        keepFraction = haloDen / actualDen
+
+        inFile = open(dataFile, 'r')
+        outFile = open(outFileName, 'a')
+        for (iHalo,line) in enumerate(inFile):
+          if iHalo < haloFileNumComLines: continue
+          if np.random.uniform() > keepFraction: continue
+          line = line.split(haloFileColSep)
+          x  = float(line[haloFileXCol]) * haloFilePosRescale
+          y  = float(line[haloFileYCol]) * haloFilePosRescale
+          z  = float(line[haloFileZCol]) * haloFilePosRescale
+          vz = float(line[haloFileVZCol])
+          vy = float(line[haloFileVYCol])
+          vx = float(line[haloFileVXCol])
+          mass = float(line[haloFileMCol])
+
+          outFile.write("%d %e %e %e %e %e %e %e\n" %(iHalo,x,y,z,
+                                                      vz,vy,vx,mass))
+        outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
+        inFile.close()
+        outFile.close()
 
 # -----------------------------------------------------------------------------
 # now the HOD
@@ -754,27 +938,13 @@ if (args.script or args.all) and haloFileBase != "":
     print "  ", thisHod['name']
 
     # estimate number of halos to get density
-    if haloFileDummy == '':
-      dataFile = catalogDir+haloFileBase+fileNums[0]
+    numPart = thisHod['galDensFinal'] * lbox**3
+    meanDen = lbox/numPart**(1./3.)
+    if meanDen < 1: 
+      minRadius = 4
     else:
-      dataFile = catalogDir+haloFileBase.replace(haloFileDummy,
-                                                 fileNums[0])
-    if dataFormat == "sdf":
-      numPart = 0
-      SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
-      command = "%s -a 200000 %s mass parent_id | awk '{if ($1>%g && $2==-1) print $1}' | wc" % (SDFcvt_PATH, dataFile, thisHod['Mcut'])
-      numPart = subprocess.check_output(command, shell=True)
-      numPart = int(numPart.split()[0])
-    else:
-      inFile = open(dataFile, 'r')
-      for (iHalo,line) in enumerate(inFile):
-        if iHalo < haloFileNumComLines: continue
-        line = line.split(haloFileColSep)
-        if float(line[haloFileMCol]) > thisHod['Mcut']: numPart += 1
-      inFile.close()
-
-    minRadius = int(np.ceil(float(lbox)/numPart**(1./3.)))
-
+      minRadius = int(np.ceil(meanDen))
+  
     setName = prefix+"hod_"+thisHod['name']
     writeScript(setName, prefix+"hod_"+thisHod['name']+"_z", "multidark",
                 scriptDir, catalogDir, fileNums, redshifts, 
@@ -802,8 +972,11 @@ if (args.hod or args.all) and haloFileBase != "":
     if dataFormat == "sdf":
       inFile = haloFile
       outFile = haloFile+"_temp"
+
+      idTag, massTag, pidTag = getSDFTags(inFile)
+
       SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
-      command = "%s -a 200000 %s mass x y z vx vy vz parent_id | awk '{if ($8 ==-1) print $1, $2, $3, $4, $5, $6, $7}'>>%s" % (SDFcvt_PATH, inFile, outFile)
+      command = "%s -a 200000 %s %s x y z vx vy vz %s | awk '{if ($8 ==-1) print $1, $2, $3, $4, $5, $6, $7}'>>%s" % (SDFcvt_PATH, inFile, massTag, pidTag, outFile)
       #os.system(command)
       subprocess.call(command, shell=True)
       haloFile = outFile
@@ -824,6 +997,7 @@ if (args.hod or args.all) and haloFileBase != "":
                                      sigma_logM=thisHod['sigma_logM'],
                                      alpha=thisHod['alpha'],
                                      Mcut=thisHod['Mcut'],
+                                     #galden=-1,
                                      galden=thisHod['galDens'],
                                      haloFile=haloFile,
                                      haloFileFormat=dataFormat,
@@ -857,9 +1031,49 @@ if (args.hod or args.all) and haloFileBase != "":
           print line
         exit(-1)
 
-      outFileName = catalogDir+"/"+sampleName+".dat"
-      os.system("mv %s/hod_%s.mock %s" % (catalogDir, sampleName, outFileName))
-      os.system("rm %s/hod.*" % catalogDir)
+      # now randomly subsample the galaxies to get desired density
+      inFile = open(catalogDir+"/hod_"+sampleName+".mock")
+      numPartExpect = thisHod['galDensFinal'] * lbox**3
+      numPartActual = 0
+      actualDen = 0
+      for (iLine,line) in enumerate(inFile):
+        numPartActual += 1
+      inFile.close()
+
+      if numPartActual < numPartExpect:
+        print " ERROR: not enough galaxies to support that density! Maximum is %g" % (1.*numPartActual / lbox**3)
+        exit(-1)
+
+      actualDen = 1.*numPartActual / lbox**3
+      keepFraction = float(thisHod['galDensFinal']) / actualDen
+
+      inFile = open(catalogDir+"/hod_"+sampleName+".mock")
+      outFile = open(catalogDir+"/"+sampleName+".dat", 'w')
+
+      #outFile.write("%f\n" %(lbox))
+      #outFile.write("%s\n" %(omegaM))
+      #outFile.write("%s\n" %(hubble))
+      #outFile.write("%s\n" %(redshift))
+      #outFile.write("%d\n" %(numPartExpect))
+
+      numKept = 0
+      for (iLine,line) in enumerate(inFile):
+        if iLine < 5: 
+          outFile.write(line)
+          continue
+        if np.random.uniform() > keepFraction: continue
+        outFile.write(line) 
+        numKept += 1
+
+      inFile.close()
+      os.unlink(catalogDir+"/hod_"+sampleName+".mock") 
+
+      outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
+      outFile.close()
+      
+
+      #os.system("mv %s/hod_%s.mock %s" % (catalogDir, sampleName, outFileName))
+      #os.system("rm %s/hod.*" % catalogDir)
       os.system("rm ./hod.par")
       os.system("rm ./hod-usedvalues")
 

@@ -109,7 +109,10 @@ haloFileDummy = 'NNNNN'
 
 # minimum halo mass cuts to apply for the halo catalog
 #   use "none" to get all halos
-minHaloMasses = [1.2e13]
+minHaloMasses = []
+
+# density threshold for halo catalogs
+haloDenList = []
 
 # locations of data in the halo catalog
 haloFileMCol  = 6
@@ -135,7 +138,6 @@ lbox = 999.983 # Mpc/h
 omegaM = 0.2847979853038958
 hubble = 0.6962
 
-#galDens = 0.000225
 hodParmList = [
   {'name'       : "dr9mid", #BOSS: Manera et al. 2012, eq. 26
    'Mmin'       : 0.0,
@@ -143,7 +145,8 @@ hodParmList = [
    'sigma_logM' : 0.596,
    'alpha'      : 1.0127,
    'Mcut'       : 1.19399e13,
-   'galDens'    : 0.0002,
+   'galDens'    : 0.0002, # density passed to HOD code
+   'galDensFinal'    : 0.0002, # subsample galaxies to reach this density
   },
 ]
 
