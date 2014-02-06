@@ -167,6 +167,8 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
         dataFileLine = "multidark " + datafile
       elif sample.dataFormat == "gadget":
         dataFileLine = "gadget " + datafile
+      elif sample.dataFormat == "ahf":
+        dataFileLine = "gadget " + datafile
       elif sample.dataFormat == "sdf":
         dataFileLine = "sdf " + datafile
       else:
@@ -1230,22 +1232,21 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
 
       Rexpect = (stack.rMin+stack.rMax)/2
       Rtruncate = stack.rMin*3. + 1 # TEST
-      #if sample.dataType == "observation":
-      #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-      #                                Niter=300000,
-      #                                Nburn=100000,
-      #                                Rextracut=Rtruncate)
-      #else:
-      #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-      #                                Niter=300000,
-      #                                Nburn=100000,
-      #                               Rextracut=Rtruncate)
-      #badChain = (args[0][0] > 0.5 or args[0][1] > 2.*stack.rMax or \
-      #            args[0][2] > 2.*stack.rMax) and \
-      #           (ntries < maxtries)
-      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="2d", nBootstraps=500, rMaxInertia=0.7)
-      #ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="symmetric", nBootstraps=500, rMaxInertia=100)
-      badChain = False
+      if sample.dataType == "observation":
+        ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+                                      Niter=300000,
+                                      Nburn=100000,
+                                      Rextracut=Rtruncate)
+      else:
+        ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+                                      Niter=300000,
+                                      Nburn=100000,
+                                     Rextracut=Rtruncate)
+      badChain = (args[0][0] > 0.5 or args[0][1] > 2.*stack.rMax or \
+                  args[0][2] > 2.*stack.rMax) and \
+                 (ntries < maxtries)
+      #ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="2d", nBootstraps=500, rMaxInertia=0.7)
+      #badChain = False
 
     #np.save(voidDir+"/chain.npy", ret)
     np.savetxt(voidDir+"/fits.out", fits)
