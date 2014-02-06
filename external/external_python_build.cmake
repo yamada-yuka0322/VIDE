@@ -3,6 +3,9 @@ INCLUDE(FindPythonInterp)
 SET(INTERNAL_NETCDF4_PYTHON ON)
 SET(INTERNAL_CYTHON ON)
 SET(INTERNAL_HEALPY ON)
+SET(INTERNAL_SETUPTOOLS ON)
+SET(INTERNAL_SCIPY ON)
+SET(INTERNAL_KDTREE_SCIPY ON)
 
 IF (PYTHON_VERSION_STRING VERSION_LESS 2.7)
   MESSAGE(STATUS "Python version is less than 2.7, argparse is needed.")
@@ -26,11 +29,26 @@ IF (INTERNAL_HEALPY)
   mark_as_advanced(HEALPY_URL)
 ENDIF(INTERNAL_HEALPY)
 
-IF(INTERNAL_ARGPARSE)
+IF(INTERNAL_SETUPTOOLS)
   SET(SETUPTOOLS_URL "http://pypi.python.org/packages/source/s/setuptools/setuptools-0.6c11.tar.gz" CACHE STRING "URL to download setuptools from")
+  mark_as_advanced(SETUPTOOLS_URL)
+ENDIF(INTERNAL_SETUPTOOLS)
+
+IF(INTERNAL_ARGPARSE)
   SET(ARGPARSE_URL "http://argparse.googlecode.com/files/argparse-1.2.1.tar.gz" CACHE STRING "URL to download argparse from")
-  mark_as_advanced(ARGPARSE_URL SETUPTOOLS_URL)
+  mark_as_advanced(ARGPARSE_URL) 
 ENDIF(INTERNAL_ARGPARSE)
+
+IF(INTERNAL_SCIPY)
+  SET(SCIPY_URL "http://downloads.sourceforge.net/project/scipy/scipy/0.13.3/scipy-0.13.3.tar.gz" CACHE STRING "URL to download scipy from")
+  mark_as_advanced(SCIPY_URL)
+ENDIF(INTERNAL_SCIPY)
+
+IF(INTERNAL_KDTREE_SCIPY)
+  SET(KDTREE_SCIPY_URL "https://github.com/patvarilly/periodic_kdtree/archive/master.zip" CACHE STRING "URL to download kdtree from")
+  mark_as_advanced(KDTREE_SCIPY_URL)
+ENDIF(INTERNAL_KDTREE_SCIPY)
+
 
 execute_process(
    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/external/detect_site.py ${CMAKE_BINARY_DIR}/ext_build/python
@@ -115,7 +133,7 @@ IF(INTERNAL_HEALPY)
   )
 ENDIF(INTERNAL_HEALPY)
 
-IF(INTERNAL_ARGPARSE)
+IF(INTERNAL_SETUPTOOLS)
   SET(BUILD_ENVIRONMENT 
           ${CMAKE_COMMAND}
            "-DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}"
@@ -130,9 +148,13 @@ IF(INTERNAL_ARGPARSE)
     BUILD_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_build.cmake
     INSTALL_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_install.cmake
   )
+  SET(PREV_PYTHON_BUILD ${PREV_PYTHON_BUILD} setuptools)
+ENDIF(INTERNAL_SETUPTOOLS)
+
+IF(INTERNAL_ARGPARSE)
 
   ExternalProject_Add(argparse
-    DEPENDS setuptools
+    DEPENDS ${PREV_PYTHON_BUILD}
     URL ${ARGPARSE_URL}
     PREFIX ${BUILD_PREFIX}/argparse-prefix
     CONFIGURE_COMMAND echo "No configure"
@@ -142,3 +164,44 @@ IF(INTERNAL_ARGPARSE)
    )
   SET(AUXILIARY_PYTHON_DEPEND ${AUXILIARY_PYTHON_DEPEND} argparse)
 ENDIF(INTERNAL_ARGPARSE)
+
+IF(INTERNAL_SCIPY)
+  SET(BUILD_ENVIRONMENT 
+          ${CMAKE_COMMAND}
+           "-DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}"
+           "-DPYTHON_LOCAL_SITE_PACKAGE=${PYTHON_LOCAL_SITE_PACKAGE}"
+           "-DTARGET_PATH=${CMAKE_BINARY_DIR}/ext_build/python" "-P")
+
+  ExternalProject_Add(scipy
+    DEPENDS ${PREV_PYTHON_BUILD}
+    URL ${SCIPY_URL}
+    PREFIX ${BUILD_PREFIX}/scipy-prefix
+    CONFIGURE_COMMAND echo "No configure"
+    BUILD_IN_SOURCE 1
+    BUILD_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_build.cmake
+    INSTALL_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_install.cmake
+   )
+   SET(PREV_PYTHON_BUILD ${PREV_PYTHON_BUILD} scipy)
+ENDIF(INTERNAL_SCIPY)
+
+IF(INTERNAL_KDTREE_SCIPY)
+  SET(BUILD_ENVIRONMENT 
+          ${CMAKE_COMMAND}
+           "-DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}"
+           "-DPYTHON_LOCAL_SITE_PACKAGE=${PYTHON_LOCAL_SITE_PACKAGE}"
+           "-DTARGET_PATH=${CMAKE_BINARY_DIR}/ext_build/python" "-P")
+
+  ExternalProject_Add(kdtree-scipy
+    DEPENDS ${PREV_PYTHON_BUILD}
+    URL ${KDTREE_SCIPY_URL}
+    PREFIX ${BUILD_PREFIX}/kdtree-scipy-prefix
+    CONFIGURE_COMMAND echo "No configure"
+    BUILD_IN_SOURCE 1
+    BUILD_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_build.cmake
+    INSTALL_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_install.cmake
+   )
+ENDIF(INTERNAL_KDTREE_SCIPY)
+
+
+
+
