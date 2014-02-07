@@ -107,7 +107,7 @@ def loadPart(sampleDir):
 
     isObservationData = isObservation == 1
 
-    return partData, boxLen, volNorm, isObservationData
+    return partData, boxLen, volNorm, isObservationData, ranges
 
 # -----------------------------------------------------------------------------
 def loadPartVel(sampleDir):
@@ -137,9 +137,22 @@ def loadPartVel(sampleDir):
 
 
 # -----------------------------------------------------------------------------
-def shiftPart(inPart, newCenter, periodicLine, boxLen):
+def shiftPart(inPart, center, periodicLine, ranges):
 
   part = inPart.copy()
+  newCenter = 1.*center;
+
+  boxLen = np.zeros((3))
+  boxLen[0] = ranges[0][1] - ranges[0][0]
+  boxLen[1] = ranges[1][1] - ranges[1][0]
+  boxLen[2] = ranges[2][1] - ranges[2][0]  
+
+  # shift to box coordinates
+  part[:,0] -= ranges[0][0]
+  part[:,1] -= ranges[1][0]
+  part[:,2] -= ranges[2][0]
+
+  newCenter[:] -= ranges[:,0]
 
   part[:,0] -= newCenter[0]
   part[:,1] -= newCenter[1]
@@ -154,6 +167,11 @@ def shiftPart(inPart, newCenter, periodicLine, boxLen):
   shiftUs = np.abs(part[:,2]) > boxLen[2]/2.
   if ("z" in periodicLine): part[shiftUs,2] -= \
                             np.copysign(boxLen[2], part[shiftUs,2])
+
+
+  #part[:,0] += ranges[0][0]
+  #part[:,1] += ranges[1][0]
+  #part[:,2] += ranges[2][0]
 
   return part
 
