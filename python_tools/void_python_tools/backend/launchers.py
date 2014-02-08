@@ -560,7 +560,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
 # -----------------------------------------------------------------------------
 def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
                 voidDir=None, freshStack=True, runSuffix=None,
-                zobovDir=None,
+                zobovDir=None, useLightCone=None, useComoving=None,
                 INCOHERENT=False, ranSeed=None, summaryFile=None, 
                 continueRun=None, dataType=None, prefixRun="",
                 idList=None, rescaleOverride=None):
@@ -586,8 +586,15 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   centralRadius = stack.rMin * 0.25
 
   # restrict to relevant ranges of sample
-  zMin = max(sample.zRange[0],stack.zMin) * 3000
-  zMax = min(sample.zRange[1],stack.zMax) * 3000
+  zMin = max(sample.zRange[0], stack.zMin)
+  zMax = min(sample.zRange[1], stack.zMax)
+  if useComoving or not useLightCone:
+    zMin = 3000.*vp.angularDiameter(zMin, Om=0.27)
+    zMax = 3000.*vp.angularDiameter(zMax, Om=0.27)
+    print min(sample.zRange[1],stack.zMax)*3000, zMax
+  else:
+    zMin *= 3000
+    zMax *= 3000
 
   if dataType == "observation":
     obsFlag = "observation"
@@ -1230,23 +1237,23 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
     while badChain:
       ntries += 1
 
-      Rexpect = (stack.rMin+stack.rMax)/2
-      Rtruncate = stack.rMin*3. + 1 # TEST
-      if sample.dataType == "observation":
-        ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-                                      Niter=300000,
-                                      Nburn=100000,
-                                      Rextracut=Rtruncate)
-      else:
-        ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-                                      Niter=300000,
-                                      Nburn=100000,
-                                     Rextracut=Rtruncate)
-      badChain = (args[0][0] > 0.5 or args[0][1] > 2.*stack.rMax or \
-                  args[0][2] > 2.*stack.rMax) and \
-                 (ntries < maxtries)
-      #ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="2d", nBootstraps=500, rMaxInertia=0.7)
-      #badChain = False
+      #Rexpect = (stack.rMin+stack.rMax)/2
+      #Rtruncate = stack.rMin*3. + 1 # TEST
+      #if sample.dataType == "observation":
+      #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+      #                                Niter=300000,
+      #                                Nburn=100000,
+      #                                Rextracut=Rtruncate)
+      #else:
+      #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+      #                                Niter=300000,
+      #                                Nburn=100000,
+      #                               Rextracut=Rtruncate)
+      #badChain = (args[0][0] > 0.5 or args[0][1] > 2.*stack.rMax or \
+      #            args[0][2] > 2.*stack.rMax) and \
+      #           (ntries < maxtries)
+      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="2d", nBootstraps=500, rMaxInertia=0.7)
+      badChain = False
 
     #np.save(voidDir+"/chain.npy", ret)
     np.savetxt(voidDir+"/fits.out", fits)
