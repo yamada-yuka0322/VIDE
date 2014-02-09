@@ -43,6 +43,8 @@ import void_python_tools.apTools as vp
 NetCDFFile = Dataset
 ncFloat = 'f8' # Double precision
 
+LIGHT_SPEED = 299792.458
+
 # -----------------------------------------------------------------------------
 def launchGenerate(sample, binPath, workDir=None, inputDataDir=None, 
                    zobovDir=None, figDir=None, logFile=None, useComoving=False,
@@ -561,6 +563,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
 def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
                 voidDir=None, freshStack=True, runSuffix=None,
                 zobovDir=None, useLightCone=None, useComoving=None,
+                omegaM=None,
                 INCOHERENT=False, ranSeed=None, summaryFile=None, 
                 continueRun=None, dataType=None, prefixRun="",
                 idList=None, rescaleOverride=None):
@@ -589,12 +592,13 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   zMin = max(sample.zRange[0], stack.zMin)
   zMax = min(sample.zRange[1], stack.zMax)
   if useComoving or not useLightCone:
-    zMin = 3000.*vp.angularDiameter(zMin, Om=0.27)
-    zMax = 3000.*vp.angularDiameter(zMax, Om=0.27)
-    print min(sample.zRange[1],stack.zMax)*3000, zMax
+    zMin = LIGHT_SPEED/100.*vp.angularDiameter(zMin, Om=omegaM)
+    zMax = LIGHT_SPEED/100.*vp.angularDiameter(zMax, Om=omegaM)
+    print min(sample.zRange[1],stack.zMax)*LIGHT_SPEED/100., zMax
+    print max(sample.zRange[0],stack.zMin)*LIGHT_SPEED/100., zMin
   else:
-    zMin *= 3000
-    zMax *= 3000
+    zMin *= LIGHT_SPEED/100.
+    zMax *= LIGHT_SPEED/100.
 
   if dataType == "observation":
     obsFlag = "observation"

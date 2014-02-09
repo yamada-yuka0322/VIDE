@@ -264,6 +264,19 @@ newSample.addStack(0.0, 5.0, 85, 90, False, False, rescaleMode="rv")
 newSample.addStack(0.0, 5.0, 90, 95, False, False, rescaleMode="rv")
 newSample.addStack(0.0, 5.0, 95, 100, False, False, rescaleMode="rv")
   """
+  elif stackMode == "sample_thick":
+    stackInfo = """
+# {zMin}, {zMax}, {minRadius}
+newSample.addStack({zMin}, {zMax}, 10, 20, True, False, rescaleMode="rmax")
+newSample.addStack({zMin}, {zMax}, 20, 30, True, False, rescaleMode="rmax")
+newSample.addStack({zMin}, {zMax}, 30, 40, True, False, rescaleMode="rmax")
+newSample.addStack({zMin}, {zMax}, 40, 50, True, False, rescaleMode="rmax")
+newSample.addStack({zMin}, {zMax}, 50, 60, True, False, rescaleMode="rmax")
+newSample.addStack({zMin}, {zMax}, 60, 70, True, False, rescaleMode="rmax")
+newSample.addStack({zMin}, {zMax}, 70, 80, True, False, rescaleMode="rmax")
+newSample.addStack({zMin}, {zMax}, 80, 90, True, False, rescaleMode="rmax")
+newSample.addStack({zMin}, {zMax}, 90, 100, True, False, rescaleMode="rmax")
+  """
 
   elif stackMode == "log":
     stackInfo = ""
@@ -279,15 +292,15 @@ newSample.addStack(0.0, 5.0, 95, 100, False, False, rescaleMode="rv")
       
       rStart = rEnd
 
-#  elif stackMode == "auto":
-#    stackInfo = """
-#newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False, rescaleMode="rv")
-#newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False, rescaleMode="rv")
-#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False, rescaleMode="rv")
-#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False, rescaleMode="rv")
-#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False, rescaleMode="rv")
-#newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False, rescaleMode="rv")
-#               """
+  elif stackMode == "auto":
+    stackInfo = """
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False, rescaleMode="rv")
+               """
   else:
     stackInfo = """
 # {zMin}, {zMax}, {minRadius}
@@ -840,20 +853,25 @@ if (args.halos or args.all) and haloFileBase != "":
 
         # do the check again since now we've filtered out subhalos
         numPart = 0
-        for line in enumerate(tempFile):
+        fileTemp = open(tempFile, 'r')
+        for line in fileTemp:
           numPart += 1
- 
+        fileTemp.close()
+
         actualDen = 1.*numPart / lbox**3
         keepFraction = haloDen / actualDen
         if numPart < numPartExpect:
           print " ERROR: not enough galaxies to support that density! Maximum is %g" % (1.*numPart / lbox**3)
           exit(-1)
-        
+
         numKept = 0
+        inFile = open(dataFile, 'r')
+        outFile = open(outFileName, 'a')
         for (iLine,line) in enumerate(inFile):
           if np.random.uniform() > keepFraction: continue
           outFile.write(line)
-          numKept += 1 
+          numKept += 1
+        inFile.close()
 
         outFile.write("-99 -99 -99 -99 -99 -99 -99 -99\n")
         outFile.close()
