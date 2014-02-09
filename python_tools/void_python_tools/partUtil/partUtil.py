@@ -27,6 +27,7 @@ from void_python_tools.backend import *
 import void_python_tools.apTools as vp
 import pickle
 from periodic_kdtree import PeriodicCKDTree
+import os
 
 NetCDFFile = Dataset
 ncFloat = 'f8'
@@ -95,11 +96,17 @@ def loadPart(sampleDir):
     boxLen = mul
 
     if isObservation == 1:
-      props = vp.getSurveyProps(sample.maskFile, sample.zBoundary[0],
+      # look for the mask file
+      if os.access(sample.maskFile, os.F_OK):
+        maskFile = sample.maskFile
+      else:
+        maskFile = sampleDir+"/"+os.path.basename(sample.maskFile)
+        print "Using maskfile found in:", maskFile
+      props = vp.getSurveyProps(maskFile, sample.zBoundary[0],
                                 sample.zBoundary[1], 
                                 sample.zBoundary[0], 
                                 sample.zBoundary[1], "all",
-                                useLCDM=sample.useLCDM)
+                                useLCDM=sample.useComoving)
       boxVol = props[0]
       volNorm = maskIndex/boxVol
     else:
