@@ -604,11 +604,12 @@ if (args.script or args.all) and haloFileBase != "":
     sys.stdout.flush()
 
     # estimate number of halos to get density
+    # take from *highest* redshift to get lowest density
     if haloFileDummy == '':
-      dataFile = catalogDir+haloFileBase+fileNums[0]
+      dataFile = catalogDir+haloFileBase+fileNums[-1]
     else:
       dataFile = catalogDir+haloFileBase.replace(haloFileDummy, 
-                                                 fileNums[0])
+                                                 fileNums[-1])
     numPart = 0
     if dataFormat == "sdf":
       SDFcvt_PATH = "@CMAKE_BINARY_DIR@/external/libsdf/apps/SDFcvt/SDFcvt.x86_64"
@@ -865,7 +866,7 @@ if (args.halos or args.all) and haloFileBase != "":
           exit(-1)
 
         numKept = 0
-        inFile = open(dataFile, 'r')
+        inFile = open(tempFile, 'r')
         outFile = open(outFileName, 'a')
         for (iLine,line) in enumerate(inFile):
           if np.random.uniform() > keepFraction: continue
