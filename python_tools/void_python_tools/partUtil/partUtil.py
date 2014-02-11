@@ -26,6 +26,8 @@ import sys
 from void_python_tools.backend import *
 import void_python_tools.apTools as vp
 import pickle
+from periodic_kdtree import PeriodicCKDTree
+import os
 
 NetCDFFile = Dataset
 ncFloat = 'f8'
@@ -94,11 +96,17 @@ def loadPart(sampleDir):
     boxLen = mul
 
     if isObservation == 1:
-      props = vp.getSurveyProps(sample.maskFile, sample.zBoundary[0],
+      # look for the mask file
+      if os.access(sample.maskFile, os.F_OK):
+        maskFile = sample.maskFile
+      else:
+        maskFile = sampleDir+"/"+os.path.basename(sample.maskFile)
+        print "Using maskfile found in:", maskFile
+      props = vp.getSurveyProps(maskFile, sample.zBoundary[0],
                                 sample.zBoundary[1], 
                                 sample.zBoundary[0], 
                                 sample.zBoundary[1], "all",
-                                useLCDM=sample.useLCDM)
+                                useLCDM=sample.useComoving)
       boxVol = props[0]
       volNorm = maskIndex/boxVol
     else:
@@ -134,6 +142,27 @@ def loadPartVel(sampleDir):
     partVel = np.column_stack((vx,vy,vz))
 
     return partVel
+
+# -----------------------------------------------------------------------------
+def getPartTree(sampleDir, partData, boxLen):
+
+  with open(sampleDir+"/sample_info.dat", 'rb') as input:
+    sample = pickle.load(input)
+
+  periodicLine = getPeriodic(sample)
+
+  periodic = 1.*boxLen
+
+  if not "x" in periodicLine: periodic[0] = -1
+  if not "y" in periodicLine: periodic[1] = -1
+  if not "z" in periodicLine: periodic[2] = -1
+
+  return PeriodicCKDTree(periodic, partData)
+
+# -----------------------------------------------------------------------------
+def getBall(partTree, center, radius):
+
+  return partTree.query_ball_point(center, r=radius)
 
 
 # -----------------------------------------------------------------------------
