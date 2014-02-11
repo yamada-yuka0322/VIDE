@@ -358,7 +358,8 @@ newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, Fal
 
 
           autoStack = ""
-          if stackMode == "auto": autoStack = "autoNumInStack = 400,"
+          if "autoNumInStack" in stackMode or "autoPartInStack" in stackMode:
+            autoStack = stackMode
           scriptFile.write(sampleInfo.format(dataFile=dataFileName,
                                          dataFormat=dataFormat,
                                          dataUnit=dataUnit,
