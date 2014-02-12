@@ -25,6 +25,8 @@ option "isObservation" - "We are working with observational data" flag off
 
 option "useComoving" - "Void positions are in comoving coordinates" flag off
 
+option "omegaM" - "Omega_M for redshift convertion" double optional default="0.27"
+
 option "zMin" - "Minimum redshift of sample" double optional default="0.0"
 option "zMax" - "Maximum redshift of sample" double optional default="10.0"
 

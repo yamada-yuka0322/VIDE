@@ -76,11 +76,11 @@ class Sample:
   profileBinSize = 2 # Mpc
   autoNumInStack = -1 # set to >0 to automatically generate stacks of size N
   autoPartInStack = -1 # set to >0 to automatically generate stacks with N particles
+  numAPSlices = 1
   volumeLimited = True
   includeInHubble = True
   partOfCombo  = False
   isCombo = False
-  useComoving = False # if True, convert population to comoving coordinates
   
   comboList = []
 
@@ -88,7 +88,6 @@ class Sample:
   boxLen = 1024 # Mpc/h
   usePecVel = False
   subsample = 1.0
-  useLightCone = True
   numSubvolumes = 1
   mySubvolume = 1
 
@@ -98,13 +97,14 @@ class Sample:
                nickName="", maskFile="", selFunFile="",
                zBoundary=(), zRange=(), zBoundaryMpc=(),
                minVoidRadius=0, fakeDensity=0.01, volumeLimited=True,
+               numAPSlices=1,
                includeInHubble=True, partOfCombo=False, isCombo=False, 
                comboList=(), profileBinSize=2.0, skyFraction=0.19,
                boxLen=1024, usePecVel=False, omegaM=0.27, 
                numSubvolumes=1, mySubvolume=1, dataFormat="sdss",
-               useComoving=False,
+               useComoving=True,
                dataType="observation",
-               subsample=1.0, useLightCone=True, autoNumInStack=-1,
+               subsample=1.0, useLightCone=False, autoNumInStack=-1,
                autoPartInStack=-1):
     self.dataFile = dataFile
     self.fullName = fullName
@@ -121,6 +121,7 @@ class Sample:
     self.partOfCombo = partOfCombo 
     self.isCombo = isCombo
     self.comboList = comboList
+    self.numAPSlices = numAPSlices
     self.zobovDir = None
     self.profileBinSize = profileBinSize
     self.skyFraction = skyFraction

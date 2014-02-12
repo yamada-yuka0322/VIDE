@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
   gsl_function expanF;
   expanF.function = &expanFun;
   struct my_expan_params expanParams;
-  expanParams.Om = 0.27;
+  expanParams.Om = args.omegaM_arg;
   expanParams.w0 = -1.0;
   expanParams.wa = 0.0;
   expanF.params = &expanParams;
@@ -741,7 +741,12 @@ int main(int argc, char **argv) {
     } else {
 
       voids[iVoid].redshiftInMpc = voids[iVoid].barycenter[2];
-      voids[iVoid].redshift = voids[iVoid].barycenter[2]/LIGHT_SPEED*100.;
+      if (args.useComoving_flag) {
+        voids[iVoid].redshift = gsl_interp_eval(interp, dL, redshifts,
+                 voids[iVoid].redshiftInMpc, acc);
+      } else {
+        voids[iVoid].redshift = voids[iVoid].barycenter[2]/LIGHT_SPEED*100.;
+      }
 
       nearestEdge = 1.e99;
      

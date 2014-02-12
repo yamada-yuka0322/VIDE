@@ -459,6 +459,7 @@ def launchPrune(sample, binPath,
     cmd += observationLine
     cmd += periodicLine
     cmd += useComovingFlag
+    cmd += " --omegaM=" + str(sample.omegaM)
     cmd += " --outputDir=" + zobovDir
     cmd += " --sampleName=" + str(sampleName)
     #cmd += " &> " + logFile
@@ -594,8 +595,8 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   if useComoving or not useLightCone:
     zMin = LIGHT_SPEED/100.*vp.angularDiameter(zMin, Om=omegaM)
     zMax = LIGHT_SPEED/100.*vp.angularDiameter(zMax, Om=omegaM)
-    print min(sample.zRange[1],stack.zMax)*LIGHT_SPEED/100., zMax
-    print max(sample.zRange[0],stack.zMin)*LIGHT_SPEED/100., zMin
+    print min(sample.zRange[1],stack.zMax)*LIGHT_SPEED/100., zMax, sample.zBoundaryMpc[1]
+    print max(sample.zRange[0],stack.zMin)*LIGHT_SPEED/100., zMin, sample.zBoundaryMpc[0]
   else:
     zMin *= LIGHT_SPEED/100.
     zMax *= LIGHT_SPEED/100.
@@ -1185,7 +1186,8 @@ def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None,
 
 
 # -----------------------------------------------------------------------------
-def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
+def launchFit(sample, stack, useComoving=None, 
+              logFile=None, voidDir=None, figDir=None,
               continueRun=None, thisDataPortion=None):
 
   sampleName = sample.fullName
@@ -1258,6 +1260,11 @@ def launchFit(sample, stack, logFile=None, voidDir=None, figDir=None,
       #           (ntries < maxtries)
       ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="2d", nBootstraps=500, rMaxInertia=0.7)
       badChain = False
+
+    ## rescale to expected stretch if using comoving coords
+    #if useComoving or not sample.useLightCone:
+    #  exp = args[1]
+    #  expError = args[2]
 
     #np.save(voidDir+"/chain.npy", ret)
     np.savetxt(voidDir+"/fits.out", fits)
@@ -1378,11 +1385,8 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
       #   (not not fully accurate) plots
       for (iZBin, stack) in enumerate(sample.getUniqueZBins()):
 
-        if sample.dataType == "observation":
-          aveDist = vp.aveStretchCone(stack.zMin, stack.zMax, 
-                                      skyFrac = sample.skyFraction)
-        else:
-          aveDist = vp.aveStretch(stack.zMin, stack.zMax, Om=sample.omegaM)
+        aveDist = vp.aveStretch(sample, stack.zMin, stack.zMax, 
+                                Om=sample.omegaM)
 
         aveDistList[iZBin, 0] = stack.zMin
         aveDistList[iZBin, 1] = aveDist
@@ -1427,11 +1431,8 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
           #                            skyFrac = sample.skyFraction, 
           #                            voidRedshifts=voidRedshifts)
 
-          if sample.dataType == "observation":
-            aveDist = vp.aveStretchCone(zBin.zMin, zBin.zMax, 
-                                        skyFrac = sample.skyFraction)
-          else:
-            aveDist = vp.aveStretch(zBin.zMin, zBin.zMax, Om=sample.omegaM)
+          aveDist = vp.aveStretch(sample, zBin.zMin, zBin.zMax, 
+                                  Om=sample.omegaM)
 
           expList[0, iR, iZBin, 2] = aveDist
 
@@ -1439,11 +1440,8 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
             for (iRCheck,rBinCheck) in enumerate(allRBins):
               if zBin.zMin == zBinCheck.zMin and zBin.zMax == zBinCheck.zMax:
                 if rBin.rMin == rBinCheck.rMin and rBin.rMax == rBinCheck.rMax:
-                  if sample.dataType == "observation":
-                    aveDist = vp.aveStretchCone(zBin.zMin, zBin.zMax, 
-                                                skyFrac = sample.skyFraction)
-                  else:
-                    aveDist = vp.aveStretch(zBin.zMin, zBin.zMax)
+                  aveDist = vp.aveStretch(sample, zBin.zMin, zBin.zMax,
+                                          Om=sample.omegaM)
 
                   allExpList[iSample, iRCheck, iZCheck, 0] = exp
                   allExpList[iSample, iRCheck, iZCheck, 1] = expError
@@ -1470,8 +1468,8 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
         #sys.stderr = open(logFile, 'a')
         plotTitle = "Sample: "+sample.nickName+", "+thisDataPortion+" voids"
         if doPlot:
-          #vp.do_all_obs(zbase, expList, workDir+"/avedistortion_",
-          vp.do_all_obs(zbase, expList, aveDistList,
+          #vp.do_all_obs(sample, zbase, expList, workDir+"/avedistortion_",
+          vp.do_all_obs(sample, zbase, expList, aveDistList,
                         rlist, plotTitle=plotTitle, plotAve=True)
           figure(1).savefig(figDir+"/hubble_"+setName+"_"+sampleName+"_"+\
                             thisDataPortion+\
@@ -1540,11 +1538,8 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
         if zBin.zMaxPlot > plotZmax: plotZmax = zBin.zMaxPlot
         if zBin.zMinPlot < plotZmin: plotZmin = zBin.zMinPlot
 
-        if sample.dataType == "observation":
-          aveDist = vp.aveStretchCone(zBin.zMin, zBin.zMax, 
-                                      skyFrac = sample.skyFraction)
-        else:
-          aveDist = vp.aveStretch(zBin.zMin, zBin.zMax)
+        aveDist = vp.aveStretch(sample, zBin.zMin, zBin.zMax,
+                                Om=sample.omegaM)
 
         aveDistList[iZ, 0] = zBin.zMin
         aveDistList[iZ, 1] = aveDist
@@ -1567,10 +1562,11 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
           #plotTitle = "all samples, "+thisDataPortion+" voids"
           plotTitle = setName
           #plotTitle = ''
-        vp.do_all_obs(zbase, allExpList, aveDistList,
+        vp.do_all_obs(sample, zbase, allExpList, aveDistList,
                       rlist, plotTitle=plotTitle, sampleNames=shortSampleNames,
                       plotAve=True, mulfac = 1.0, biasLine = 1.16, 
-                      plotZmin=plotZmin, plotZmax=plotZmax)
+                      plotZmin=plotZmin, plotZmax=plotZmax,
+                      plotOm1=True)
         figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+ \
                           thisDataPortion+\
                           ".eps",bbox_inches='tight')
@@ -1588,10 +1584,11 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
           #plotTitle = "all samples, "+thisDataPortion+\
           #            " voids (systematics corrected)"
           plotTitle = setName + "(systematics corrected)"
-        vp.do_all_obs(zbase, allExpList, aveDistList,
+        vp.do_all_obs(sample, zbase, allExpList, aveDistList,
                       rlist, plotTitle=plotTitle, sampleNames=shortSampleNames,
                       plotAve=True, mulfac = 1.16, 
-                      plotZmin=plotZmin, plotZmax=plotZmax)
+                      plotZmin=plotZmin, plotZmax=plotZmax,
+                      plotOm1=True)
         figure(1).savefig(figDir+"/hubble_combined_"+setName+"_"+\
                           thisDataPortion+\
                           "_debiased.eps",bbox_inches='tight')
