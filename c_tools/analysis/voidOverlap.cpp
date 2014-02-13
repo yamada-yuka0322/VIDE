@@ -465,7 +465,7 @@ int main(int argc, char **argv) {
       rdist = catalog1.voids[iVoid1].matches[0].dist;
       rdist /= catalog1.voids[iVoid1].radius;
 
-      fprintf(fp, "%d %.4f %.4f %e %e %.4f %d %d %d %e %e %e %e %e %e\n", voidID, 
+      fprintf(fp, "%d %.4f %.4f %e %e %.4f %d %d %d %e %e %e %e %e %e %e\n", voidID, 
       //fprintf(fp, "%d %.4f %.4f %.4f %.4f %.4f %d %d %d\n", voidID, 
                                    catalog1.voids[iVoid1].radiusMpc,
                                    rRatio, 
@@ -480,12 +480,13 @@ int main(int argc, char **argv) {
                                    catalog1.voids[iVoid1].densCon,
                                    cosThetaMaj,
                                    majAxisRatio,
-                                   minAxisRatio
+                                   minAxisRatio,
+                                   catalog1.voids[iVoid1].ellipticity
                                    );
 
     } else {
-      fprintf(fp, "%d %.4f 0.0 0.0 0.0 0.0 0.0 0 0 0 0.0 0.0 0.0 0.0 0.0\n", voidID, 
-                                           catalog1.voids[iVoid1].radiusMpc);
+      fprintf(fp, "%d %.4f 0.0 0.0 0.0 0.0 0.0 0 0 0 0.0 0.0 0.0 0.0 0.0 %e\n", voidID, 
+                                           catalog1.voids[iVoid1].radiusMpc, catalog1.voids[iVoid1].ellipticity);
     }
   } // end printing
   fclose(fp);
