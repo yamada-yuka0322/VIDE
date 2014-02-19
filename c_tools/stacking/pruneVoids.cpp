@@ -170,8 +170,8 @@ int main(int argc, char **argv) {
   double result, error;
   size_t nEval;
 
-  int iZ, numZ = 4000;
-  double maxZ = 2.0, z, *dL, *redshifts;
+  int iZ, numZ = 10000;
+  double maxZ = 5.0, z, *dL, *redshifts;
   dL = (double *) malloc(numZ * sizeof(double));  
   redshifts = (double *) malloc(numZ * sizeof(double));
   for (iZ = 0; iZ < numZ; iZ++) {
@@ -460,7 +460,7 @@ int main(int argc, char **argv) {
 
   // load voids *again* using Guilhem's code so we can get tree
   clock3 = clock();
-  if (!args.isObservation_flag) {
+  //if (!args.isObservation_flag) {
     printf(" Re-loading voids and building tree..\n");
     ZobovRep zobovCat;
     if (!loadZobov(args.voidDesc_arg, args.zone2Part_arg,
@@ -488,7 +488,7 @@ int main(int argc, char **argv) {
       }
       voids[iVoid].level = level;
     }
-  } // end re-load
+  //} // end re-load
   clock4 = clock();
   interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
   printf(" Re-read voids (%.2f sec)...\n", interval);
