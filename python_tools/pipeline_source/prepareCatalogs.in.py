@@ -230,7 +230,7 @@ newSample = Sample(dataFile = "{dataFile}",
                    profileBinSize = "auto",
                    includeInHubble = True,
                    partOfCombo = False,
-                   {autoStack},
+                   {autoStack}
                    numAPSlices = {numAPSlices},
                    isCombo = False,
                    boxLen = {boxLen},
@@ -360,7 +360,7 @@ newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, Fal
 
           autoStack = ""
           if "autoNumInStack" in stackMode or "autoPartInStack" in stackMode:
-            autoStack = stackMode
+            autoStack = stackMode+","
           scriptFile.write(sampleInfo.format(dataFile=dataFileName,
                                          dataFormat=dataFormat,
                                          dataUnit=dataUnit,

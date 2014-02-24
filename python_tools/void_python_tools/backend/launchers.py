@@ -438,6 +438,18 @@ def launchPrune(sample, binPath,
   else:
     useComovingFlag = ""
 
+  if sample.minVoidRadius == -1:
+    minRadius = -1
+    for line in open(zobovDir+"/sample_info.txt"):
+      if "Estimated mean tracer separation" in line:
+        minRadius = float(line.split()[5])
+        break
+    if minRadius == -1:
+      print "Could not grab mean tracer separation!?"
+      exit(-1)
+  else:
+    minRadius = sample.minVoidRadius
+
   if not (continueRun and (jobSuccessful(logFile, "NetCDF: Not a valid ID\n") \
           or jobSuccessful(logFile, "Done!\n"))):
     cmd = binPath
@@ -454,7 +466,7 @@ def launchPrune(sample, binPath,
     cmd += " --maxCentralDen=" + str(maxDen)
     cmd += " --zMin=" + str(sample.zRange[0])
     cmd += " --zMax=" + str(sample.zRange[1])
-    cmd += " --rMin=" + str(sample.minVoidRadius)
+    cmd += " --rMin=" + str(minRadius)
     cmd += " --numVoids=" + str(numVoids)
     cmd += observationLine
     cmd += periodicLine
@@ -595,8 +607,6 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   if useComoving or not useLightCone:
     zMin = LIGHT_SPEED/100.*vp.angularDiameter(zMin, Om=omegaM)
     zMax = LIGHT_SPEED/100.*vp.angularDiameter(zMax, Om=omegaM)
-    print min(sample.zRange[1],stack.zMax)*LIGHT_SPEED/100., zMax, sample.zBoundaryMpc[1]
-    print max(sample.zRange[0],stack.zMin)*LIGHT_SPEED/100., zMin, sample.zBoundaryMpc[0]
   else:
     zMin *= LIGHT_SPEED/100.
     zMax *= LIGHT_SPEED/100.
@@ -608,6 +618,8 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
 
   Rextracut = stack.rMin*3 + 1
   Rcircular = stack.rMin*3 + 2
+  #Rextracut = stack.rMax*3 + 1
+  #Rcircular = stack.rMax*3 + 2
 
   if dataType == "observation":
     maskIndex = open(zobovDir+"/mask_index.txt", "r").read()
@@ -765,7 +777,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
       line = line.split()
       numVoids = line[1]
 
-    if "Number of particles =" in line:
+    if "Final zobov stack size" in line:
       line = line.split()
       numParticles = line[4]
 
@@ -793,51 +805,6 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     fp.close()
     return
 
-  # figure out box volume and average density
-  if sample.dataType == "observation":
-    maskFile = sample.maskFile
-    sulFunFile = sample.selFunFile
-
-    if not os.access(sample.selFunFile, os.F_OK) and not sample.volumeLimited:
-      print " Cannot find", selFunFile, "!"
-      exit(-1)
-
-    sys.stdout = open(logFile, 'a')
-    #sys.stderr = open(logFile, 'a')
-    zMin = sample.zRange[0]
-    zMax = sample.zRange[1]
-    if not sample.volumeLimited:
-      props = vp.getSurveyProps(maskFile, stack.zMin,
-                                stack.zMax, zMin, zMax, "all",
-                                selectionFuncFile=sample.selFunFile)
-    else:
-      zMinForVol = sample.zBoundary[0]
-      zMaxForVol = sample.zBoundary[1]
-      props = vp.getSurveyProps(maskFile, zMinForVol,
-                                zMaxForVol, zMin, zMax, "all")
-      props = ((1.0,1.0))
-      
-    sys.stdout = sys.__stdout__
-    #sys.stderr = sys.__stderr__
-  
-    boxVol = props[0]
-    nbar   = props[1]
-    if sample.volumeLimited:
-      nbar = 1.0
-  else:
-    nbar = 1.0
- 
-    iX = float(sample.mySubvolume[0])
-    iY = float(sample.mySubvolume[1])
-    xMin = iX/sample.numSubvolumes * sample.boxLen
-    yMin = iY/sample.numSubvolumes * sample.boxLen
-    xMax = (iX+1)/sample.numSubvolumes * sample.boxLen
-    yMax = (iY+1)/sample.numSubvolumes * sample.boxLen
-    zMin = sample.zBoundaryMpc[0]
-    zMax = sample.zBoundaryMpc[1]
-    
-    boxVol = (xMax-xMin)*(yMax-yMin)*(zMax-zMin)
-
   summaryLine = runSuffix + " " + \
                 thisDataPortion + " " + \
                 str(stack.zMin) + " " + \
@@ -847,8 +814,14 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   if summaryFile != None:
     open(summaryFile, "a").write(summaryLine+"\n")
 
-  # move local outputs to storage directory
+  # write out individual normalizations for each void
   if os.access("tree.data", os.F_OK):
+    for line in open(zobovDir+"/sample_info.txt"):
+      if "Number of real" in line:
+        numParticles = line.split()[-1]
+      if "Estimated volume" in line:
+        boxVol = line.split()[-1]
+    nbar = 1.0
     normalization = float(numParticles)/float(boxVol)/nbar
     dataTemp = file("centers.txt", "r").readlines()
     fp = file("normalizations.txt", "w")
@@ -1144,7 +1117,9 @@ def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None,
   numParticles = open(voidDir+"/num_particles.txt", "r").readline()
 
   Rextracut = stack.rMin*3 + 1
-  Rcircular = stack.rMin*3 + 2
+  Rcircular = stack.rMin*2 + 2
+  #Rextracut = stack.rMax*3 + 1
+  #Rcircular = stack.rMax*3 + 2
 
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
     profileParmFile = voidDir+"/params.txt"
@@ -1163,7 +1138,9 @@ def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None,
     #  return
 
     if sample.profileBinSize == "auto":
-      density = 0.5 * 50 / Rcircular / 2
+      #density = 0.5 * 50 / Rcircular / 2
+      density = stack.rMax / 5.
+      #density = stack.rMax / 10.
     else:
       density = sample.profileBinSize
 
@@ -1176,7 +1153,8 @@ def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None,
     #sys.stderr = sys.__stderr__
 
     if jobSuccessful(logFile, "Done!\n"):
-      print jobString, "Profiling stacks done, (N_v=", numVoids,")"
+      print jobString, "Profiling stacks done (N_v=%s, N_p=%s)" % \
+                       (numVoids,numParticles)
     else:
       print jobString, "Profiling stacks FAILED!"
       exit(-1)
@@ -1203,10 +1181,18 @@ def launchFit(sample, stack, useComoving=None,
       return
 
     numVoids = int(open(voidDir+"/num_voids.txt", "r").readline())
-    if numVoids < 10:
+    if numVoids < 1:
       print jobString, "Fitting not enough voids to fit; skipping!"
       fp = open(voidDir+"/NOFIT", "w")
       fp.write("not enough voids: %d \n" % numVoids)
+      fp.close()
+      return
+
+    numPart = int(open(voidDir+"/num_particles.txt", "r").readline())
+    if numPart < 1:
+      print jobString, "Fitting not enough particles to fit; skipping!"
+      fp = open(voidDir+"/NOFIT", "w")
+      fp.write("not enough particles: %d \n" % numPart)
       fp.close()
       return
 
@@ -1243,23 +1229,28 @@ def launchFit(sample, stack, useComoving=None,
     while badChain:
       ntries += 1
 
-      #Rexpect = (stack.rMin+stack.rMax)/2
-      #Rtruncate = stack.rMin*3. + 1 # TEST
-      #if sample.dataType == "observation":
-      #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-      #                                Niter=300000,
-      #                                Nburn=100000,
-      #                                Rextracut=Rtruncate)
-      #else:
-      #  ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-      #                                Niter=300000,
-      #                                Nburn=100000,
-      #                               Rextracut=Rtruncate)
-      #badChain = (args[0][0] > 0.5 or args[0][1] > 2.*stack.rMax or \
-      #            args[0][2] > 2.*stack.rMax) and \
-      #           (ntries < maxtries)
-      ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="2d", nBootstraps=500, rMaxInertia=0.7)
-      badChain = False
+      Rexpect = (stack.rMin+stack.rMax)/2
+      #Rtruncate = stack.rMax*2. # TEST
+      #Rtruncate = stack.rMax*3. # TEST
+      Rtruncate = stack.rMin*3. + 1 # TEST
+      if sample.dataType == "observation":
+       ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+                                      nbar_init=1.0,
+                                      Niter=300000,
+                                      Nburn=100000,
+                                      Rextracut=Rtruncate)
+      else:
+        ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+                                      nbar_init=1.0,
+                                      Niter=300000,
+                                      Nburn=100000,
+                                     Rextracut=Rtruncate)
+      print "TEST", stack.rMax, args[0][0], args[0][1], args[0][2]
+      badChain = (args[0][0] > 0.5 or args[0][1] > 2.*stack.rMax or \
+                  args[0][2] > 2.*stack.rMax) and \
+                 (ntries < maxtries)
+      #ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="2d", nBootstraps=100, rMaxInertia=0.7)
+      #badChain = False
 
     ## rescale to expected stretch if using comoving coords
     #if useComoving or not sample.useLightCone:
@@ -1282,7 +1273,7 @@ def launchFit(sample, stack, useComoving=None,
     else:
       rescaleFactor = 1.0
 
-    vp.draw_fit(*args, delta_tick=0.2, vmax=1.0, delta_v=0.01,
+    vp.draw_fit(*args, delta_tick=0.2, vmax=1.4, delta_v=0.01,
                 nocontour=True, model_max=1.0, delta_model=0.1,
                 plotTitle=plotTitle, show_ratio=showRatio,
                 showContours=showContours,
@@ -1293,30 +1284,31 @@ def launchFit(sample, stack, useComoving=None,
                       "_"+runSuffix+".pdf")
     figure(1).savefig(figDir+"/stackedVoid_"+sampleName+\
                       "_"+runSuffix+".png")
-
-    print "Done!"
-    sys.stdout = sys.__stdout__
-    #sys.stderr = sys.__stderr__
-    if jobSuccessful(logFile, "Done!\n"):
-      print jobString, "Fitting done (", ntries, " tries)"
-    else:
-      print jobString, "Fitting FAILED!"
-      exit(-1)
-
     # record the measured stretch  
     exp = args[1]
     expError = args[2]
     outline = str(exp) + " " + str(expError)
     open(voidDir+"/expansion.out", "w").write(outline)
 
+    print "Done!"
+    sys.stdout = sys.__stdout__
+    #sys.stderr = sys.__stderr__
+
     if os.access(voidDir+"/NOFIT", os.F_OK):
       os.unlink(voidDir+"/NOFIT")
-    if ntries > maxtries:
-      print jobString, "    No reliable fit found; skipping!"
+    if ntries >= maxtries:
+      print jobString, "No reliable fit found; skipping!"
       fp = open(voidDir+"/NOFIT", "w")
       fp.write("bad ellipticity fit\n")
       fp.close()
-      return
+      #return
+
+    else:
+      if jobSuccessful(logFile, "Done!\n"):
+        print jobString, "Fitting done (%d tries)" % ntries
+      else:
+        print jobString, "Fitting FAILED!"
+        exit(-1)
 
   else:
     print jobString, "already done!"
@@ -1360,7 +1352,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
           if not alreadyHere:
             allZBins.append(stack)
 
-    allExpList = np.zeros((numSamplesForHubble,len(allRBins),len(allZBins),3))
+    allExpList = np.zeros((numSamplesForHubble,len(allRBins),len(allZBins),5))
     allExpList[:] = -1
     aveDistList = np.zeros((len(allZBins),3))
 
@@ -1436,6 +1428,10 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
 
           expList[0, iR, iZBin, 2] = aveDist
 
+          voidDir = zobovDir+"/stacks_" + runSuffix
+          numVoids = open(voidDir+"/num_voids.txt", "r").readline()
+          numParticles = open(voidDir+"/num_particles.txt", "r").readline()
+
           for (iZCheck,zBinCheck) in enumerate(allZBins):
             for (iRCheck,rBinCheck) in enumerate(allRBins):
               if zBin.zMin == zBinCheck.zMin and zBin.zMax == zBinCheck.zMax:
@@ -1445,6 +1441,8 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
 
                   allExpList[iSample, iRCheck, iZCheck, 0] = exp
                   allExpList[iSample, iRCheck, iZCheck, 1] = expError
+                  allExpList[iSample, iRCheck, iZCheck, 3] = numVoids
+                  allExpList[iSample, iRCheck, iZCheck, 4] = numParticles
 
           fp.write(str(exp) + " " + str(expError) + " "+ " "+ \
                    str(aveDist) + " -1 " + runSuffix+"\n")
@@ -1467,22 +1465,22 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
         sys.stdout = open(logFile, 'w')
         #sys.stderr = open(logFile, 'a')
         plotTitle = "Sample: "+sample.nickName+", "+thisDataPortion+" voids"
-        if doPlot:
+        #if doPlot:
           #vp.do_all_obs(sample, zbase, expList, workDir+"/avedistortion_",
-          vp.do_all_obs(sample, zbase, expList, aveDistList,
-                        rlist, plotTitle=plotTitle, plotAve=True)
-          figure(1).savefig(figDir+"/hubble_"+setName+"_"+sampleName+"_"+\
-                            thisDataPortion+\
-                            ".eps",bbox_inches='tight')
-          figure(1).savefig(figDir+"/hubble_"+setName+"_"+sampleName+"_"+\
-                            thisDataPortion+\
-                            ".pdf",bbox_inches='tight')
-          figure(1).savefig(figDir+"/hubble_"+setName+"_"+sampleName+"_"+\
-                            thisDataPortion+\
-                            ".png",bbox_inches='tight')
-        else:
-          print "Skipping plot"
-          print "Done!"
+          #vp.do_all_obs(sample, zbase, expList, aveDistList,
+          #              rlist, plotTitle=plotTitle, plotAve=True)
+          #figure(1).savefig(figDir+"/hubble_"+setName+"_"+sampleName+"_"+\
+          #                  thisDataPortion+\
+          #                  ".eps",bbox_inches='tight')
+          #figure(1).savefig(figDir+"/hubble_"+setName+"_"+sampleName+"_"+\
+          #                  thisDataPortion+\
+          #                  ".pdf",bbox_inches='tight')
+          #figure(1).savefig(figDir+"/hubble_"+setName+"_"+sampleName+"_"+\
+          #                  thisDataPortion+\
+          #                  ".png",bbox_inches='tight')
+        #else:
+        print "Skipping plot"
+        print "Done!"
         sys.stdout = sys.__stdout__
         #sys.stderr = sys.__stderr__
 
@@ -1520,6 +1518,8 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
                 line = fp.readline().split()
                 allExpList[iSample,iR,iZ,2] = allExpList[iSample,iR,iZ,1]
                 allExpList[iSample,iR,iZ,1] = float(line[1])
+                allExpList[iSample,iR,iZ,3] = float(line[2])
+                allExpList[iSample,iR,iZ,4] = float(line[3])
 
           fp.close()
 
@@ -1617,8 +1617,24 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
           for iR in xrange(len(allExpList[0,:,0,0])):
             fp.write(str(allExpList[iSample,iR,iZ,0]) + " " +\
                      str(allExpList[iSample,iR,iZ,1]) + " " +\
-                     str(allExpList[iSample,iR,iZ,2]) + "\n")
+                     str(allExpList[iSample,iR,iZ,2]) + " " +\
+                     str(allExpList[iSample,iR,iZ,3]) + " " +\
+                     str(allExpList[iSample,iR,iZ,4]) + "\n")
       fp.close()
+
+      fp = file(workDir+'/calculatedExpansions_reduced_'+thisDataPortion+'.txt',
+                mode="w")
+      for iZ in xrange(len(allExpList[0,0,:,0])):
+        for iSample in xrange(len(allExpList[:,0,0,0])):
+          for iR in xrange(len(allExpList[0,:,0,0])):
+            if (allExpList[iSample,iR,iZ,0] == -1): continue
+            fp.write(str(allExpList[iSample,iR,iZ,0]) + " " +\
+                     str(allExpList[iSample,iR,iZ,1]) + " " +\
+                     str(allExpList[iSample,iR,iZ,2]) + " " +\
+                     str(allExpList[iSample,iR,iZ,3]) + " " +\
+                     str(allExpList[iSample,iR,iZ,4]) + "\n")
+      fp.close()
+
 
       # save all void distribution data to a single file 
       fp = file(workDir+'/voidDistributions_'+thisDataPortion+'.txt',
@@ -1823,8 +1839,8 @@ def launchVelocityStack(sample, stack, binPath,
 #  Rmax = 
 
   centralRadius = stack.rMin * 0.25
-  Rextracut = stack.rMin*3 + 1
-  Rcircular = stack.rMin*3 + 2
+  Rextracut = stack.rMax*3 + 1
+  Rcircular = stack.rMax*3 + 2
 
   parameters="--velocityField=%s --voidCenters=%s --Rmax=%e --L0=%e --numBins=%d" % (velField_file, voidCenters, Rmax, Boxsize, numBins)
 

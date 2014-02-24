@@ -22,6 +22,7 @@
 
 import numpy as np
 import scipy.integrate as integrate
+from void_python_tools.backend import *
 
 __all__=['expansion', 'angularDiameter', 'expectedStretch', 'aveStretch', 'aveExpansion', 'aveStretchCone', 'aveWeightedStretch']
 
@@ -48,19 +49,12 @@ def expectedStretch(z, Om = 0.27, Ot = 1.0, w0 = -1.0, wa = 0.0):
   da = angularDiameter(z, Om=Om, Ot=Ot, w0=w0, wa=wa)
   return ez*da/z
 
-
-# returns average expected void stretch for a given redshift range
-def aveStretch(zStart, zEnd, Om = 0.27, Ot = 1.0, w0 = -1.0, wa = 0.0):
-  if zStart == 0.0: zStart = 1.e-6
-  ave = integrate.quad(expectedStretch, zStart, zEnd, args=(Om, Ot, w0, wa))[0]
-  ave /= (zEnd-zStart)
-  return ave
-
 # -----------------------------------------------------------------------------
 # returns average expected void stretch for a given redshift range 
 #   assuming a cone 
 def aveStretchCone(zStart, zEnd, skyFrac = 0.19, Om = 0.27, Ot = 1.0, 
                    w0 = -1.0, wa = 0.0):
+  #print "assuming observation!", skyFrac
   if zStart == 0.0: zStart = 1.e-6
 
   h1 = zStart 
@@ -82,6 +76,39 @@ def aveStretchCone(zStart, zEnd, skyFrac = 0.19, Om = 0.27, Ot = 1.0,
   volumeLow = integrate.quad(coneSlice, 0.0, zStart, args=(h1, r1))[0]
 
   return (aveHigh-aveLow)/(volumeHigh-volumeLow)
+
+# returns average expected void stretch for a given redshift range
+def aveStretch(sample, zStart, zEnd, 
+               Om = 0.27, Ot = 1.0, w0 = -1.0, wa = 0.0):
+  if zStart == 0.0: zStart = 1.e-6
+
+  if sample.dataType == "observation":
+    stretch =  aveStretchCone(zStart, zEnd, 
+                          skyFrac=sample.skyFraction, Om=Om, Ot=Ot, 
+                          w0=w0, wa=wa)
+  else:
+    ave = integrate.quad(expectedStretch, zStart, zEnd, 
+                         args=(Om, Ot, w0, wa))[0]
+    ave /= (zEnd-zStart)
+    stretch = ave
+
+  # if in comoving space, calculate stretch for fiducial cosmology
+  # and take relative amount
+  if not sample.useLightCone or sample.useComoving:
+    if sample.dataType == "observation":
+      stretchFid =  aveStretchCone(zStart, zEnd, 
+                          skyFrac=sample.skyFraction, Om=sample.omegaM, Ot=Ot, 
+                          w0=w0, wa=wa)
+    else:
+      ave = integrate.quad(expectedStretch, zStart, zEnd, 
+                           args=(sample.omegaM, Ot, w0, wa))[0]
+      ave /= (zEnd-zStart)
+      stretchFid = ave
+
+  stretch = stretchFid/stretch
+
+  return stretch
+
 
 # -----------------------------------------------------------------------------
 # returns average expected void stretch for a given redshift range 

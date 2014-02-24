@@ -71,7 +71,7 @@ class Sample:
   zBoundaryMpc = (0., 300)
   zRange    = (0.0, 0.1)
   omegaM    = 0.27
-  minVoidRadius = 5
+  minVoidRadius = -1
   fakeDensity = 0.01
   profileBinSize = 2 # Mpc
   autoNumInStack = -1 # set to >0 to automatically generate stacks of size N
@@ -96,7 +96,7 @@ class Sample:
   def __init__(self, dataFile="", fullName="", dataUnit=1,
                nickName="", maskFile="", selFunFile="",
                zBoundary=(), zRange=(), zBoundaryMpc=(),
-               minVoidRadius=0, fakeDensity=0.01, volumeLimited=True,
+               minVoidRadius=-1, fakeDensity=0.01, volumeLimited=True,
                numAPSlices=1,
                includeInHubble=True, partOfCombo=False, isCombo=False, 
                comboList=(), profileBinSize=2.0, skyFraction=0.19,
