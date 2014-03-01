@@ -367,7 +367,7 @@ int main(int argc, char **argv) {
   filename = string(args.outfile_arg);
   filename = filename.append("summary.out");
   fp = fopen(filename.c_str(), "w");
-  fprintf(fp, "# void ID, radius, radius ratio, common volume ratio (to original), common volume ratio (to match), relative dist, num matches, num significant matches, match ID, merit, ellipticity ratio, density contrast\n");
+  fprintf(fp, "# void ID, radius, radius ratio, common volume ratio (to original), common volume ratio (to match), relative dist, num matches, num significant matches, match ID, merit, ellipticity ratio, density contrast, cosTheta, major axis ratio, minor axis ratio, ellipticity\n");
   for (iVoid1 = 0; iVoid1 < catalog1.numVoids; iVoid1++) {
     int voidID = catalog1.voids[iVoid1].voidID;
     if (catalog1.voids[iVoid1].numMatches > 0) {

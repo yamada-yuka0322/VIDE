@@ -114,7 +114,8 @@ def aveStretch(sample, zStart, zEnd,
 # returns average expected void stretch for a given redshift range 
 #   weighted by an actual void distribution
 def aveWeightedStretch(zStart, zEnd, skyFrac = 0.19, Om = 0.27, Ot = 1.0, 
-                   w0 = -1.0, wa = 0.0, dist=None, bins=None):
+                   w0 = -1.0, wa = 0.0, dist=None, bins=None, 
+                   useComoving=True, OmFid=None):
   if zStart == 0.0: zStart = 1.e-6
 
   def weightedSlice(x):
@@ -126,10 +127,26 @@ def aveWeightedStretch(zStart, zEnd, skyFrac = 0.19, Om = 0.27, Ot = 1.0,
 
   ave = integrate.quad(weightedFunc, zStart, zEnd, args=(Om, Ot, w0, wa),
                        full_output=1)[0]
-
   volume = integrate.quad(weightedSlice, zStart, zEnd, full_output=1)[0]
-   
-  return ave/volume
+
+  if volume == 0.0: volume = 1.0 
+  stretch = ave/volume
+ 
+  # if in comoving space, calculate stretch for fiducial cosmology
+  # and take relative amount
+  if useComoving:
+    ave = integrate.quad(weightedFunc, zStart, zEnd, args=(OmFid, 
+                         Ot, w0, wa),
+                         full_output=1)[0]
+    volume = integrate.quad(weightedSlice, zStart, zEnd, full_output=1)[0]
+  
+    if volume == 0.0: volume = 1.0 
+    stretchFid = ave/volume
+
+  if stretchFid != 0.0: 
+    stretch = stretchFid/stretch
+
+  return stretch
 
 
 # -----------------------------------------------------------------------------
