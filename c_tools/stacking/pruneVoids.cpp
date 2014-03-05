@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
   double result, error;
   size_t nEval;
 
-  int iZ, numZ = 10000;
+  int iZ, numZ = 4000;
   double maxZ = 5.0, z, *dL, *redshifts;
   dL = (double *) malloc(numZ * sizeof(double));  
   redshifts = (double *) malloc(numZ * sizeof(double));
