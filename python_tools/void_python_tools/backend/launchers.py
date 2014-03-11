@@ -1711,6 +1711,11 @@ def launchLikelihood(dataSampleList=None,
       #sys.stdout = open(logFile, 'w')
       #sys.stderr = open(logFile, 'a')
 
+      if dataSampleList[0].usePecVel:
+        biasLevel = 1.16
+      else:
+        biasLevel = 1.0
+
       vp.build1dLikelihood(dataSampleList[0], 
                     workDir+"/calculatedExpansions_"+\
                          thisDataPortion+".txt",
@@ -1721,8 +1726,8 @@ def launchLikelihood(dataSampleList=None,
                     OmEnd   = 1.0,
                     #biasStart = 1.0,
                     #biasEnd   = 1.32,
-                    biasStart = 1.16,
-                    biasEnd   = 1.16,
+                    biasStart = biasLevel,
+                    biasEnd   = biasLevel,
                     outputBase = workDir+"/1dlikelihoods_"+thisDataPortion+"_",
                     useBinAve = False,
                     useComoving = useComoving,
