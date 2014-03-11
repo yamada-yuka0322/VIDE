@@ -188,6 +188,11 @@ bias = 1.16
 
 dataPortions = {dataPortions}
 dataSampleList = []
+
+# for the A-P test
+minVoidsToFit = {minVoidsToFit}
+minPartToFit = {minPartToFit}
+fittingMode = '{fittingMode}'
            """
 
   scriptFile.write(header.format(startCatalogStage=startCatalogStage,
@@ -195,7 +200,11 @@ dataSampleList = []
                                  startAPStage=startAPStage,
                                  endAPStage=endAPStage,
                                  continueRun=continueRun,
-                                 dataPortions=dataPortions))
+                                 dataPortions=dataPortions,
+                                 minVoidsToFit=minVoidsToFit,
+                                 minPartToFit=minPartToFit,
+                                 fittingMode=fittingMode,
+                                ))
 
   dataInfo = """
 setName = "{setName}"
@@ -245,38 +254,38 @@ dataSampleList.append(newSample)
   if stackMode == "fixed":
     stackInfo = """
 # {zMin}, {zMax}, {minRadius}
-newSample.addStack(0.0, 5.0, 5 , 10, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 10, 15, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 15, 20, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 20, 25, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 25, 30, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 30, 35, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 35, 40, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 40, 45, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 45, 50, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 50, 55, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 55, 60, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 60, 65, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 65, 70, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 70, 75, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 75, 80, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 80, 85, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 85, 90, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 90, 95, False, False, rescaleMode="rv")
-newSample.addStack(0.0, 5.0, 95, 100, False, False, rescaleMode="rv")
+newSample.addStack(0.0, 5.0, 5 , 10, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 10, 15, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 15, 20, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 20, 25, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 25, 30, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 30, 35, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 35, 40, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 40, 45, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 45, 50, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 50, 55, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 55, 60, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 60, 65, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 65, 70, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 70, 75, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 75, 80, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 80, 85, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 85, 90, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 90, 95, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack(0.0, 5.0, 95, 100, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
   """
   elif stackMode == "sample_thick":
     stackInfo = """
 # {zMin}, {zMax}, {minRadius}
-newSample.addStack({zMin}, {zMax}, 10, 20, True, False, rescaleMode="rmax")
-newSample.addStack({zMin}, {zMax}, 20, 30, True, False, rescaleMode="rmax")
-newSample.addStack({zMin}, {zMax}, 30, 40, True, False, rescaleMode="rmax")
-newSample.addStack({zMin}, {zMax}, 40, 50, True, False, rescaleMode="rmax")
-newSample.addStack({zMin}, {zMax}, 50, 60, True, False, rescaleMode="rmax")
-newSample.addStack({zMin}, {zMax}, 60, 70, True, False, rescaleMode="rmax")
-newSample.addStack({zMin}, {zMax}, 70, 80, True, False, rescaleMode="rmax")
-newSample.addStack({zMin}, {zMax}, 80, 90, True, False, rescaleMode="rmax")
-newSample.addStack({zMin}, {zMax}, 90, 100, True, False, rescaleMode="rmax")
+newSample.addStack({zMin}, {zMax}, 10, 20, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack({zMin}, {zMax}, 20, 30, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack({zMin}, {zMax}, 30, 40, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack({zMin}, {zMax}, 40, 50, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack({zMin}, {zMax}, 50, 60, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack({zMin}, {zMax}, 60, 70, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack({zMin}, {zMax}, 70, 80, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack({zMin}, {zMax}, 80, 90, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack({zMin}, {zMax}, 90, 100, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
   """
 
   elif stackMode == "log":
@@ -289,18 +298,18 @@ newSample.addStack({zMin}, {zMax}, 90, 100, True, False, rescaleMode="rmax")
     while rEnd < rMax:
       rEnd = (1+0.5*dlogR)*rStart/(1-0.5*dlogR)
     
-      stackInfo += """newSample.addStack({zMin}, {zMax}"""+ ", %g, %g, True, False, rescaleMode='rv')" % (rStart, rEnd)
+      stackInfo += """newSample.addStack({zMin}, {zMax}"""+ ", %g, %g, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})" % (rStart, rEnd)
       
       rStart = rEnd
 
   elif stackMode == "auto":
     stackInfo = """
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False, rescaleMode="rv")
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False, rescaleMode="rv")
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False, rescaleMode="rv")
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False, rescaleMode="rv")
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False, rescaleMode="rv")
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False, rescaleMode="rv")
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
+newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
                """
   else:
     stackInfo = """
@@ -389,7 +398,11 @@ newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, Fal
             sliceAPMax = "%0.2f" % sliceAPMax
             scriptFile.write(stackInfo.format(zMin=sliceAPMin,
                                               zMax=sliceAPMax,
-                                              minRadius=minRadius))
+                                              minRadius=minRadius,
+                                              rescaleMode=stackRescaleMode,
+                                              maxVoids=maxVoidsInStack,
+                                              fittingMode=fittingMode
+                             ))
 
 
   scriptFile.close()

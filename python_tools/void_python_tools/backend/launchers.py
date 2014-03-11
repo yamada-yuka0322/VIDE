@@ -616,10 +616,10 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   else:
     obsFlag = ""
 
-  Rextracut = stack.rMin*3 + 1
-  Rcircular = stack.rMin*3 + 2
-  #Rextracut = stack.rMax*3 + 1
-  #Rcircular = stack.rMax*3 + 2
+  #Rextracut = stack.rMin*3 + 1
+  #Rcircular = stack.rMin*3 + 2
+  Rextracut = stack.rMax*3 + 1
+  Rcircular = stack.rMax*3 + 2
 
   if dataType == "observation":
     maskIndex = open(zobovDir+"/mask_index.txt", "r").read()
@@ -642,6 +642,11 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
     rescaleFlag = "rescale"
   else:
     rescaleFlag = ""
+
+  if stack.maxVoids != -1:
+    maxVoidsFlag = "maxVoids="+str(stack.maxVoids)
+  else:
+    maxVoidsFlag = ""
 
   idListFile = "idlist.temp"
   if idList != None:
@@ -695,6 +700,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
   %s
   %s
   %s
+  %s
   """ % \
   (zobovDir+"/voidDesc_"+thisDataPortion+"_"+sampleName+".out",
    zobovDir+"/voidPart_"+sampleName+".dat",
@@ -717,6 +723,7 @@ def launchStack(sample, stack, binPath, thisDataPortion=None, logDir=None,
    zobovDir+"/barycenters_"+thisDataPortion+"_"+sampleName+".out",
    zobovDir+"/boundaryDistances_"+thisDataPortion+"_"+sampleName+".out",
    rescaleFlag,
+   maxVoidsFlag,
    idListFlag,
    periodicLine
    )
@@ -1116,10 +1123,10 @@ def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None,
   numVoids = open(voidDir+"/num_voids.txt", "r").readline()
   numParticles = open(voidDir+"/num_particles.txt", "r").readline()
 
-  Rextracut = stack.rMin*3 + 1
-  Rcircular = stack.rMin*2 + 2
-  #Rextracut = stack.rMax*3 + 1
-  #Rcircular = stack.rMax*3 + 2
+  #Rextracut = stack.rMin*3 + 1
+  #Rcircular = stack.rMin*2 + 2
+  Rextracut = stack.rMax*3 + 1
+  Rcircular = stack.rMax*3 + 2
 
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
     profileParmFile = voidDir+"/params.txt"
@@ -1139,8 +1146,8 @@ def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None,
 
     if sample.profileBinSize == "auto":
       #density = 0.5 * 50 / Rcircular / 2
-      density = stack.rMax / 5.
-      #density = stack.rMax / 10.
+      density = stack.rMin / 5.
+      #density = stack.rMax / 5.
     else:
       density = sample.profileBinSize
 
@@ -1166,7 +1173,9 @@ def launchProfile(sample, stack, voidDir=None, logFile=None, continueRun=None,
 # -----------------------------------------------------------------------------
 def launchFit(sample, stack, useComoving=None, 
               logFile=None, voidDir=None, figDir=None,
-              continueRun=None, thisDataPortion=None):
+              continueRun=None, thisDataPortion=None, 
+              fittingMode=None, minVoidsToFit=None,
+              minPartToFit=None):
 
   sampleName = sample.fullName
 
@@ -1181,7 +1190,7 @@ def launchFit(sample, stack, useComoving=None,
       return
 
     numVoids = int(open(voidDir+"/num_voids.txt", "r").readline())
-    if numVoids < 1:
+    if numVoids < minVoidsToFit:
       print jobString, "Fitting not enough voids to fit; skipping!"
       fp = open(voidDir+"/NOFIT", "w")
       fp.write("not enough voids: %d \n" % numVoids)
@@ -1189,7 +1198,7 @@ def launchFit(sample, stack, useComoving=None,
       return
 
     numPart = int(open(voidDir+"/num_particles.txt", "r").readline())
-    if numPart < 1:
+    if numPart < minPartToFit:
       print jobString, "Fitting not enough particles to fit; skipping!"
       fp = open(voidDir+"/NOFIT", "w")
       fp.write("not enough particles: %d \n" % numPart)
@@ -1229,28 +1238,31 @@ def launchFit(sample, stack, useComoving=None,
     while badChain:
       ntries += 1
 
-      Rexpect = (stack.rMin+stack.rMax)/2
-      #Rtruncate = stack.rMax*2. # TEST
-      #Rtruncate = stack.rMax*3. # TEST
-      Rtruncate = stack.rMin*3. + 1 # TEST
-      if sample.dataType == "observation":
-       ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-                                      nbar_init=1.0,
-                                      Niter=300000,
-                                      Nburn=100000,
-                                      Rextracut=Rtruncate)
-      else:
-        ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
-                                      nbar_init=1.0,
-                                      Niter=300000,
-                                      Nburn=100000,
-                                     Rextracut=Rtruncate)
-      print "TEST", stack.rMax, args[0][0], args[0][1], args[0][2]
-      badChain = (args[0][0] > 0.5 or args[0][1] > 2.*stack.rMax or \
-                  args[0][2] > 2.*stack.rMax) and \
-                 (ntries < maxtries)
-      #ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="2d", nBootstraps=100, rMaxInertia=0.7)
-      #badChain = False
+      if fittingMode == "mcmc":
+        Rexpect = (stack.rMin+stack.rMax)/2
+        #Rtruncate = stack.rMax*2. # TEST
+        Rtruncate = stack.rMax*3. # TEST
+        #Rtruncate = stack.rMin*3. + 1 # TEST
+        if sample.dataType == "observation":
+         ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+                                        nbar_init=1.0,
+                                        Niter=300000,
+                                        Nburn=100000,
+                                        Rextracut=Rtruncate)
+        else:
+          ret,fits,args = vp.fit_ellipticity(voidDir,Rbase=Rexpect,
+                                        nbar_init=1.0,
+                                        Niter=300000,
+                                        Nburn=100000,
+                                       Rextracut=Rtruncate)
+        #print "TEST", stack.rMax, args[0][0], args[0][1], args[0][2]
+        badChain = (args[0][0] > 0.5 or args[0][1] > 2.*stack.rMax or \
+                    args[1] > 2.0 or \
+                    args[0][2] > 2.*stack.rMax) and \
+                   (ntries < maxtries)
+      elif fittingMode == "inertia":
+        ret,fits,args = vp.compute_inertia(voidDir, stack.rMax, mode="2d", nBootstraps=100, rMaxInertia=0.7)
+        badChain = False
 
     ## rescale to expected stretch if using comoving coords
     #if useComoving or not sample.useLightCone:
@@ -1296,7 +1308,7 @@ def launchFit(sample, stack, useComoving=None,
 
     if os.access(voidDir+"/NOFIT", os.F_OK):
       os.unlink(voidDir+"/NOFIT")
-    if ntries >= maxtries:
+    if ntries > maxtries:
       print jobString, "No reliable fit found; skipping!"
       fp = open(voidDir+"/NOFIT", "w")
       fp.write("bad ellipticity fit\n")
@@ -1664,7 +1676,7 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
                 else:
                   fp.write("-1\n")
               #fp.write(str(len(voidRedshifts))+" ")
-              np.savetxt(fp, voidRedshifts[None])
+              #np.savetxt(fp, voidRedshifts[None])
             else:
               fp.write("-1\n")
       fp.close()
@@ -1680,8 +1692,13 @@ def launchHubble(dataPortions=None, dataSampleList=None, logDir=None,
       print "already done!"
 
 # -----------------------------------------------------------------------------
-def launchLikelihood(dataPortions=None, logDir=None, workDir=None, 
-                      continueRun=False):
+def launchLikelihood(dataSampleList=None,
+                     dataPortions=None, logDir=None, workDir=None, 
+                     continueRun=False):
+
+  # check for comoving from first sample
+  useComoving =  not dataSampleList[0].useLightCone or \
+                 dataSampleList[0].useComoving
 
   for thisDataPortion in dataPortions:
     print "    For data portion", thisDataPortion, "...",
@@ -1691,24 +1708,27 @@ def launchLikelihood(dataPortions=None, logDir=None, workDir=None,
     
     if not (continueRun and jobSuccessful(logFile, "Done!\n")):
 
-      sys.stdout = open(logFile, 'w')
+      #sys.stdout = open(logFile, 'w')
       #sys.stderr = open(logFile, 'a')
 
-      vp.build1dLikelihood(workDir+"/calculatedExpansions_"+\
+      vp.build1dLikelihood(dataSampleList[0], 
+                    workDir+"/calculatedExpansions_"+\
                          thisDataPortion+".txt",
                     workDir+"/voidDistributions_" + \
                       thisDataPortion+".txt",
                     nbins = 20,
                     OmStart = 0.0,
                     OmEnd   = 1.0,
-                    biasStart = 1.0,
-                    biasEnd   = 1.32,
-                    #biasStart = 1.15,
-                    #biasEnd   = 1.17,
+                    #biasStart = 1.0,
+                    #biasEnd   = 1.32,
+                    biasStart = 1.16,
+                    biasEnd   = 1.16,
                     outputBase = workDir+"/1dlikelihoods_"+thisDataPortion+"_",
-                    useBinAve = False)
+                    useBinAve = False,
+                    useComoving = useComoving,
+                    OmFid=dataSampleList[0].omegaM)
 
-      sys.stdout = sys.__stdout__
+      #sys.stdout = sys.__stdout__
       #sys.stderr = sys.__stderr__
 
       if jobSuccessful(logFile, "Done!\n"):

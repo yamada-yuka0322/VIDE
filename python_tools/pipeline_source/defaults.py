@@ -36,6 +36,11 @@ dataPortions = ["central"]
 
 # auto for AP analysis, "fixed" for catalog comparison
 stackMode = "fixed"
+maxVoidsInStack = -1
+stackRescaleMode = "rv"
+fittingMode = "mcmc"
+minVoidsToFit = 20
+minPartToFit = 2
 
 # directory for the input simulation/observational particle files
 catalogDir = os.getenv("HOME")+"/workspace/Voids/catalog/"

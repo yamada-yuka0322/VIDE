@@ -38,9 +38,11 @@ class Stack:
   needProfile = True
   rescaleMode = "rmax" # options: "rmax" to scale to largest void in stack
                        #          "rv"   normalize each void
+  maxVoids = -1 # maximum number of voids to allow in the stack
 
   def __init__(self, zMin, zMax, rMin, rMax, includeInHubble, partOfCombo, 
-               zMinPlot=None, needProfile=True, rescaleMode="rmax"):
+               zMinPlot=None, needProfile=True, rescaleMode="rmax",
+               maxVoids=-1, fittingMode="mcmc"):
     self.zMin = zMin
     self.zMax = zMax
     self.rMin = rMin
@@ -50,6 +52,8 @@ class Stack:
     self.partOfCombo = partOfCombo
     self.needProfile = needProfile
     self.rescaleMode = rescaleMode
+    self.maxVoids = maxVoids
+    self.fittingMode = fittingMode
    
     if zMinPlot == None:
       self.zMinPlot = self.zMin
@@ -143,11 +147,14 @@ class Sample:
 
   def addStack(self, zMin, zMax, rMin, rMax, 
                 includeInHubble, partOfCombo,zMinPlot=None, 
-                needProfile=True, rescaleMode="rmax"):
+                needProfile=True, rescaleMode="rmax",
+                maxVoids=-1, fittingMode="mcmc"):
     self.stacks.append(Stack(zMin, zMax, rMin, rMax,
                             includeInHubble, partOfCombo, 
                             zMinPlot=zMinPlot, needProfile=needProfile,
-                            rescaleMode=rescaleMode))
+                            rescaleMode=rescaleMode,
+                            maxVoids=maxVoids,
+                            fittingMode=fittingMode))
 
   def getHubbleStacks(self):
     stacksForHubble = []
