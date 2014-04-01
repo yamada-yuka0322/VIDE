@@ -245,7 +245,7 @@ def loadVoidCatalog(sampleDir):
   File.close()
 
   print "Loading all particles..."
-  partData, boxLen, volNorm, isObservationData = loadPart(sampleDir)
+  partData, boxLen, volNorm, isObservationData, ranges = loadPart(sampleDir)
   numPartTot = len(partData)
   catalog.numPartTot = numPartTot
   catalog.part = []
