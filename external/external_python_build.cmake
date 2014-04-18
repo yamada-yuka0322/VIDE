@@ -199,7 +199,14 @@ IF(INTERNAL_KDTREE_SCIPY)
     BUILD_IN_SOURCE 1
     BUILD_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_build.cmake
     INSTALL_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_install.cmake
+    PATCH_COMMAND  ${CMAKE_COMMAND} 
+      -DBUILD_PREFIX=${BUILD_PREFIX}/kdtree-scipy-prefix 
+      -DPATCH_FILE=${CMAKE_SOURCE_DIR}/external/patch_kdtree 
+      -DSOURCE_PREFIX=${BUILD_PREFIX}/kdtree-scipy-prefix/src/kdtree-scipy
+      -P ${CMAKE_SOURCE_DIR}/external/check_and_apply_patch.cmake
+
    )
+  SET(AUXILIARY_PYTHON_DEPEND ${AUXILIARY_PYTHON_DEPEND} kdtree-scipy)
 ENDIF(INTERNAL_KDTREE_SCIPY)
 
 

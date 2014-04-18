@@ -1,0 +1,29 @@
+--- periodic_kdtree.py.old	2014-04-18 17:30:39.000000000 +0200
++++ periodic_kdtree.py	2014-04-18 17:31:59.000000000 +0200
+@@ -102,7 +102,7 @@
+         # all neighbors within the given distance_upper_bound".
+ 
+         # Cap distance_upper_bound
+-        distance_upper_bound = np.min(distance_upper_bound,
++        distance_upper_bound = min(distance_upper_bound,
+                                       self.max_distance_upper_bound)
+ 
+         # Run queries over all relevant images of x
+@@ -128,7 +128,7 @@
+         # is a single point, not an array of points
+         
+         # Cap r
+-        r = np.min(r, self.max_distance_upper_bound)
++        r = min(r, self.max_distance_upper_bound)
+ 
+         # Run queries over all relevant images of x
+         results = []
+@@ -213,7 +213,7 @@
+         # all neighbors within the given distance_upper_bound".
+ 
+         # Cap distance_upper_bound
+-        distance_upper_bound = np.min(distance_upper_bound,
++        distance_upper_bound = min(distance_upper_bound,
+                                       self.max_distance_upper_bound)
+ 
+         # Run queries over all relevant images of x
