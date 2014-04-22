@@ -34,7 +34,7 @@ ncFloat = 'f8'
 
 # -----------------------------------------------------------------------------
 def loadPart(sampleDir):
-    #print "    Loading particle data..."
+    print "    Loading particle data..."
     sys.stdout.flush()
 
     with open(sampleDir+"/sample_info.dat", 'rb') as input:
