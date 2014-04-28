@@ -23,101 +23,123 @@ import os
 # -----------------------------------------------------------------------------
 # CONFIGURATION
 
-startCatalogStage = 0
-endCatalogStage = 0
+# if True, will scan log files for last known completed state and run from there
 continueRun = False
 
-startAPStage = 1
-endAPStage = 2
+# stages:
+#   1 : extract redshift slices from data
+#   2 : void extraction using zobov
+#   3 : removal of small voids and voids near the edge 
+startCatalogStage = 1
+endCatalogStage   = 3
 
 # directory for the input simulation/observational particle files
 catalogDir = os.getenv("HOME")+"/workspace/Voids/catalogs/mergertree1024/"
 
-# path to HOD code
-hodPath = os.getenv("HOME")+"/projects/Voids/hod/HOD.x"
+# void catalog output directory
+workDir      = os.getenv("HOME")+"/workspace/Voids/sim/"
 
-# where to put the final void catalog, figures, and output logs
-voidOutputDir = os.getenv("HOME")+"/workspace/Voids/mergertree1024/"
-figDir = os.getenv("PWD")+"/../figs/mergertree1024/"
-logDir = os.getenv("PWD")+"/../logs/mergertree1024/"
+# output directory for log files
+logDir = os.getenv("PWD")+"/../logs/sim/"
+
+# output directory for figures
+figDir = os.getenv("PWD")+"/../figs/sim/"
 
 # where to place the pipeline scripts
-scriptDir = os.getenv("PWD")+"/mergertree1024/"
+scriptDir = os.getenv("PWD")+"/sim/"
 
-# simulation or observation?
+# don't change
 dataType = "simulation"
 
-# available formats for simulation: gadget, mergertree
+# available formats for simulation: gadget, sdf, multidark
 dataFormat = "sdf"
-dataUnit = 1 # as multiple of Mpc/h
 
-# place particles on the lightcone?
+# units of position in Mpc/h
+dataUnit = 1
+
+# place particles on the lightcone (z-axis in sims)?
 useLightCone = False
 
-# also do peculiar velocities?
+# add peculiar velocities?
 doPecVel = False
+
+# optimization: maximum number of parallel threads to use
+numZobovThreads = 2
+
+# optimization: number of subdivisions of the box
+numZobovDivisions = 2
+
+
+###############################################################################
+# Particles
 
 # common filename of particle files
 particleFileBase = "mf_4s_1G_1k_NNNNN"
+
+# this flag will be replaced by values in fileNums list below
 particleFileDummy = 'NNNNN'
 
 # list of file numbers for the particle files
-# to get particle file name, we take particleFileBase+fileNum
 fileNums = ["1.000"]
 
-# redshift of each file in the above list
+# redshift of each file in the above fileNums list
 redshifts = ["0.0"]
 
 # how many independent slices along the z-axis?
 numSlices = 1
-#numSlices = 4
-numAPSlices = 1
 
 # how many subdivisions along the x- and y- axis?
 #   ( = 2 will make 4 subvolumes for each slice, = 3 will make 9, etc.)
 numSubvolumes = 1
 
 # prefix to give all outputs
-prefix = "mt_"
+prefix = "sim_"
 
 # list of desired subsamples - these are in unts of h Mpc^-3!
-subSamples = [0.1, 0.05, 0.02, 0.01, 0.004, 0.002, 0.001, 0.0003, 0.0001]
-#doSubSampling = False # do the subsampling in preparation script?
-doSubSampling = True # do the subsampling in preparation script?
+subSamples = [1.0, 0.5]
+
+# if True, do the subsampling in preparation (only for sdf and multidark)
+doSubSampling = True 
+
+
+###############################################################################
+# Halos
 
 # common filename of halo files, leave blank to ignore halos
 haloFileBase = "mf_4s_1G_1k_bgc2_NNNNN.sdf"
+
+# this flag will be replaced by values in fileNums list above
 haloFileDummy = 'NNNNN'
 
 # minimum halo mass cuts to apply for the halo catalog
 #   use "none" to get all halos
 minHaloMasses = ["none", 1.2e13]
-#minHaloMasses = [7.0e11, 1.2e13]
 
 # locations of data in the halo catalog
-haloFileMCol  = 6
-haloFileXCol  = 0
-haloFileYCol  = 1
-haloFileZCol  = 2
-haloFileVXCol = 3
-haloFileVYCol = 4
-haloFileVZCol = 5
-haloFileColSep = ','
-haloFileNumComLines = 0
+haloFileMCol  = 6    # mass
+haloFileXCol  = 0    # x
+haloFileYCol  = 1    # y
+haloFileZCol  = 2    # z
+haloFileVXCol = 3    # v_x
+haloFileVYCol = 4    # v_y
+haloFileVZCol = 5    # v_z
+haloFileColSep = ',' # separator
+haloFileNumComLines = 0 # number of comments before data
 
-# adjust these two parameters given the memory contraints on your system:
-#   numZobovDivisions: how many sub-volumes per dimension will zobov process
-#   numZobovThreads: how many sub-volumes to process at once?   
-numZobovDivisions = 4
-numZobovThreads = 4
 
+###############################################################################
 # simulation information
+
 numPart = 1024*1024*1024
 lbox = 999.983 # Mpc/h
 omegaM = 0.2847979853038958
-hubble = 0.6962
+hubble = 0.6962 # h_0
 
-#galDens = 0.000225
+
+###############################################################################
+# HOD
+
+# each of the HOD sets will be applied to each halo catalog defined above
 hodParmList = [
   {'name'       : "LowRes", #BOSS: Manera et al. 2012, eq. 26
    'Mmin'       : 0.0,
@@ -127,16 +149,6 @@ hodParmList = [
    'Mcut'       : 1.19399e13,
    'galDens'    : 0.0002,
   },
-
-  {'name'       : "HighRes",
-   'Mmin'       : 0.0,
-   #'Mmin'       : 1.99525e12,
-   'M1'         : 3.80189e13,
-   'sigma_logM' : 0.21,
-   'alpha'      : 1.12,
-   'Mcut'       : 6.91831e11,
-   'galDens'    : 0.02,
-  }
 ]
 
 # END CONFIGURATION
