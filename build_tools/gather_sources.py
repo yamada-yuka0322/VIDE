@@ -1,7 +1,7 @@
 #+
 #   VIDE -- Void IDentification and Examination -- ./build_tools/gather_sources.py
-#   Copyright (C) 2010-2013 Guilhem Lavaux
-#   Copyright (C) 2011-2013 P. M. Sutter
+#   Copyright (C) 2010-2014 Guilhem Lavaux
+#   Copyright (C) 2011-2014 P. M. Sutter
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -41,8 +41,8 @@ def apply_license(license, relimit, filename):
 def apply_python_license(filename):
   license="""#+
 #   VIDE -- Void IDentification and Examination -- @FILENAME@
-#   Copyright (C) 2010-2013 Guilhem Lavaux
-#   Copyright (C) 2011-2013 P. M. Sutter
+#   Copyright (C) 2010-2014 Guilhem Lavaux
+#   Copyright (C) 2011-2014 P. M. Sutter
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -68,8 +68,8 @@ def apply_python_license(filename):
 def apply_cpp_license(filename):
   license="""/*+
     VIDE -- Void IDentification and Examination -- @FILENAME@
-    Copyright (C) 2010-2013 Guilhem Lavaux
-    Copyright (C) 2011-2013 P. M. Sutter
+    Copyright (C) 2010-2014 Guilhem Lavaux
+    Copyright (C) 2011-2014 P. M. Sutter
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -85,13 +85,14 @@ def apply_cpp_license(filename):
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 +*/
 """
-  relimit = r'^(?s)/\*\+.*\+\*/'
+  relimit = r'^(?s)/\*\+.*\+\*/\n'
   print("C++ file: %s" % filename)
   apply_license(license, relimit, filename)
   
 
 def analyze_tree(prefix, t):
-  for ename,entry in t.items():
+  for entry in t:
+    ename = entry.name
     if ename == 'external' or ename == 'zobov':
       continue
     if type(entry) == Tree:
