@@ -71,9 +71,9 @@ configure_exec(${CMAKE_SOURCE_DIR}/run_env.sh.in  ${CMAKE_BINARY_DIR} run_env.sh
 configure_exec(${CMAKE_SOURCE_DIR}/python_tools/pipeline_source/prepareCatalogs.in.py
 ${CMAKE_BINARY_DIR}/pipeline prepareCatalogs.py)
 #configure_exec(${CMAKE_SOURCE_DIR}/python_tools/pipeline_source/applyMaskToMock.in.py
-${CMAKE_BINARY_DIR}/pipeline applyMaskToMock.py)
+#${CMAKE_BINARY_DIR}/pipeline applyMaskToMock.py)
 #configure_exec(${CMAKE_SOURCE_DIR}/python_tools/pipeline_source/buildSkyProjections.in.py
-${CMAKE_BINARY_DIR}/pipeline/miscTools buildSkyProjections.py)
+#${CMAKE_BINARY_DIR}/pipeline/miscTools buildSkyProjections.py)
 
 SET(python_build_environment
   ${CMAKE_COMMAND} -DPYTHON_LOCAL_SITE_PACKAGE=${PYTHON_LOCAL_SITE_PACKAGE} -DVOID_GSL=${CMAKE_BINARY_DIR}/ext_build/gsl -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} -DTARGET_PATH=${CMAKE_BINARY_DIR}/ext_build/python -P)
