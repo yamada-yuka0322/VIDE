@@ -389,3 +389,22 @@ def getVoidPart(catalog, voidID):
   
   return partOut
 
+# -----------------------------------------------------------------------------
+def filterVoidsOnSize(catalog, rMin):
+  catalog.voids = catalog.voids[ catalog.voids[:].radius >= rMin ]
+  return catalog
+
+# -----------------------------------------------------------------------------
+def filterVoidsOnTreeLevel(catalog, level):
+  catalog.voids = catalog.voids[ catalog.voids[:].treeLevel == level ]
+
+  if level == -1:
+    catalog.voids = catalog.voids[ catalog.voids[:].numChildren == 0 ]
+    
+  return catalog
+
+# -----------------------------------------------------------------------------
+def filterVoidsOnCentralDen(catalog, maxCentralDen):
+  catalog.voids = catalog.voids[ catalog.voids[:].centralDen <= maxCentralDen ]
+  return catalog
+
