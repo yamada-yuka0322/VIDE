@@ -144,10 +144,11 @@ def loadPartVel(sampleDir):
     return partVel
 
 # -----------------------------------------------------------------------------
-def getPartTree(sampleDir, partData, boxLen):
+def getPartTree(catalog):
 
-  with open(sampleDir+"/sample_info.dat", 'rb') as input:
-    sample = pickle.load(input)
+  sample = catalog.sampleInfo
+  partData = catalog.partData
+  boxLen = catalog.boxLen
 
   periodicLine = getPeriodic(sample)
 
@@ -222,7 +223,12 @@ class Catalog:
   sampleInfo = None
 
 # -----------------------------------------------------------------------------
-def loadVoidCatalog(sampleDir, dataPortion="central"):
+def loadVoidCatalog(sampleDir, dataPortion="central", loadPart=True):
+# loads a void catalog
+#   sampleDir: path to VIDE output directory
+#   dataPortion: "central" or "all"
+#   loadPart: if True, also load particle information
+
   #print "    Loading particle data..."
   sys.stdout.flush()
 
@@ -245,31 +251,6 @@ def loadVoidCatalog(sampleDir, dataPortion="central"):
   catalog.boxLen[1] = ranges[1][1] - ranges[1][0]
   catalog.boxLen[2] = ranges[2][1] - ranges[2][0]
   File.close()
-
-  print "Loading all particles..."
-  partData, boxLen, volNorm, isObservationData, ranges = loadPart(sampleDir)
-  numPartTot = len(partData)
-  catalog.numPartTot = numPartTot
-  catalog.partPos = partData
-  catalog.part = []
-  for i in xrange(len(partData)):
-    catalog.part.append(Bunch(x = partData[i][0], 
-                              y = partData[i][1],
-                              z = partData[i][2],
-                              volume = 0,
-                              ra = 0,
-                              dec = 0,
-                              redshift = 0,
-                              uniqueID = 0))
-      
- 
-  print "Loading volumes..."
-  volFile = sampleDir+"/vol_"+sample.fullName+".dat"
-  File = file(volFile)
-  chk = np.fromfile(File, dtype=np.int32,count=1)
-  vols = np.fromfile(File, dtype=np.float32,count=numPartTot)
-  for ivol in xrange(len(vols)):
-    catalog.part[ivol].volume = vols[ivol] / volNorm
 
   print "Loading voids..."
   fileName = sampleDir+"/untrimmed_voidDesc_"+dataPortion+"_"+sample.fullName+".out"
@@ -342,39 +323,64 @@ def loadVoidCatalog(sampleDir, dataPortion="central"):
 
     iLine += 1
 
-  print "Loading zone-void membership info..."
-  zoneFile = sampleDir+"/voidZone_"+sample.fullName+".dat"
-  catalog.void2Zones = []
-  File = file(zoneFile)
-  numZonesTot = np.fromfile(File, dtype=np.int32,count=1)
-  catalog.numZonesTot = numZonesTot
-  for iZ in xrange(numZonesTot):
-    numZones = np.fromfile(File, dtype=np.int32,count=1)
-    catalog.void2Zones.append(Bunch(numZones = numZones,
-                                     zoneIDs = []))
+  if loadPart:
+    print "Loading all particles..."
+    partData, boxLen, volNorm, isObservationData, ranges = loadPart(sampleDir)
+    numPartTot = len(partData)
+    catalog.numPartTot = numPartTot
+    catalog.partPos = partData
+    catalog.part = []
+    for i in xrange(len(partData)):
+      catalog.part.append(Bunch(x = partData[i][0], 
+                                y = partData[i][1],
+                                z = partData[i][2],
+                                volume = 0,
+                                ra = 0,
+                                dec = 0,
+                                redshift = 0,
+                                uniqueID = 0))
+      
+ 
+    print "Loading volumes..."
+    volFile = sampleDir+"/vol_"+sample.fullName+".dat"
+    File = file(volFile)
+    chk = np.fromfile(File, dtype=np.int32,count=1)
+    vols = np.fromfile(File, dtype=np.float32,count=numPartTot)
+    for ivol in xrange(len(vols)):
+      catalog.part[ivol].volume = vols[ivol] / volNorm
 
-    for p in xrange(numZones):
-      zoneID = np.fromfile(File, dtype=np.int32,count=1)
-      catalog.void2Zones[iZ].zoneIDs.append(zoneID)
+    print "Loading zone-void membership info..."
+    zoneFile = sampleDir+"/voidZone_"+sample.fullName+".dat"
+    catalog.void2Zones = []
+    File = file(zoneFile)
+    numZonesTot = np.fromfile(File, dtype=np.int32,count=1)
+    catalog.numZonesTot = numZonesTot
+    for iZ in xrange(numZonesTot):
+      numZones = np.fromfile(File, dtype=np.int32,count=1)
+      catalog.void2Zones.append(Bunch(numZones = numZones,
+                                       zoneIDs = []))
+
+      for p in xrange(numZones):
+        zoneID = np.fromfile(File, dtype=np.int32,count=1)
+        catalog.void2Zones[iZ].zoneIDs.append(zoneID)
 
 
-  print "Loading particle-zone membership info..."
-  zonePartFile = sampleDir+"/voidPart_"+sample.fullName+".dat"
-  catalog.zones2Parts = []
-  File = file(zonePartFile)
-  chk = np.fromfile(File, dtype=np.int32,count=1)
-  numZonesTot = np.fromfile(File, dtype=np.int32,count=1)
-  for iZ in xrange(numZonesTot):
-    numPart = np.fromfile(File, dtype=np.int32,count=1)
-    catalog.zones2Parts.append(Bunch(numPart = numPart,
-                                     partIDs = []))
+    print "Loading particle-zone membership info..."
+    zonePartFile = sampleDir+"/voidPart_"+sample.fullName+".dat"
+    catalog.zones2Parts = []
+    File = file(zonePartFile)
+    chk = np.fromfile(File, dtype=np.int32,count=1)
+    numZonesTot = np.fromfile(File, dtype=np.int32,count=1)
+    for iZ in xrange(numZonesTot):
+      numPart = np.fromfile(File, dtype=np.int32,count=1)
+      catalog.zones2Parts.append(Bunch(numPart = numPart,
+                                       partIDs = []))
 
-    for p in xrange(numPart):
-      partID = np.fromfile(File, dtype=np.int32,count=1)
-      catalog.zones2Parts[iZ].partIDs.append(partID)
+      for p in xrange(numPart):
+        partID = np.fromfile(File, dtype=np.int32,count=1)
+        catalog.zones2Parts[iZ].partIDs.append(partID)
 
   return catalog
-
 
   
 # -----------------------------------------------------------------------------

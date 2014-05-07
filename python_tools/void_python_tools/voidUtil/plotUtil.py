@@ -17,8 +17,7 @@
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #+
-__all__=['plotRedshiftDistribution', 'plotSizeDistribution', 'plot1dProfiles',
-         'plotMarg1d', 'plotNumberDistribution', 'plotVoidDistribution']
+__all__=['plotNumberFunction',]
 
 from void_python_tools.backend.classes import *
 from plotDefs import *
@@ -40,7 +39,7 @@ def fill_between(x, y1, y2=0, ax=None, **kwargs):
     ax.add_patch(p)
 
 # -----------------------------------------------------------------------------
-def plotNumberFunction(sampleDirList=None, figDir="./", 
+def plotNumberFunction(catalogList, figDir="./", 
                        plotName="numberfunc", 
                        dataPortion="central"):
 
@@ -50,22 +49,12 @@ plt.clf()
 plt.xlabel("$R_{eff}$ [$h^{-1}Mpc$]", fontsize=14)
 plt.ylabel(r"log ($n$ (> R) [$h^3$ Gpc$^{-3}$])", fontsize=14)
 
-for (iSample,sampleDir) in enumerate(sampleDirList):
-  with open(workDir+sampleDir+"/sample_info.dat", 'rb') as input:
-    sample = pickle.load(input)
-  filename = sampleDir+"/centers_"+dataPortion+"_"+sample.fullName+".out"
-  if not os.access(filename, os.F_OK):
-    print "File not found: ", filename
-  else:
-    data = np.loadtxt(filename, comments="#")[:,4]
+for (iSample,catalog) in enumerate(catalogList):
+  sample = catalog.sampleInfo
+  data = catalog.voids[:].radius
 
   if sample.dataType == "observation":
-    # look for the mask file
-    if os.access(sample.maskFile, os.F_OK):
-      maskFile = sample.maskFile
-    else:
-      maskFile = sampleDir+"/"+os.path.basename(sample.maskFile)
-      print "Using maskfile found in:", maskFile
+    maskFile = sample.maskFile
 
     boxVol = vp.getSurveyProps(maskFile,
                                sample.zBoundary[0], sample.zBoundary[1],
