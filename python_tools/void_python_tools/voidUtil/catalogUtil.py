@@ -229,7 +229,6 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadPart=True):
 #   dataPortion: "central" or "all"
 #   loadPart: if True, also load particle information
 
-  #print "    Loading particle data..."
   sys.stdout.flush()
 
   catalog = Catalog()

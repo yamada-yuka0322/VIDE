@@ -368,8 +368,8 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
   // TEST - insert mock galaxies along spheres of survey redshift boundaries
   fp = fopen("mock_sphere.txt", "w");
 
-  for (int q = 0; q < 0; q++) {
-  //for (int q = 0; q < full_mask_list.size(); q++) {
+  //for (int q = 0; q < 0; q++) {
+  for (int q = 0; q < full_mask_list.size(); q++) {
     vec3 v = mask.pix2vec(full_mask_list[q]);
 	  
     Position p;
