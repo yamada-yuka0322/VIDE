@@ -215,6 +215,7 @@ class Catalog:
   numVoids = 0
   numPartTot = 0
   numZonesTot = 0
+  volNorm = 0
   boxLen = np.zeros((3))
   part = None
   zones2Parts = None
@@ -327,6 +328,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadPart=True):
     partData, boxLen, volNorm, isObservationData, ranges = loadPart(sampleDir)
     numPartTot = len(partData)
     catalog.numPartTot = numPartTot
+    catalog.volNorm = volNorm
     catalog.partPos = partData
     catalog.part = []
     for i in xrange(len(partData)):

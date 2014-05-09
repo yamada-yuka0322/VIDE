@@ -21,3 +21,6 @@
 from catalogUtil import *
 from plotDefs import *
 from plotUtil import *
+from matchUtil import *
+from xcorUtil import *
+from profileUtil import *

@@ -39,8 +39,6 @@
 #+
 
 from void_python_tools.backend import *
-from void_python_tools.plotting import *
-import void_python_tools.xcor as xcorlib
 import imp
 import pickle
 import argparse
@@ -55,6 +53,7 @@ from matplotlib import rc
 from matplotlib.ticker import NullFormatter
 import random
 import sys
+__all__=['computeCrossCor',]
 
 # ------------------------------------------------------------------------------
 
