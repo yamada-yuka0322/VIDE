@@ -342,9 +342,9 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadPart=True):
     iLine += 1
 
   print "Loading derived void information..."
-  iLine = 0
-  for line in open(sampleDir+"/untrimmed_centers_"+dataPortion+"_"+sample.fullName+".out"):
-    line = line.split()
+  fileName = sampleDir+"/untrimmed_centers_"+dataPortion+"_"+sample.fullName+".out"
+  catData = np.loadtxt(fileName, comments="#")
+  for (iLine,line) in enumerate(catData):
     catalog.voids[iLine].volume = float(line[6])
     catalog.voids[iLine].radius = float(line[4])
     catalog.voids[iLine].parentID = float(line[10])
@@ -353,10 +353,9 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadPart=True):
     catalog.voids[iLine].centralDen = float(line[13])
     iLine += 1
 
-  print "Loading shapes..."
-  iLine = 0
-  for line in open(sampleDir+"/untrimmed_shapes_"+dataPortion+"_"+sample.fullName+".out"):
-    line = line.split()
+  fileName = sampleDir+"/untrimmed_shapes_"+dataPortion+"_"+sample.fullName+".out"
+  catData = np.loadtxt(fileName, comments="#")
+  for (iLine,line) in enumerate(catData):
     catalog.voids[iLine].eigenVals[0] = float(line[1])
     catalog.voids[iLine].eigenVals[1] = float(line[2])
     catalog.voids[iLine].eigenVals[2] = float(line[3])
