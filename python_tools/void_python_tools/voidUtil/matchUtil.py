@@ -32,7 +32,7 @@ def compareCatalogs(baseCatalogDir, compareCatalogDir,
                     outputDir="./", logDir="./", 
                     matchMethod="useID", dataPortion="central",
                     strictMatch=True, 
-                    pathToCTools="../../../c_tools")
+                    pathToCTools="../../../c_tools"):
 
 # reports the overlap between two void catalogs
 #  baseCatalogDir: directory of catalog 1
@@ -44,36 +44,37 @@ def compareCatalogs(baseCatalogDir, compareCatalogDir,
 #  strictMatch: if True, only attempt to match to trimmed catalog
 #  pathToCTools: path to location of VIDE c_tools directory
 
-if not os.access(outputDir, os.F_OK):
-  os.makedirs(outputDir)
-
-if not os.access(logDir, os.F_OK):
-  os.makedirs(logDir)
-
-outFileName = outputDir + "/" + "voidOverlap" #+ ".dat"
-
-with open(baseCatalogDir+"/sample_info.dat", 'rb') as input:
-  baseSample = pickle.load(input)
-
-with open(compareCatalogDir+"/sample_info.dat", 'rb') as input:
-  sample = pickle.load(input)
-
-print " Comparing", baseSample.fullName, "to", sample.fullName, "...",
-sys.stdout.flush()
-
-sampleName = sample.fullName
-
-binPath = pathToCTools+"/analysis/voidOverlap"
-logFile = logDir+"/compare_"+baseSample.fullName+"_"+sampleName+".out"
-stepOutputFileName = outFileName + "_" + baseSample.fullName + "_" + \
-                     sampleName + "_"
-
-launchVoidOverlap(baseSample, sample, baseCatalogDir, 
-                  compareCatalogDir, binPath, 
-                  thisDataPortion=dataPortion, logFile=logFile,
-                  continueRun=False, workDir=workDir,
-                  outputFile=stepOutputFileName,
-                  matchMethod=matchMethod,
-                  strictMatch=strictMatch)
-
-print " Done!"
+  if not os.access(outputDir, os.F_OK):
+    os.makedirs(outputDir)
+  
+  if not os.access(logDir, os.F_OK):
+    os.makedirs(logDir)
+  
+  outFileName = outputDir + "/" + "voidOverlap" #+ ".dat"
+  
+  with open(baseCatalogDir+"/sample_info.dat", 'rb') as input:
+    baseSample = pickle.load(input)
+  
+  with open(compareCatalogDir+"/sample_info.dat", 'rb') as input:
+    sample = pickle.load(input)
+  
+  print " Comparing", baseSample.fullName, "to", sample.fullName, "...",
+  sys.stdout.flush()
+  
+  sampleName = sample.fullName
+  
+  binPath = pathToCTools+"/analysis/voidOverlap"
+  logFile = logDir+"/compare_"+baseSample.fullName+"_"+sampleName+".out"
+  stepOutputFileName = outFileName + "_" + baseSample.fullName + "_" + \
+                       sampleName + "_"
+  
+  launchVoidOverlap(baseSample, sample, baseCatalogDir, 
+                    compareCatalogDir, binPath, 
+                    thisDataPortion=dataPortion, logFile=logFile,
+                    continueRun=False, workDir=workDir,
+                    outputFile=stepOutputFileName,
+                    matchMethod=matchMethod,
+                    strictMatch=strictMatch)
+  
+  print " Done!"
+  return

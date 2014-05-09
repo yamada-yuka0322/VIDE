@@ -61,7 +61,7 @@ def computeCrossCor(catalogDir,
                     outputDir="./", logDir="./",
                     matchMethod="useID", dataPortion="central",
                     strictMatch=True,
-                    pathToCTools="../../../c_tools")
+                    pathToCTools="../../../c_tools"):
 
 # Computes void-void and void-matter(galaxy) correlations
 #  baseCatalogDir: directory of catalog 
