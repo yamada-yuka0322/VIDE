@@ -1,7 +1,7 @@
 /*+
     VIDE -- Void IDentification and Examination -- ./c_tools/mock/generateFromCatalog.cpp
-    Copyright (C) 2010-2013 Guilhem Lavaux
-    Copyright (C) 2011-2013 P. M. Sutter
+    Copyright (C) 2010-2014 Guilhem Lavaux
+    Copyright (C) 2011-2014 P. M. Sutter
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -368,8 +368,8 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
   // TEST - insert mock galaxies along spheres of survey redshift boundaries
   fp = fopen("mock_sphere.txt", "w");
 
-  for (int q = 0; q < 0; q++) {
-  //for (int q = 0; q < full_mask_list.size(); q++) {
+  //for (int q = 0; q < 0; q++) {
+  for (int q = 0; q < full_mask_list.size(); q++) {
     vec3 v = mask.pix2vec(full_mask_list[q]);
 	  
     Position p;

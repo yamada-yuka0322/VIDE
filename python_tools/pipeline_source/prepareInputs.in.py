@@ -1,3 +1,22 @@
+#+
+#   VIDE -- Void IDentification and Examination -- ./python_tools/pipeline_source/prepareCatalogs.in.py
+#   Copyright (C) 2010-2014 Guilhem Lavaux
+#   Copyright (C) 2011-2014 P. M. Sutter
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; version 2 of the License.
+# 
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#+
 #!/usr/bin/env python
 #+
 #   VIDE -- Void IDentification and Examination -- ./python_tools/pipeline_source/prepareCatalogs.in.py
@@ -250,71 +269,6 @@ newSample = Sample(dataFile = "{dataFile}",
                    subsample = "{subsample}")
 dataSampleList.append(newSample)
   """
-
-  if stackMode == "fixed":
-    stackInfo = """
-# {zMin}, {zMax}, {minRadius}
-newSample.addStack(0.0, 5.0, 5 , 10, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 10, 15, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 15, 20, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 20, 25, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 25, 30, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 30, 35, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 35, 40, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 40, 45, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 45, 50, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 50, 55, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 55, 60, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 60, 65, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 65, 70, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 70, 75, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 75, 80, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 80, 85, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 85, 90, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 90, 95, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack(0.0, 5.0, 95, 100, False, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-  """
-  elif stackMode == "sample_thick":
-    stackInfo = """
-# {zMin}, {zMax}, {minRadius}
-newSample.addStack({zMin}, {zMax}, 10, 20, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack({zMin}, {zMax}, 20, 30, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack({zMin}, {zMax}, 30, 40, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack({zMin}, {zMax}, 40, 50, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack({zMin}, {zMax}, 50, 60, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack({zMin}, {zMax}, 60, 70, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack({zMin}, {zMax}, 70, 80, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack({zMin}, {zMax}, 80, 90, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack({zMin}, {zMax}, 90, 100, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-  """
-
-  elif stackMode == "log":
-    stackInfo = ""
-    rMin = 10
-    rMax = 100
-    rStart = rMin
-    rEnd = rMin
-    dlogR = 0.25
-    while rEnd < rMax:
-      rEnd = (1+0.5*dlogR)*rStart/(1-0.5*dlogR)
-    
-      stackInfo += """newSample.addStack({zMin}, {zMax}"""+ ", %g, %g, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})" % (rStart, rEnd)
-      
-      rStart = rEnd
-
-  elif stackMode == "auto":
-    stackInfo = """
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+2, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}  , 2*{minRadius}+4, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+2, 2*{minRadius}+6, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+6, 2*{minRadius}+10, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+10, 2*{minRadius}+18, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-newSample.addStack({zMin}, {zMax}, 2*{minRadius}+18, 2*{minRadius}+24, True, False, rescaleMode='{rescaleMode}', maxVoids={maxVoids})
-               """
-  else:
-    stackInfo = """
-# {zMin}, {zMax}, {minRadius}
-"""
 
   for (iFile, redshift) in enumerate(redshifts):
     fileNum = fileNums[iFile]

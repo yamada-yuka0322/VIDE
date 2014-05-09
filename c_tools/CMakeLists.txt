@@ -44,7 +44,7 @@ include_directories(
 
 set(computeAverageDistortion_SRCS computeAverageDistortion.cpp)
 add_genopt(computeAverageDistortion_SRCS computeAverageDistortion.ggo computeAverageDistortion_conf STRUCTNAME Params)
-add_executable(computeAverageDistortion ${computeAverageDistortion_SRCS})
-target_link_libraries(computeAverageDistortion ${ZOB_LIBS})
+#add_executable(computeAverageDistortion ${computeAverageDistortion_SRCS})
+#target_link_libraries(computeAverageDistortion ${ZOB_LIBS})
 
-subdirs(libzobov test mock  stacking visualization analysis zobov2 hod)
+subdirs(libzobov mock  stacking analysis zobov2 hod)

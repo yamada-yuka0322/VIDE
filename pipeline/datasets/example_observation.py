@@ -1,7 +1,7 @@
 #+
-#   VIDE -- Void IDentification and Examination -- ./pipeline/sdss/sdss_dr7LCDM.py
-#   Copyright (C) 2010-2013 Guilhem Lavaux
-#   Copyright (C) 2011-2013 P. M. Sutter
+#   VIDE -- Void IDentification and Examination -- ./pipeline/datasets/example_observation.py
+#   Copyright (C) 2010-2014 Guilhem Lavaux
+#   Copyright (C) 2011-2014 P. M. Sutter
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by

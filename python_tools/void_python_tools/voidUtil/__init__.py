@@ -1,7 +1,7 @@
 #+
-#   VIDE -- Void IDentification and Examination -- ./python_tools/void_python_tools/plotting/__init__.py
-#   Copyright (C) 2010-2013 Guilhem Lavaux
-#   Copyright (C) 2011-2013 P. M. Sutter
+#   VIDE -- Void IDentification and Examination -- ./python_tools/void_python_tools/partUtil/__init__.py
+#   Copyright (C) 2010-2014 Guilhem Lavaux
+#   Copyright (C) 2011-2014 P. M. Sutter
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -17,4 +17,7 @@
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #+
-from partUtil import *
+
+from catalogUtil import *
+from plotDefs import *
+from plotUtil import *

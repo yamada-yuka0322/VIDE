@@ -12,54 +12,8 @@ This is VIDE, the Void IDentification and Examination pipeline.
 License/Copyright information
 -----------------------------
 
-Copyright (C) 2010-2013 Guilhem Lavaux, 2011-2013 P.M. Sutter.
+Copyright (C) 2010-2014 Guilhem Lavaux, 2011-2014 P.M. Sutter.
 This software is put under the GNU Public License. Please see LICENSE
 for further information.
 
-
-Parts of the pipeline includes ZOBOV. See zobov/zobov_readme.txt for 
-copyright/license information
-
-Building
---------
-
-
-After compiling, go to the pipeline directory.
-
-
-Using the pipeline
-------------------
-
-
-Create a dataset parameter file. Look at datasets/multidark.py for 
-an example. Describe the simulation, where to put outputs, how many 
-redshift slices, subvolumes, etc. etc.
-
-prepareCatalogs will produce a pipeline script for each
-subsampling you choose. If you have multiple redshift particle files,
-and choose multiple slices and/or subdivisions, they will be packaged
-in the same pipeline script.
-
-Run "./generateCatalog.py [name of pipeline script]" for each script
-written by prepareGadgetCatalog. This will run generateMock, zobov,
-and pruneVoids. At the end of it, you should have a void catalog for
-each redshift, slice, and subdivision.
-
-Check the logfiles for any error messages.
-
-See the README of the public void catalog for the format of the
-outputs.
-
-Please do not change the outputs of pruneVoids etc. without
-discussion, since further analysis relies on the current formats.
-
-If you're wondering why these scripts are rather complex, it's because
-it can also support A-P analysis, which is much more complicated :)
-
-Good luck!
-
-Important directories:
-
-pipeline: scripts to set up and generate void catalogs
-crossCompare: analysis and plotting tools designed to work with disparate catalogs
-
+This pipeline includes ZOBOV. See zobov/zobov_readme.txt for copyright/license information.

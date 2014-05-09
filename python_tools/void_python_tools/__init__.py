@@ -1,7 +1,7 @@
 #+
 #   VIDE -- Void IDentification and Examination -- ./python_tools/void_python_tools/__init__.py
-#   Copyright (C) 2010-2013 Guilhem Lavaux
-#   Copyright (C) 2011-2013 P. M. Sutter
+#   Copyright (C) 2010-2014 Guilhem Lavaux
+#   Copyright (C) 2011-2014 P. M. Sutter
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -19,6 +19,5 @@
 #+
 from void_python_tools.backend  import *
 from void_python_tools.apTools  import *
-from void_python_tools.plotting import *
 from void_python_tools.xcor     import *
-from void_python_tools.partUtil import *
+from void_python_tools.voidUtil import *

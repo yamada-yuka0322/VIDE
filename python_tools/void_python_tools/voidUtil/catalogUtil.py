@@ -1,7 +1,7 @@
 #+
-#   VIDE -- Void IDentification and Examination -- ./python_tools/void_python_tools/plotting/__init__.py
-#   Copyright (C) 2010-2013 Guilhem Lavaux
-#   Copyright (C) 2011-2013 P. M. Sutter
+#   VIDE -- Void IDentification and Examination -- ./python_tools/void_python_tools/partUtil/partUtil.py
+#   Copyright (C) 2010-2014 Guilhem Lavaux
+#   Copyright (C) 2011-2014 P. M. Sutter
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -144,10 +144,11 @@ def loadPartVel(sampleDir):
     return partVel
 
 # -----------------------------------------------------------------------------
-def getPartTree(sampleDir, partData, boxLen):
+def getPartTree(catalog):
 
-  with open(sampleDir+"/sample_info.dat", 'rb') as input:
-    sample = pickle.load(input)
+  sample = catalog.sampleInfo
+  partData = catalog.partData
+  boxLen = catalog.boxLen
 
   periodicLine = getPeriodic(sample)
 
@@ -219,15 +220,21 @@ class Catalog:
   zones2Parts = None
   void2Zones = None
   voids = None
+  sampleInfo = None
 
 # -----------------------------------------------------------------------------
-def loadVoidCatalog(sampleDir):
-  #print "    Loading particle data..."
+def loadVoidCatalog(sampleDir, dataPortion="central", loadPart=True):
+# loads a void catalog
+#   sampleDir: path to VIDE output directory
+#   dataPortion: "central" or "all"
+#   loadPart: if True, also load particle information
+
   sys.stdout.flush()
 
   catalog = Catalog()
   with open(sampleDir+"/sample_info.dat", 'rb') as input:
     sample = pickle.load(input)
+  catalog.sampleInfo = sample
 
   print "Loading info..."
   infoFile = sampleDir+"/zobov_slice_"+sample.fullName+".par"
@@ -244,32 +251,8 @@ def loadVoidCatalog(sampleDir):
   catalog.boxLen[2] = ranges[2][1] - ranges[2][0]
   File.close()
 
-  print "Loading all particles..."
-  partData, boxLen, volNorm, isObservationData, ranges = loadPart(sampleDir)
-  numPartTot = len(partData)
-  catalog.numPartTot = numPartTot
-  catalog.part = []
-  for i in xrange(len(partData)):
-    catalog.part.append(Bunch(x = partData[i][0], 
-                              y = partData[i][1],
-                              z = partData[i][2],
-                              volume = 0,
-                              ra = 0,
-                              dec = 0,
-                              redshift = 0,
-                              uniqueID = 0))
-      
- 
-  print "Loading volumes..."
-  volFile = sampleDir+"/vol_"+sample.fullName+".dat"
-  File = file(volFile)
-  chk = np.fromfile(File, dtype=np.int32,count=1)
-  vols = np.fromfile(File, dtype=np.float32,count=numPartTot)
-  for ivol in xrange(len(vols)):
-    catalog.part[ivol].volume = vols[ivol] / volNorm
-
   print "Loading voids..."
-  fileName = sampleDir+"/voidDesc_central_"+sample.fullName+".out"
+  fileName = sampleDir+"/untrimmed_voidDesc_"+dataPortion+"_"+sample.fullName+".out"
   catData = np.loadtxt(fileName, comments="#", skiprows=2)
   catalog.voids = []
   for line in catData:
@@ -283,55 +266,120 @@ def loadVoidCatalog(sampleDir):
                                voidVol = line[7],
                                numPart = int(line[8]),
                                densCon = line[9],
-                               voidProp = line[10],
+                               voidProb = line[10],
                                radius = pow(line[7]/volNorm*3./4./np.pi, 1./3.),
-                               barycenter = np.zeros((3))))
+                               barycenter = np.zeros((3))
+                               parentID = 0,
+                               treeLevel = 0,
+                               numChildren = 0,
+                               centralDen = 0.,
+                               eigenVals = np.zeros((3)),
+                               eigenVecs = np.zeros((3,3)),
+                               ))
 
   print "Read %d voids" % len(catalog.voids)
 
   print "Loading barycenters..."
   iLine = 0
-  for line in open(sampleDir+"/barycenters_central_"+sample.fullName+".out"):
+  for line in open(sampleDir+"/untrimmed_barycenters_"+dataPortion+"_"+sample.fullName+".out"):
     line = line.split()
     catalog.voids[iLine].barycenter[0] = float(line[1])
     catalog.voids[iLine].barycenter[1] = float(line[2])
     catalog.voids[iLine].barycenter[2] = float(line[3])
     iLine += 1
 
+  print "Loading derived void information..."
+  iLine = 0
+  for line in open(sampleDir+"/untrimmed_centers_"+dataPortion+"_"+sample.fullName+".out"):
+    line = line.split()
+    catalog.voids[iLine].volume = float(line[6])
+    catalog.voids[iLine].radius = float(line[4])
+    catalog.voids[iLine].parentID = float(line[10])
+    catalog.voids[iLine].treeLevel = float(line[11])
+    catalog.voids[iLine].numChildren = float(line[12])
+    catalog.voids[iLine].centralDen = float(line[13])
+    iLine += 1
 
-  print "Loading zone-void membership info..."
-  zoneFile = sampleDir+"/voidZone_"+sample.fullName+".dat"
-  catalog.void2Zones = []
-  File = file(zoneFile)
-  numZonesTot = np.fromfile(File, dtype=np.int32,count=1)
-  catalog.numZonesTot = numZonesTot
-  for iZ in xrange(numZonesTot):
-    numZones = np.fromfile(File, dtype=np.int32,count=1)
-    catalog.void2Zones.append(Bunch(numZones = numZones,
-                                     zoneIDs = []))
+  print "Loading shapes..."
+  iLine = 0
+  for line in open(sampleDir+"/untrimmed_shapes_"+dataPortion+"_"+sample.fullName+".out"):
+    line = line.split()
+    catalog.voids[iLine].eigenVals[0] = float(line[1])
+    catalog.voids[iLine].eigenVals[1] = float(line[2])
+    catalog.voids[iLine].eigenVals[2] = float(line[3])
 
-    for p in xrange(numZones):
-      zoneID = np.fromfile(File, dtype=np.int32,count=1)
-      catalog.void2Zones[iZ].zoneIDs.append(zoneID)
+    catalog.voids[iLine].eigenVecs[0][0] = float(line[4])
+    catalog.voids[iLine].eigenVecs[0][1] = float(line[5])
+    catalog.voids[iLine].eigenVecs[0][2] = float(line[6])
+
+    catalog.voids[iLine].eigenVecs[1][0] = float(line[7])
+    catalog.voids[iLine].eigenVecs[1][1] = float(line[8])
+    catalog.voids[iLine].eigenVecs[1][2] = float(line[9])
+
+    catalog.voids[iLine].eigenVecs[2][0] = float(line[10])
+    catalog.voids[iLine].eigenVecs[2][1] = float(line[11])
+    catalog.voids[iLine].eigenVecs[2][2] = float(line[12])
+
+    iLine += 1
+
+  if loadPart:
+    print "Loading all particles..."
+    partData, boxLen, volNorm, isObservationData, ranges = loadPart(sampleDir)
+    numPartTot = len(partData)
+    catalog.numPartTot = numPartTot
+    catalog.partPos = partData
+    catalog.part = []
+    for i in xrange(len(partData)):
+      catalog.part.append(Bunch(x = partData[i][0], 
+                                y = partData[i][1],
+                                z = partData[i][2],
+                                volume = 0,
+                                ra = 0,
+                                dec = 0,
+                                redshift = 0,
+                                uniqueID = 0))
+      
+ 
+    print "Loading volumes..."
+    volFile = sampleDir+"/vol_"+sample.fullName+".dat"
+    File = file(volFile)
+    chk = np.fromfile(File, dtype=np.int32,count=1)
+    vols = np.fromfile(File, dtype=np.float32,count=numPartTot)
+    for ivol in xrange(len(vols)):
+      catalog.part[ivol].volume = vols[ivol] / volNorm
+
+    print "Loading zone-void membership info..."
+    zoneFile = sampleDir+"/voidZone_"+sample.fullName+".dat"
+    catalog.void2Zones = []
+    File = file(zoneFile)
+    numZonesTot = np.fromfile(File, dtype=np.int32,count=1)
+    catalog.numZonesTot = numZonesTot
+    for iZ in xrange(numZonesTot):
+      numZones = np.fromfile(File, dtype=np.int32,count=1)
+      catalog.void2Zones.append(Bunch(numZones = numZones,
+                                       zoneIDs = []))
+
+      for p in xrange(numZones):
+        zoneID = np.fromfile(File, dtype=np.int32,count=1)
+        catalog.void2Zones[iZ].zoneIDs.append(zoneID)
 
 
-  print "Loading particle-zone membership info..."
-  zonePartFile = sampleDir+"/voidPart_"+sample.fullName+".dat"
-  catalog.zones2Parts = []
-  File = file(zonePartFile)
-  chk = np.fromfile(File, dtype=np.int32,count=1)
-  numZonesTot = np.fromfile(File, dtype=np.int32,count=1)
-  for iZ in xrange(numZonesTot):
-    numPart = np.fromfile(File, dtype=np.int32,count=1)
-    catalog.zones2Parts.append(Bunch(numPart = numPart,
-                                     partIDs = []))
+    print "Loading particle-zone membership info..."
+    zonePartFile = sampleDir+"/voidPart_"+sample.fullName+".dat"
+    catalog.zones2Parts = []
+    File = file(zonePartFile)
+    chk = np.fromfile(File, dtype=np.int32,count=1)
+    numZonesTot = np.fromfile(File, dtype=np.int32,count=1)
+    for iZ in xrange(numZonesTot):
+      numPart = np.fromfile(File, dtype=np.int32,count=1)
+      catalog.zones2Parts.append(Bunch(numPart = numPart,
+                                       partIDs = []))
 
-    for p in xrange(numPart):
-      partID = np.fromfile(File, dtype=np.int32,count=1)
-      catalog.zones2Parts[iZ].partIDs.append(partID)
+      for p in xrange(numPart):
+        partID = np.fromfile(File, dtype=np.int32,count=1)
+        catalog.zones2Parts[iZ].partIDs.append(partID)
 
   return catalog
-
 
   
 # -----------------------------------------------------------------------------
@@ -345,4 +393,23 @@ def getVoidPart(catalog, voidID):
       partOut.append(catalog.part[partID])
   
   return partOut
+
+# -----------------------------------------------------------------------------
+def filterVoidsOnSize(catalog, rMin):
+  catalog.voids = catalog.voids[ catalog.voids[:].radius >= rMin ]
+  return catalog
+
+# -----------------------------------------------------------------------------
+def filterVoidsOnTreeLevel(catalog, level):
+  catalog.voids = catalog.voids[ catalog.voids[:].treeLevel == level ]
+
+  if level == -1:
+    catalog.voids = catalog.voids[ catalog.voids[:].numChildren == 0 ]
+    
+  return catalog
+
+# -----------------------------------------------------------------------------
+def filterVoidsOnCentralDen(catalog, maxCentralDen):
+  catalog.voids = catalog.voids[ catalog.voids[:].centralDen <= maxCentralDen ]
+  return catalog
 
