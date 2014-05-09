@@ -43,68 +43,68 @@ def plotNumberFunction(catalogList, figDir="./",
                        plotName="numberfunc", 
                        dataPortion="central"):
 
-print "Plotting number function"
-
-plt.clf()
-plt.xlabel("$R_{eff}$ [$h^{-1}Mpc$]", fontsize=14)
-plt.ylabel(r"log ($n$ (> R) [$h^3$ Gpc$^{-3}$])", fontsize=14)
-
-for (iSample,catalog) in enumerate(catalogList):
-  sample = catalog.sampleInfo
-  data = catalog.voids[:].radius
-
-  if sample.dataType == "observation":
-    maskFile = sample.maskFile
-
-    boxVol = vp.getSurveyProps(maskFile,
-                               sample.zBoundary[0], sample.zBoundary[1],
-                               sample.zRange[0], sample.zRange[1], "all",
-                               selectionFuncFile=None)[0]
-                               #selectionFuncFile=sample.selFunFile)[0]
-    boxVol *= obsFudgeFactor
-  else:
-    boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1] -
-                                          sample.zBoundaryMpc[0])
-
-  boxVol *= 1.e-9 # Mpc->Gpc
-
-  bins = args.xmax/5.
-  hist, binEdges = np.histogram(data, bins=bins, range=(0., 100.))
-  binCenters = 0.5*(binEdges[1:] + binEdges[:-1])
-
-  nvoids = len(data)
-  var = hist * (1. - hist/nvoids)
-  sig = np.sqrt(var)
-
-  lowerbound = hist - sig
-  upperbound = hist + sig
-
-  mean = np.log10(hist/boxVol)
-  lowerbound = np.log10(lowerbound/boxVol)
-  upperbound = np.log10(upperbound/boxVol)
-
-  lineColor = colorList[iSample]
-  lineTitle = sample.fullName
+  print "Plotting number function"
   
-  trim = (bounds[0] > .01)
-  mean = mean[trim]
-  binCentersToUse = binCenters[trim]
-  lower = lowerbound[trim]
-  upper = upperbound[trim]
-
-  alpha = 0.55
-  fill_between(binCentersToUse, lower, upper,
-             label=lineTitle, color=lineColor,
-             alpha=alpha,
-             )
-
-  lineStyle = '-'
-  plt.plot(binCentersToUse, mean, lineStyle,
-              color=lineColor,
-              linewidth=3)
-
-  plt.legend(loc = "upper right", fancybox=True, prop={'size':14})
-
-  plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
-  plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
-  plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")
+  plt.clf()
+  plt.xlabel("$R_{eff}$ [$h^{-1}Mpc$]", fontsize=14)
+  plt.ylabel(r"log ($n$ (> R) [$h^3$ Gpc$^{-3}$])", fontsize=14)
+  
+  for (iSample,catalog) in enumerate(catalogList):
+    sample = catalog.sampleInfo
+    data = catalog.voids[:].radius
+  
+    if sample.dataType == "observation":
+      maskFile = sample.maskFile
+  
+      boxVol = vp.getSurveyProps(maskFile,
+                                 sample.zBoundary[0], sample.zBoundary[1],
+                                 sample.zRange[0], sample.zRange[1], "all",
+                                 selectionFuncFile=None)[0]
+                                 #selectionFuncFile=sample.selFunFile)[0]
+      boxVol *= obsFudgeFactor
+    else:
+      boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1] -
+                                            sample.zBoundaryMpc[0])
+  
+    boxVol *= 1.e-9 # Mpc->Gpc
+  
+    bins = args.xmax/5.
+    hist, binEdges = np.histogram(data, bins=bins, range=(0., 100.))
+    binCenters = 0.5*(binEdges[1:] + binEdges[:-1])
+  
+    nvoids = len(data)
+    var = hist * (1. - hist/nvoids)
+    sig = np.sqrt(var)
+  
+    lowerbound = hist - sig
+    upperbound = hist + sig
+  
+    mean = np.log10(hist/boxVol)
+    lowerbound = np.log10(lowerbound/boxVol)
+    upperbound = np.log10(upperbound/boxVol)
+  
+    lineColor = colorList[iSample]
+    lineTitle = sample.fullName
+    
+    trim = (bounds[0] > .01)
+    mean = mean[trim]
+    binCentersToUse = binCenters[trim]
+    lower = lowerbound[trim]
+    upper = upperbound[trim]
+  
+    alpha = 0.55
+    fill_between(binCentersToUse, lower, upper,
+               label=lineTitle, color=lineColor,
+               alpha=alpha,
+               )
+  
+    lineStyle = '-'
+    plt.plot(binCentersToUse, mean, lineStyle,
+                color=lineColor,
+                linewidth=3)
+  
+    plt.legend(loc = "upper right", fancybox=True, prop={'size':14})
+  
+    plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
+    plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
+    plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")

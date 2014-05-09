@@ -269,7 +269,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadPart=True):
                                densCon = line[9],
                                voidProb = line[10],
                                radius = pow(line[7]/volNorm*3./4./np.pi, 1./3.),
-                               barycenter = np.zeros((3))
+                               barycenter = np.zeros((3)),
                                parentID = 0,
                                treeLevel = 0,
                                numChildren = 0,

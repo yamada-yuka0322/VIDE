@@ -94,7 +94,7 @@ def fitHSWProfile(radii, densities, sigmas):
 #   pcov: covariance matrix
 
   popt, pcov = curve_fit(HamausProfile, radii, densities,
-                         sigma=sigmas)
+                         sigma=sigmas,
                          maxfev=10000, xtol=5.e-3,
                          p0=[1.0,-1.0])
 
