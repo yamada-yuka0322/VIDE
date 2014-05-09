@@ -68,8 +68,8 @@ include(${CMAKE_SOURCE_DIR}/external/external_python_build.cmake)
 SET(PYTHONPATH ${PYTHON_LOCAL_SITE_PACKAGE})
 configure_exec(${CMAKE_SOURCE_DIR}/run_python.sh.in ${CMAKE_BINARY_DIR} run_python.sh)
 configure_exec(${CMAKE_SOURCE_DIR}/run_env.sh.in  ${CMAKE_BINARY_DIR} run_env.sh)
-configure_exec(${CMAKE_SOURCE_DIR}/python_tools/pipeline_source/prepareCatalogs.in.py
-${CMAKE_BINARY_DIR}/pipeline prepareCatalogs.py)
+configure_exec(${CMAKE_SOURCE_DIR}/python_tools/pipeline_source/prepareInputs.in.py
+${CMAKE_BINARY_DIR}/pipeline prepareInputs.py)
 #configure_exec(${CMAKE_SOURCE_DIR}/python_tools/pipeline_source/applyMaskToMock.in.py
 #${CMAKE_BINARY_DIR}/pipeline applyMaskToMock.py)
 #configure_exec(${CMAKE_SOURCE_DIR}/python_tools/pipeline_source/buildSkyProjections.in.py
