@@ -58,29 +58,26 @@ import sys
 
 # ------------------------------------------------------------------------------
 
-dataNameBase = "xcor"
+def computeCrossCor(catalogDir, 
+                    outputDir="./", logDir="./",
+                    matchMethod="useID", dataPortion="central",
+                    strictMatch=True,
+                    pathToCTools="../../../c_tools")
 
-parser = argparse.ArgumentParser(description='Analyze.')
-parser.add_argument('--parmFile', dest='parmFile', default='datasetsToAnalyze.py',
-                    help='path to parameter file')
-args = parser.parse_args()
+# Computes void-void and void-matter(galaxy) correlations
+#  baseCatalogDir: directory of catalog 
+#  compareCatagDir: directory of catalog 2
+#  outputDir: directory to place outputs
+#  logDir: directory to place log files
+#  matchMethod: "useID" to use unique IDs, "prox" to use overlap of Voronoi cells
+#  dataPortion: "central" or "all"
+#  strictMatch: if True, only attempt to match to trimmed catalog
+#  pathToCTools: path to location of VIDE c_tools directory
 
-# ------------------------------------------------------------------------------
+  if not os.access(outputDir, os.F_OK):
+    os.makedirs(outputDir)
 
-filename = args.parmFile
-print " Loading parameters from", filename
-if not os.access(filename, os.F_OK):
-  print "  Cannot find parameter file %s!" % filename
-  exit(-1)
-parms = imp.load_source("name", filename)
-globals().update(vars(parms))
-
-if not os.access(outputDir, os.F_OK):
-  os.makedirs(outputDir)
-
-for (iSample, sampleDir) in enumerate(sampleDirList):
-
-  with open(voidBaseDir+sampleDir+"/sample_info.dat", 'rb') as input:
+  with open(catalogDir+"/sample_info.dat", 'rb') as input:
     sample = pickle.load(input)
 
   print " Working with", sample.fullName, "...",
