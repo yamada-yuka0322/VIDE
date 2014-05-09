@@ -118,6 +118,55 @@ def loadPart(sampleDir):
     return partData, boxLen, volNorm, isObservationData, ranges
 
 # -----------------------------------------------------------------------------
+def getVolNorm(sampleDir):
+    with open(sampleDir+"/sample_info.dat", 'rb') as input:
+      sample = pickle.load(input)
+
+    infoFile = sampleDir+"/zobov_slice_"+sample.fullName+".par"
+    File = NetCDFFile(infoFile, 'r')
+    ranges = np.zeros((3,2))
+    ranges[0][0] = getattr(File, 'range_x_min')
+    ranges[0][1] = getattr(File, 'range_x_max')
+    ranges[1][0] = getattr(File, 'range_y_min')
+    ranges[1][1] = getattr(File, 'range_y_max')
+    ranges[2][0] = getattr(File, 'range_z_min')
+    ranges[2][1] = getattr(File, 'range_z_max')
+    isObservation = getattr(File, 'is_observation')
+    maskIndex = getattr(File, 'mask_index')
+    File.close()
+    mul = np.zeros((3))
+    mul[:] = ranges[:,1] - ranges[:,0]
+
+    partFile = sampleDir+"/zobov_slice_"+sample.fullName
+    File = file(partFile)
+    chk = np.fromfile(File, dtype=np.int32,count=1)
+    Np = np.fromfile(File, dtype=np.int32,count=1)
+    File.close()
+
+    boxLen = mul
+
+    if isObservation == 1:
+      # look for the mask file
+      if os.access(sample.maskFile, os.F_OK):
+        maskFile = sample.maskFile
+      else:
+        maskFile = sampleDir+"/"+os.path.basename(sample.maskFile)
+        print "Using maskfile found in:", maskFile
+      props = vp.getSurveyProps(maskFile, sample.zBoundary[0],
+                                sample.zBoundary[1], 
+                                sample.zBoundary[0], 
+                                sample.zBoundary[1], "all",
+                                useLCDM=sample.useComoving)
+      boxVol = props[0]
+      volNorm = maskIndex/boxVol
+    else:
+      boxVol = np.prod(boxLen) 
+      volNorm = Np/boxVol
+
+    return volNorm
+
+
+# -----------------------------------------------------------------------------
 def loadPartVel(sampleDir):
     #print "    Loading particle velocities..."
     sys.stdout.flush()
@@ -252,6 +301,9 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadPart=True):
   catalog.boxLen[2] = ranges[2][1] - ranges[2][0]
   File.close()
 
+  volNorm = getVolNorm(sampleDir)
+  catalog.volNorm = volNorm
+
   print "Loading voids..."
   fileName = sampleDir+"/untrimmed_voidDesc_"+dataPortion+"_"+sample.fullName+".out"
   catData = np.loadtxt(fileName, comments="#", skiprows=2)
@@ -328,7 +380,6 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadPart=True):
     partData, boxLen, volNorm, isObservationData, ranges = loadPart(sampleDir)
     numPartTot = len(partData)
     catalog.numPartTot = numPartTot
-    catalog.volNorm = volNorm
     catalog.partPos = partData
     catalog.part = []
     for i in xrange(len(partData)):
