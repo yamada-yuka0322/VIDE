@@ -8,6 +8,10 @@
 
 This is VIDE, the Void IDentification and Examination pipeline.
 
+For more information, see http://www.cosmicvoids.net
+
+Please cite arXiv:NNNN if you use this software.
+
 
 License/Copyright information
 -----------------------------
@@ -17,3 +21,13 @@ This software is put under the GNU Public License. Please see LICENSE
 for further information.
 
 This pipeline includes ZOBOV. See zobov/zobov_readme.txt for copyright/license information.
+
+
+Quick Start Guide
+-----------------
+
+ccmake ./
+make
+cd pipeline/
+./prepareInputs.py --scripts path/to/dataset.py
+./generateCatalog.py path/to/parameter_file.py
