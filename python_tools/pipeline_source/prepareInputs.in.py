@@ -344,19 +344,19 @@ dataSampleList.append(newSample)
                                          useLightCone=useLightCone,
                                          subsample=str(subsample).strip('[]')))
 
-          for iAPSlice in xrange(numAPSlices):
-            sliceWidth = float(sliceMax) - float(sliceMin)
-            sliceAPMin = float(sliceMin) + iAPSlice*sliceWidth/numAPSlices
-            sliceAPMax = float(sliceMin) + (iAPSlice+1)*sliceWidth/numAPSlices
-            sliceAPMin = "%0.2f" % sliceAPMin
-            sliceAPMax = "%0.2f" % sliceAPMax
-            scriptFile.write(stackInfo.format(zMin=sliceAPMin,
-                                              zMax=sliceAPMax,
-                                              minRadius=minRadius,
-                                              rescaleMode=stackRescaleMode,
-                                              maxVoids=maxVoidsInStack,
-                                              fittingMode=fittingMode
-                             ))
+          #for iAPSlice in xrange(numAPSlices):
+          #  sliceWidth = float(sliceMax) - float(sliceMin)
+          #  sliceAPMin = float(sliceMin) + iAPSlice*sliceWidth/numAPSlices
+          #  sliceAPMax = float(sliceMin) + (iAPSlice+1)*sliceWidth/numAPSlices
+          #  sliceAPMin = "%0.2f" % sliceAPMin
+          #  sliceAPMax = "%0.2f" % sliceAPMax
+          #  scriptFile.write(stackInfo.format(zMin=sliceAPMin,
+          #                                    zMax=sliceAPMax,
+          #                                    minRadius=minRadius,
+          #                                    rescaleMode=stackRescaleMode,
+          #                                    maxVoids=maxVoidsInStack,
+          #                                    fittingMode=fittingMode
+          #                   ))
 
 
   scriptFile.close()
