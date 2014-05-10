@@ -273,11 +273,11 @@ class Catalog:
   sampleInfo = None
 
 # -----------------------------------------------------------------------------
-def loadVoidCatalog(sampleDir, dataPortion="central", loadPart=True):
+def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True):
 # loads a void catalog
 #   sampleDir: path to VIDE output directory
 #   dataPortion: "central" or "all"
-#   loadPart: if True, also load particle information
+#   loadParticles: if True, also load particle information
 
   sys.stdout.flush()
 
@@ -374,7 +374,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadPart=True):
 
     iLine += 1
 
-  if loadPart:
+  if loadParticles:
     print "Loading all particles..."
     partData, boxLen, volNorm, isObservationData, ranges = loadPart(sampleDir)
     numPartTot = len(partData)
