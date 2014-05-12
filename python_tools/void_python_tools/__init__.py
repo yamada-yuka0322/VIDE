@@ -19,5 +19,4 @@
 #+
 from void_python_tools.backend  import *
 from void_python_tools.apTools  import *
-from void_python_tools.xcor     import *
 from void_python_tools.voidUtil import *
