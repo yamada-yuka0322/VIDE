@@ -447,7 +447,12 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
 def getArray(objectList, attr):
 
   if hasattr(objectList[0], attr):
-    return np.fromiter((getattr(v, attr) for v in objectList), float)
+    ndim = np.shape( np.atleast_1d( getattr(objectList[0], attr) ) )[0]
+    attrArr = np.zeros(( len(objectList), ndim ))
+    for idim in xrange(ndim):
+      attrArr[:,idim] = np.fromiter((np.atleast_1d(getattr(v, attr))[idim] \
+                                    for v in objectList), float )
+    return attrArr
   else:
     print " Attribute", attr, "not found!"
     return -1

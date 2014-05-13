@@ -4,6 +4,16 @@
 .mydepend
 ./pipeline/miscTools/*.out
 
+c_tools/hod/hod
+c_tools/zobov2/jozov2/jozov2
+c_tools/zobov2/voz1b1/voz1b1_2
+external/libsdf/Objfiles/
+external/libsdf/apps/SDFcvt/SDFcvt.x86_64
+pipeline/prepareInputs.py
+zobov/jozov
+zobov/voz1b1
+zobov/vozinit
+zobov/voztie
 CMakeCache.txt
 CMakeFiles/
 Makefile
