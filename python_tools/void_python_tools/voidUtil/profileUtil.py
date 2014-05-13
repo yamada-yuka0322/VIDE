@@ -20,6 +20,7 @@
 __all__=['buildProfile','fitHSWProfile','getHSWProfile',]
 
 from void_python_tools.backend.classes import *
+from void_python_tools.voidUtil import *
 from plotDefs import *
 import numpy as np
 import os
