@@ -433,7 +433,17 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True):
 
   return catalog
 
-  
+   
+# -----------------------------------------------------------------------------
+def getVoidArray(catalog, attr):
+
+  if hasattr(catalog.voids[0], attr):
+    return np.fromiter((getattr(v, attr) for v in catalog.voids), float)
+  else:
+    print " Attribute", attr, "not found!"
+    return -1
+
+ 
 # -----------------------------------------------------------------------------
 def getVoidPart(catalog, voidID):
 

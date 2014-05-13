@@ -25,6 +25,7 @@ import numpy as np
 import os
 import pylab as plt
 import void_python_tools.apTools as vp
+from void_python_tools.voidUtil import getVoidArray
 
 def fill_between(x, y1, y2=0, ax=None, **kwargs):
     """Plot filled region between `y1` and `y2`.
@@ -51,7 +52,8 @@ def plotNumberFunction(catalogList, figDir="./",
   
   for (iSample,catalog) in enumerate(catalogList):
     sample = catalog.sampleInfo
-    data = catalog.voids[:].radius
+    data = getVoidArray(catalog, 'radius')
+    #data = np.fromiter((v.radius for v in catalog.voids[:]), float)
   
     if sample.dataType == "observation":
       maskFile = sample.maskFile
@@ -68,7 +70,7 @@ def plotNumberFunction(catalogList, figDir="./",
   
     boxVol *= 1.e-9 # Mpc->Gpc
   
-    bins = args.xmax/5.
+    bins = 100./5.
     hist, binEdges = np.histogram(data, bins=bins, range=(0., 100.))
     binCenters = 0.5*(binEdges[1:] + binEdges[:-1])
   
@@ -86,7 +88,7 @@ def plotNumberFunction(catalogList, figDir="./",
     lineColor = colorList[iSample]
     lineTitle = sample.fullName
     
-    trim = (bounds[0] > .01)
+    trim = (lowerbound > .01)
     mean = mean[trim]
     binCentersToUse = binCenters[trim]
     lower = lowerbound[trim]
