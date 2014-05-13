@@ -63,7 +63,7 @@ def buildProfile(catalog, rMin, rMax):
   for void in voidsToStack:
     center = void.barycenter
     
-    localPart = catalog.partData[ getBall(partTree, center, rMaxProfile) ]
+    localPart = catalog.partPos[ getBall(partTree, center, rMaxProfile) ]
     shiftedPart = shiftPart(localPart, center, periodicLine, catalog.ranges)
 
     dist = np.sqrt(np.sum(shiftedPart[:,:]**2, axis=1))
