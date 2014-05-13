@@ -25,7 +25,7 @@ import numpy as np
 import os
 import pylab as plt
 import void_python_tools.apTools as vp
-from void_python_tools.voidUtil import getVoidArray
+from void_python_tools.voidUtil import getArray
 
 def fill_between(x, y1, y2=0, ax=None, **kwargs):
     """Plot filled region between `y1` and `y2`.
@@ -52,8 +52,7 @@ def plotNumberFunction(catalogList, figDir="./",
   
   for (iSample,catalog) in enumerate(catalogList):
     sample = catalog.sampleInfo
-    data = getVoidArray(catalog, 'radius')
-    #data = np.fromiter((v.radius for v in catalog.voids[:]), float)
+    data = getArray(catalog.voids, 'radius')
   
     if sample.dataType == "observation":
       maskFile = sample.maskFile

@@ -55,8 +55,7 @@ def buildProfile(catalog, rMin, rMax):
   partTree = getPartTree(catalog)
 
   print "  Selecting voids to stack..."
-  accepted = (catalog.voids[:].radius > rMin) & (catalog.voids[:].radius < rMax)
-  voidsToStack = catalog.voids[accepted]
+  voidsToStack = [v for v in catalog.voids if (v.radius > rMin and v.radius < rMax)]
 
   print "  Stacking voids..."
   allProfiles = []

@@ -308,7 +308,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
   volNorm = getVolNorm(sampleDir)
   catalog.volNorm = volNorm
 
-  if unfiltered:
+  if untrimmed:
     prefix = "untrimmed_"
   else:
     prefix = ""
@@ -467,20 +467,21 @@ def getVoidPart(catalog, voidID):
 
 # -----------------------------------------------------------------------------
 def filterVoidsOnSize(catalog, rMin):
-  catalog.voids = catalog.voids[ catalog.voids[:].radius >= rMin ]
+  catalog.voids = [v for v in catalog.voids if v.radius >= rMin]
   return catalog
 
 # -----------------------------------------------------------------------------
 def filterVoidsOnTreeLevel(catalog, level):
-  catalog.voids = catalog.voids[ catalog.voids[:].treeLevel == level ]
+  catalog.voids = [v for v in catalog.voids if v.treeLevel == level]
 
   if level == -1:
-    catalog.voids = catalog.voids[ catalog.voids[:].numChildren == 0 ]
+    catalog.voids = [v for v in catalog.voids if v.numChildren == 0]
     
   return catalog
 
 # -----------------------------------------------------------------------------
 def filterVoidsOnCentralDen(catalog, maxCentralDen):
-  catalog.voids = catalog.voids[ catalog.voids[:].centralDen <= maxCentralDen ]
+  catalog.voids = [v for v in catalog.voids if v.centralDen <= maxCentralDen]
+
   return catalog
 
