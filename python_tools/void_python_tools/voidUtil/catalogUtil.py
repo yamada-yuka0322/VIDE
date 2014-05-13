@@ -273,11 +273,15 @@ class Catalog:
   sampleInfo = None
 
 # -----------------------------------------------------------------------------
-def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True):
+def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
+                    untrimmed=False):
+
 # loads a void catalog
+# by default, loads parent-level voids with central densities greater than 0.2*mean
 #   sampleDir: path to VIDE output directory
 #   dataPortion: "central" or "all"
 #   loadParticles: if True, also load particle information
+#   untrimmed: if True, catalog contains all voids, regardless of density or hierarchy level
 
   sys.stdout.flush()
 
@@ -304,8 +308,13 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True):
   volNorm = getVolNorm(sampleDir)
   catalog.volNorm = volNorm
 
+  if unfiltered:
+    prefix = "untrimmed_"
+  else:
+    prefix = ""
+
   print "Loading voids..."
-  fileName = sampleDir+"/untrimmed_voidDesc_"+dataPortion+"_"+sample.fullName+".out"
+  fileName = sampleDir+"/"+prefix+"voidDesc_"+dataPortion+"_"+sample.fullName+".out"
   catData = np.loadtxt(fileName, comments="#", skiprows=2)
   catalog.voids = []
   for line in catData:
@@ -334,7 +343,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True):
 
   print "Loading barycenters..."
   iLine = 0
-  for line in open(sampleDir+"/untrimmed_barycenters_"+dataPortion+"_"+sample.fullName+".out"):
+  for line in open(sampleDir+"/"+prefix+"barycenters_"+dataPortion+"_"+sample.fullName+".out"):
     line = line.split()
     catalog.voids[iLine].barycenter[0] = float(line[1])
     catalog.voids[iLine].barycenter[1] = float(line[2])
@@ -342,7 +351,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True):
     iLine += 1
 
   print "Loading derived void information..."
-  fileName = sampleDir+"/untrimmed_centers_"+dataPortion+"_"+sample.fullName+".out"
+  fileName = sampleDir+"/"+prefix+"centers_"+dataPortion+"_"+sample.fullName+".out"
   catData = np.loadtxt(fileName, comments="#")
   for (iLine,line) in enumerate(catData):
     catalog.voids[iLine].volume = float(line[6])
@@ -353,7 +362,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True):
     catalog.voids[iLine].centralDen = float(line[13])
     iLine += 1
 
-  fileName = sampleDir+"/untrimmed_shapes_"+dataPortion+"_"+sample.fullName+".out"
+  fileName = sampleDir+"/"+prefix+"shapes_"+dataPortion+"_"+sample.fullName+".out"
   catData = np.loadtxt(fileName, comments="#")
   for (iLine,line) in enumerate(catData):
     catalog.voids[iLine].eigenVals[0] = float(line[1])
