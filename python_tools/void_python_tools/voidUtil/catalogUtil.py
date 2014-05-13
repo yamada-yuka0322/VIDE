@@ -435,10 +435,10 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True):
 
    
 # -----------------------------------------------------------------------------
-def getVoidArray(catalog, attr):
+def getArray(objectList, attr):
 
-  if hasattr(catalog.voids[0], attr):
-    return np.fromiter((getattr(v, attr) for v in catalog.voids), float)
+  if hasattr(objectList[0], attr):
+    return np.fromiter((getattr(v, attr) for v in objectList), float)
   else:
     print " Attribute", attr, "not found!"
     return -1
