@@ -72,6 +72,13 @@ def plotNumberFunction(catalogList, figDir="./",
     bins = 100./5.
     hist, binEdges = np.histogram(data, bins=bins, range=(0., 100.))
     binCenters = 0.5*(binEdges[1:] + binEdges[:-1])
+
+    foundStart = False
+    for iBin in xrange(len(hist)):
+      if not foundStart and hist[iBin] == 0:
+        continue
+      foundStart = True
+      hist[iBin] = np.sum(hist[iBin:])
   
     nvoids = len(data)
     var = hist * (1. - hist/nvoids)
