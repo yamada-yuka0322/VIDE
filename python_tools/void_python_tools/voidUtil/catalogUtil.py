@@ -196,7 +196,7 @@ def loadPartVel(sampleDir):
 def getPartTree(catalog):
 
   sample = catalog.sampleInfo
-  partData = catalog.partData
+  partData = catalog.partPos
   boxLen = catalog.boxLen
 
   periodicLine = getPeriodic(sample)
