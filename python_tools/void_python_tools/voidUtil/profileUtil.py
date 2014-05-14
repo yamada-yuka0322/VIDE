@@ -67,7 +67,7 @@ def buildProfile(catalog, rMin, rMax):
     shiftedPart = shiftPart(localPart, center, periodicLine, catalog.ranges)
 
     dist = np.sqrt(np.sum(shiftedPart[:,:]**2, axis=1))
-    thisProfile, radii = np.histogram(dist, bins=nBins, range=(0,rMaxProfile))
+    thisProfile, radii = np.histogram(dist, bins=10, range=(0,rMaxProfile))
     deltaV = 4*np.pi/3*(radii[1:]**3-radii[0:(radii.size-1)]**3)
     thisProfile = np.float32(thisProfile)
     thisProfile /= deltaV
@@ -75,6 +75,7 @@ def buildProfile(catalog, rMin, rMax):
     allProfiles.append(thisProfile)
     binCenters = 0.5*(radii[1:] + radii[:-1])
 
+  nVoid = len(voidsToStack)
   stackedProfile = np.std(allProfiles, axis=0) / np.sqrt(nVoids)
   sigmas = np.std(allProfiles, axis=0) / np.sqrt(nVoids)
   
