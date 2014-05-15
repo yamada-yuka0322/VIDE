@@ -4,6 +4,7 @@
 .mydepend
 ./pipeline/miscTools/*.out
 
+external/libsdf/libsw/Malloc.c
 c_tools/hod/hod
 c_tools/zobov2/jozov2/jozov2
 c_tools/zobov2/voz1b1/voz1b1_2

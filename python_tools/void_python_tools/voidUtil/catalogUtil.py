@@ -490,3 +490,41 @@ def filterVoidsOnCentralDen(catalog, maxCentralDen):
 
   return catalog
 
+
+# -----------------------------------------------------------------------------
+def stackVoids(catalog, stackMode = "ball"):
+
+# builds a stack of voids from the given catalog
+#   catalog: void catalog
+#   stackMode:
+#     "ball": spherical cut
+#     "voronoi": only void member particles
+#
+# returns:
+#   stackedPart: array of relative particle positions in the stack
+
+  rMax = 100.
+  periodicLine = getPeriodic(catalog.sampleInfo)
+
+  if stackMode == "ball":
+    partTree = getPartTree(catalog)
+
+  stackedPart = []
+  for void in catalog.voids:
+    center = void.barycenter
+
+    if stackMode == "ball":
+      localPart = catalog.partPos[ getBall(partTree, center, rMax) ]
+    else:
+      voidPart = getVoidPart(catalog, void.voidID)
+      localPart = np.zeros((3,len(voidPart)))
+      localPart[0,:] = getArray(localPart, 'x')
+      localPart[1,:] = getArray(localPart, 'y')
+      localPart[2,:] = getArray(localPart, 'z')
+
+    shiftedPart = shiftPart(localPart, center, periodicLine, catalog.ranges)
+
+    stackedPart.extend(shiftedPart)
+
+  return stackedPart
+
