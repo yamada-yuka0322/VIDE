@@ -266,6 +266,7 @@ class Catalog:
   numZonesTot = 0
   volNorm = 0
   boxLen = np.zeros((3))
+  ranges = np.zeros((3,2))
   part = None
   zones2Parts = None
   void2Zones = None
@@ -303,6 +304,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
   catalog.boxLen[0] = ranges[0][1] - ranges[0][0]
   catalog.boxLen[1] = ranges[1][1] - ranges[1][0]
   catalog.boxLen[2] = ranges[2][1] - ranges[2][0]
+  catalog.ranges = ranges
   File.close()
 
   volNorm = getVolNorm(sampleDir)
