@@ -75,7 +75,7 @@ def buildProfile(catalog, rMin, rMax):
     allProfiles.append(thisProfile)
     binCenters = 0.5*(radii[1:] + radii[:-1])
 
-  nVoid = len(voidsToStack)
+  nVoids = len(voidsToStack)
   stackedProfile = np.std(allProfiles, axis=0) / np.sqrt(nVoids)
   sigmas = np.std(allProfiles, axis=0) / np.sqrt(nVoids)
   
