@@ -40,16 +40,26 @@ def fill_between(x, y1, y2=0, ax=None, **kwargs):
     ax.add_patch(p)
 
 # -----------------------------------------------------------------------------
-def plotNumberFunction(catalogList, figDir="./", 
-                       plotName="numberfunc", 
-                       dataPortion="central"):
+def plotNumberFunction(catalogList, 
+                       figDir="./", 
+                       plotName="numberfunc"):
+
+# plots a cumulative number function
+#   catalogList: list of void catalogs to plot
+#   figDir: output directory for figures
+#   plotName: name to prefix to all outputs
+# returns:
+#   numberFuncList: array of len(catalogList), 
+#                   each element has array of size bins, number, +/- 1 sigma
 
   print "Plotting number function"
   
   plt.clf()
   plt.xlabel("$R_{eff}$ [$h^{-1}Mpc$]", fontsize=14)
   plt.ylabel(r"log ($n$ (> R) [$h^3$ Gpc$^{-3}$])", fontsize=14)
-  
+ 
+  numberFuncList = [] 
+
   for (iSample,catalog) in enumerate(catalogList):
     sample = catalog.sampleInfo
     data = getArray(catalog.voids, 'radius')
@@ -116,3 +126,7 @@ def plotNumberFunction(catalogList, figDir="./",
     plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
     plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
     plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")
+
+    numberFuncList.append((binCentersToUse, mean, lower, upper))
+
+  return numberFuncList 
