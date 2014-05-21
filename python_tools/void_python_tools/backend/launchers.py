@@ -32,8 +32,6 @@ import shutil
 import glob
 import subprocess
 import sys
-import matplotlib
-matplotlib.use('Agg')
 from   pylab import figure
 from   netCDF4 import Dataset
 from void_python_tools.backend.classes import *
