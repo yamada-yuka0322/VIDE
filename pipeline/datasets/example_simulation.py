@@ -37,7 +37,7 @@ endCatalogStage   = 3
 catalogDir = os.getenv("HOME")+"/workspace/Voids/catalogs/mergertree1024/"
 
 # void catalog output directory
-workDir      = os.getenv("HOME")+"/workspace/Voids/sim/"
+voidOutputDir = os.getenv("HOME")+"/workspace/Voids/sim/"
 
 # output directory for log files
 logDir = os.getenv("PWD")+"/../logs/sim/"
@@ -69,6 +69,16 @@ numZobovThreads = 2
 # optimization: number of subdivisions of the box
 numZobovDivisions = 2
 
+# prefix to give all outputs
+prefix = "sim_"
+
+# how many independent slices along the z-axis?
+numSlices = 1
+
+# how many subdivisions along the x- and y- axis?
+#   ( = 2 will make 4 subvolumes for each slice, = 3 will make 9, etc.)
+numSubvolumes = 1
+
 
 ###############################################################################
 # Particles
@@ -84,16 +94,6 @@ fileNums = ["1.000"]
 
 # redshift of each file in the above fileNums list
 redshifts = ["0.0"]
-
-# how many independent slices along the z-axis?
-numSlices = 1
-
-# how many subdivisions along the x- and y- axis?
-#   ( = 2 will make 4 subvolumes for each slice, = 3 will make 9, etc.)
-numSubvolumes = 1
-
-# prefix to give all outputs
-prefix = "sim_"
 
 # list of desired subsamples - these are in unts of h Mpc^-3!
 subSamples = [1.0, 0.5]
