@@ -79,8 +79,14 @@ newSample = Sample(
                    # don't change this
                    dataType = "observation",
 
+                   # assume volume-limites?
+                   volumeLimited = True,
+
                    # HEALpix mask file
                    maskFile = inputDataDir+"/healpix/rast_window_512.fits",
+
+                   # radial selection function (if not volume limited)
+                   selFunFile = None,
 
                    # max and min redshifts of galaxies in your sample
                    zBoundary = (0.0, 0.05),
@@ -88,9 +94,6 @@ newSample = Sample(
                    # max and min redshifts where you want to find voids
                    zRange = (0.0, 0.05),
  
-                   # TODO 
-                   skyFraction = 0.19,
-
                    # leave this at -1 for mean particle separation, or 
                    # specify your own in Mpc/h
                    minVoidRadius = -1,

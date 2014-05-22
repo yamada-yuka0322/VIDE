@@ -106,7 +106,8 @@ def loadPart(sampleDir):
                                 sample.zBoundary[1], 
                                 sample.zBoundary[0], 
                                 sample.zBoundary[1], "all",
-                                useLCDM=sample.useComoving)
+                                selectionFuncFile=sample.selFunFile,
+                                useComoving=sample.useComoving)
       boxVol = props[0]
       volNorm = maskIndex/boxVol
     else:
@@ -156,7 +157,8 @@ def getVolNorm(sampleDir):
                                 sample.zBoundary[1], 
                                 sample.zBoundary[0], 
                                 sample.zBoundary[1], "all",
-                                useLCDM=sample.useComoving)
+                                selectionFuncFile=sample.selFunFile,
+                                useComoving=sample.useComoving)
       boxVol = props[0]
       volNorm = maskIndex/boxVol
     else:

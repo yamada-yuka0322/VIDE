@@ -269,7 +269,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
   numTracers = int(open(zobovDir+"/mask_index.txt", "r").read())
   numTotal = int(open(zobovDir+"/total_particles.txt", "r").read())
  
-  meanSep = (1.*numTracers/boxVol)**(-1/3.) 
+  meanSep = (1.*numTracers/boxVol/nbar)**(-1/3.) 
 
   # save this sample's information
   with open(zobovDir+"/sample_info.dat", 'w') as output:

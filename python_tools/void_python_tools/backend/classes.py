@@ -68,7 +68,6 @@ class Sample:
   zobovDir = ""
   maskFile = "rast_window_512.fits"
   selFunFile = "czselfunc.all.dr72dim.dat"
-  skyFraction = 0.19
   zBoundary = (0.0, 0.1)
   zBoundaryMpc = (0., 300)
   zRange    = (0.0, 0.1)
@@ -101,7 +100,7 @@ class Sample:
                minVoidRadius=-1, fakeDensity=0.01, volumeLimited=True,
                numAPSlices=1,
                includeInHubble=True, partOfCombo=False, isCombo=False, 
-               comboList=(), profileBinSize=2.0, skyFraction=0.19,
+               comboList=(), profileBinSize=2.0,
                boxLen=1024, usePecVel=False, omegaM=0.27, 
                numSubvolumes=1, mySubvolume=1, dataFormat="sdss",
                useComoving=True,
@@ -126,7 +125,6 @@ class Sample:
     self.numAPSlices = numAPSlices
     self.zobovDir = None
     self.profileBinSize = profileBinSize
-    self.skyFraction = skyFraction
     self.dataType = dataType
     self.boxLen = boxLen
     self.usePecVel = usePecVel

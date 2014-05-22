@@ -25,19 +25,23 @@ import void_python_tools as ct
 __all__=['getSurveyProps']
    
 # returns the volume and galaxy density for a given redshit slice
-def getSurveyProps(maskFile, zmin, zmax, selFunMin, selFunMax, portion, selectionFuncFile=None, useLCDM=False):
+def getSurveyProps(maskFile, zmin, zmax, selFunMin, selFunMax, portion, selectionFuncFile=None, useComoving=False):
 
   LIGHT_SPEED = 299792.458
 
   mask = healpy.read_map(maskFile)
   area = (1.*np.size(np.where(mask > 0)) / np.size(mask)) * 4.*np.pi
 
-  if useLCDM:
+  if useComoving:
     zmin = LIGHT_SPEED/100.*ct.angularDiameter(zmin, Om=0.27)
     zmax = LIGHT_SPEED/100.*ct.angularDiameter(zmax, Om=0.27)
+    selFunMin = LIGHT_SPEED/100.*ct.angularDiameter(selFunMin, Om=0.27)
+    selFunMax = LIGHT_SPEED/100.*ct.angularDiameter(selFunMax, Om=0.27)
   else:
     zmin = zmin * 3000
     zmax = zmax * 3000
+    selFunMin *= 3000
+    selFunMax *= 3000
   volume = area * (zmax**3  - zmin**3) / 3
 
   if selectionFuncFile != None:
@@ -50,9 +54,6 @@ def getSurveyProps(maskFile, zmin, zmax, selFunMin, selFunMax, portion, selectio
     selfuncMax = selfunc[-1,0]
     selfuncDx = selfunc[1,0] - selfunc[0,0]
     selfuncN = np.size(selfunc[:,0])
-  
-    selFunMin *= 3000
-    selFunMax *= 3000
   
     selFunMin = max(selFunMin, selfuncMin)
     selFunMax = min(selFunMax, selfuncMax)
@@ -67,7 +68,6 @@ def getSurveyProps(maskFile, zmin, zmax, selFunMin, selFunMax, portion, selectio
     nbar = nbar[0]
   
     ntotal = scipy.integrate.quad(fTotal, 0.0, max(selfuncUnity[:,0]))
-    #ntotal = scipy.integrate.quad(f, 0.0, max(selfunc[:,0]))
     ntotal = ntotal[0]
   
     nbar = ntotal / area / nbar
