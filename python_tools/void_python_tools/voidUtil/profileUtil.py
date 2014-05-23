@@ -28,7 +28,7 @@ import void_python_tools.apTools as vp
 from scipy.optimize import curve_fit
 from scipy.interpolate import interp1d
 
-def HamausProfile(r, rs, dc):
+def HSWProfile(r, rs, dc):
   alpha = -2.0*rs + 4.0
   if rs < 0.91:
     beta = 17.5*rs - 6.5
@@ -83,24 +83,28 @@ def buildProfile(catalog, rMin, rMax):
 
 
 # -----------------------------------------------------------------------------
-def fitHSWProfile(radii, densities, sigmas):
+def fitHSWProfile(radii, densities, sigmas, rV):
 
 # fits the given density profile to the HSW function
-#   radii: array of radii in r/rV
+#   radii: array of radii
 #   densities: array of densities
 #   sigmas: array of uncertainties
+#   rV: radius normalization
 # 
 # returns:
 #   popt: best-fit values of dc and rs
 #   pcov: covariance matrix
+#   rVals: array of radii for best-fit curve
+#   hswProfile: array of densities for best-fit curve 
 
-  popt, pcov = curve_fit(HamausProfile, radii, densities,
+  popt, pcov = curve_fit(HSWProfile, radii/rV, densities,
                          sigma=sigmas,
                          maxfev=10000, xtol=5.e-3,
                          p0=[1.0,-1.0])
 
-  return popt, pcov
-
+  # return best-fits
+  rVals = np.linspace(0.0, radii[-1], 100) / rV
+  return popt, pcov, rVals*rV, HSWProfile(rVals,popt[0],popt[1])
 
 # -----------------------------------------------------------------------------
 def getHSWProfile(density, radius):
@@ -202,5 +206,5 @@ def getHSWProfile(density, radius):
 
   # return best-fits
   rVals = np.linspace(0.0, 3*radius, 100) / radius
-  return (rs,dc), rVals, HamausProfile(rVals,rs,dc)
+  return (rs,dc), rVals, HSWProfile(rVals,rs,dc)
   
