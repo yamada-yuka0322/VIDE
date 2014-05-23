@@ -37,18 +37,10 @@ void tasks(int argc, char **argv)
   
 
 
-  /* This is for chi^2 minimization of data for the projected correlation
-   * function.
-   */
-  if(Task.wp_minimize && !HOD.color)
-    wp_minimization(argv[1]);
-
   /* This is for Monte-Carlo Markov Chain exploration of the posterior
    * distribution of the parameters, either real-space or redshift-space,
    * depending on what MCMC is set to.
    */
-  if(Task.MCMC)
-    mcmc_minimization();
 
   /* This is to output the shape of the mean occupation function and the 
    * scatter about the mean. 
@@ -85,26 +77,6 @@ void tasks(int argc, char **argv)
    *  5 - projected correlation function (1st column is now r_p)
    *  6 - projected correlation function without z-space correction
    */
-  if(Task.real_space_xi || Task.All)
-    {
-      fprintf(stderr,"\n\nCALCULATING REAL-SPACE CORRELATION FUNCTION.\n");
-      fprintf(stderr,    "--------------------------------------------\n\n");
-
-      sprintf(fname,"%s.r_space",Task.root_filename);
-      fp=fopen(fname,"w");
-      dr=(log(70.0)-log(0.01))/49.0;
-      for(i=0;i<50;++i)
-	{
-	  r=exp(i*dr+log(0.01));
-	  x1=one_halo_real_space(r);
-	  x2=two_halo_real_space(r);
-	  x3=projected_xi(r);
-	  x4 = projected_xi_rspace(r);
-	  fprintf(fp,"%f %e %e %e %e %e\n",r,x1,x2,x1+x2,x3,x4);
-	  fflush(fp);
-	}
-      fclose(fp);
-    }
 
   /* This takes a halofile from a simulation and populates the halos
    * with galaxies according the HOD specified in the batch file.
@@ -123,9 +95,6 @@ void tasks(int argc, char **argv)
    *   2 - linear P(k) [Mpc/h]^3
    *   3 - non-linear P(k) [Mpc/h]^3
    */
-  if(Task.matter_pk)
-    output_matter_power_spectrum();
-
   /* Output the linear and non-linear dark matter power spectrum.
    * Non-linear xi(r) is Fourier transform of Smith et al (above)
    *
@@ -134,8 +103,6 @@ void tasks(int argc, char **argv)
    *   2 - linear xi(r)
    *   3 - non-linear xi(r)
    */
-  if(Task.matter_xi)
-    output_matter_correlation_function();
 
   /* Output the matter variance as a function of scale.
    *
@@ -145,8 +112,6 @@ void tasks(int argc, char **argv)
    *  3 - sigma(r) [non-linear, using Smith]
    *  4 - mass [M_sol/h] mass = (4/3)*PI*r^3*rho_bar
    */
-  if(Task.sigma_r)
-    output_matter_variance();
 
   /* Output the halo concentrations using Bullock et al (2001) model
    * 
@@ -154,8 +119,6 @@ void tasks(int argc, char **argv)
    *  1 - mass [Msol/h] --> mass specified by DELTA_HALO (input file).
    *  2 - halo concentration. (for the specified halo definition)
    */
-  if(Task.cvir)
-    output_halo_concentrations();
 
   /* Output the halo mass function using the results of Tinker et al (2008)
    *
@@ -163,8 +126,6 @@ void tasks(int argc, char **argv)
    *  1 - mass [Msol/h]
    *  2 - dn/dM [Mph/c]^-3 (the differential mass function).
    */
-  if(Task.dndM)
-    output_halo_mass_function();
 
   endrun("finished with tasks");
 }

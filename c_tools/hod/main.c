@@ -98,11 +98,6 @@ int main(int argc, char **argv)
    * arg==999 goes to the test program, superceding tasks.
    * arg<0 supercedes the MCMC random number in the batfile.
    */
-  if(argc>2)
-    {
-      if(atoi(argv[2])==999)
-	test(argc,argv);
-    }
 
   tasks(argc,argv);
 }
