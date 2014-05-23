@@ -20,7 +20,10 @@ Copyright (C) 2010-2014 Guilhem Lavaux, 2011-2014 P.M. Sutter.
 This software is put under the GNU Public License. Please see LICENSE
 for further information.
 
-This pipeline includes ZOBOV. See zobov/zobov_readme.txt for copyright/license information. SDF library provided by Mike Warren. HOD fitting code provided by Francisco Navarro. HOD halo population code provided by Jeremy Tinker.
+This pipeline includes ZOBOV, originally developed by Mark Neyrinck. See zobov/zobov_readme.txt for copyright/license information. 
+SDF library provided by Mike Warren. 
+HOD fitting code provided by Francisco Navarro. 
+HOD halo population code provided by Jeremy Tinker.
 
 
 Quick Start Guide
