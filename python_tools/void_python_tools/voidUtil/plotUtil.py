@@ -79,7 +79,7 @@ def plotNumberFunction(catalogList,
   
     boxVol *= 1.e-9 # Mpc->Gpc
   
-    bins = 100./5.
+    bins = 100.
     hist, binEdges = np.histogram(data, bins=bins, range=(0., 100.))
     binCenters = 0.5*(binEdges[1:] + binEdges[:-1])
 
