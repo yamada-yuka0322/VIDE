@@ -494,6 +494,12 @@ def filterVoidsOnCentralDen(catalog, maxCentralDen):
 
   return catalog
 
+# -----------------------------------------------------------------------------
+def filterVoidsOnCoreDen(catalog, maxCoreDen):
+  catalog.voids = [v for v in catalog.voids if v.coreDens <= maxCoreDen]
+
+  return catalog
+
 
 # -----------------------------------------------------------------------------
 def stackVoids(catalog, stackMode = "ball"):
