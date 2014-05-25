@@ -500,6 +500,13 @@ def filterVoidsOnCoreDen(catalog, maxCoreDen):
 
   return catalog
 
+# -----------------------------------------------------------------------------
+def filterVoidsOnDenCon(catalog, minDenCon):
+  catalog.voids = [v for v in catalog.voids if v.densCon >= minDenCon]
+
+  return catalog
+
+
 
 # -----------------------------------------------------------------------------
 def stackVoids(catalog, stackMode = "ball"):
