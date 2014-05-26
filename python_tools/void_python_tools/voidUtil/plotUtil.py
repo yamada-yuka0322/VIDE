@@ -17,7 +17,7 @@
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #+
-__all__=['plotNumberFunction',]
+__all__=['plotNumberFunction','plotEllipDist',]
 
 from void_python_tools.backend.classes import *
 from plotDefs import *
@@ -53,7 +53,7 @@ def plotNumberFunction(catalogList,
 #   cumulative: if True, plots cumulative number function
 #   binWidth: width of histogram bins in Mpc/h
 # returns:
-#   numberFuncList: array of len(catalogList), 
+#   ellipDistList: array of len(catalogList), 
 #                   each element has array of size bins, number, +/- 1 sigma
 
   print "Plotting number function"
@@ -66,7 +66,7 @@ def plotNumberFunction(catalogList,
   else:
     plt.ylabel(r"log ($dn/dR$ [$h^3$ Gpc$^{-3}$])", fontsize=14)
  
-  numberFuncList = [] 
+  ellipDistList = [] 
 
   for (iSample,catalog) in enumerate(catalogList):
     sample = catalog.sampleInfo
@@ -127,13 +127,54 @@ def plotNumberFunction(catalogList,
     plt.plot(binCentersToUse, mean, lineStyle,
                 color=lineColor,
                 linewidth=3)
+    
+    ellipDistList.append((binCentersToUse, mean, lower, upper))
   
-    plt.legend(loc = "upper right", fancybox=True, prop={'size':14})
+  plt.legend(loc = "upper right", fancybox=True, prop={'size':14})
   
-    plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
-    plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
-    plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")
+  plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
+  plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
+  plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")
 
-    numberFuncList.append((binCentersToUse, mean, lower, upper))
+  return ellipDistList 
 
-  return numberFuncList 
+
+# -----------------------------------------------------------------------------
+def plotEllipDist(catalogList, 
+                  figDir="./", 
+                  plotName="ellipdist"):
+
+# plots ellipticity distributions
+#   catalogList: list of void catalogs to plot
+#   figDir: output directory for figures
+#   plotName: name to prefix to all outputs
+# returns:
+#   ellipDistList: array of len(catalogList), 
+#                  each element has array of ellipticity distributions
+
+  print "Plotting ellipticity distributions"
+  
+  plt.clf()
+  plt.xlabel(r"Ellipticity $\epsilon$", fontsize=14)
+  plt.ylabel(r"P($\epsilon$)", fontsize=14)
+  
+  ellipDistList = [] 
+
+  for (iSample,catalog) in enumerate(catalogList):
+    sample = catalog.sampleInfo
+    data = getArray(catalog.voids, 'ellipticity')
+  
+    dataWeights = np.ones_like(data)/len(data)
+    dataHist, dataBins = np.histogram(data, bins=10, weights=dataWeights,
+                                         range=(0.0,0.35)) 
+  
+    plt.plot(dataBins, dataHist, label=sample.fullName, 
+             color=colorList[iSample])
+  
+    ellipDistList.append((dataBins, dataHist,))
+    
+  plt.legend(loc = "upper right", fancybox=True, prop={'size':14})
+  
+  plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
+  plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
+  plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")
