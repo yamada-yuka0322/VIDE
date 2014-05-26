@@ -339,6 +339,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
                                treeLevel = 0,
                                numChildren = 0,
                                centralDen = 0.,
+                               ellipticity = 0.,
                                eigenVals = np.zeros((3)),
                                eigenVecs = np.zeros((3,3)),
                                ))
@@ -369,21 +370,23 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
   fileName = sampleDir+"/"+prefix+"shapes_"+dataPortion+"_"+sample.fullName+".out"
   catData = np.loadtxt(fileName, comments="#")
   for (iLine,line) in enumerate(catData):
-    catalog.voids[iLine].eigenVals[0] = float(line[1])
-    catalog.voids[iLine].eigenVals[1] = float(line[2])
-    catalog.voids[iLine].eigenVals[2] = float(line[3])
+    catalog.voids[iLine].ellipticity = float(line[1])
 
-    catalog.voids[iLine].eigenVecs[0][0] = float(line[4])
-    catalog.voids[iLine].eigenVecs[0][1] = float(line[5])
-    catalog.voids[iLine].eigenVecs[0][2] = float(line[6])
+    catalog.voids[iLine].eigenVals[0] = float(line[2])
+    catalog.voids[iLine].eigenVals[1] = float(line[3])
+    catalog.voids[iLine].eigenVals[2] = float(line[4])
 
-    catalog.voids[iLine].eigenVecs[1][0] = float(line[7])
-    catalog.voids[iLine].eigenVecs[1][1] = float(line[8])
-    catalog.voids[iLine].eigenVecs[1][2] = float(line[9])
+    catalog.voids[iLine].eigenVecs[0][0] = float(line[5])
+    catalog.voids[iLine].eigenVecs[0][1] = float(line[6])
+    catalog.voids[iLine].eigenVecs[0][2] = float(line[7])
 
-    catalog.voids[iLine].eigenVecs[2][0] = float(line[10])
-    catalog.voids[iLine].eigenVecs[2][1] = float(line[11])
-    catalog.voids[iLine].eigenVecs[2][2] = float(line[12])
+    catalog.voids[iLine].eigenVecs[1][0] = float(line[8])
+    catalog.voids[iLine].eigenVecs[1][1] = float(line[9])
+    catalog.voids[iLine].eigenVecs[1][2] = float(line[10])
+
+    catalog.voids[iLine].eigenVecs[2][0] = float(line[11])
+    catalog.voids[iLine].eigenVecs[2][1] = float(line[12])
+    catalog.voids[iLine].eigenVecs[2][2] = float(line[13])
 
     iLine += 1
 
