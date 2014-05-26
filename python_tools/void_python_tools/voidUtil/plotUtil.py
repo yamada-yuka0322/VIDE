@@ -178,3 +178,116 @@ def plotEllipDist(catalogList,
   plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
   plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
   plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")
+  
+  return
+
+
+# -----------------------------------------------------------------------------
+plotVoidCells(catalogList,
+              voidID,
+              figDir="./",
+              plotName="cells",
+              plotDensity=True,
+              sliceWidth=250)
+
+# plots the particles belonging to a void
+#   catalog: void catalog
+#   voidID: ID of void to plot
+#   figDir: output directory for figures
+#   plotName: name to prefix to all outputs
+#   sliceWidth: width of slice in Mpc/h
+
+  sample = catalog.sampleInfo
+  periodicLine = getPeriodic(sample)
+
+  plt.clf()
+
+  iVoid = -1
+  for i in xrange(len(catalog.voids)):
+    if catalog.voids[i].voidID == voidID:
+      iVoid = i
+      break
+
+  if iVoid == -1:
+    print "Void ID %d not found!" % voidID
+    return
+  
+  sliceCenter = catalog.voids[iVoid].barycenter
+
+  xwidth = sliceWidth
+  ywidth = sliceWidth
+  zwidth = max(sliceWidth/4., 50)
+
+  xmin = -xwidth/2.
+  xmax = xwidth/2.
+  ymin = -ywidth/2.
+  ymax = ywidth/2.
+  zmin = -zwidth/2.
+  zmax = zwidth/2.
+
+  #Slice Particles
+  if plotDensity:
+    part = catalog.partPos
+    part = shiftPart(part, sliceCenter, periodicLine, catalog.ranges) 
+
+    filter = (part[:,0] > xmin) & (part[:,0] < xmax) & \
+             (part[:,1] > ymin) & (part[:,1] < ymax) & \
+             (part[:,2] > zmin) & (part[:,2] < zmax)
+    part = part[filter]
+
+    extent = [xmin, xmax, ymin, ymax]
+    hist, xedges, yedges = np.histogram2d(part[:,0], part[:,1], normed=False,
+                                          bins=64)
+
+    hist = np.log10(hist+1)
+    plt.imshow(hist,
+               aspect='equal',
+               extent=extent,
+               interpolation='gaussian',
+               cmap='YlGnBu_r')
+
+
+  # overlay voids as circles
+  fig = plt.gcf()
+
+  voidPart = getVoidPart(catalog, voidID)
+
+  newpart = np.zeros((3,len(voidPart)))
+  volume=np.zeros(len(voidPart))
+  radius=np.zeros(len(voidPart))
+
+  newpart[0,:] = getArray(voidPart, 'x')
+  newpart[1,:] = getArray(voidPart, 'y')
+  newpart[2,:] = getArray(voidPart, 'z')
+
+  volume = getArray(voidPart, 'volume')
+  radius = (3.*volume/(4.*np.pi))**(1./3.)
+
+  shiftedPartVoid =shiftPart(newpart,sliceCenter, periodicLine, catalog.ranges)
+
+  #Limiting plotted cells to cells into the slice
+  #Possibility to only plot bigger cells (through cellsradiuslim)
+  cellsMinlimz = zmin
+  cellsMaxlimz = zmax
+  cellsradiuslim = 0.0
+
+  for p in xrange(len(volume)):
+    if (shiftedPartVoid[p,2]>(cellsMinlimz) and \
+        shiftedPartVoid[p,2]<(cellsMinlimz) and \
+        radius[p]>cellsradiuslim):
+      color = 'blue'
+      circle = plt.Circle((shiftedPartVoid[p,0], \
+                           shiftedPartVoid[p,1]), \
+                           radius[p],
+                           alpha =.2, fc=color,edgecolor=None,linewidth=1)
+      fig.gca().add_artist(circle)
+
+  title="cells"+str(voidID)
+  plt.title(title, fontsize=20)
+  plotName="cells"+str(voidID)
+
+  plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
+  plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
+  plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")
+
+  return
