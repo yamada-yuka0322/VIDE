@@ -42,12 +42,16 @@ def fill_between(x, y1, y2=0, ax=None, **kwargs):
 # -----------------------------------------------------------------------------
 def plotNumberFunction(catalogList, 
                        figDir="./", 
-                       plotName="numberfunc"):
+                       plotName="numberfunc",
+                       cumulative=True,
+                       binWidth=1):
 
 # plots a cumulative number function
 #   catalogList: list of void catalogs to plot
 #   figDir: output directory for figures
 #   plotName: name to prefix to all outputs
+#   cumulative: if True, plots cumulative number function
+#   binWidth: width of histogram bins in Mpc/h
 # returns:
 #   numberFuncList: array of len(catalogList), 
 #                   each element has array of size bins, number, +/- 1 sigma
@@ -56,7 +60,11 @@ def plotNumberFunction(catalogList,
   
   plt.clf()
   plt.xlabel("$R_{eff}$ [$h^{-1}Mpc$]", fontsize=14)
-  plt.ylabel(r"log ($n$ (> R) [$h^3$ Gpc$^{-3}$])", fontsize=14)
+  
+  if cumulative:
+    plt.ylabel(r"log ($n$ (> R) [$h^3$ Gpc$^{-3}$])", fontsize=14)
+  else:
+    plt.ylabel(r"log ($dn/dR$ [$h^3$ Gpc$^{-3}$])", fontsize=14)
  
   numberFuncList = [] 
 
@@ -70,25 +78,24 @@ def plotNumberFunction(catalogList,
       boxVol = vp.getSurveyProps(maskFile,
                                  sample.zBoundary[0], sample.zBoundary[1],
                                  sample.zRange[0], sample.zRange[1], "all",
-                                 selectionFuncFile=None)[0]
-                                 #selectionFuncFile=sample.selFunFile)[0]
-      boxVol *= obsFudgeFactor
+                                 selectionFuncFile=sample.selFunFile)[0]
     else:
       boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1] -
                                             sample.zBoundaryMpc[0])
   
     boxVol *= 1.e-9 # Mpc->Gpc
   
-    bins = 100.
+    bins = 100./binWidth
     hist, binEdges = np.histogram(data, bins=bins, range=(0., 100.))
     binCenters = 0.5*(binEdges[1:] + binEdges[:-1])
 
-    foundStart = False
-    for iBin in xrange(len(hist)):
-      if not foundStart and hist[iBin] == 0:
-        continue
-      foundStart = True
-      hist[iBin] = np.sum(hist[iBin:])
+    if cumulative:
+      foundStart = False
+      for iBin in xrange(len(hist)):
+        if not foundStart and hist[iBin] == 0:
+          continue
+        foundStart = True
+        hist[iBin] = np.sum(hist[iBin:])
   
     nvoids = len(data)
     var = hist * (1. - hist/nvoids)
