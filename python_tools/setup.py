@@ -33,10 +33,4 @@ setup(
     packages=
        ['void_python_tools','void_python_tools.backend','void_python_tools.apTools', 'void_python_tools.voidUtil',
         'void_python_tools.apTools.profiles','void_python_tools.apTools.chi2',],
-    #ext_modules = [Extension("void_python_tools.chi2.velocityProfileFitNative", ["void_python_tools/chi2/velocityProfileFitNative.pyx"], libraries=["gsl", "gslcblas"]), Extension("void_python_tools.chi2.likelihoo", ["void_python_tools/chi2/likelihood.pyx"], libraries=["gsl", "gslcblas"])]
-    #ext_modules = [
-    #   Extension("void_python_tools.apTools.chi2.velocityProfileFitNative", 
-    #             ["void_python_tools/apTools/chi2/velocityProfileFitNative.pyx"],
-    #   libraries=["gsl", "gslcblas"], library_dirs=[VOID_GSL+"/lib"], include_dirs=[VOID_GSL+"/include"])
-    #]
 )

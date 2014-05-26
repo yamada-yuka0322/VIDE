@@ -343,9 +343,17 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
     subprocess.call(cmd, stdout=log, stderr=log)
     log.close()
 
+    # TODO re-weight the volumes based on selection function
+    #volFile = zobovDir+"/vol_"+sampleName+".dat"
+    #File = file(volFile)
+    #chk = np.fromfile(File, dtype=np.int32,count=1)
+    #vols = np.fromfile(File, dtype=np.float32,count=numPartTot)
+
+
     cmd = [binPath+"../c_tools/zobov2/jozov2/jozov2", \
            zobovDir+"/adj_"+sampleName+".dat", \
-           zobovDir+"/vol_"+sampleName+".dat", \
+           zobovDir+"/vol_weighted_"+sampleName+".dat", \
+           #zobovDir+"/vol_"+sampleName+".dat", \
            zobovDir+"/voidPart_"+sampleName+".dat", \
            zobovDir+"/voidZone_"+sampleName+".dat", \
            zobovDir+"/voidDesc_"+sampleName+".out", \
