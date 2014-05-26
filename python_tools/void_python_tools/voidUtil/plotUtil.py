@@ -183,12 +183,12 @@ def plotEllipDist(catalogList,
 
 
 # -----------------------------------------------------------------------------
-plotVoidCells(catalogList,
+def plotVoidCells(catalogList,
               voidID,
               figDir="./",
               plotName="cells",
               plotDensity=True,
-              sliceWidth=250)
+              sliceWidth=250):
 
 # plots the particles belonging to a void
 #   catalog: void catalog
