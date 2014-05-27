@@ -183,7 +183,7 @@ def plotEllipDist(catalogList,
 
 
 # -----------------------------------------------------------------------------
-def plotVoidCells(catalogList,
+def plotVoidCells(catalog,
               voidID,
               figDir="./",
               plotName="cells",
