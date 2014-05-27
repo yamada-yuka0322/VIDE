@@ -15,8 +15,8 @@ def computeXcor(catalog,
 # Computes and plots void-void and void-matter(galaxy) correlations
 #   catalog: catalog to analyze
 #   figDir: where to place plots
-#   Nmesh: number of grid cells in power spectrum calculation
-#   Nbin: number of grid cells in plot
+#   Nmesh: number of grid cells in cic mesh-interpolation
+#   Nbin:  number of bins in final plots
 
   # Parameters
   Lbox = catalog.boxLen # Boxlength
@@ -40,10 +40,6 @@ def computeXcor(catalog,
   ((Nm, km, Pmm, SPmm),(Nmx, rm, Xmm, SXmm)) = xcorlib.powcor(dmk, dmk, Lbox, Nbin, 'lin', True, True, 1)
   ((Nm, km, Pvm, SPvm),(Nmx, rm, Xvm, SXvm)) = xcorlib.powcor(dvk, dmk, Lbox, Nbin, 'lin', True, True, 1)
   ((Nm, km, Pvv, SPvv),(Nmx, rm, Xvv, SXvv)) = xcorlib.powcor(dvk, dvk, Lbox, Nbin, 'lin', True, True, 1)
-  
-  # 2D Power spectra & correlation functions
-  ((Nm2d, kmper, kmpar, Pmm2d),(Nmx2d, rmper, rmpar, Xmm2d)) = xcorlib.powcor(dmk, dmk, Lbox, Nbin, 'lin', True, True, 2)
-  ((Nm2d, kmper, kmpar, Pvm2d),(Nmx2d, rmper, rmpar, Xvm2d)) = xcorlib.powcor(dvk, dmk, Lbox, Nbin, 'lin', True, True, 2)
   
   # Number densities
   nm = np.empty(len(km))
@@ -155,46 +151,4 @@ def computeXcor(catalog,
   plt.clf()
   
   
-  # 2D power spectra & correlation functions
-  kpermin = kmper.min()
-  kpermax = 0.3001
-  kparmin = kmpar.min()
-  kparmax = 0.3001
-  rpermin = rmper.min()
-  rpermax = 40
-  rparmin = rmpar.min()
-  rparmax = 40
-  
-  for (P2d,idx,vmin,vmax) in ([Pmm2d,'mm',None,None],[Pvm2d,'vm',None,None],[Phm2d,'gm',None,None],[Pvv2d,'vv',None,2.9],[Pvh2d,'vg',None,None],[Phh2d,'gg',None,None]):
-    cut = np.where(kmper[:,0] <= kpermax)[0].max()+2
-    plt.pcolormesh(kmper[0:cut,0:cut], kmpar[0:cut,0:cut], P2d[0:cut,0:cut]/1e4, cmap=cm.Spectral_r, shading='gouraud', vmin=vmin, vmax=vmax)
-    plt.colorbar(format='%.1f')
-    plt.contour(kmper[0:cut,0:cut], kmpar[0:cut,0:cut], P2d[0:cut,0:cut]/1e4, levels=np.array(P2d.min()+(P2d.max()-P2d.min())*(np.arange(Nbin/6+1)/float(Nbin/6)))/1e4, vmin=vmin, vmax=vmax, colors='k', linewidths=0.2)
-    plt.xlabel(r'$k_\perp \;[h\mathrm{Mpc}^{-1}]$', fontsize=fs)
-    plt.ylabel(r'$k_\parallel \;[h\mathrm{Mpc}^{-1}]$', fontsize=fs)
-    plt.axes().set_aspect('equal')
-    plt.xscale('linear')
-    plt.yscale('linear')
-    plt.xlim(kpermin,kpermax)
-    plt.ylim(kparmin,kparmax)
-    plt.title(r'$P_{\mathrm{'+idx+r'}}(k_\perp, k_\parallel) \;[10^4h^{-3}\mathrm{Mpc}^3]$', fontsize=fs)
-    plt.savefig(figDir+'/P'+idx+'2d_'+sample.fullName+'.pdf', format='pdf', bbox_inches="tight")
-    plt.clf()
-  
-  for (X2d,idx,vmin,vmax) in ([Xmm2d,'mm',None,None],[Xvm2d,'vm',None,None],[Xhm2d,'gm',None,None],[Xvv2d,'vv',None,0.2],[Xvh2d,'vg',None,None],[Xhh2d,'gg',None,None]):
-    cut = np.where(rmper[:,0] <= rpermax)[0].max()+3
-    plt.pcolormesh(rmper[0:cut,0:cut], rmpar[0:cut,0:cut], X2d[0:cut,0:cut], cmap=cm.Spectral_r, shading='gouraud', vmin=vmin, vmax=vmax)
-    plt.colorbar(format='%+.2f')
-    plt.contour(rmper[0:cut,0:cut], rmpar[0:cut,0:cut], X2d[0:cut,0:cut], levels=np.array(X2d.min()+(X2d.max()-X2d.min())*(np.arange(Nbin/6+1)/float(Nbin/6))), vmin=vmin, vmax=vmax, colors='k', linewidths=0.2)  
-    plt.xlabel(r'$r_\perp \;[h^{-1}\mathrm{Mpc}]$', fontsize=fs)
-    plt.ylabel(r'$r_\parallel \;[h^{-1}\mathrm{Mpc}]$', fontsize=fs)
-    plt.axes().set_aspect('equal')
-    plt.xscale('linear')
-    plt.yscale('linear')
-    plt.xlim(rpermin,rpermax)
-    plt.ylim(rparmin,rparmax)
-    plt.title(r'$\xi_{\mathrm{'+idx+r'}}(r_\perp, r_\parallel)$', fontsize=fs)
-    plt.savefig(figDir+'/X'+idx+'2d_'+sample.fullName+'.pdf', format='pdf', bbox_inches="tight")
-    plt.clf()
- 
   return 
