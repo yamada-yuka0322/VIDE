@@ -37,6 +37,7 @@ from   netCDF4 import Dataset
 from void_python_tools.backend.classes import *
 import pickle
 import void_python_tools.apTools as vp
+import scipy.interpolate
 
 NetCDFFile = Dataset
 ncFloat = 'f8' # Double precision
@@ -344,17 +345,75 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
     subprocess.call(cmd, stdout=log, stderr=log)
     log.close()
 
-    # TODO re-weight the volumes based on selection function
-    #volFile = zobovDir+"/vol_"+sampleName+".dat"
-    #File = file(volFile)
-    #chk = np.fromfile(File, dtype=np.int32,count=1)
-    #vols = np.fromfile(File, dtype=np.float32,count=numPartTot)
+    # re-weight the volumes based on selection function
+    if sample.dataType == "observation" and \
+       sample.selFunFile != None:
+
+      # load volumes
+      volFile = zobovDir+"/vol_"+sampleName+".dat"
+      File = file(volFile)
+      numPartTot = np.fromfile(File, dtype=np.int32,count=1)
+      vols = np.fromfile(File, dtype=np.float32,count=numPartTot)
+      File.close()
+
+      # load redshifts
+      partFile = sampleDir+"/zobov_slice_"+sample.fullName
+      File = file(partFile)
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+      Np = np.fromfile(File, dtype=np.int32,count=1)
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+
+      # x
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+      redshifts = np.fromfile(File, dtype=np.float32,count=Np)
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+
+      # y
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+      redshifts = np.fromfile(File, dtype=np.float32,count=Np)
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+
+      # z
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+      redshifts = np.fromfile(File, dtype=np.float32,count=Np)
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+
+      # RA
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+      redshifts = np.fromfile(File, dtype=np.float32,count=Np)
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+
+      # Dec
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+      redshifts = np.fromfile(File, dtype=np.float32,count=Np)
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+
+      # z
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+      redshifts = np.fromfile(File, dtype=np.float32,count=Np)
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+      File.close()
+      
+      # build selection function interpolation
+      selfuncData = np.genfromtxt(sample.selFunFile)
+      selfunc = interpolate.interp1d(selfuncData[:,0], selfuncData[:,1],
+                                     kind='cubic')
+      # re-weight and write
+      vols *= selfunc(redshifts)
+
+      volFile = zobovDir+"/vol_"+sampleName+".dat"
+      File = file(volFile, 'w')
+      chk.astype('np.int32').tofile(File)
+      vols.astype('np.float32').tofile(File)
+
+      volFileToUse = zobovDir+"/vol_weighted"+sampleName+".dat"
+    else:
+      volFileToUse = zobovDir+"/vol_"+sampleName+".dat"
 
 
     cmd = [binPath+"../c_tools/zobov2/jozov2/jozov2", \
            zobovDir+"/adj_"+sampleName+".dat", \
-           zobovDir+"/vol_weighted_"+sampleName+".dat", \
-           #zobovDir+"/vol_"+sampleName+".dat", \
+           voleFileToUse, \
            zobovDir+"/voidPart_"+sampleName+".dat", \
            zobovDir+"/voidZone_"+sampleName+".dat", \
            zobovDir+"/voidDesc_"+sampleName+".out", \
