@@ -456,9 +456,13 @@ def getArray(objectList, attr):
   if hasattr(objectList[0], attr):
     ndim = np.shape( np.atleast_1d( getattr(objectList[0], attr) ) )[0]
     attrArr = np.zeros(( len(objectList), ndim ))
+    }
     for idim in xrange(ndim):
       attrArr[:,idim] = np.fromiter((np.atleast_1d(getattr(v, attr))[idim] \
                                     for v in objectList), float )
+  
+    if ndim == 1: attrArr = attArr[:,0]
+
     return attrArr
   else:
     print " Attribute", attr, "not found!"

@@ -25,7 +25,7 @@ import numpy as np
 import os
 import pylab as plt
 import void_python_tools.apTools as vp
-from void_python_tools.voidUtil import getArray
+from void_python_tools.voidUtil import getArray, shiftPart, getVoidPart
 
 def fill_between(x, y1, y2=0, ax=None, **kwargs):
     """Plot filled region between `y1` and `y2`.
@@ -183,7 +183,7 @@ def plotEllipDist(catalogList,
 
 
 # -----------------------------------------------------------------------------
-def plotVoidCells(catalogList,
+def plotVoidCells(catalog,
               voidID,
               figDir="./",
               plotName="cells",

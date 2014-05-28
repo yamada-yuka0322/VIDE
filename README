@@ -34,3 +34,8 @@ make
 cd pipeline/
 ./prepareInputs.py --scripts path/to/dataset.py
 ./generateCatalog.py path/to/parameter_file.py
+
+Version Summary
+-----------------
+
+v1.0 - Initial Release
