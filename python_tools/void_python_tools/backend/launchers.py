@@ -265,6 +265,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     zMax = sample.zBoundaryMpc[1]
 
     boxVol = (xMax-xMin)*(yMax-yMin)*(zMax-zMin)
+    nbar = 1.0
 
   numTracers = int(open(zobovDir+"/mask_index.txt", "r").read())
   numTotal = int(open(zobovDir+"/total_particles.txt", "r").read())
