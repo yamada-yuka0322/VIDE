@@ -413,7 +413,7 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
 
     cmd = [binPath+"../c_tools/zobov2/jozov2/jozov2", \
            zobovDir+"/adj_"+sampleName+".dat", \
-           voleFileToUse, \
+           volFileToUse, \
            zobovDir+"/voidPart_"+sampleName+".dat", \
            zobovDir+"/voidZone_"+sampleName+".dat", \
            zobovDir+"/voidDesc_"+sampleName+".out", \
