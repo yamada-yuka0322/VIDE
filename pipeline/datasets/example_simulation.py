@@ -99,8 +99,10 @@ redshifts = ["0.0"]
 subSamples = [1.0, 0.5]
 
 # if True, do the subsampling in preparation (only for sdf and multidark)
-doSubSampling = True 
+doSubSamplingInPrep = True 
 
+# shift the z-coord of sims with redshift
+shiftSimZ = False
 
 ###############################################################################
 # Halos

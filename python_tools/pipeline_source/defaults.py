@@ -98,11 +98,14 @@ numSubvolumes = 1
 # prefix to give all outputs
 prefix = "mt_"
 
+# shift the z-coord of sims with redshift
+shiftSimZ = False
+
 # list of desired subsamples - see subSamplingMode parameter
 subSamples = [1.0]
 
-doSubSampling = True # do the subsampling in preparation script?
-                     # if False, generateMock will do the subsampling
+doSubSamplingInPrep = True # do the subsampling in preparation script?
+                           # if False, generateMock will do the subsampling
 
 # if 'absolute', subSamples are given in particles per cubic Mpc/h
 # if 'relative', subSamples are given as a fraction of input particles

@@ -296,8 +296,12 @@ dataSampleList.append(newSample)
         sliceMinMpc = sliceMin*LIGHT_SPEED/100.
         sliceMaxMpc = sliceMax*LIGHT_SPEED/100.
       else:
-        sliceMinMpc = zBoxMpc + iSlice*lbox/numSlices
-        sliceMaxMpc = zBoxMpc + (iSlice+1)*lbox/numSlices
+        if shiftSimZ:
+          sliceMinMpc = zBoxMpc + iSlice*lbox/numSlices
+          sliceMaxMpc = zBoxMpc + (iSlice+1)*lbox/numSlices
+        else:
+          sliceMinMpc = iSlice*lbox/numSlices
+          sliceMaxMpc = (iSlice+1)*lbox/numSlices
         sliceMin = np.interp(sliceMinMpc*100./LIGHT_SPEED, zVsDX, zVsDY)
         sliceMax = np.interp(sliceMaxMpc*100./LIGHT_SPEED, zVsDX, zVsDY)
 
