@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib as mpl
-mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib import rc
@@ -66,14 +65,18 @@ def computeXcor(catalog,
   plt.xlabel(r'$x \;[h^{-1}\mathrm{Mpc}]$')
   plt.ylabel(r'$y \;[h^{-1}\mathrm{Mpc}]$')
   plt.title(r'Dark matter')
-  plt.savefig(figDir+'/dm.eps', format='eps', bbox_inches="tight")
+  plt.savefig(figDir+'/dm.eps', bbox_inches="tight")
+  plt.savefig(figDir+'/dm.pdf', bbox_inches="tight")
+  plt.savefig(figDir+'/dm.png', bbox_inches="tight")
   plt.clf()
   
   plt.imshow(np.sum(dv[:,:,:]+1,2)/Nmesh,extent=[0,Lbox,0,Lbox],aspect='equal',cmap='YlGnBu_r',interpolation='gaussian')
   plt.xlabel(r'$x \;[h^{-1}\mathrm{Mpc}]$')
   plt.ylabel(r'$y \;[h^{-1}\mathrm{Mpc}]$')
   plt.title(r'Voids')
-  plt.savefig(figDir+'/dv.eps', format='eps', bbox_inches="tight") #, dpi=300
+  plt.savefig(figDir+'/dv.eps', bbox_inches="tight") #, dpi=300
+  plt.savefig(figDir+'/dv.pdf', bbox_inches="tight") #, dpi=300
+  plt.savefig(figDir+'/dv.png', bbox_inches="tight") #, dpi=300
   plt.clf()
   
   
@@ -95,7 +98,9 @@ def computeXcor(catalog,
   plt.xlim(kmin,kmax)
   plt.ylim(10**np.floor(np.log10(abs(Pvm[1:]).min()))/margin, max(10**np.ceil(np.log10(Pmm.max())),10**np.ceil(np.log10(Pvv.max())))*margin)
   plt.legend([pa, pb, pc],['tt', 'vt', 'vv'],'best',prop={'size':12})
-  plt.savefig(figDir+'/power.eps', format='eps', bbox_inches="tight") 
+  plt.savefig(figDir+'/power.eps', bbox_inches="tight") 
+  plt.savefig(figDir+'/power.pdf', bbox_inches="tight") 
+  plt.savefig(figDir+'/power.png', bbox_inches="tight") 
   plt.clf()
   
   pa ,= plt.plot(rm, Xmm, 'k-o', ms=0.8*ms, mew=mew)

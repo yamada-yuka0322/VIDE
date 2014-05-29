@@ -344,8 +344,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
                                eigenVecs = np.zeros((3,3)),
                                ))
 
-  catalog.numVoids = len(catalog.voids)
-  print "Read %d voids" % catalog.numVoids
+  print "Read %d voids" % len(catalog.voids)
 
   print "Loading barycenters..."
   iLine = 0
@@ -462,7 +461,7 @@ def getArray(objectList, attr):
       attrArr[:,idim] = np.fromiter((np.atleast_1d(getattr(v, attr))[idim] \
                                     for v in objectList), float )
   
-    if ndim == 1: attrArr = attrArr[:,0]
+    if ndim == 1: attrArr = attArr[:,0]
 
     return attrArr
   else:
