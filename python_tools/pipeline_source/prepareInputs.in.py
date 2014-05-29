@@ -299,12 +299,20 @@ dataSampleList.append(newSample)
         if shiftSimZ:
           sliceMinMpc = zBoxMpc + iSlice*lbox/numSlices
           sliceMaxMpc = zBoxMpc + (iSlice+1)*lbox/numSlices
+          sliceMin = np.interp(sliceMinMpc*100./LIGHT_SPEED, zVsDX, zVsDY)
+          sliceMax = np.interp(sliceMaxMpc*100./LIGHT_SPEED, zVsDX, zVsDY)
+          sliceMinForName = sliceMin
         else:
           sliceMinMpc = iSlice*lbox/numSlices
           sliceMaxMpc = (iSlice+1)*lbox/numSlices
-        sliceMin = np.interp(sliceMinMpc*100./LIGHT_SPEED, zVsDX, zVsDY)
-        sliceMax = np.interp(sliceMaxMpc*100./LIGHT_SPEED, zVsDX, zVsDY)
+          sliceMin = np.interp(sliceMinMpc*100./LIGHT_SPEED, zVsDX, zVsDY)
+          sliceMax = np.interp(sliceMaxMpc*100./LIGHT_SPEED, zVsDX, zVsDY)
 
+          sliceMinMpcForName = zBoxMpc + iSlice*lbox/numSlices
+          sliceMinForName = np.interp(sliceMinMpcForName*100./LIGHT_SPEED, \
+                                      zVsDX, zVsDY)
+
+      sliceMinForName = "%0.2f" % sliceMinForName
       sliceMin = "%0.2f" % sliceMin
       sliceMax = "%0.2f" % sliceMax
       sliceMinMpc = "%0.2f" % sliceMinMpc
@@ -320,7 +328,7 @@ dataSampleList.append(newSample)
 
           mySubvolume = "%d%d" % (iX, iY)
 
-          sampleName = getSampleName(setName, sliceMin, useVel,
+          sampleName = getSampleName(setName, sliceMinForName, useVel,
                                      iSlice=iSlice, iVol=mySubvolume)
           nickName = getNickName(setName, sampleName)
 
@@ -347,21 +355,6 @@ dataSampleList.append(newSample)
                                          mySubvolume=mySubvolume,
                                          useLightCone=useLightCone,
                                          subsample=str(subsample).strip('[]')))
-
-          #for iAPSlice in xrange(numAPSlices):
-          #  sliceWidth = float(sliceMax) - float(sliceMin)
-          #  sliceAPMin = float(sliceMin) + iAPSlice*sliceWidth/numAPSlices
-          #  sliceAPMax = float(sliceMin) + (iAPSlice+1)*sliceWidth/numAPSlices
-          #  sliceAPMin = "%0.2f" % sliceAPMin
-          #  sliceAPMax = "%0.2f" % sliceAPMax
-          #  scriptFile.write(stackInfo.format(zMin=sliceAPMin,
-          #                                    zMax=sliceAPMax,
-          #                                    minRadius=minRadius,
-          #                                    rescaleMode=stackRescaleMode,
-          #                                    maxVoids=maxVoidsInStack,
-          #                                    fittingMode=fittingMode
-          #                   ))
-
 
   scriptFile.close()
   return
