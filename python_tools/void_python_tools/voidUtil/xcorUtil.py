@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib import rc
 import xcorlib
+from void_python_tools.voidUtil import getArray
 
 def computeXcor(catalog,
                 figDir="./",
@@ -19,7 +20,7 @@ def computeXcor(catalog,
 #   Nbin:  number of bins in final plots
 
   # Parameters
-  Lbox = catalog.boxLen # Boxlength
+  Lbox = catalog.boxLen[0] # Boxlength
   Lboxcut = 0.
   Lbox -= 2*Lboxcut
   
@@ -43,23 +44,9 @@ def computeXcor(catalog,
   
   # Number densities
   nm = np.empty(len(km))
-  nh = np.empty(len(km))
   nv = np.empty(len(km))
   nm[:] = len(xm)/Lbox**3
-  nh[:] = len(xh)/Lbox**3
   nv[:] = len(xv)/Lbox**3
-  
-  # Bias
-  b_hh = np.sqrt(Phh/Pmm)
-  b_vv = np.sqrt(Pvv/Pmm)
-  b_hm = Phm/Pmm
-  b_vm = Pvm/Pmm
-  b_vh = Pvh/Phh
-  
-  # Shot Noise
-  sn_hh = Phh - Phm**2/Pmm
-  sn_vh = Pvh - Pvm*Phm/Pmm
-  sn_vv = Pvv - Pvm**2/Pmm
   
   
   # Plots
@@ -79,39 +66,26 @@ def computeXcor(catalog,
   plt.xlabel(r'$x \;[h^{-1}\mathrm{Mpc}]$')
   plt.ylabel(r'$y \;[h^{-1}\mathrm{Mpc}]$')
   plt.title(r'Dark matter')
-  plt.savefig(figDir+'/dm_'+sample.fullName+'.pdf', format='pdf', bbox_inches="tight")
+  plt.savefig(figDir+'/dm.eps', format='eps', bbox_inches="tight")
   plt.clf()
   
   plt.imshow(np.sum(dv[:,:,:]+1,2)/Nmesh,extent=[0,Lbox,0,Lbox],aspect='equal',cmap='YlGnBu_r',interpolation='gaussian')
   plt.xlabel(r'$x \;[h^{-1}\mathrm{Mpc}]$')
   plt.ylabel(r'$y \;[h^{-1}\mathrm{Mpc}]$')
   plt.title(r'Voids')
-  plt.savefig(figDir+'/dv_'+sample.fullName+'.pdf', format='pdf', bbox_inches="tight") #, dpi=300
+  plt.savefig(figDir+'/dv.eps', format='eps', bbox_inches="tight") #, dpi=300
   plt.clf()
   
   
   # Power spectra & correlation functions
-  pa ,= plt.plot(km, Phh, 'r-s', ms=ms, mew=mew, mec='k')
-  plt.plot(km, Phh-sn_hh, 'r--', ms=ms, mew=mew)
-  plt.plot(km, sn_hh, 'r:', ms=ms, mew=mew)
-  plt.fill_between(km, Phh+SPhh, abs(Phh-SPhh), color='r', alpha=0.2)
-  pb ,= plt.plot(km, Phm, 'y-^', ms=ms, mew=mew, mec='k')
-  plt.fill_between(km, Phm+SPhm, abs(Phm-SPhm), color='y', alpha=0.2)
-  pc ,= plt.plot(km, Pmm, 'k-o', ms=0.8*ms, mew=mew, mec='k')
-  plt.plot(km, Pmm-1./nm, 'k--', ms=ms, mew=mew)
+  pa ,= plt.plot(km, Pmm, 'k-o', ms=0.8*ms, mew=mew, mec='k')
+  #plt.plot(km, Pmm-1./nm, 'k--', ms=ms, mew=mew)
   plt.fill_between(km, Pmm+SPmm, abs(Pmm-SPmm), color='k', alpha=0.2)
-  pd ,= plt.plot(km, Pvh, 'g-*', ms=1.5*ms, mew=mew, mec='k')
-  plt.plot(km, -Pvh, 'g*', ms=1.5*ms, mew=mew, mec='k')
-  plt.plot(km, abs(Pvh-sn_vh), 'g--', ms=ms, mew=mew)
-  plt.plot(km, sn_vh, 'g:', ms=ms, mew=mew)
-  plt.plot(km, -sn_vh, 'g-.', ms=ms, mew=mew)
-  plt.fill_between(km, abs(Pvh+SPvh), abs(Pvh-SPvh), color='g', alpha=0.2)
-  pe ,= plt.plot(km, Pvm, 'm-D', ms=ms, mew=mew, mec='k')
+  pb ,= plt.plot(km, Pvm, 'm-D', ms=ms, mew=mew, mec='k')
   plt.plot(km, -Pvm, 'mD', ms=ms, mew=mew, mec='k')
   plt.fill_between(km, abs(Pvm+SPvm), abs(Pvm-SPvm), color='m', alpha=0.2)
-  pf ,= plt.plot(km, Pvv, 'b-p', ms=1.3*ms, mew=mew, mec='k')
-  plt.plot(km, Pvv-sn_vv, 'b--', ms=ms, mew=mew)
-  plt.plot(km, sn_vv, 'b:', ms=ms, mew=mew)
+  pc ,= plt.plot(km, Pvv, 'b-p', ms=1.3*ms, mew=mew, mec='k')
+  #plt.plot(km, Pvv-1./nv, 'b--', ms=ms, mew=mew)
   plt.fill_between(km, Pvv+SPvv, abs(Pvv-SPvv), color='b', alpha=0.2)
   plt.xlabel(r'$k \;[h\mathrm{Mpc}^{-1}]$')
   plt.ylabel(r'$P(k) \;[h^{-3}\mathrm{Mpc}^3]$')
@@ -119,25 +93,18 @@ def computeXcor(catalog,
   plt.xscale('log')
   plt.yscale('log')
   plt.xlim(kmin,kmax)
-  plt.ylim(10**np.floor(np.log10(abs(Pvh).min()))/margin, max(10**np.ceil(np.log10(Phh.max())),10**np.ceil(np.log10(Pvv.max())))*margin)
-  plt.legend([pa, pb, pc, pd, pe, pf],['gg', 'gm', 'mm', 'vg', 'vm', 'vv'],'lower left',prop={'size':12})
-  plt.savefig(figDir+'/power_'+sample.fullName+'.pdf', format='pdf', bbox_inches="tight") 
+  plt.ylim(10**np.floor(np.log10(abs(Pvm[1:]).min()))/margin, max(10**np.ceil(np.log10(Pmm.max())),10**np.ceil(np.log10(Pvv.max())))*margin)
+  plt.legend([pa, pb, pc],['tt', 'vt', 'vv'],'best',prop={'size':12})
+  plt.savefig(figDir+'/power.eps', format='eps', bbox_inches="tight") 
   plt.clf()
   
-  pa ,= plt.plot(rm, Xhh, 'r-', ms=ms, mew=mew)
-  plt.fill_between(rm, abs(Xhh+SXhh), abs(Xhh-SXhh), color='r', alpha=0.2)
-  pb ,= plt.plot(rm, Xhm, 'y-', ms=ms, mew=mew)
-  plt.fill_between(rm, abs(Xhm+SXhm), abs(Xhm-SXhm), color='y', alpha=0.2)
-  pc ,= plt.plot(rm, Xmm, 'k-', ms=ms, mew=mew)
+  pa ,= plt.plot(rm, Xmm, 'k-o', ms=0.8*ms, mew=mew)
   plt.fill_between(rm, abs(Xmm+SXmm), abs(Xmm-SXmm), color='k', alpha=0.2)
-  pd ,= plt.plot(rm, Xvh, 'g-', ms=ms, mew=mew)
-  plt.plot(rm, -Xvh, 'g--', ms=ms, mew=mew)
-  plt.fill_between(rm, abs(Xvh+SXvh), abs(Xvh-SXvh), color='g', alpha=0.2)
-  pe ,= plt.plot(rm, Xvm, 'm-', ms=ms, mew=mew)
-  plt.plot(rm, -Xvm, 'm--', ms=ms, mew=mew)
+  pb ,= plt.plot(rm, Xvm, 'm-D', ms=ms, mew=mew)
+  plt.plot(rm, -Xvm, 'mD', ms=ms, mew=mew)
   plt.fill_between(rm, abs(Xvm+SXvm), abs(Xvm-SXvm), color='m', alpha=0.2)
-  pf ,= plt.plot(rm, Xvv, 'b-', ms=ms, mew=mew)
-  plt.plot(rm, -Xvv, 'b--', ms=ms, mew=mew)
+  pc ,= plt.plot(rm, Xvv, 'b-p', ms=1.3*ms, mew=mew)
+  plt.plot(rm, -Xvv, 'bp', ms=ms, mew=1.3*mew)
   plt.fill_between(rm, abs(Xvv+SXvv), abs(Xvv-SXvv), color='b', alpha=0.2)
   plt.xlabel(r'$r \;[h^{-1}\mathrm{Mpc}]$')
   plt.ylabel(r'$\xi(r)$')
@@ -145,9 +112,9 @@ def computeXcor(catalog,
   plt.xscale('log')
   plt.yscale('log')
   plt.xlim(rmin,rmax)
-  plt.ylim(10**np.floor(np.log10(abs(Xvh).min()))/margin, max(10**np.ceil(np.log10(Xhh.max())),10**np.ceil(np.log10(Xvv.max())))*margin)
-  plt.legend([pa, pb, pc, pd, pe, pf],['gg', 'gm', 'mm', 'vg', 'vm', 'vv'],'best',prop={'size':12})
-  plt.savefig(figDir+'/correlation_'+sample.fullName+'.pdf', format='pdf', bbox_inches="tight") 
+  plt.ylim(min(10**np.floor(np.log10(abs(Xvm).min())),10**np.floor(np.log10(abs(Xmm).min())))/margin, max(10**np.ceil(np.log10(Xmm.max())),10**np.ceil(np.log10(Xvv.max())))*margin)
+  plt.legend([pa, pb, pc],['tt', 'vt', 'vv'],'best',prop={'size':12})
+  plt.savefig(figDir+'/correlation.eps', format='eps', bbox_inches="tight") 
   plt.clf()
   
   
