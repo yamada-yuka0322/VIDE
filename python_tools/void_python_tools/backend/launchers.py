@@ -180,6 +180,9 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       xMax = (iX+1)/sample.numSubvolumes * sample.boxLen
       yMax = (iY+1)/sample.numSubvolumes * sample.boxLen
 
+      reshiftFlag = ""
+      if not sample.shiftSimZ: reshiftFlag = "preReShift"
+
       conf="""
       %s
       output %s
@@ -196,6 +199,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       %s
       %s
       %s
+      %s
       """ % (dataFileLine, outputFile,
              outputFile+".par",
              includePecVelString,
@@ -203,7 +207,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
              sample.dataUnit,
              xMin, xMax, yMin, yMax,
              sample.zBoundaryMpc[0], sample.zBoundaryMpc[1],
-             subSampleLine,resubSampleLine,inputParameterFlag)
+             subSampleLine,resubSampleLine,inputParameterFlag,reshiftFlag)
 
       parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
 

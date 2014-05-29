@@ -70,6 +70,7 @@ class Sample:
   selFunFile = "czselfunc.all.dr72dim.dat"
   zBoundary = (0.0, 0.1)
   zBoundaryMpc = (0., 300)
+  shiftSimZ = False
   zRange    = (0.0, 0.1)
   omegaM    = 0.27
   minVoidRadius = -1
@@ -96,7 +97,7 @@ class Sample:
 
   def __init__(self, dataFile="", fullName="", dataUnit=1,
                nickName="", maskFile="", selFunFile="",
-               zBoundary=(), zRange=(), zBoundaryMpc=(),
+               zBoundary=(), zRange=(), zBoundaryMpc=(), shiftSimZ=False,
                minVoidRadius=-1, fakeDensity=0.01, volumeLimited=True,
                numAPSlices=1,
                includeInHubble=True, partOfCombo=False, isCombo=False, 
@@ -114,6 +115,7 @@ class Sample:
     self.selFunFile = selFunFile
     self.zBoundary = zBoundary 
     self.zBoundaryMpc = zBoundaryMpc
+    self.shiftSimZ = shiftSimZ
     self.zRange = zRange
     self.minVoidRadius = minVoidRadius
     self.fakeDensity = fakeDensity
