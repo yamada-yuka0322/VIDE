@@ -424,7 +424,7 @@ for iSubSample in xrange(len(subSamples)):
                     numSubvolumes, numSlices, True, lbox, minRadius, omegaM, 
                     subsample=subSampleToUse, suffix=suffix)
     else:
-      if doSubSampling:
+      if doSubSamplingInPrep:
         # prepare scripts using our own format
         dataFormatToUse = "multidark"
         subSampleToUse = 1.0
@@ -453,7 +453,7 @@ for iSubSample in xrange(len(subSamples)):
                     dataFileNameList=partFileList)
        
 
-  if (args.subsample or args.all) and doSubSampling:
+  if (args.subsample or args.all) and doSubSamplingInPrep:
     print " Doing subsample", thisSubSample
     sys.stdout.flush()
 
