@@ -190,21 +190,19 @@ def getHSWProfile(density, radius):
     },
   ]
 
-  if not np.any(density == samples[:]['name']):
-    print "Sample", density," not found! Use one of ", samples[:]['name']
-    return -1
+  mySample = next((item for item in samples if item['name'] == density), None)
+  if mySample == None:
+    print "Sample", density," not found! Use one of ", [item['name'] for item in samples]
+    return 
 
   # interpolate the radii
-  for sample in samples:
-    if not density == sample['name']: continue
- 
-    rsFunc = interp1d( sample['rv'], sample['rs'], kind='cubic' )
-    dcFunc = interp1d( sample['rv'], sample['dc'], kind='cubic' )
+  rsFunc = interp1d( mySample['rv'], mySample['rs'], kind='cubic' )
+  dcFunc = interp1d( mySample['rv'], mySample['dc'], kind='cubic' )
     
-    rs = rsFunc(radius)
-    dc = dcFunc(radius)  
+  rs = rsFunc(radius)
+  dc = dcFunc(radius)
 
   # return best-fits
   rVals = np.linspace(0.0, 3*radius, 100) / radius
-  return (rs,dc), rVals, HSWProfile(rVals,rs,dc)
+  return (rs,dc), rVals*radius, HSWProfile(rVals,rs,dc)
   
