@@ -104,8 +104,8 @@ shiftSimZ = False
 # list of desired subsamples - see subSamplingMode parameter
 subSamples = [1.0]
 
-doSubSamplingInPrep = True # do the subsampling in preparation script?
-                           # if False, generateMock will do the subsampling
+doSubSamplingInPrep = False # do the subsampling in preparation script?
+                            # if False, generateMock will do the subsampling
 
 # if 'absolute', subSamples are given in particles per cubic Mpc/h
 # if 'relative', subSamples are given as a fraction of input particles
