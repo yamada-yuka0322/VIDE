@@ -542,10 +542,10 @@ def stackVoids(catalog, stackMode = "ball"):
       localPart = catalog.partPos[ getBall(partTree, center, rMax) ]
     else:
       voidPart = getVoidPart(catalog, void.voidID)
-      localPart = np.zeros((3,len(voidPart)))
-      localPart[0,:] = getArray(voidPart, 'x')
-      localPart[1,:] = getArray(voidPart, 'y')
-      localPart[2,:] = getArray(voidPart, 'z')
+      localPart = np.zeros((len(voidPart),3))
+      localPart[:,0] = getArray(voidPart, 'x')
+      localPart[:,1] = getArray(voidPart, 'y')
+      localPart[:,2] = getArray(voidPart, 'z')
 
     shiftedPart = shiftPart(localPart, center, periodicLine, catalog.ranges)
 

@@ -253,13 +253,13 @@ def plotVoidCells(catalog,
 
   voidPart = getVoidPart(catalog, voidID)
 
-  newpart = np.zeros((3,len(voidPart)))
+  newpart = np.zeros((len(voidPart),3))
   volume=np.zeros(len(voidPart))
   radius=np.zeros(len(voidPart))
 
-  newpart[0,:] = getArray(voidPart, 'x')
-  newpart[1,:] = getArray(voidPart, 'y')
-  newpart[2,:] = getArray(voidPart, 'z')
+  newpart[:,0] = getArray(voidPart, 'x')
+  newpart[:,1] = getArray(voidPart, 'y')
+  newpart[:,2] = getArray(voidPart, 'z')
 
   volume = getArray(voidPart, 'volume')
   radius = (3.*volume/(4.*np.pi))**(1./3.)
