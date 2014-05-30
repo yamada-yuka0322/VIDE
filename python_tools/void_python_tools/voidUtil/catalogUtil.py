@@ -461,7 +461,7 @@ def getArray(objectList, attr):
       attrArr[:,idim] = np.fromiter((np.atleast_1d(getattr(v, attr))[idim] \
                                     for v in objectList), float )
   
-    if ndim == 1: attrArr = attArr[:,0]
+    if ndim == 1: attrArr = attrArr[:,0]
 
     return attrArr
   else:
