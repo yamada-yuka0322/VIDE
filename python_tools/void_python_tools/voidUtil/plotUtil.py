@@ -58,6 +58,8 @@ def plotNumberFunction(catalogList,
 
   print "Plotting number function"
   
+  catalogList = np.atleast_1d(catalogList)
+
   plt.clf()
   plt.xlabel("$R_{eff}$ [$h^{-1}Mpc$]", fontsize=14)
   
@@ -160,6 +162,8 @@ def plotEllipDist(catalogList,
   
   ellipDistList = [] 
 
+  catalogList = np.atleast_1d(catalogList)
+
   for (iSample,catalog) in enumerate(catalogList):
     sample = catalog.sampleInfo
     data = getArray(catalog.voids, 'ellipticity')
@@ -167,8 +171,9 @@ def plotEllipDist(catalogList,
     dataWeights = np.ones_like(data)/len(data)
     dataHist, dataBins = np.histogram(data, bins=10, weights=dataWeights,
                                          range=(0.0,0.35)) 
+    binCenters = 0.5*(dataBins[1:] + dataBins[:-1])
   
-    plt.plot(dataBins, dataHist, label=sample.fullName, 
+    plt.plot(binCenters, dataHist, label=sample.fullName, 
              color=colorList[iSample])
   
     ellipDistList.append((dataBins, dataHist,))
@@ -252,13 +257,13 @@ def plotVoidCells(catalog,
 
   voidPart = getVoidPart(catalog, voidID)
 
-  newpart = np.zeros((3,len(voidPart)))
+  newpart = np.zeros((len(voidPart),3))
   volume=np.zeros(len(voidPart))
   radius=np.zeros(len(voidPart))
 
-  newpart[0,:] = getArray(voidPart, 'x')
-  newpart[1,:] = getArray(voidPart, 'y')
-  newpart[2,:] = getArray(voidPart, 'z')
+  newpart[:,0] = getArray(voidPart, 'x')
+  newpart[:,1] = getArray(voidPart, 'y')
+  newpart[:,2] = getArray(voidPart, 'z')
 
   volume = getArray(voidPart, 'volume')
   radius = (3.*volume/(4.*np.pi))**(1./3.)

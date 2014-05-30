@@ -119,7 +119,9 @@ def computeXcor(catalog,
   plt.xlim(rmin,rmax)
   plt.ylim(min(10**np.floor(np.log10(abs(Xvm).min())),10**np.floor(np.log10(abs(Xmm).min())))/margin, max(10**np.ceil(np.log10(Xmm.max())),10**np.ceil(np.log10(Xvv.max())))*margin)
   plt.legend([pa, pb, pc],['tt', 'vt', 'vv'],'best',prop={'size':12})
-  plt.savefig(figDir+'/correlation.eps', format='eps', bbox_inches="tight") 
+  plt.savefig(figDir+'/correlation.eps', bbox_inches="tight") 
+  plt.savefig(figDir+'/correlation.pdf', bbox_inches="tight")
+  plt.savefig(figDir+'/correlation.png', bbox_inches="tight")
   plt.clf()
   
   
