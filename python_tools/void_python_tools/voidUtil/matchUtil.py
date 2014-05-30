@@ -71,7 +71,7 @@ def compareCatalogs(baseCatalogDir, compareCatalogDir,
   launchVoidOverlap(baseSample, sample, baseCatalogDir, 
                     compareCatalogDir, binPath, 
                     thisDataPortion=dataPortion, logFile=logFile,
-                    continueRun=False, workDir=workDir,
+                    continueRun=False, 
                     outputFile=stepOutputFileName,
                     matchMethod=matchMethod,
                     strictMatch=strictMatch)
