@@ -344,7 +344,8 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
                                eigenVecs = np.zeros((3,3)),
                                ))
 
-  print "Read %d voids" % len(catalog.voids)
+  catalog.numVoids = len(catalog.voids)
+  print "Read %d voids" % catalog.numVoids  
 
   print "Loading barycenters..."
   iLine = 0

@@ -167,8 +167,9 @@ def plotEllipDist(catalogList,
     dataWeights = np.ones_like(data)/len(data)
     dataHist, dataBins = np.histogram(data, bins=10, weights=dataWeights,
                                          range=(0.0,0.35)) 
+    binCenters = 0.5*(dataBins[1:] + dataBins[:-1])
   
-    plt.plot(dataBins, dataHist, label=sample.fullName, 
+    plt.plot(binCenters, dataHist, label=sample.fullName, 
              color=colorList[iSample])
   
     ellipDistList.append((dataBins, dataHist,))
