@@ -84,14 +84,38 @@ def loadPart(sampleDir):
     if isObservation != 1:
       z += ranges[2][0]
     chk = np.fromfile(File, dtype=np.int32,count=1)
+
+    chk = np.fromfile(File, dtype=np.int32,count=1)
+    RA = np.fromfile(File, dtype=np.float32,count=Np)
+    chk = np.fromfile(File, dtype=np.int32,count=1)
+
+    chk = np.fromfile(File, dtype=np.int32,count=1)
+    Dec = np.fromfile(File, dtype=np.float32,count=Np)
+    chk = np.fromfile(File, dtype=np.int32,count=1)
+
+    chk = np.fromfile(File, dtype=np.int32,count=1)
+    redshift = np.fromfile(File, dtype=np.float32,count=Np)
+    chk = np.fromfile(File, dtype=np.int32,count=1)
+
+    chk = np.fromfile(File, dtype=np.int32,count=1)
+    uniqueID = np.fromfile(File, dtype=np.int64,count=Np)
+    chk = np.fromfile(File, dtype=np.int32,count=1)
+
     File.close()
+
 
     if isObservation == 1:
       x = x[0:maskIndex]# * 100/300000
       y = y[0:maskIndex]# * 100/300000
       z = z[0:maskIndex]# * 100/300000
+      RA = RA[0:maskIndex]
+      Dec = Dec[0:maskIndex]
+      redshift = redshift[0:maskIndex]
+      uniqueID = uniqueID[0:maskIndex]
 
     partData = np.column_stack((x,y,z))
+
+    extraData = np.column_stack((RA,Dec,redshift,uniqueID))
 
     boxLen = mul
 
@@ -116,7 +140,7 @@ def loadPart(sampleDir):
 
     isObservationData = isObservation == 1
 
-    return partData, boxLen, volNorm, isObservationData, ranges
+    return partData, boxLen, volNorm, isObservationData, ranges, extraData
 
 # -----------------------------------------------------------------------------
 def getVolNorm(sampleDir):
@@ -392,7 +416,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
 
   if loadParticles:
     print "Loading all particles..."
-    partData, boxLen, volNorm, isObservationData, ranges = loadPart(sampleDir)
+    partData, boxLen, volNorm, isObservationData, ranges, extraData = loadPart(sampleDir)
     numPartTot = len(partData)
     catalog.numPartTot = numPartTot
     catalog.partPos = partData
@@ -402,10 +426,10 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
                                 y = partData[i][1],
                                 z = partData[i][2],
                                 volume = 0,
-                                ra = 0,
-                                dec = 0,
-                                redshift = 0,
-                                uniqueID = 0))
+                                ra = extraData[i][0],
+                                dec = extraData[i][1],
+                                redshift = extraData[i][2],
+                                uniqueID = extraData[i][3]))
       
  
     print "Loading volumes..."
