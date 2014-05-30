@@ -525,7 +525,7 @@ def launchPrune(sample, binPath,
 # -----------------------------------------------------------------------------
 def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir, 
                       binPath, thisDataPortion=None, 
-                      logFile=None, workDir=None,
+                      logFile=None, 
                       continueRun=None, outputFile=None, 
                       matchMethod=None, strictMatch=False):
 
