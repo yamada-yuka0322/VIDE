@@ -58,6 +58,8 @@ def plotNumberFunction(catalogList,
 
   print "Plotting number function"
   
+  catalogList = np.atleast_1d(catalogList)
+
   plt.clf()
   plt.xlabel("$R_{eff}$ [$h^{-1}Mpc$]", fontsize=14)
   
@@ -159,6 +161,8 @@ def plotEllipDist(catalogList,
   plt.ylabel(r"P($\epsilon$)", fontsize=14)
   
   ellipDistList = [] 
+
+  catalogList = np.atleast_1d(catalogList)
 
   for (iSample,catalog) in enumerate(catalogList):
     sample = catalog.sampleInfo
