@@ -359,6 +359,8 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
                                voidProb = line[10],
                                radius = pow(line[7]/volNorm*3./4./np.pi, 1./3.),
                                barycenter = np.zeros((3)),
+                               RA = 0,
+                               Dec = 0,
                                parentID = 0,
                                treeLevel = 0,
                                numChildren = 0,
@@ -379,6 +381,14 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
     catalog.voids[iLine].barycenter[1] = float(line[2])
     catalog.voids[iLine].barycenter[2] = float(line[3])
     iLine += 1
+
+  iLine = 0
+  for line in open(sampleDir+"/"+prefix+"sky_positions_"+dataPortion+"_"+sample.fullName+".out"):
+    line = line.split()
+    catalog.voids[iLine].RA = float(line[0])
+    catalog.voids[iLine].Dec = float(line[1])
+    iLine += 1
+
 
   print "Loading derived void information..."
   fileName = sampleDir+"/"+prefix+"centers_"+dataPortion+"_"+sample.fullName+".out"
