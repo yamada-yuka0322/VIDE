@@ -71,7 +71,7 @@ typedef struct voidStruct {
   int voidID, numPart, numZones, coreParticle, zoneNumPart;
   float maxRadius, nearestMock, centralDen, redshift, redshiftInMpc;
   float nearestEdge;
-  float barycenter[3];
+  float macrocenter[3];
   float ellipticity;
   float eigv1[3], eigv2[3], eigv3[3], eig[3];
   std::vector<MATCHPROPS> matches;
@@ -194,11 +194,11 @@ int main(int argc, char **argv) {
           partID1 = catalog1.zones2Parts[zoneID1].partIDs[p1];     
 
           dist[0] = fabs(catalog1.part[partID1].x - 
-                         catalog2.voids[iVoid2].barycenter[0]);
+                         catalog2.voids[iVoid2].macrocenter[0]);
           dist[1] = fabs(catalog1.part[partID1].y - 
-                         catalog2.voids[iVoid2].barycenter[1]);
+                         catalog2.voids[iVoid2].macrocenter[1]);
           dist[2] = fabs(catalog1.part[partID1].z - 
-                         catalog2.voids[iVoid2].barycenter[2]);
+                         catalog2.voids[iVoid2].macrocenter[2]);
 
           if (periodicX) dist[0] = fmin(dist[0], 1.0 - dist[0]);
           if (periodicY) dist[1] = fmin(dist[1], 1.0 - dist[1]);
@@ -659,7 +659,7 @@ void loadCatalog(const char *partFile, const char *volFile,
   catalog.voids.resize(catalog.numVoids);
   printf("  Read %d voids.\n", catalog.numVoids);
 
-  printf(" Loading barycenters\n");
+  printf(" Loading macrocenters\n");
   fp = fopen(centerFile, "r");
   float tempBary[3];
   float tempFloat;
@@ -678,9 +678,9 @@ void loadCatalog(const char *partFile, const char *volFile,
     tempBary[0] = (tempBary[0] - ranges[0][0])/catalog.boxLen[0];
     tempBary[1] = (tempBary[1] - ranges[1][0])/catalog.boxLen[1];
     tempBary[2] = (tempBary[2] - ranges[2][0])/catalog.boxLen[2];
-    catalog.voids[iVoid].barycenter[0] = tempBary[0];
-    catalog.voids[iVoid].barycenter[1] = tempBary[1];
-    catalog.voids[iVoid].barycenter[2] = tempBary[2];
+    catalog.voids[iVoid].macrocenter[0] = tempBary[0];
+    catalog.voids[iVoid].macrocenter[1] = tempBary[1];
+    catalog.voids[iVoid].macrocenter[2] = tempBary[2];
     iVoid++;
   }
   fclose(fp);
@@ -764,12 +764,12 @@ float getDist(CATALOG& catalog1, CATALOG& catalog2, int& iVoid1, int& iVoid2,
 
   float rdist, dist[3];
 
-  dist[0] = fabs(catalog1.voids[iVoid1].barycenter[0] - 
-                 catalog2.voids[iVoid2].barycenter[0]);
-  dist[1] = fabs(catalog1.voids[iVoid1].barycenter[1] - 
-                 catalog2.voids[iVoid2].barycenter[1]);
-  dist[2] = fabs(catalog1.voids[iVoid1].barycenter[2] - 
-                 catalog2.voids[iVoid2].barycenter[2]);
+  dist[0] = fabs(catalog1.voids[iVoid1].macrocenter[0] - 
+                 catalog2.voids[iVoid2].macrocenter[0]);
+  dist[1] = fabs(catalog1.voids[iVoid1].macrocenter[1] - 
+                 catalog2.voids[iVoid2].macrocenter[1]);
+  dist[2] = fabs(catalog1.voids[iVoid1].macrocenter[2] - 
+                 catalog2.voids[iVoid2].macrocenter[2]);
 
   if (periodicX) dist[0] = fmin(dist[0], 1.0 - dist[0]);
   if (periodicY) dist[1] = fmin(dist[1], 1.0 - dist[1]);

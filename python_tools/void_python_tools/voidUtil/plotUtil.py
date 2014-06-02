@@ -217,7 +217,7 @@ def plotVoidCells(catalog,
     print "Void ID %d not found!" % voidID
     return
   
-  sliceCenter = catalog.voids[iVoid].barycenter
+  sliceCenter = catalog.voids[iVoid].macrocenter
 
   xwidth = sliceWidth
   ywidth = sliceWidth

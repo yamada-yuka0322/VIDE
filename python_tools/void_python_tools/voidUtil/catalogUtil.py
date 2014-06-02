@@ -358,7 +358,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
                                densCon = line[9],
                                voidProb = line[10],
                                radius = pow(line[7]/volNorm*3./4./np.pi, 1./3.),
-                               barycenter = np.zeros((3)),
+                               macrocenter = np.zeros((3)),
                                RA = 0,
                                Dec = 0,
                                parentID = 0,
@@ -373,13 +373,13 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
   catalog.numVoids = len(catalog.voids)
   print "Read %d voids" % catalog.numVoids  
 
-  print "Loading barycenters..."
+  print "Loading macrocenters..."
   iLine = 0
-  for line in open(sampleDir+"/"+prefix+"barycenters_"+dataPortion+"_"+sample.fullName+".out"):
+  for line in open(sampleDir+"/"+prefix+"macrocenters_"+dataPortion+"_"+sample.fullName+".out"):
     line = line.split()
-    catalog.voids[iLine].barycenter[0] = float(line[1])
-    catalog.voids[iLine].barycenter[1] = float(line[2])
-    catalog.voids[iLine].barycenter[2] = float(line[3])
+    catalog.voids[iLine].macrocenter[0] = float(line[1])
+    catalog.voids[iLine].macrocenter[1] = float(line[2])
+    catalog.voids[iLine].macrocenter[2] = float(line[3])
     iLine += 1
 
   iLine = 0
@@ -570,7 +570,7 @@ def stackVoids(catalog, stackMode = "ball"):
 
   stackedPart = []
   for void in catalog.voids:
-    center = void.barycenter
+    center = void.macrocenter
 
     if stackMode == "ball":
       localPart = catalog.partPos[ getBall(partTree, center, rMax) ]

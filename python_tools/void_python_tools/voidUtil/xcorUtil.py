@@ -25,7 +25,7 @@ def computeXcor(catalog,
   
   # Input particle arrays of shape (N,3)
   xm = catalog.partPos # Halos / Galaxies / Dark matter
-  xv = getArray(catalog.voids, 'barycenter')
+  xv = getArray(catalog.voids, 'macrocenter')
   
   
   # Interpolate to mesh

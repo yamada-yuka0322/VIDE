@@ -550,7 +550,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
     cmd += " --infoFile1=" + sample1Dir+"/zobov_slice_" + \
            str(sampleName1)+".par"
     cmd += " --centerFile1=" + sample1Dir + \
-           "/barycenters_"+thisDataPortion+"_"+str(sampleName1)+".out"
+           "/macrocenters_"+thisDataPortion+"_"+str(sampleName1)+".out"
     cmd += " --shapeFile1=" + sample1Dir + \
            "/shapes_"+thisDataPortion+"_"+str(sampleName1)+".out"
     cmd += " --zoneFile1=" + sample1Dir+"/voidZone_" + \
@@ -567,7 +567,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
     cmd += " --infoFile2=" + sample2Dir+"/zobov_slice_" + \
            str(sampleName2)+".par"
     cmd += " --centerFile2=" + sample2Dir + \
-           "/"+matchPrefix+"barycenters_"+thisDataPortion+"_"+str(sampleName2)+".out"
+           "/"+matchPrefix+"macrocenters_"+thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --shapeFile2=" + sample2Dir + \
            "/"+matchPrefix+"shapes_"+thisDataPortion+"_"+str(sampleName2)+".out"
     cmd += " --zoneFile2=" + sample2Dir+"/voidZone_" + \

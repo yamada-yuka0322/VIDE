@@ -78,7 +78,7 @@ typedef struct voidStruct {
   float maxRadius, nearestMock, centralDen, redshift, redshiftInMpc;
   float nearestMockFromCore, nearestGalFromCore;
   float nearestEdge;
-  float center[3], barycenter[3];
+  float center[3], macrocenter[3];
   int accepted;
   int voidType;
   int parentID, numChildren, level;
@@ -555,12 +555,12 @@ int main(int argc, char **argv) {
     interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
     //printf("   %.2f for buffer\n", interval);
 
-    // compute barycenters
+    // compute macrocenters
     clock3 = clock();
     double weight = 0.;
-    voids[iVoid].barycenter[0] = 0.;
-    voids[iVoid].barycenter[1] = 0.;
-    voids[iVoid].barycenter[2] = 0.;
+    voids[iVoid].macrocenter[0] = 0.;
+    voids[iVoid].macrocenter[1] = 0.;
+    voids[iVoid].macrocenter[2] = 0.;
 
     for (p = 0; p < voids[iVoid].numPart; p++) {
       dist[0] = voidPart[p].x - voids[iVoid].center[0];
@@ -574,39 +574,39 @@ int main(int argc, char **argv) {
       if (periodicZ && fabs(dist[2]) > boxLen[2]/2.) 
           dist[2] = dist[2] - copysign(boxLen[2], dist[2]);
 
-      voids[iVoid].barycenter[0] += voidPart[p].vol*(dist[0]);
-      voids[iVoid].barycenter[1] += voidPart[p].vol*(dist[1]);
-      voids[iVoid].barycenter[2] += voidPart[p].vol*(dist[2]);
+      voids[iVoid].macrocenter[0] += voidPart[p].vol*(dist[0]);
+      voids[iVoid].macrocenter[1] += voidPart[p].vol*(dist[1]);
+      voids[iVoid].macrocenter[2] += voidPart[p].vol*(dist[2]);
       weight += voidPart[p].vol;
     }
-    voids[iVoid].barycenter[0] /= weight;
-    voids[iVoid].barycenter[1] /= weight;
-    voids[iVoid].barycenter[2] /= weight;
-    voids[iVoid].barycenter[0] += voids[iVoid].center[0];
-    voids[iVoid].barycenter[1] += voids[iVoid].center[1];
-    voids[iVoid].barycenter[2] += voids[iVoid].center[2];
+    voids[iVoid].macrocenter[0] /= weight;
+    voids[iVoid].macrocenter[1] /= weight;
+    voids[iVoid].macrocenter[2] /= weight;
+    voids[iVoid].macrocenter[0] += voids[iVoid].center[0];
+    voids[iVoid].macrocenter[1] += voids[iVoid].center[1];
+    voids[iVoid].macrocenter[2] += voids[iVoid].center[2];
 
     if (periodicX) {
-      if (voids[iVoid].barycenter[0] > ranges[0][1])
-        voids[iVoid].barycenter[0] = voids[iVoid].barycenter[0] - boxLen[0];
-      if (voids[iVoid].barycenter[0] < ranges[0][0])
-        voids[iVoid].barycenter[0] = boxLen[0] + voids[iVoid].barycenter[0];
+      if (voids[iVoid].macrocenter[0] > ranges[0][1])
+        voids[iVoid].macrocenter[0] = voids[iVoid].macrocenter[0] - boxLen[0];
+      if (voids[iVoid].macrocenter[0] < ranges[0][0])
+        voids[iVoid].macrocenter[0] = boxLen[0] + voids[iVoid].macrocenter[0];
     }
     if (periodicY) {
-      if (voids[iVoid].barycenter[1] > ranges[1][1])
-        voids[iVoid].barycenter[1] = voids[iVoid].barycenter[1] - boxLen[1];
-      if (voids[iVoid].barycenter[1] < ranges[1][0])
-        voids[iVoid].barycenter[1] = boxLen[1] + voids[iVoid].barycenter[1];
+      if (voids[iVoid].macrocenter[1] > ranges[1][1])
+        voids[iVoid].macrocenter[1] = voids[iVoid].macrocenter[1] - boxLen[1];
+      if (voids[iVoid].macrocenter[1] < ranges[1][0])
+        voids[iVoid].macrocenter[1] = boxLen[1] + voids[iVoid].macrocenter[1];
     }
     if (periodicZ) {
-      if (voids[iVoid].barycenter[2] > ranges[2][1])
-        voids[iVoid].barycenter[2] = voids[iVoid].barycenter[2] - boxLen[2];
-      if (voids[iVoid].barycenter[2] < ranges[2][0])
-        voids[iVoid].barycenter[2] = boxLen[2] + voids[iVoid].barycenter[2];
+      if (voids[iVoid].macrocenter[2] > ranges[2][1])
+        voids[iVoid].macrocenter[2] = voids[iVoid].macrocenter[2] - boxLen[2];
+      if (voids[iVoid].macrocenter[2] < ranges[2][0])
+        voids[iVoid].macrocenter[2] = boxLen[2] + voids[iVoid].macrocenter[2];
     }
     clock4 = clock();
     interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
-    //printf("   %.2f for barycenter\n", interval);
+    //printf("   %.2f for macrocenter\n", interval);
 
     // compute central density
     clock3 = clock();
@@ -614,9 +614,9 @@ int main(int argc, char **argv) {
     centralDen = 0.;
     int numCentral = 0;
     for (p = 0; p < voids[iVoid].numPart; p++) {
-      dist[0] = fabs(voidPart[p].x - voids[iVoid].barycenter[0]);
-      dist[1] = fabs(voidPart[p].y - voids[iVoid].barycenter[1]);
-      dist[2] = fabs(voidPart[p].z - voids[iVoid].barycenter[2]);
+      dist[0] = fabs(voidPart[p].x - voids[iVoid].macrocenter[0]);
+      dist[1] = fabs(voidPart[p].y - voids[iVoid].macrocenter[1]);
+      dist[2] = fabs(voidPart[p].z - voids[iVoid].macrocenter[2]);
 
       if (periodicX) dist[0] = fmin(dist[0], boxLen[0]-dist[0]);
       if (periodicY) dist[1] = fmin(dist[1], boxLen[1]-dist[1]);
@@ -681,9 +681,9 @@ int main(int argc, char **argv) {
       maxDist = 0.;
       for (p = 0; p < voids[iVoid].numPart; p++) {
   
-        dist[0] = fabs(voidPart[p].x - voids[iVoid].barycenter[0]);
-        dist[1] = fabs(voidPart[p].y - voids[iVoid].barycenter[1]);
-        dist[2] = fabs(voidPart[p].z - voids[iVoid].barycenter[2]);
+        dist[0] = fabs(voidPart[p].x - voids[iVoid].macrocenter[0]);
+        dist[1] = fabs(voidPart[p].y - voids[iVoid].macrocenter[1]);
+        dist[2] = fabs(voidPart[p].z - voids[iVoid].macrocenter[2]);
 
         if (periodicX) dist[0] = fmin(dist[0], boxLen[0]-dist[0]);
         if (periodicY) dist[1] = fmin(dist[1], boxLen[1]-dist[1]);
@@ -703,9 +703,9 @@ int main(int argc, char **argv) {
       // compute distance from center to nearest mock
       minDist = 1.e99;
       for (p = mockIndex; p < numPartTot; p++) {
-        dist[0] = voids[iVoid].barycenter[0] - part[p].x;
-        dist[1] = voids[iVoid].barycenter[1] - part[p].y;
-        dist[2] = voids[iVoid].barycenter[2] - part[p].z;
+        dist[0] = voids[iVoid].macrocenter[0] - part[p].x;
+        dist[1] = voids[iVoid].macrocenter[1] - part[p].y;
+        dist[2] = voids[iVoid].macrocenter[2] - part[p].z;
 
         dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
         if (dist2 < minDist) minDist = dist2;
@@ -718,9 +718,9 @@ int main(int argc, char **argv) {
  
     if (args.isObservation_flag) {
       voids[iVoid].redshiftInMpc = 
-                        sqrt(pow(voids[iVoid].barycenter[0] - boxLen[0]/2.,2) + 
-                             pow(voids[iVoid].barycenter[1] - boxLen[1]/2.,2) + 
-                             pow(voids[iVoid].barycenter[2] - boxLen[2]/2.,2));
+                        sqrt(pow(voids[iVoid].macrocenter[0] - boxLen[0]/2.,2) + 
+                             pow(voids[iVoid].macrocenter[1] - boxLen[1]/2.,2) + 
+                             pow(voids[iVoid].macrocenter[2] - boxLen[2]/2.,2));
       voids[iVoid].redshiftInMpc = voids[iVoid].redshiftInMpc;
 
 
@@ -740,33 +740,33 @@ int main(int argc, char **argv) {
 
     } else {
 
-      voids[iVoid].redshiftInMpc = voids[iVoid].barycenter[2];
+      voids[iVoid].redshiftInMpc = voids[iVoid].macrocenter[2];
       if (args.useComoving_flag) {
         voids[iVoid].redshift = gsl_interp_eval(interp, dL, redshifts,
                  voids[iVoid].redshiftInMpc, acc);
       } else {
-        voids[iVoid].redshift = voids[iVoid].barycenter[2]/LIGHT_SPEED*100.;
+        voids[iVoid].redshift = voids[iVoid].macrocenter[2]/LIGHT_SPEED*100.;
       }
 
       nearestEdge = 1.e99;
      
       if (!periodicX) {
         nearestEdge = fmin(nearestEdge,
-                           fabs(voids[iVoid].barycenter[0] - ranges[0][0]));
+                           fabs(voids[iVoid].macrocenter[0] - ranges[0][0]));
         nearestEdge = fmin(nearestEdge,
-                           fabs(voids[iVoid].barycenter[0] - ranges[0][1]));
+                           fabs(voids[iVoid].macrocenter[0] - ranges[0][1]));
       }
       if (!periodicY) {
         nearestEdge = fmin(nearestEdge,
-                           fabs(voids[iVoid].barycenter[1] - ranges[1][0]));
+                           fabs(voids[iVoid].macrocenter[1] - ranges[1][0]));
         nearestEdge = fmin(nearestEdge,
-                           fabs(voids[iVoid].barycenter[1] - ranges[1][1]));
+                           fabs(voids[iVoid].macrocenter[1] - ranges[1][1]));
       }
       if (!periodicZ) {
         nearestEdge = fmin(nearestEdge,
-                           fabs(voids[iVoid].barycenter[2] - ranges[2][0]));
+                           fabs(voids[iVoid].macrocenter[2] - ranges[2][0]));
         nearestEdge = fmin(nearestEdge,
-                           fabs(voids[iVoid].barycenter[2] - ranges[2][1]));
+                           fabs(voids[iVoid].macrocenter[2] - ranges[2][1]));
       }
     }
 
@@ -782,9 +782,9 @@ int main(int argc, char **argv) {
     for (int i = 0; i < 9; i++) inertia[i] = 0.;
 
     for (int p = 0; p < voids[iVoid].numPart; p++) {
-      dist[0] = voidPart[p].x - voids[iVoid].barycenter[0];
-      dist[1] = voidPart[p].y - voids[iVoid].barycenter[1];
-      dist[2] = voidPart[p].z - voids[iVoid].barycenter[2];
+      dist[0] = voidPart[p].x - voids[iVoid].macrocenter[0];
+      dist[1] = voidPart[p].y - voids[iVoid].macrocenter[1];
+      dist[2] = voidPart[p].z - voids[iVoid].macrocenter[2];
 
       if (periodicX && fabs(dist[0]) > boxLen[0]/2.)
           dist[0] = dist[0] - copysign(boxLen[0], dist[0]);
@@ -1037,7 +1037,7 @@ void openFiles(string outputDir, string sampleName,
   fprintf(*fpZobov, "%d particles, %d voids.\n", mockIndex, numKept);
   fprintf(*fpZobov, "Void# FileVoid# CoreParticle CoreDens ZoneVol Zone#Part Void#Zones VoidVol Void#Part VoidDensContrast VoidProb\n");
 
-  *fpBarycenter = fopen((outputDir+"/"+prefix+"barycenters_"+dataPortion+"_"+sampleName).c_str(), "w");
+  *fpBarycenter = fopen((outputDir+"/"+prefix+"macrocenters_"+dataPortion+"_"+sampleName).c_str(), "w");
 
   *fpCenters = fopen((outputDir+"/"+prefix+"centers_"+dataPortion+"_"+sampleName).c_str(), "w");
   fprintf(*fpCenters, "# center x,y,z (Mpc/h), volume (normalized), radius (Mpc/h), redshift, volume (Mpc/h^3), void ID, density contrast, num part, parent ID, tree level, number of children, central density\n");
@@ -1103,14 +1103,14 @@ void outputVoids(string outputDir, string sampleName, string prefix,
        } 
 
      double outCenter[3];
-     outCenter[0] = outVoid.barycenter[0];
-     outCenter[1] = outVoid.barycenter[1];
-     outCenter[2] = outVoid.barycenter[2];
+     outCenter[0] = outVoid.macrocenter[0];
+     outCenter[1] = outVoid.macrocenter[1];
+     outCenter[2] = outVoid.macrocenter[2];
 
      //if (isObservation) {
-     //  outCenter[0] = (outVoid.barycenter[0]-boxLen[0]/2.)*100.;
-     //  outCenter[1] = (outVoid.barycenter[1]-boxLen[1]/2.)*100.;
-     //  outCenter[2] = (outVoid.barycenter[2]-boxLen[2]/2.)*100.;
+     //  outCenter[0] = (outVoid.macrocenter[0]-boxLen[0]/2.)*100.;
+     //  outCenter[1] = (outVoid.macrocenter[1]-boxLen[1]/2.)*100.;
+     //  outCenter[2] = (outVoid.macrocenter[2]-boxLen[2]/2.)*100.;
      //}
 
      fprintf(fpZobov, "%d %d %d %f %f %d %d %f %d %f %f\n", 
@@ -1128,9 +1128,9 @@ void outputVoids(string outputDir, string sampleName, string prefix,
 
      fprintf(fpBarycenter, "%d  %e %e %e\n", 
              outVoid.voidID,
-             outVoid.barycenter[0],
-             outVoid.barycenter[1],
-             outVoid.barycenter[2]);
+             outVoid.macrocenter[0],
+             outVoid.macrocenter[1],
+             outVoid.macrocenter[2]);
 
      fprintf(fpDistances, "%d %e %e %e %e %e\n", 
              outVoid.voidID, 
@@ -1157,9 +1157,9 @@ void outputVoids(string outputDir, string sampleName, string prefix,
              outVoid.centralDen);
      
      fprintf(fpSkyPositions, "%.2f %.2f %.5f %.2f %d\n",
-             atan((outVoid.barycenter[1]-boxLen[1]/2.) / 
-                  (outVoid.barycenter[0]-boxLen[0]/2.)) * 180/M_PI + 180,  
-             asin((outVoid.barycenter[2]-boxLen[2]/2.) / 
+             atan((outVoid.macrocenter[1]-boxLen[1]/2.) / 
+                  (outVoid.macrocenter[0]-boxLen[0]/2.)) * 180/M_PI + 180,  
+             asin((outVoid.macrocenter[2]-boxLen[2]/2.) / 
                    outVoid.redshiftInMpc) * 180/M_PI,  
              outVoid.redshift,
              outVoid.radius,

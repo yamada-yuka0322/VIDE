@@ -61,7 +61,7 @@ def buildProfile(catalog, rMin, rMax):
   print "  Stacking voids..."
   allProfiles = []
   for void in voidsToStack:
-    center = void.barycenter
+    center = void.macrocenter
     
     localPart = catalog.partPos[ getBall(partTree, center, rMaxProfile) ]
     shiftedPart = shiftPart(localPart, center, periodicLine, catalog.ranges)
