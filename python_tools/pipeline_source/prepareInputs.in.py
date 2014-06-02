@@ -191,9 +191,6 @@ continueRun = {continueRun} # set to True to enable restarting aborted jobs
 startCatalogStage = {startCatalogStage}
 endCatalogStage   = {endCatalogStage}
                
-startAPStage = {startAPStage}
-endAPStage = {endAPStage}
-
 regenerateFlag = False
 #ZOBOV_PATH = "@CMAKE_BINARY_DIR@/c_tools/zobov2/"
 ZOBOV_PATH = "@CMAKE_BINARY_DIR@/zobov/"
@@ -216,8 +213,6 @@ fittingMode = '{fittingMode}'
 
   scriptFile.write(header.format(startCatalogStage=startCatalogStage,
                                  endCatalogStage=endCatalogStage,
-                                 startAPStage=startAPStage,
-                                 endAPStage=endAPStage,
                                  continueRun=continueRun,
                                  dataPortions=dataPortions,
                                  minVoidsToFit=minVoidsToFit,
