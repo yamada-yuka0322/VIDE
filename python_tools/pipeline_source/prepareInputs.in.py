@@ -170,32 +170,15 @@ startCatalogStage = {startCatalogStage}
 endCatalogStage   = {endCatalogStage}
                
 regenerateFlag = False
-#ZOBOV_PATH = "@CMAKE_BINARY_DIR@/c_tools/zobov2/"
 ZOBOV_PATH = "@CMAKE_BINARY_DIR@/zobov/"
 CTOOLS_PATH = "@CMAKE_BINARY_DIR@/c_tools/"
-freshStack = True
-errorBars = "CALCULATED"
-numIncoherentRuns = 100
-ranSeed = 101010
-useComoving = False
-bias = 1.16
 
-dataPortions = {dataPortions}
 dataSampleList = []
-
-# for the A-P test
-minVoidsToFit = {minVoidsToFit}
-minPartToFit = {minPartToFit}
-fittingMode = '{fittingMode}'
            """
 
   scriptFile.write(header.format(startCatalogStage=startCatalogStage,
                                  endCatalogStage=endCatalogStage,
                                  continueRun=continueRun,
-                                 dataPortions=dataPortions,
-                                 minVoidsToFit=minVoidsToFit,
-                                 minPartToFit=minPartToFit,
-                                 fittingMode=fittingMode,
                                 ))
 
   dataInfo = """
@@ -233,8 +216,6 @@ newSample = Sample(dataFile = "{dataFile}",
                    includeInHubble = True,
                    partOfCombo = False,
                    {autoStack}
-                   numAPSlices = {numAPSlices},
-                   isCombo = False,
                    boxLen = {boxLen},
                    usePecVel = {usePecVel},
                    numSubvolumes = {numSubvolumes},
@@ -323,7 +304,6 @@ dataSampleList.append(newSample)
                                          omegaM=Om,
                                          boxLen=lbox,
                                          autoStack=autoStack,
-                                         numAPSlices=numAPSlices,
                                          usePecVel=useVel,
                                          minRadius=minRadius,
                                          numSubvolumes=numSubvolumes,
