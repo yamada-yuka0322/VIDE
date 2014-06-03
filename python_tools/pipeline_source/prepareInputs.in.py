@@ -215,7 +215,6 @@ newSample = Sample(dataFile = "{dataFile}",
                    profileBinSize = "auto",
                    includeInHubble = True,
                    partOfCombo = False,
-                   {autoStack}
                    boxLen = {boxLen},
                    usePecVel = {usePecVel},
                    numSubvolumes = {numSubvolumes},
@@ -288,9 +287,6 @@ dataSampleList.append(newSample)
           nickName = getNickName(setName, sampleName)
 
 
-          autoStack = ""
-          if "autoNumInStack" in stackMode or "autoPartInStack" in stackMode:
-            autoStack = stackMode+","
           scriptFile.write(sampleInfo.format(dataFile=dataFileName,
                                          dataFormat=dataFormat,
                                          dataUnit=dataUnit,
@@ -303,7 +299,6 @@ dataSampleList.append(newSample)
                                          shiftSimZ=shiftSimZ,
                                          omegaM=Om,
                                          boxLen=lbox,
-                                         autoStack=autoStack,
                                          usePecVel=useVel,
                                          minRadius=minRadius,
                                          numSubvolumes=numSubvolumes,
