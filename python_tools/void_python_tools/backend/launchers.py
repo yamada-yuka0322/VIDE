@@ -197,6 +197,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       outputParameter %s
       %s
       %s
+      gadgetUnit %g
       %s
       rangeX_min %g
       rangeX_max %g
@@ -208,10 +209,12 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       %s
       %s
       %s
-      """ % ((dataFileLine + "/"), outputFile,
+      """ % ((dataFileLine + "/"), 
+             outputFile,
              outputFile+".par",
              includePecVelString,
              useLightConeString,
+             sample.dataUnit,
              ramsesIdLine,
              xMin, xMax, yMin, yMax,
              sample.zBoundaryMpc[0], sample.zBoundaryMpc[1],
@@ -321,8 +324,6 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
   sampleName = sample.fullName
 
   datafile = zobovDir+"zobov_slice_"+sampleName
-
-  print "zobovDir ", zobovDir 
 
   logFile = logDir+"/zobov_"+sampleName+".out"
 
