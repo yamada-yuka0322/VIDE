@@ -27,20 +27,7 @@ datasetName = ""
 
 startCatalogStage = 1
 endCatalogStage = 3
-
-startAPStage = 1
-endAPStage = 5
-
 continueRun = True
-dataPortions = ["central"]
-
-# auto for AP analysis, "fixed" for catalog comparison
-stackMode = "fixed"
-maxVoidsInStack = -1
-stackRescaleMode = "rv"
-fittingMode = "mcmc"
-minVoidsToFit = 20
-minPartToFit = 2
 
 # directory for the input simulation/observational particle files
 catalogDir = os.getenv("HOME")+"/workspace/Voids/catalog/"
