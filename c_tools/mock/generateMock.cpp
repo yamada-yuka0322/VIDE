@@ -684,7 +684,7 @@ int main(int argc, char **argv)
       if (args_info.ramsesBase_given && args_info.ramsesId_given)   {
 	loader = ramsesLoader(args_info.ramsesBase_arg, 
 			      args_info.ramsesId_arg, 
-			      false,
+			      true,  // double precision with ramses... set this to false if you are dealing with single precision
 			      NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID, preselector);
       }
       else

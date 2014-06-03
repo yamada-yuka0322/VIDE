@@ -169,6 +169,8 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
         dataFileLine = "gadget " + datafile
       elif sample.dataFormat == "sdf":
         dataFileLine = "sdf " + datafile
+      elif sample.dataFormat == "ramses":
+        dataFileLine = "ramses " + os.path.split(datafile)[0] # just want the output directory
       else:
         raise ValueError("unknown dataFormat '%s'" % sample.dataFormat)
     
@@ -183,13 +185,19 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       reshiftFlag = ""
       if not sample.shiftSimZ: reshiftFlag = "preReShift"
 
+      if sample.dataFormat == "ramses":
+        ramsesId = int((os.path.split(datafile)[1])[5:10]) # picks out the particle file (should be the part_NNNNN.outXXXXX, then extracts the output id "NNNNN" as an integer)
+        ramsesIdLine = "ramsesId " + ramsesId
+      else:
+        ramsesIdLine = ""
+
       conf="""
       %s
       output %s
       outputParameter %s
       %s
       %s
-      gadgetUnit %g
+      %s
       rangeX_min %g
       rangeX_max %g
       rangeY_min %g
@@ -200,11 +208,11 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       %s
       %s
       %s
-      """ % (dataFileLine, outputFile,
+      """ % ((dataFileLine + "/"), outputFile,
              outputFile+".par",
              includePecVelString,
              useLightConeString,
-             sample.dataUnit,
+             ramsesIdLine,
              xMin, xMax, yMin, yMax,
              sample.zBoundaryMpc[0], sample.zBoundaryMpc[1],
              subSampleLine,resubSampleLine,inputParameterFlag,reshiftFlag)
@@ -220,6 +228,8 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
         cmd = "%s --configFile=%s" % (binPath,parmFile)
         log = open(logFile, 'a')
       arg1 = "--configFile=%s" % parmFile 
+
+
       subprocess.call(cmd, stdout=log, stderr=log, shell=True)
       log.close()
  
@@ -230,7 +240,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
       doneLine = "Done! %5.2e\n" % keepFraction
       if not jobSuccessful(logFile, doneLine):
-        print "FAILED!"
+        print "FAILED!"   ### dies here for now
         exit(-1)
 
       prevSubSample = thisSubSample
@@ -311,6 +321,8 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
   sampleName = sample.fullName
 
   datafile = zobovDir+"zobov_slice_"+sampleName
+
+  print "zobovDir ", zobovDir 
 
   logFile = logDir+"/zobov_"+sampleName+".out"
 
