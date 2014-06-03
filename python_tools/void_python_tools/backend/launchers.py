@@ -209,7 +209,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       %s
       %s
       %s
-      """ % ((dataFileLine + "/"), 
+      """ % (dataFileLine, 
              outputFile,
              outputFile+".par",
              includePecVelString,
