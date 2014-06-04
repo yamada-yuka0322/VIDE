@@ -186,7 +186,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       if not sample.shiftSimZ: reshiftFlag = "preReShift"
 
       if sample.dataFormat == "ramses":
-        ramsesId = int((os.path.split(datafile)[1])[5:10]) # picks out the particle file (should be the part_NNNNN.outXXXXX, then extracts the output id "NNNNN" as an integer)
+        ramsesId = (os.path.split(datafile)[1])[5:10] # picks out the particle file (should be the part_NNNNN.outXXXXX, then extracts the output id "NNNNN" as an integer)
         ramsesIdLine = "ramsesId " + ramsesId
       else:
         ramsesIdLine = ""
