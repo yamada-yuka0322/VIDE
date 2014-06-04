@@ -170,7 +170,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       elif sample.dataFormat == "sdf":
         dataFileLine = "sdf " + datafile
       elif sample.dataFormat == "ramses":
-        dataFileLine = "ramses " + os.path.split(datafile)[0] # just want the output directory
+        dataFileLine = "ramses " + os.path.split(datafile)[0] + '/' # just want the output directory
       else:
         raise ValueError("unknown dataFormat '%s'" % sample.dataFormat)
     

@@ -4,6 +4,8 @@
 .mydepend
 ./pipeline/miscTools/*.out
 
+output_*
+pipeline/ramses_simulation.py
 external/libsdf/libsw/Malloc.c
 c_tools/hod/hod
 c_tools/zobov2/jozov2/jozov2
