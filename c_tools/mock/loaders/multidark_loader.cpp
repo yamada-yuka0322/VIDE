@@ -27,11 +27,13 @@
 #include <CosmoTool/loadRamses.hpp>
 #include <CosmoTool/fortran.hpp>
 #include "simulation_loader.hpp"
-#include <libsdf/cosmo.h>
 
 using boost::format;
 using namespace std;
 using namespace CosmoTool;
+
+static const double one_kpc = 3.08567802e16; /* km */
+static const double one_Gyr = 3.1558149984e16; /* sec */
 
 class MultiDarkLoader: public SimulationLoader
 {

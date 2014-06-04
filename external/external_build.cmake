@@ -327,15 +327,20 @@ IF(SDF_SUPPORT)
   SET(LIBSDF_PATH ${CMAKE_SOURCE_DIR}/external/libsdf)
 
   ExternalProject_Add(libSDF
+    URL ${CMAKE_SOURCE_DIR}/external/mswarren-libsdf-b4b9f9464b5b.tar.gz
     PREFIX ${BUILD_PREFIX}/libSDF-prefix
-    SOURCE_DIR ${LIBSDF_PATH}
     CONFIGURE_COMMAND echo No configure
-    BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} ARCH=${LIBSDF_ARCH}
-    INSTALL_COMMAND ${CMAKE_COMMAND} -DDEST_DIR=${CMAKE_BINARY_DIR}/ext_build/sdf -DLIBSDF_ARCH=${LIBSDF_ARCH} -DLIBSDF_PATH=${LIBSDF_PATH} -P ${CMAKE_SOURCE_DIR}/external/install_sdf.cmake
+    BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -f Make.simple
+    INSTALL_COMMAND ${CMAKE_COMMAND} -DDEST_DIR=${CMAKE_BINARY_DIR}/ext_build/sdf -DLIBSDF_ARCH=${LIBSDF_ARCH} -DLIBSDF_PATH=${BUILD_PREFIX}/libSDF-prefix/src/libSDF -P ${CMAKE_SOURCE_DIR}/external/install_sdf.cmake
     BUILD_IN_SOURCE 1
+    PATCH_COMMAND  ${CMAKE_COMMAND} 
+      -DBUILD_PREFIX=${BUILD_PREFIX}/libSDF-prefix
+      -DPATCH_FILE=${CMAKE_SOURCE_DIR}/external/patch_sdf 
+      -DSOURCE_PREFIX=${BUILD_PREFIX}/libSDF-prefix/src/libSDF
+      -P ${CMAKE_SOURCE_DIR}/external/check_and_apply_patch.cmake
   )
-  SET(LIBSDF_INCLUDE_PATH ${LIBSDF_PATH}/include)
-  SET(LIBSDF_LIBRARY ${LIBSDF_PATH}/Objfiles/${LIBSDF_ARCH}/libsw.a)
+  SET(LIBSDF_INCLUDE_PATH ${BUILD_PREFIX}/libSDF-prefix/src)
+  SET(LIBSDF_LIBRARY ${BUILD_PREFIX}/libSDF-prefix/src/libSDF/libSDF.a)
 
   find_library(RT_LIBRARY rt)
   IF (RT_LIBRARY)

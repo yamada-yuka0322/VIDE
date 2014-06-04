@@ -1,0 +1,64 @@
+--- SDF.h	2014-06-04 07:22:26.000000000 +0200
++++ SDF.h.new	2014-06-04 10:06:18.521116967 +0200
+@@ -85,7 +85,7 @@
+ int SDFswap(SDF *hdr);
+ int SDFnoswap(SDF *hdr);
+ int SDFisswapping(SDF *hdr);
+-int SDFsetmaxbufsz(int new);
++int SDFsetmaxbufsz(int);
+ int SDFrdvecs(SDF *hdr, ...
+ 	     /* char *name, int n, void *address, int stride,  
+ 		... , 
+@@ -113,10 +113,10 @@
+ 
+ /* These four are harder to write than one might guess. */
+ /* They're in the library to avoid duplicating code. */
+-int SDFgetint(SDF *sdfp, char *name, int *value);
+-int SDFgetint64(SDF *sdfp, char *name, int64_t *value);
+-int SDFgetfloat(SDF *sdfp, char *name, float *value);
+-int SDFgetdouble(SDF *sdfp, char *name, double *value);
++int SDFgetint(SDF *sdfp, const char *name, int *value);
++int SDFgetint64(SDF *sdfp, const char *name, int64_t *value);
++int SDFgetfloat(SDF *sdfp, const char *name, float *value);
++int SDFgetdouble(SDF *sdfp, const char *name, double *value);
+ int SDFgetstring(SDF *sdfp, const char *name, char *string, int size);
+ 
+ void SDFwrite(const char *filename, int64_t gnobj, int64_t nobj, 
+--- SDFget.c.old	2014-06-04 10:17:16.380531163 +0200
++++ SDFget.c	2014-06-04 10:17:40.991953383 +0200
+@@ -22,7 +22,7 @@
+ /* I'll resist the temptation to make one macro to cover all these cases */
+ /* Should we check for loss of precision in float too? */
+ int 
+-SDFgetfloat(SDF *sdfp, char *name, float *value)
++SDFgetfloat(SDF *sdfp, const char *name, float *value)
+ {
+     double double_value;
+     int int_value;
+@@ -62,7 +62,7 @@
+ }
+ 
+ int
+-SDFgetdouble(SDF *sdfp, char *name, double *value)
++SDFgetdouble(SDF *sdfp, const char *name, double *value)
+ {
+     double double_value;
+     float float_value;
+@@ -102,7 +102,7 @@
+ }
+ 
+ int
+-SDFgetint(SDF *sdfp, char *name, int *value)
++SDFgetint(SDF *sdfp, const char *name, int *value)
+ {
+     int int_value;
+     float float_value;
+@@ -198,7 +198,7 @@
+ }
+ 
+ int
+-SDFgetint64(SDF *sdfp, char *name, int64_t *value)
++SDFgetint64(SDF *sdfp, const char *name, int64_t *value)
+ {
+     int int_value;
+     float float_value;

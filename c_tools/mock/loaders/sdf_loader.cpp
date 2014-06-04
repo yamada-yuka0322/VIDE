@@ -26,15 +26,43 @@
 #include <string>
 #include "sdfloader_internal.hpp"
 #include "simulation_loader.hpp"
-#include <libsdf/mpmy.h>
-#include <libsdf/SDF.h>
-#include <libsdf/error.h>
-#include <libsdf/cosmo.h>
+#include <libSDF/SDF.h>
+
+#undef SDFgetfloatOrDie
+#undef SDFgetdoubleOrDie
+#undef SDFgetintOrDie
 
 using boost::format;
 
 using namespace std;
 using namespace CosmoTool;
+
+static const double one_kpc = 3.08567802e16; /* km */
+static const double one_Gyr = 3.1558149984e16; /* sec */
+
+static void SDFgetfloatOrDie(SDF *sdfp, const char *name, float *v)
+{
+   if( SDFgetfloat(sdfp, name, v) ) {
+     cerr << format("SDFgetfloat(%s) failed") % name << endl;
+     abort();
+   }
+}
+
+static void SDFgetdoubleOrDie(SDF *sdfp, const char *name, double *v)
+{
+   if( SDFgetdouble(sdfp, name, v) ) {
+     cerr << format("SDFgetdouble(%s) failed") % name << endl;
+     abort();
+   }
+}
+
+static void SDFgetintOrDie(SDF *sdfp, const char *name, int *v)
+{
+   if( SDFgetint(sdfp, name, v) ) {
+     cerr << format("SDFgetint(%s) failed") % name << endl;
+     abort();
+   }
+}
 
 class SDFLoader: public SimulationLoader
 {
@@ -277,5 +305,4 @@ SimulationLoader *sdfLoader(const std::string& snapshot, int flags,
 
 void sdfLoaderInit(int& argc, char **& argv)
 {
-  MPMY_Init(&argc, &argv);
 }
