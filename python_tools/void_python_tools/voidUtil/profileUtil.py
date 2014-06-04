@@ -60,6 +60,7 @@ def buildProfile(catalog, rMin, rMax):
 
   print "  Stacking voids..."
   allProfiles = []
+  binCenters = []
   for void in voidsToStack:
     center = void.macrocenter
     
