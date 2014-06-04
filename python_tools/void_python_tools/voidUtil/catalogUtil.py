@@ -383,7 +383,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
     iLine += 1
 
   iLine = 0
-  filName = sampleDir+"/"+prefix+"sky_positions_"+dataPortion+"_"+sample.fullName+".out"
+  fileName = sampleDir+"/"+prefix+"sky_positions_"+dataPortion+"_"+sample.fullName+".out"
   catData = np.loadtxt(fileName, comments="#")
   for line in catData:
     catalog.voids[iLine].RA = float(line[0])
