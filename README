@@ -31,9 +31,10 @@ Quick Start Guide
 
 ccmake ./
 make
+add path/to/vide/ext_build/python/lib/python2.7/site-packages/ to PYTHONPATH
 cd pipeline/
 ./prepareInputs.py --scripts --parm=path/to/dataset.py
-./run_python.sh generateCatalog.py path/to/parameter_file.py
+./generateCatalog.py path/to/parameter_file.py
 
 Version Summary
 -----------------
