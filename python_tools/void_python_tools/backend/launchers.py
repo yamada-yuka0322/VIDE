@@ -170,7 +170,8 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       elif sample.dataFormat == "sdf":
         dataFileLine = "sdf " + datafile
       elif sample.dataFormat == "ramses":
-        dataFileLine = "ramses " + os.path.split(datafile)[0] + '/' # just want the output directory
+        ramsesId = int(os.path.split(datafile)[1][-5:len(datafile)]) # picks out the particle file (should be the output_NNNNN, then extracts the output id "NNNNN" as an integer)
+        dataFileLine = "ramses " + datafile + "/"
       else:
         raise ValueError("unknown dataFormat '%s'" % sample.dataFormat)
     
@@ -186,8 +187,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       if not sample.shiftSimZ: reshiftFlag = "preReShift"
 
       if sample.dataFormat == "ramses":
-        ramsesId = int((os.path.split(datafile)[1])[5:10]) # picks out the particle file (should be the part_NNNNN.outXXXXX, then extracts the output id "NNNNN" as an integer)
-        ramsesIdLine = "ramsesId " + ramsesId
+        ramsesIdLine = "ramsesId " + str(ramsesId)
       else:
         ramsesIdLine = ""
 

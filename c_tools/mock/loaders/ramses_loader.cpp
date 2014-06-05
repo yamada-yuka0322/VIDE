@@ -95,11 +95,8 @@ public:
     if (id >= _num_files)
       return 0;
 
-
-    d = loadRamsesSimu("/home/ben/phd/software/VIDE/vide_public/output_00091/", baseid, id, double_precision, load_flags);
+    d = loadRamsesSimu(snapshot_name.c_str(), baseid, id, double_precision, load_flags);
     assert(d != 0);
-
-    cout << " Id " << id << "\n";
 
     if (d->Id != 0)
       {
