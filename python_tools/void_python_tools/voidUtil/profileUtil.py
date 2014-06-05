@@ -58,9 +58,12 @@ def buildProfile(catalog, rMin, rMax):
   print "  Selecting voids to stack..."
   voidsToStack = [v for v in catalog.voids if (v.radius > rMin and v.radius < rMax)]
 
+  if len(voidsToStack):
+    print "  No voids to stack!"
+    return -1, -1, -1
+    
   print "  Stacking voids..."
   allProfiles = []
-  binCenters = []
   for void in voidsToStack:
     center = void.macrocenter
     
