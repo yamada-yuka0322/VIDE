@@ -20,6 +20,7 @@ Copyright (C) 2010-2014 Guilhem Lavaux, 2011-2014 P.M. Sutter.
 This software is put under the GNU Public License. Please see LICENSE
 for further information.
 
+Mainline VIDE contributions from Nico Hamaus and Alice Pisani.
 This pipeline includes ZOBOV, originally developed by Mark Neyrinck. See zobov/zobov_readme.txt for copyright/license information. 
 SDF library provided by Michael S. Warren and John Salmon. 
 HOD fitting code provided by Francisco Navarro. 
