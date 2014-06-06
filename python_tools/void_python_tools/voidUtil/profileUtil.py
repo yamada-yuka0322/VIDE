@@ -58,7 +58,7 @@ def buildProfile(catalog, rMin, rMax):
   print "  Selecting voids to stack..."
   voidsToStack = [v for v in catalog.voids if (v.radius > rMin and v.radius < rMax)]
 
-  if len(voidsToStack):
+  if len(voidsToStack) == 0:
     print "  No voids to stack!"
     return -1, -1, -1
     
