@@ -10,7 +10,9 @@ This is VIDE, the Void IDentification and Examination toolkit.
 
 For more information, see http://www.cosmicvoids.net
 
-Please cite arXiv:1406.1191 if you use this software.
+Please cite arXiv:1406.1191 and arXiv:0712.0349 if you use this software, using the following suggested sentence:
+
+"This work uses voids identified with VIDE\footnote{\url{http:www.cosmicvoids.net}} (Sutter et al. 2014), which implements an enhanced version of ZOBOV (Neyrinck 2008) to construct voids with a watershed algorithm."
 
 
 License/Copyright information
@@ -20,11 +22,12 @@ Copyright (C) 2010-2014 Guilhem Lavaux, 2011-2014 P.M. Sutter.
 This software is put under the GNU Public License. Please see LICENSE
 for further information.
 
-Mainline VIDE contributions from Nico Hamaus and Alice Pisani.
-This pipeline includes ZOBOV, originally developed by Mark Neyrinck. See zobov/zobov_readme.txt for copyright/license information. 
+Mainline VIDE contributions from Ben Wandelt, Nico Hamaus, Alice Pisani, Paul Zibick, and Qingqing Mao.
+This toolkit includes ZOBOV, originally developed by Mark Neyrinck. See zobov/zobov_readme.txt for copyright/license information. 
 SDF library provided by Michael S. Warren and John Salmon. 
 HOD fitting code provided by Francisco Navarro. 
 HOD halo population code provided by Jeremy Tinker.
+RAMSES module provided by Benjamin B. Thompson.
 
 
 Quick Start Guide
