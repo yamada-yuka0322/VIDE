@@ -45,7 +45,7 @@ IF(INTERNAL_SCIPY)
 ENDIF(INTERNAL_SCIPY)
 
 IF(INTERNAL_KDTREE_SCIPY)
-  SET(KDTREE_SCIPY_URL "https://github.com/patvarilly/periodic_kdtree/archive/master.zip" CACHE STRING "URL to download kdtree from")
+  SET(KDTREE_SCIPY_URL "https://github.com/patvarilly/periodic_kdtree/archive/ea2d9e8c9d.zip" CACHE STRING "URL to download kdtree from")
   mark_as_advanced(KDTREE_SCIPY_URL)
 ENDIF(INTERNAL_KDTREE_SCIPY)
 
@@ -200,15 +200,13 @@ IF(INTERNAL_KDTREE_SCIPY)
     BUILD_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_build.cmake
     INSTALL_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_install.cmake
     PATCH_COMMAND  ${CMAKE_COMMAND} 
-      -DBUILD_PREFIX=${BUILD_PREFIX}/kdtree-scipy-prefix 
       -DPATCH_FILE=${CMAKE_SOURCE_DIR}/external/patch_kdtree 
+      -DBUILD_PREFIX=${BUILD_PREFIX}/kdtree-scipy-prefix 
       -DSOURCE_PREFIX=${BUILD_PREFIX}/kdtree-scipy-prefix/src/kdtree-scipy
       -P ${CMAKE_SOURCE_DIR}/external/check_and_apply_patch.cmake
-
    )
+
   SET(AUXILIARY_PYTHON_DEPEND ${AUXILIARY_PYTHON_DEPEND} kdtree-scipy)
 ENDIF(INTERNAL_KDTREE_SCIPY)
-
-
 
 

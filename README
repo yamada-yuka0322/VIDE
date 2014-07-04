@@ -26,7 +26,7 @@ This software is put under the GNU Public License.
 Please see LICENSE for further information.
 
 Mainline VIDE contributions from Ben Wandelt, Nico Hamaus, Alice Pisani, 
-Paul Zibick, and Qingqing Mao.
+Paul Zivick, and Qingqing Mao.
 This toolkit includes ZOBOV, originally developed by Mark Neyrinck. 
 See zobov/zobov_readme.txt for copyright/license information. 
 SDF library provided by Michael S. Warren and John Salmon. 
