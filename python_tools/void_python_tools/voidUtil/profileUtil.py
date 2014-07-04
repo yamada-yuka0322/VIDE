@@ -91,15 +91,15 @@ def fitHSWProfile(radii, densities, sigmas, rV):
 
 # fits the given density profile to the HSW function
 #   radii: array of radii
-#   densities: array of densities
+#   densities: array of densities in units of mean density
 #   sigmas: array of uncertainties
-#   rV: radius normalization
+#   rV: mean effective void radius
 # 
 # returns:
-#   popt: best-fit values of dc and rs
+#   popt: best-fit values of rs and dc
 #   pcov: covariance matrix
 #   rVals: array of radii for best-fit curve
-#   hswProfile: array of densities for best-fit curve 
+#   hswProfile: array of densities for best-fit curve in units of mean density
 
   popt, pcov = curve_fit(HSWProfile, radii/rV, densities,
                          sigma=sigmas,
