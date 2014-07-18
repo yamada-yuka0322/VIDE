@@ -37,12 +37,13 @@ def HSWProfile(r, rs, dc):
   return dc * (1 - (r/rs)**alpha) / (1+ (r)**beta) + 1
 
 # -----------------------------------------------------------------------------
-def buildProfile(catalog, rMin, rMax):
+def buildProfile(catalog, rMin, rMax, nBins=10):
 
 # builds a stacked radial density profile from the given catalog
 #   catalog: void catalog
 #   rMin: minimum void radius, in Mpc/h
 #   rMax: maximum void radius, in Mpc/h
+#   nBins: number of bins in profile (detaulf 10)
 #
 # returns:
 #   binCenters: array of radii in binned profile
@@ -71,7 +72,7 @@ def buildProfile(catalog, rMin, rMax):
     shiftedPart = shiftPart(localPart, center, periodicLine, catalog.ranges)
 
     dist = np.sqrt(np.sum(shiftedPart[:,:]**2, axis=1))
-    thisProfile, radii = np.histogram(dist, bins=10, range=(0,rMaxProfile))
+    thisProfile, radii = np.histogram(dist, bins=nBins, range=(0,rMaxProfile))
     deltaV = 4*np.pi/3*(radii[1:]**3-radii[0:(radii.size-1)]**3)
     thisProfile = np.float32(thisProfile)
     thisProfile /= deltaV
