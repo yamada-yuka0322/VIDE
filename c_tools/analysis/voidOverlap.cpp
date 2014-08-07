@@ -143,6 +143,8 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  matchDist = args.overlapFrac_arg;
+
   loadCatalog(args.partFile1_arg, args.volFile1_arg, args.voidFile1_arg,
               args.zoneFile1_arg, args.infoFile1_arg, args.centerFile1_arg,
               args.shapeFile1_arg,

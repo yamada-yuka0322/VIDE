@@ -540,6 +540,7 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
                       binPath, thisDataPortion=None, 
                       logFile=None, 
                       continueRun=None, outputFile=None, 
+                      overlapFrac=0.25,
                       matchMethod=None, strictMatch=False):
 
   sampleName1 = sample1.fullName
@@ -587,6 +588,8 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
            str(sampleName2)+".dat"
     cmd += " --zonePartFile2=" + sample2Dir+"/voidPart_" + \
            str(sampleName2)+".dat"
+
+    cmd += " --overlapFrac=" + str(overlapFrac)
 
     if matchMethod == "useID": cmd += " --useID"
     cmd += periodicLine

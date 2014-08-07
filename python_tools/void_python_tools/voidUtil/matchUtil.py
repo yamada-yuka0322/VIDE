@@ -32,6 +32,7 @@ def compareCatalogs(baseCatalogDir, compareCatalogDir,
                     outputDir="./", logDir="./", 
                     matchMethod="useID", dataPortion="central",
                     strictMatch=True, 
+                    overlapFrac=0.25,
                     pathToCTools="../../../c_tools"):
 
 # reports the overlap between two void catalogs
@@ -42,6 +43,7 @@ def compareCatalogs(baseCatalogDir, compareCatalogDir,
 #  matchMethod: "useID" to use unique IDs, "prox" to use overlap of Voronoi cells
 #  dataPortion: "central" or "all"
 #  strictMatch: if True, only attempt to match to trimmed catalog
+#  overlapFrac: threshold fraction of Voronoi radius to count as matched
 #  pathToCTools: path to location of VIDE c_tools directory
 
   if not os.access(outputDir, os.F_OK):
@@ -74,6 +76,7 @@ def compareCatalogs(baseCatalogDir, compareCatalogDir,
                     continueRun=False, 
                     outputFile=stepOutputFileName,
                     matchMethod=matchMethod,
+                    overlapFrac=overlapFrac,
                     strictMatch=strictMatch)
   
   print " Done!"

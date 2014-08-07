@@ -26,4 +26,5 @@ option "shapeFile2" - "Shape file for catalog 2" string yes
 # options
 option "outfile" - "Output file" string yes
 option "useID" - "Use unique catalog ID to match voids; otherwise use volumes" flag off
+option "overlapFrac" - "threshold fraction of voronoi radius to count as matched" double optional default="0.25"
 option "periodic" - "Set of edges which are periodic" string optional default="xy"
