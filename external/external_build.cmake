@@ -37,7 +37,7 @@ IF(INTERNAL_NETCDF)
 ENDIF(INTERNAL_NETCDF)
 
 IF(INTERNAL_BOOST)
-  SET(BOOST_URL "http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz/download" CACHE STRING "URL to download Boost from")
+  SET(BOOST_URL "http://sourceforge.net/projects/boost/files/boost/1.56.0/boost_1_56_0.tar.gz/download" CACHE STRING "URL to download Boost from")
   mark_as_advanced(BOOST_URL)
 ELSE(INTERNAL_BOOST)
   find_package(Boost 1.49.0 COMPONENTS format spirit phoenix python FATAL_ERROR)
