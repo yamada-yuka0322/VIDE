@@ -138,6 +138,11 @@ if (INTERNAL_NETCDF)
     DEPENDS ${hdf5_built}
     PREFIX ${BUILD_PREFIX}/netcdf-prefix
     URL ${NETCDF_URL}
+    PATCH_COMMAND  ${CMAKE_COMMAND} 
+      -DBUILD_PREFIX=${BUILD_PREFIX}/netcdf-prefix
+      -DPATCH_FILE=${CMAKE_SOURCE_DIR}/external/patch_netcdf
+      -DSOURCE_PREFIX=${BUILD_PREFIX}/netcdf-prefix/src/netcdf/ncgen3
+      -P ${CMAKE_SOURCE_DIR}/external/check_and_apply_patch.cmake
     CONFIGURE_COMMAND ${NETCDF_SOURCE_DIR}/configure
          --prefix=${NETCDF_BIN_DIR} --libdir=${NETCDF_BIN_DIR}/lib
          --enable-netcdf-4  --with-pic --disable-shared --disable-dap 
