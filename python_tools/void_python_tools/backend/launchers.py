@@ -271,7 +271,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
   if sample.dataType == "observation":
     (boxVol, nbar) = vp.getSurveyProps(sample.maskFile, sample.zRange[0],
      sample.zRange[1], sample.zRange[0], sample.zRange[1], "all", 
-     useLCDM=useComoving)
+     useComoving=useComoving)
   else:
     iX = float(sample.mySubvolume[0])
     iY = float(sample.mySubvolume[1])
