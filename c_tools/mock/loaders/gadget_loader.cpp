@@ -105,6 +105,8 @@ SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLengt
   int num_files;
   SimuData *d;
 
+  cout << " File to load is:" << snapshot.c_str() << endl;
+
   try
     {
       d = loadGadgetMulti(snapshot.c_str(), -1, 0);
