@@ -98,8 +98,12 @@ redshifts = ["0.0"]
 # list of desired subsamples - these are in unts of h Mpc^-3!
 subSamples = [1.0, 0.5]
 
-# if True, do the subsampling in preparation (only for sdf and multidark)
-doSubSamplingInPrep = True 
+# if True, do the subsampling in preparation (available for sdf and multidark)
+doSubSamplingInPrep = False
+
+# if 'absolute', subSamples are given in particles per cubic Mpc/h
+# if 'relative', subSamples are given as a fraction of input particles
+subSampleMode = "absolute"
 
 # shift the z-coord of sims with redshift
 shiftSimZ = False
