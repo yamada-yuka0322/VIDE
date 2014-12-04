@@ -103,7 +103,7 @@ doSubSamplingInPrep = False
 
 # if 'absolute', subSamples are given in particles per cubic Mpc/h
 # if 'relative', subSamples are given as a fraction of input particles
-subSampleMode = "absolute"
+subSampleMode = "relative"
 
 # shift the z-coord of sims with redshift
 shiftSimZ = False
