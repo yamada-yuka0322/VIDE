@@ -96,7 +96,7 @@ doSubSamplingInPrep = False # do the subsampling in preparation script?
 
 # if 'absolute', subSamples are given in particles per cubic Mpc/h
 # if 'relative', subSamples are given as a fraction of input particles
-subSampleMode = "absolute" 
+subSampleMode = "relative"
 
 # common filename of halo files, leave blank to ignore halos
 haloFileBase = "mf_4s_1G_512_bgc2_NNNNN.sdf"

@@ -110,16 +110,26 @@ public:
 
     while (i < N)
       {
-	if (!accepted[i])
-	  {
-	    i++;
-	    continue;
-	  }
+        if (!accepted[i])
+          {
+            i++;
+            continue;
+          }
 
-	a[j] = a[i];
-	j++;
-	i++;
+        a[j] = a[i];
+        j++;
+        i++;
       }
+  }
+  
+  template<typename T>
+  void filterAttribute(CosmoTool::SimuData *d, const std::string& attrname, bool *accepted, long NumPart)
+  {
+    if (d->attributes.find(attrname) == d->attributes.end())
+      return;
+ 
+    long *l = d->as<T>(attrname);
+    filteredCopy<T>(l, accepted, NumPart);
   }
 };
 

@@ -37,7 +37,7 @@ IF(INTERNAL_NETCDF)
 ENDIF(INTERNAL_NETCDF)
 
 IF(INTERNAL_BOOST)
-  SET(BOOST_URL "http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz/download" CACHE STRING "URL to download Boost from")
+  SET(BOOST_URL "http://sourceforge.net/projects/boost/files/boost/1.56.0/boost_1_56_0.tar.gz/download" CACHE STRING "URL to download Boost from")
   mark_as_advanced(BOOST_URL)
 ELSE(INTERNAL_BOOST)
   find_package(Boost 1.49.0 COMPONENTS format spirit phoenix python FATAL_ERROR)
@@ -138,6 +138,11 @@ if (INTERNAL_NETCDF)
     DEPENDS ${hdf5_built}
     PREFIX ${BUILD_PREFIX}/netcdf-prefix
     URL ${NETCDF_URL}
+    PATCH_COMMAND  ${CMAKE_COMMAND} 
+      -DBUILD_PREFIX=${BUILD_PREFIX}/netcdf-prefix
+      -DPATCH_FILE=${CMAKE_SOURCE_DIR}/external/patch_netcdf
+      -DSOURCE_PREFIX=${BUILD_PREFIX}/netcdf-prefix/src/netcdf/ncgen3
+      -P ${CMAKE_SOURCE_DIR}/external/check_and_apply_patch.cmake
     CONFIGURE_COMMAND ${NETCDF_SOURCE_DIR}/configure
          --prefix=${NETCDF_BIN_DIR} --libdir=${NETCDF_BIN_DIR}/lib
          --enable-netcdf-4  --with-pic --disable-shared --disable-dap 
