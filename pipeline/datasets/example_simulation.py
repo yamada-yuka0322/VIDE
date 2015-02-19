@@ -33,26 +33,26 @@ continueRun = False
 startCatalogStage = 1
 endCatalogStage   = 3
 
-# directory for the input simulation/observational particle files
-catalogDir = os.getenv("HOME")+"/workspace/Voids/catalogs/mergertree1024/"
+# directory for the input simulation files
+catalogDir = os.getenv("PWD")+"/../examples/"
 
 # void catalog output directory
-voidOutputDir = os.getenv("HOME")+"/workspace/Voids/sim/"
+voidOutputDir = os.getenv("PWD")+"/../examples/example_simulation/"
 
 # output directory for log files
-logDir = os.getenv("PWD")+"/../logs/sim/"
+logDir = os.getenv("PWD")+"/../logs/example_simulation/"
 
 # output directory for figures
-figDir = os.getenv("PWD")+"/../figs/sim/"
+figDir = os.getenv("PWD")+"/../figs/example_simulation/"
 
 # where to place the pipeline scripts
-scriptDir = os.getenv("PWD")+"/sim/"
+scriptDir = os.getenv("PWD")+"/example_simulation/"
 
 # don't change
 dataType = "simulation"
 
 # available formats for simulation: gadget, sdf, multidark
-dataFormat = "sdf"
+dataFormat = "multidark"
 
 # units of position in Mpc/h
 dataUnit = 1
@@ -84,19 +84,19 @@ numSubvolumes = 1
 # Particles
 
 # common filename of particle files
-particleFileBase = "mf_4s_1G_1k_NNNNN"
+particleFileBase = "example_simulation_NNNN.dat"
 
 # this flag will be replaced by values in fileNums list below
-particleFileDummy = 'NNNNN'
+particleFileDummy = 'NNNN'
 
 # list of file numbers for the particle files
-fileNums = ["1.000"]
+fileNums = ["z0.0"]
 
 # redshift of each file in the above fileNums list
 redshifts = ["0.0"]
 
 # list of desired subsamples - these are in unts of h Mpc^-3!
-subSamples = [1.0, 0.5]
+subSamples = [1.0]
 
 # if True, do the subsampling in preparation (available for sdf and multidark)
 doSubSamplingInPrep = False
@@ -112,14 +112,17 @@ shiftSimZ = False
 # Halos
 
 # common filename of halo files, leave blank to ignore halos
-haloFileBase = "mf_4s_1G_1k_bgc2_NNNNN.sdf"
+haloFileBase = ""
+#haloFileBase = "mf_4s_1G_1k_bgc2_NNNNN.sdf"
 
 # this flag will be replaced by values in fileNums list above
-haloFileDummy = 'NNNNN'
+haloFileDummy = ''
+#haloFileDummy = 'NNNNN'
 
 # minimum halo mass cuts to apply for the halo catalog
 #   use "none" to get all halos
-minHaloMasses = ["none", 1.2e13]
+minHaloMasses = []
+#minHaloMasses = ["none", 1.2e13]
 
 # locations of data in the halo catalog
 haloFileMCol  = 6    # mass
@@ -147,14 +150,14 @@ hubble = 0.6962 # h_0
 
 # each of the HOD sets will be applied to each halo catalog defined above
 hodParmList = [
-  {'name'       : "LowRes", #BOSS: Manera et al. 2012, eq. 26
-   'Mmin'       : 0.0,
-   'M1'         : 1.e14,
-   'sigma_logM' : 0.596,
-   'alpha'      : 1.0127,
-   'Mcut'       : 1.19399e13,
-   'galDens'    : 0.0002,
-  },
+  #{'name'       : "LowRes", #BOSS: Manera et al. 2012, eq. 26
+  # 'Mmin'       : 0.0,
+  # 'M1'         : 1.e14,
+  # 'sigma_logM' : 0.596,
+  # 'alpha'      : 1.0127,
+  # 'Mcut'       : 1.19399e13,
+  # 'galDens'    : 0.0002,
+  #},
 ]
 
 # END CONFIGURATION
