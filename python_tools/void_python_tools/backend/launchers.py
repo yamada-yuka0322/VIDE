@@ -37,7 +37,7 @@ from   netCDF4 import Dataset
 from void_python_tools.backend.classes import *
 import pickle
 import void_python_tools.apTools as vp
-import scipy.interpolate
+import scipy.interpolate as interpolate
 
 NetCDFFile = Dataset
 ncFloat = 'f8' # Double precision
@@ -374,7 +374,7 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
       File.close()
 
       # load redshifts
-      partFile = sampleDir+"/zobov_slice_"+sample.fullName
+      partFile = zobovDir+"/zobov_slice_"+sample.fullName
       File = file(partFile)
       chk = np.fromfile(File, dtype=np.int32,count=1)
       Np = np.fromfile(File, dtype=np.int32,count=1)
@@ -414,16 +414,20 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
       # build selection function interpolation
       selfuncData = np.genfromtxt(sample.selFunFile)
       selfunc = interpolate.interp1d(selfuncData[:,0], selfuncData[:,1],
-                                     kind='cubic')
+                                     kind='cubic', bounds_error=False,
+                                     fill_value=1.0)
       # re-weight and write
-      vols *= selfunc(redshifts)
+       ## TEST
+      #redshifts /= 10000.
+      for i in xrange(len(vols)):
+        vols[i] *= selfunc(redshifts[i])
 
-      volFile = zobovDir+"/vol_"+sampleName+".dat"
+      volFile = zobovDir+"/vol_weighted_"+sampleName+".dat"
       File = file(volFile, 'w')
-      chk.astype('np.int32').tofile(File)
-      vols.astype('np.float32').tofile(File)
+      numPartTot.astype(np.int32).tofile(File)
+      vols.astype(np.float32).tofile(File)
 
-      volFileToUse = zobovDir+"/vol_weighted"+sampleName+".dat"
+      volFileToUse = zobovDir+"/vol_weighted_"+sampleName+".dat"
     else:
       volFileToUse = zobovDir+"/vol_"+sampleName+".dat"
 
