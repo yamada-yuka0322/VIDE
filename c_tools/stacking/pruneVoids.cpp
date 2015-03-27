@@ -919,8 +919,19 @@ int main(int argc, char **argv) {
       voids[iGood++] = voids[iVoid];
     }
   }
+
+  iGood = 0;
+  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
+    // just in case
+    if (args.isObservation_flag && 
+        voids[iVoid].redshift > args.zMax_arg) {
+      numNearZ++;
+     } else {
+      voids[iGood++] = voids[iVoid];
+    }
+  }
   voids.resize(iGood);
-  printf("  4th filter: rejected %d below redshift boundaries\n", numNearZ); 
+  printf("  4th filter: rejected %d outside redshift boundaries\n", numNearZ); 
 
   // take only top-level voids
   numAreParents = 0;
