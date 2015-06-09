@@ -10,6 +10,7 @@ check_c_compiler_flag(-march=native SUPPORT_ARCH_NATIVE )
 
 
 find_library(MATH_LIB m)
+find_library(DL_LIB dl)
 
 macro(add_genopt _sourcelist _ggofile _basefile)
 

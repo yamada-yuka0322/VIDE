@@ -14,7 +14,8 @@ This file has been developped by P. M. Sutter.
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include <string.h>
+#include <string>
+#include <cstring>
 #include "hdf5_flash.h"
 #include "H5Cpp.h"
 
