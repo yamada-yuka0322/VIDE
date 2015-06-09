@@ -27,7 +27,7 @@ IF(INTERNAL_GENGETOPT)
 ENDIF(INTERNAL_GENGETOPT)
 
 IF(INTERNAL_HDF5)
-  SET(HDF5_URL "http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.9/src/hdf5-1.8.9.tar.gz" CACHE STRING "URL to download HDF5 from")
+  SET(HDF5_URL "http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.15/src/hdf5-1.8.15.tar.gz" CACHE STRING "URL to download HDF5 from")
   mark_as_advanced(HDF5_URL)
 ENDIF(INTERNAL_HDF5)
 
