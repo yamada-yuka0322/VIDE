@@ -919,6 +919,7 @@ int main(int argc, char **argv) {
       voids[iGood++] = voids[iVoid];
     }
   }
+  voids.resize(iGood);
 
   iGood = 0;
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
