@@ -921,6 +921,7 @@ int main(int argc, char **argv) {
   }
   voids.resize(iGood);
 
+/*
   iGood = 0;
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
     // just in case
@@ -932,6 +933,8 @@ int main(int argc, char **argv) {
     }
   }
   voids.resize(iGood);
+*/
+
   printf("  4th filter: rejected %d outside redshift boundaries\n", numNearZ); 
 
   // take only top-level voids
@@ -1167,12 +1170,19 @@ void outputVoids(string outputDir, string sampleName, string prefix,
              outVoid.level,
              outVoid.numChildren,
              outVoid.centralDen);
-     
+
+     double phi = atan2(outVoid.macrocenter[1]-boxLen[1]/2.,
+                        outVoid.macrocenter[0]-boxLen[0]/2.);
+     if (phi < 0) phi += 2.*M_PI;
+     double RA = phi * 180./M_PI;
+           
+     double theta = acos((outVoid.macrocenter[2]-boxLen[2]/2.) / 
+                          outVoid.redshiftInMpc);
+     double dec = (M_PI/2. - theta) * 180./M_PI;
+             
      fprintf(fpSkyPositions, "%.2f %.2f %.5f %.2f %d\n",
-             atan((outVoid.macrocenter[1]-boxLen[1]/2.) / 
-                  (outVoid.macrocenter[0]-boxLen[0]/2.)) * 180/M_PI + 180,  
-             asin((outVoid.macrocenter[2]-boxLen[2]/2.) / 
-                   outVoid.redshiftInMpc) * 180/M_PI,  
+             RA,                  
+             dec,
              outVoid.redshift,
              outVoid.radius,
              outVoid.voidID);
