@@ -359,6 +359,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
                                voidProb = line[10],
                                radius = pow(line[7]/volNorm*3./4./np.pi, 1./3.),
                                macrocenter = np.zeros((3)),
+                               redshift = 0,
                                RA = 0,
                                Dec = 0,
                                parentID = 0,
@@ -397,6 +398,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
   for (iLine,line) in enumerate(catData):
     catalog.voids[iLine].volume = float(line[6])
     catalog.voids[iLine].radius = float(line[4])
+    catalog.voids[iLine].redshift = float(line[5])
     catalog.voids[iLine].parentID = float(line[10])
     catalog.voids[iLine].treeLevel = float(line[11])
     catalog.voids[iLine].numChildren = float(line[12])
