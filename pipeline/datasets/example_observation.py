@@ -33,21 +33,17 @@ continueRun = False
 startCatalogStage = 1
 endCatalogStage   = 3
 
-# a global name to give 
-#catalogName = "lcdm"
-
-
 # directory for input data files
-inputDataDir = os.getenv("HOME")+"/workspace/Voids/catalogs/nyuvagc/"
+inputDataDir = os.getenv("PWD")+"/../examples/"
 
 # void catalog output directory
-workDir      = os.getenv("HOME")+"/workspace/Voids/sdss_dr7LCDM/"
+workDir = os.getenv("PWD")+"/../examples/example_observation/"
 
 # output directory for log files
-logDir = os.getenv("PWD")+"/../logs/sdss_dr7LCDM"
+logDir = os.getenv("PWD")+"/../logs/example_observation/"
 
 # output directory for figures
-figDir = os.getenv("PWD")+"/../figs/sdss_dr7LCDM"
+figDir = os.getenv("PWD")+"/../figs/example_observation/"
 
 # you need to set these manually: point to ZOBOV and C_TOOLS in VIDE directory
 ZOBOV_PATH = os.getenv("PWD")+"/../zobov/"
@@ -68,38 +64,39 @@ dataSampleList = []
 # define your volume-limited samples
 newSample = Sample(
                    # path to galaxy file is inputDataDir+dataFile
-                   dataFile = "filename.dat"
+                   dataFile = "example_observation.dat",
 
                    # full name for this sample
-                   fullName = "lss.dr72dim1.dat",
+                   fullName = "example_observation",
 
                    # a convenient nickname
-                   nickName = "dim1",
+                   nickName = "exobs",
 
                    # don't change this
                    dataType = "observation",
 
-                   # assume volume-limites?
+                   # assume sample is volume-limited?
                    volumeLimited = True,
 
                    # HEALpix mask file
-                   maskFile = inputDataDir+"/healpix/rast_window_512.fits",
+                   maskFile = inputDataDir+"/example_observation_mask.fits",
 
                    # radial selection function (if not volume limited)
                    selFunFile = None,
 
                    # max and min redshifts of galaxies in your sample
-                   zBoundary = (0.0, 0.05),
+                   zBoundary = (0.0, 0.15),
 
                    # max and min redshifts where you want to find voids
-                   zRange = (0.0, 0.05),
+                   zRange = (0.1, 0.15),
  
-                   # leave this at -1 for mean particle separation, or 
-                   # specify your own in Mpc/h
+                   # leave this at -1 for mean particle separation, 
+                   # or specify your own in Mpc/h
                    minVoidRadius = -1,
 
                    # density of mock particles in cubic Mpc/h
-                   fakeDensity = 0.01,
+                   # (make this as high as you can afford)
+                   fakeDensity = 0.05,
 
                    )
 dataSampleList.append(newSample)
