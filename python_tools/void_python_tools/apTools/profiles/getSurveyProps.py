@@ -21,6 +21,7 @@ import numpy as np
 import healpy as healpy
 import scipy.integrate
 import void_python_tools as ct
+import os
 
 __all__=['getSurveyProps']
    
