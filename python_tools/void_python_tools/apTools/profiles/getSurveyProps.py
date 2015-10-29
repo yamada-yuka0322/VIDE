@@ -44,7 +44,14 @@ def getSurveyProps(maskFile, zmin, zmax, selFunMin, selFunMax, portion, selectio
     selFunMax *= 3000
   volume = area * (zmax**3  - zmin**3) / 3
 
-  if selectionFuncFile != None:
+  if selectionFuncFile == None:
+    nbar = 1.0
+
+  elif not os.access(selectionFuncFile, os.F_OK):
+    print "   Warning, selection function file %s not found, using default of uniform selection." % selectionFuncFile
+    nbar = 1.0
+
+  else:
     selfunc = np.genfromtxt(selectionFuncFile)
     selfunc = np.array(selfunc)
     selfunc[:,0] = selfunc[:,0]/100.
@@ -72,8 +79,6 @@ def getSurveyProps(maskFile, zmin, zmax, selFunMin, selFunMax, portion, selectio
   
     nbar = ntotal / area / nbar
 
-  else:
-    nbar = 1.0  
 
   #print "PROPERTIES: ", volume, nbar
  
