@@ -20,7 +20,7 @@ IF(INTERNAL_CYTHON)
 ENDIF(INTERNAL_CYTHON)
 
 IF(INTERNAL_NETCDF4_PYTHON)
-  SET(NETCDF4_PYTHON_URL "http://netcdf4-python.googlecode.com/files/netCDF4-1.0.1.tar.gz" CACHE STRING "URL to download NetCDF4-python from")
+  SET(NETCDF4_PYTHON_URL "https://github.com/Unidata/netcdf4-python/archive/v1.1.9rel.tar.gz" CACHE STRING "URL to download NetCDF4-python from")
   mark_as_advanced(NETCDF4_PYTHON_URL)
 ENDIF(INTERNAL_NETCDF4_PYTHON)
 
