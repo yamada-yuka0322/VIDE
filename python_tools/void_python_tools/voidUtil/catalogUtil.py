@@ -119,24 +119,24 @@ def loadPart(sampleDir):
 
     boxLen = mul
 
-    if isObservation == 1:
-      # look for the mask file
-      if os.access(sample.maskFile, os.F_OK):
-        maskFile = sample.maskFile
-      else:
-        maskFile = sampleDir+"/"+os.path.basename(sample.maskFile)
-        print "Using maskfile found in:", maskFile
-      props = vp.getSurveyProps(maskFile, sample.zBoundary[0],
-                                sample.zBoundary[1], 
-                                sample.zBoundary[0], 
-                                sample.zBoundary[1], "all",
-                                selectionFuncFile=sample.selFunFile,
-                                useComoving=sample.useComoving)
-      boxVol = props[0]
-      volNorm = maskIndex/boxVol
-    else:
-      boxVol = np.prod(boxLen) 
-      volNorm = len(x)/boxVol
+    #if isObservation == 1:
+    #  # look for the mask file
+    #  if os.access(sample.maskFile, os.F_OK):
+    #    maskFile = sample.maskFile
+    #  else:
+    #    maskFile = sampleDir+"/"+os.path.basename(sample.maskFile)
+    #    print "Using maskfile found in:", maskFile
+    #  props = vp.getSurveyProps(maskFile, sample.zBoundary[0],
+    #                            sample.zBoundary[1], 
+    #                            sample.zBoundary[0], 
+    #                            sample.zBoundary[1], "all",
+    #                            selectionFuncFile=sample.selFunFile,
+    #                            useComoving=sample.useComoving)
+    #  boxVol = props[0]
+    #  volNorm = maskIndex/boxVol
+    #else:
+    boxVol = np.prod(boxLen) 
+    volNorm = len(x)/boxVol
 
     isObservationData = isObservation == 1
 
@@ -170,24 +170,24 @@ def getVolNorm(sampleDir):
 
     boxLen = mul
 
-    if isObservation == 1:
-      # look for the mask file
-      if os.access(sample.maskFile, os.F_OK):
-        maskFile = sample.maskFile
-      else:
-        maskFile = sampleDir+"/"+os.path.basename(sample.maskFile)
-        print "Using maskfile found in:", maskFile
-      props = vp.getSurveyProps(maskFile, sample.zBoundary[0],
-                                sample.zBoundary[1], 
-                                sample.zBoundary[0], 
-                                sample.zBoundary[1], "all",
-                                selectionFuncFile=sample.selFunFile,
-                                useComoving=sample.useComoving)
-      boxVol = props[0]
-      volNorm = maskIndex/boxVol
-    else:
-      boxVol = np.prod(boxLen) 
-      volNorm = Np/boxVol
+    #if isObservation == 1:
+    #  # look for the mask file
+    #  if os.access(sample.maskFile, os.F_OK):
+    #    maskFile = sample.maskFile
+    #  else:
+    #    maskFile = sampleDir+"/"+os.path.basename(sample.maskFile)
+    #    print "Using maskfile found in:", maskFile
+    #  props = vp.getSurveyProps(maskFile, sample.zBoundary[0],
+    #                            sample.zBoundary[1], 
+    #                            sample.zBoundary[0], 
+    #                            sample.zBoundary[1], "all",
+    #                            selectionFuncFile=sample.selFunFile,
+    #                            useComoving=sample.useComoving)
+    #  boxVol = props[0]
+    #  volNorm = maskIndex/boxVol
+    #else:
+    boxVol = np.prod(boxLen) 
+    volNorm = Np/boxVol
 
     return volNorm
 
@@ -357,7 +357,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
                                numPart = int(line[8]),
                                densCon = line[9],
                                voidProb = line[10],
-                               radius = pow(line[7]/volNorm*3./4./np.pi, 1./3.),
+                               radius = 0., # this is read in later
                                macrocenter = np.zeros((3)),
                                redshift = 0,
                                RA = 0,
