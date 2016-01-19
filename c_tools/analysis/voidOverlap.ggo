@@ -24,6 +24,7 @@ option "centerFile2" - "Barycenter file for catalog 2" string yes
 option "shapeFile2" - "Shape file for catalog 2" string yes
 
 # options
+option "isObservation" - "We are working with observational data" flag off
 option "outfile" - "Output file" string yes
 option "useID" - "Use unique catalog ID to match voids; otherwise use volumes" flag off
 option "overlapFrac" - "threshold fraction of voronoi radius to count as matched" double optional default="0.25"

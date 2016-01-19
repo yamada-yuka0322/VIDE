@@ -93,7 +93,8 @@ void loadCatalog(const char *partFile, const char *volFile,
                  const char *voidFile, const char *zoneFile,
                  const char *infoFile, const char *centerFile,
                  const char *shapeFile,
-                 const char *zonePartFile, CATALOG& catalog);
+                 const char *zonePartFile, CATALOG& catalog,
+                 bool isObservation);
 
 float getDist(CATALOG& catalog1, CATALOG& catalog2, int& iVoid1, int& iVoid2,
                bool periodicX, bool periodicY, bool operiodicZ);
@@ -148,12 +149,12 @@ int main(int argc, char **argv) {
   loadCatalog(args.partFile1_arg, args.volFile1_arg, args.voidFile1_arg,
               args.zoneFile1_arg, args.infoFile1_arg, args.centerFile1_arg,
               args.shapeFile1_arg,
-              args.zonePartFile1_arg, catalog1);
+              args.zonePartFile1_arg, catalog1, args.isObservation_flag);
 
   loadCatalog(args.partFile2_arg, args.volFile2_arg, args.voidFile2_arg,
               args.zoneFile2_arg, args.infoFile2_arg, args.centerFile2_arg,
               args.shapeFile2_arg,
-              args.zonePartFile2_arg, catalog2);
+              args.zonePartFile2_arg, catalog2, args.isObservation_flag);
 
   // check for periodic box
     if ( strchr(args.periodic_arg, 'x') != NULL) {
@@ -532,11 +533,12 @@ void loadCatalog(const char *partFile, const char *volFile,
                  const char *voidFile, const char *zoneFile,
                  const char *infoFile, const char *centerFile,
                  const char *shapeFile,
-                 const char *zonePartFile, CATALOG& catalog) {
+                 const char *zonePartFile, CATALOG& catalog,
+                 bool isObservation) {
 
-  int i, p, numPartTot, numZonesTot, dummy, iVoid, iZ, numVolTot;
+  int i, p, numPartTot, numZonesTot, dummy, iVoid, iZ, numVolTot, zoneNumPart;
   FILE *fp;
-  float *temp, junk, voidVol, coreParticle, coreDens, zoneVol, zoneNumPart;
+  float *temp, junk, voidVol, coreParticle, coreDens, zoneVol;
   float densCon, voidProb, volNorm;
   long *temp2;
   int junkInt, voidID, numPart, numZones, zoneID, partID;
@@ -676,10 +678,18 @@ void loadCatalog(const char *partFile, const char *volFile,
     //       &tempFloat, &tempFloat, &tempFloat, &tempFloat, &tempInt,
     //       &tempFloat, &tempInt, &tempInt, &tempInt, &tempInt);
 
+    // convert back to ZOBOV-normalized units
 //if (iVoid < 10) printf("BARY %d %d %e %e %e\n", iVoid, catalog.voids[iVoid].voidID, tempBary[0], tempBary[1], tempBary[2]);
     tempBary[0] = (tempBary[0] - ranges[0][0])/catalog.boxLen[0];
     tempBary[1] = (tempBary[1] - ranges[1][0])/catalog.boxLen[1];
     tempBary[2] = (tempBary[2] - ranges[2][0])/catalog.boxLen[2];
+
+    if (isObservation) {
+      tempBary[0] -= 0.5;
+      tempBary[1] -= 0.5;
+      tempBary[2] -= 0.5;
+    }
+
     catalog.voids[iVoid].macrocenter[0] = tempBary[0];
     catalog.voids[iVoid].macrocenter[1] = tempBary[1];
     catalog.voids[iVoid].macrocenter[2] = tempBary[2];

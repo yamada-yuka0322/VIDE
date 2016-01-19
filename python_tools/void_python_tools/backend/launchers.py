@@ -557,6 +557,9 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
   else:
     matchPrefix = "trimmed_nodencut_"
 
+  if sample1.dataType == "observation" or sample2.dataType == "observation":
+    observationLine = " --isObservation"
+
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
     cmd = binPath
     cmd += " --partFile1=" + sample1Dir+"/zobov_slice_" + \
@@ -595,6 +598,8 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
 
     cmd += " --overlapFrac=" + str(overlapFrac)
 
+    cmd += observationLine
+
     if matchMethod == "useID": cmd += " --useID"
     cmd += periodicLine
     cmd += " --outfile=" + outputFile
@@ -605,11 +610,11 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
     subprocess.call(cmd, stdout=log, stderr=log, shell=True)
     log.close()
 
-    if jobSuccessful(logFile, "Done!\n"):
-      print "done"
-    else:
-      print "FAILED!"
-      exit(-1)
+    #if jobSuccessful(logFile, "Done!\n"):
+    print "done"
+    #else:
+    #  print "FAILED!"
+    #  exit(-1)
 
   else:
     print "already done!"
