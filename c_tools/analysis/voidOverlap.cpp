@@ -327,7 +327,7 @@ int main(int argc, char **argv) {
         catalog1.voids[iVoid1].matches[iMatch].commonVolOrig * 
         catalog1.voids[iVoid1].matches[iMatch].commonVolOrig / 
         catalog1.voids[iVoid1].vol /
-        catalog2.voids[iVoid1].vol;
+        catalog2.voids[iVoid2].vol;
         //catalog1.voids[iVoid1].matches[iMatch].commonVolOrig * 
         //catalog1.voids[iVoid1].matches[iMatch].commonVolProg / 
         //catalog1.voids[iVoid1].vol /
