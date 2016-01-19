@@ -59,9 +59,9 @@ int main(int argc, char *argv[]) {
     printf("That's no number of divisions; try again.\n");
     exit(0);
   }
-  if (numdiv < 2) {
-    printf("Cannot have a number of divisions less than 2.  Resetting to 2:\n");
-    numdiv = 2;
+  if (numdiv < 1) {
+    printf("Cannot have a number of divisions less than 1.  Resetting to 1:\n");
+    numdiv = 1;
   }
 
   suffix = argv[5];

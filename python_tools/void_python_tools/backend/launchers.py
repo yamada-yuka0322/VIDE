@@ -339,6 +339,8 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
   else:
     maskIndex = -1
     maxDen = 0.2
+    if numZobovDivisions == 1:
+      print "  WARNING! You are using a single ZOBOV division with a simulation. Periodic boundaries will not be respected!"
 
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
     for fileName in glob.glob(zobovDir+"/part._"+sampleName+".*"):
