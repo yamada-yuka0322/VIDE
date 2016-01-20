@@ -278,7 +278,7 @@ def plotVoidCells(catalog,
 
   for p in xrange(len(volume)):
     if (shiftedPartVoid[p,2]>(cellsMinlimz) and \
-        shiftedPartVoid[p,2]<(cellsMinlimz) and \
+        shiftedPartVoid[p,2]<(cellsMaxlimz) and \
         radius[p]>cellsradiuslim):
       color = 'blue'
       circle = plt.Circle((shiftedPartVoid[p,0], \
