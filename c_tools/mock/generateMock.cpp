@@ -695,7 +695,11 @@ int main(int argc, char **argv)
     }
   else if (args_info.gadget_given)
     {
-      loader = gadgetLoader(args_info.gadget_arg, 1/args_info.gadgetUnit_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID, preselector);
+      loader = gadgetLoader(args_info.gadget_arg, 1/args_info.gadgetUnit_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID, 1, preselector);
+    }
+  else if (args_info.gadget2_given)
+    {
+      loader = gadgetLoader(args_info.gadget_arg, 1/args_info.gadgetUnit_arg, NEED_POSITION|NEED_VELOCITY|NEED_GADGET_ID, 2, preselector);
     }
   else if (args_info.flash_given)
     {
