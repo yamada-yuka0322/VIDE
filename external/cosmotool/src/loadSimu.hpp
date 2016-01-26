@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/loadSimu.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/loadSimu.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -36,6 +36,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifndef __COSMOTOOLBOX_HPP
 #define __COSMOTOOLBOX_HPP
 
+#include <sys/types.h>
 #include <map>
 #include <string>
 
@@ -45,6 +46,8 @@ namespace CosmoTool
   static const int NEED_POSITION = 2;
   static const int NEED_VELOCITY = 4;
   static const int NEED_TYPE = 8;
+  static const int NEED_MASS = 16;
+  static const int NEED_DOUBLE_PRECISION = 32;
 
   struct SimuParticle
   {
@@ -64,6 +67,8 @@ namespace CosmoTool
     typedef void (*FreeFunction)(void *);
     typedef std::map<std::string, std::pair<void *, FreeFunction> > AttributeMap;
 
+    bool noAuto;
+
     float BoxSize;
     float time;
     float Hubble;
@@ -71,59 +76,60 @@ namespace CosmoTool
     float Omega_M;
     float Omega_Lambda;
 
-    long NumPart;
-    long TotalNumPart;
+    ssize_t NumPart;
+    ssize_t TotalNumPart;
     long *Id;
     float *Pos[3];
     float *Vel[3];
+    float *Mass;
     int *type;
 
     AttributeMap attributes;
     
   public:
-    SimuData() : Id(0),NumPart(0),type(0)  { Pos[0]=Pos[1]=Pos[2]=0; Vel[0]=Vel[1]=Vel[2]=0; }
+    SimuData() : Mass(0), Id(0),NumPart(0),type(0),noAuto(false)  { Pos[0]=Pos[1]=Pos[2]=0; Vel[0]=Vel[1]=Vel[2]=0; }
     ~SimuData() 
     {
-      for (int j = 0; j < 3; j++)
-	{
-	  if (Pos[j])
-	    delete[] Pos[j];
-	  if (Vel[j])
-	    delete[] Vel[j];
-	}
-      if (type)
-	delete[] type;
-      if (Id)
-	delete[] Id;
-
-      for (AttributeMap::iterator i = attributes.begin();
-	   i != attributes.end();
-	   ++i)
-	{
-	  if (i->second.second)
-	    i->second.second(i->second.first);
-	}
+        if (!noAuto)  {
+            for (int j = 0; j < 3; j++) {
+                if (Pos[j])
+                    delete[] Pos[j];
+                if (Vel[j])
+                    delete[] Vel[j];
+            }
+            if (type)
+                delete[] type;
+            if (Id)
+                delete[] Id;
+            if (Mass)
+                delete[] Mass;
+        }
+        for (AttributeMap::iterator i = attributes.begin();
+             i != attributes.end();
+             ++i) {
+            if (i->second.second)
+                i->second.second(i->second.first);
+        }
     }    
     
     template<typename T>
     T *as(const std::string& n) 
     {
-      AttributeMap::iterator i = attributes.find(n);
-      if (i == attributes.end())
-	return 0;
-      
-      return reinterpret_cast<T *>(i->second.first);
+        AttributeMap::iterator i = attributes.find(n);
+        if (i == attributes.end())
+            return 0;
+
+        return reinterpret_cast<T *>(i->second.first);
     }
 
     void new_attribute(const std::string& n, void *p, FreeFunction free_func)
     {
-      AttributeMap::iterator i = attributes.find(n);
-      if (i != attributes.end())
-	{
-	  if (i->second.second)
-	    i->second.second(i->second.first);
-	}
-      attributes[n] = std::make_pair(p, free_func);
+        AttributeMap::iterator i = attributes.find(n);
+        if (i != attributes.end()) {
+            if (i->second.second)
+                i->second.second(i->second.first);
+        }
+        attributes[n] = std::make_pair(p, free_func);
     }
     
   };

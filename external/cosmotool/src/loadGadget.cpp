@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/loadGadget.cpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/loadGadget.cpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -38,6 +38,8 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 #include "load_data.hpp"
 #include "loadGadget.hpp"
 #include "fortran.hpp"
@@ -65,9 +67,16 @@ void loadGadgetHeader(UnformattedRead *f, GadgetHeader& h, SimuData *data, int i
   data->Omega_M = h.Omega0 = f->readReal64();
   data->Omega_Lambda = h.OmegaLambda = f->readReal64();
   data->Hubble = h.HubbleParam = f->readReal64();
+  (int)f->readInt32(); // stellarage
+  (int)f->readInt32(); // metals
+  for (int i = 0; i < 6; i++)
+    h.npartTotal[i] |= ((unsigned long)f->readInt32()) << 32;
+  (int)f->readInt32(); // entropy instead of u
+  h.flag_doubleprecision = f->readInt32();  
+
   f->endCheckpoint(true);
   
-  long NumPart = 0, NumPartTotal = 0;
+  ssize_t NumPart = 0, NumPartTotal = 0;
   for(int k=0; k<6; k++)
     {
       NumPart += h.npart[k];
@@ -76,6 +85,12 @@ void loadGadgetHeader(UnformattedRead *f, GadgetHeader& h, SimuData *data, int i
   data->NumPart = NumPart;
   data->TotalNumPart = NumPartTotal;
 }
+
+template<typename T>
+T myRead64(UnformattedRead *f) { return f->readReal64(); }
+
+template<typename T>
+T myRead32(UnformattedRead *f) { return f->readReal32(); }
 
 SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
 				     int loadflags, int GadgetFormat, 
@@ -86,6 +101,14 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
   UnformattedRead *f;
   GadgetHeader h;
   float velmul;
+  boost::function0<double> readToDouble;
+  boost::function0<float> readToSingle;
+  long float_size;
+
+  if (GadgetFormat > 2) {
+     cerr << "Unknown gadget format" << endl;
+     return 0;
+  }
 
   if (id >= 0) {
     int k = snprintf(0, 0, "%s.%d", fname, id)+1;
@@ -96,7 +119,7 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
     if (f == 0)
       return 0;
 
-    delete out_fname;
+    delete[] out_fname;
 
   } else {
 
@@ -106,27 +129,68 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
 
   }
 
+  typedef std::map<std::string, int64_t> BlockMap;
+  BlockMap blockTable;
+  
+  if (GadgetFormat == 2) {
+    int64_t startBlock = 0;
+    char block[5];
+    int32_t blocksize;
+
+    try {
+      while (true) {
+        f->beginCheckpoint();
+        f->readOrderedBuffer(block, 4);
+        block[4] = 0;
+        blocksize = f->readInt32();
+        f->endCheckpoint();
+        blockTable[block] = f->position();
+        f->skip(blocksize);
+      }
+    } catch (EndOfFileException&) {}
+
+    f->seek(startBlock);
+  }
+
   data = new SimuData;
   if (data == 0) {
     delete f;
     return 0;
   }
 
-  long NumPart = 0, NumPartTotal = 0;
+  ssize_t NumPart = 0, NumPartTotal = 0;
+#define ENSURE(name) { \
+    if (GadgetFormat == 2) { \
+     BlockMap::iterator iter = blockTable.find(name); \
+     if (iter == blockTable.end()) { \
+        std::cerr << "GADGET2: Cannot find block named '" << name << "'" << endl; \
+        if (data) delete data; \
+        delete f; \
+        return 0; \
+     } \
+     f->seek(iter->second); \
+    } \
+  } 
+
   
   try
     {
+      ENSURE("HEAD");
       loadGadgetHeader(f, h, data, id);
 
-      if (GadgetFormat == 1)
-        velmul = sqrt(h.time);
-      else if (GadgetFormat == 2)
-        velmul = 1/(h.time);
-      else {
-        cerr << "unknown gadget format" << endl;
-	abort();
+      velmul = sqrt(h.time);
+      
+      if (h.flag_doubleprecision) {
+        //cout << "Gadget format with double precision" << endl;
+        readToDouble = boost::bind(myRead64<double>, f);
+        readToSingle = boost::bind(myRead64<float>, f);
+        float_size = sizeof(double);
+      } else {
+        //cout << "Gadget format with single precision" << endl;
+        readToDouble = boost::bind(myRead32<double>, f);
+        readToSingle = boost::bind(myRead32<float>, f);
+        float_size = sizeof(float);
       }
-
       NumPart = data->NumPart;
       NumPartTotal = data->TotalNumPart;
     }
@@ -138,34 +202,47 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
       return 0;
     }
 
+
   if (loadflags & NEED_TYPE)
     {
       int p = 0;
-
+ 
       data->type = new int[data->NumPart];
       for (int k = 0; k < 6; k++)
-	for (int n = 0; n < h.npart[k]; n++,p++)
-	  data->type[p] = k;
+        for (int n = 0; n < h.npart[k]; n++,p++)
+            data->type[p] = k;
     }
 
   if (loadflags & NEED_POSITION) {
       
     for (int i = 0; i < 3; i++) {
-      data->Pos[i] = new float[data->NumPart];
-      if (data->Pos[i] == 0) {
-	delete data;
-	return 0;
-      }
+        data->Pos[i] = new float[data->NumPart];
+        if (data->Pos[i] == 0) {
+        	delete data;
+    	return 0;
     }
+  }
     
     try
       {
+        ENSURE("POS ");
 	f->beginCheckpoint();
+        if (f->getBlockSize() != NumPart*float_size*3) {
+          // Check that single would work
+          if (f->getBlockSize() == NumPart*sizeof(float)*3) {
+            // Change to single
+            cout << "Change back to single. Buggy header." << endl;
+            readToDouble = boost::bind(myRead32<double>, f);
+            readToSingle = boost::bind(myRead32<float>, f);
+            float_size = sizeof(float);
+          }
+        }
 	for(int k = 0, p = 0; k < 6; k++) {
 	  for(int n = 0; n < h.npart[k]; n++) {
-	    data->Pos[0][p] = f->readReal32();
-	    data->Pos[1][p] = f->readReal32();
-	    data->Pos[2][p] = f->readReal32();
+//            if ((n%1000000)==0) cout << n << endl;
+	    data->Pos[0][p] = readToSingle();
+	    data->Pos[1][p] = readToSingle();
+	    data->Pos[2][p] = readToSingle();
 	    p++;
 	  }
 	}
@@ -173,15 +250,16 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
       }
     catch (const InvalidUnformattedAccess& e)
       {
-	cerr << "Invalid format while reading positions" << endl;
-	delete f;
-	delete data;
-	return 0;
+        cerr << "Invalid format while reading positions" << endl;
+        delete f;
+        delete data;
+        return 0;
       }
     
   } else {
+    long float_size = (h.flag_doubleprecision) ? sizeof(double) : sizeof(float);
     // Skip positions
-    f->skip(NumPart * 3 * sizeof(float) + 2*4);
+    f->skip(NumPart * 3 * float_size + 2*4);
   }
   
   if (loadflags & NEED_VELOCITY) {
@@ -198,13 +276,15 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
     
     try
       {
+        ENSURE("VEL ");
 	f->beginCheckpoint();
 	for(int k = 0, p = 0; k < 6; k++) {
 	  for(int n = 0; n < h.npart[k]; n++) {
 	    // THIS IS GADGET 1
-	    data->Vel[0][p] = f->readReal32()*velmul;
-	    data->Vel[1][p] = f->readReal32()*velmul;
-	    data->Vel[2][p] = f->readReal32()*velmul;
+//            if ((n%1000000)==0) cout << n << endl;
+	    data->Vel[0][p] = readToSingle()*velmul;
+	    data->Vel[1][p] = readToSingle()*velmul;
+	    data->Vel[2][p] = readToSingle()*velmul;
 	    p++;
 	  }
 	}
@@ -222,13 +302,14 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
 ///    // TODO: FIX THE UNITS OF THESE FUNKY VELOCITIES !!!
   } else {
     // Skip velocities
-    f->skip(NumPart*3*sizeof(float)+2*4);
+    f->skip(NumPart*3*float_size+2*4);
   }
 
   // Skip ids
   if (loadflags & NEED_GADGET_ID) {
     try
       {
+        ENSURE("ID  ");
 	f->beginCheckpoint();
 	data->Id = new long[data->NumPart];
 	if (data->Id == 0)
@@ -261,11 +342,66 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
       f->skip(h.npart[k]*4);
   }
 
+  if (loadflags & NEED_MASS) {
+    bool do_load = false;
+
+    for (int k = 0; k < 6; k++)
+      {
+         do_load = do_load || ((h.mass[k] == 0)&&(h.npart[k]>0));
+      }
+
+    try
+      {
+        long l = 0;
+	if (do_load) {
+          ENSURE("MASS");
+          f->beginCheckpoint();
+        }
+        data->Mass = new float[NumPart];
+        for (int k = 0; k < 6; k++)
+	  {
+            if (h.mass[k] == 0) {
+              for(int n = 0; n < h.npart[k]; n++)
+	        {
+//            if ((n%1000000)==0) cout << n << endl;
+                  data->Mass[l++] = readToSingle();
+                }
+            } else {
+              for(int n = 0; n < h.npart[k]; n++)
+	        {
+            if ((n%1000000)==0) cout << n << endl;
+                  data->Mass[l++] = h.mass[k];
+                }
+            }
+          }
+        if (do_load)
+          f->endCheckpoint();
+      }
+    catch (const InvalidUnformattedAccess& e)
+      {
+	cerr << "Invalid unformatted access while reading ID" << endl;
+	delete f;
+	delete data;
+	return 0;
+      }
+    catch (const EndOfFileException& e)
+      {
+        for (int k = 0; k < 6; k++)
+          cerr << "mass[" << k << "] = " << h.mass[k] << endl;
+      }
+  } else {
+    f->skip(2*4);
+    for (int k = 0; k < 6; k++)
+      if (h.mass[k] == 0)
+        f->skip(h.npart[k]*4);
+  }
+
   delete f;
 
   return data;
 }
 
+#undef ENSURE
 
 
 void CosmoTool::writeGadget(const std::string& fname, SimuData *data, int GadgetFormat)
@@ -274,12 +410,16 @@ void CosmoTool::writeGadget(const std::string& fname, SimuData *data, int Gadget
   int npart[6], npartTotal[6];
   float mass[6];
 
-  if (data->Pos[0] == 0 || data->Vel[0] == 0 || data->Id == 0)
+  if (data->Pos[0] == 0 || data->Vel[0] == 0 || data->Id == 0) {
+    cerr << "Invalid simulation data array" << endl;
     return;
+  }
 
   f = new UnformattedWrite(fname);
-  if (f == 0)
+  if (f == 0) {
+    cerr << "Cannot create file" << endl;
     return;
+  }
 
   for (int i = 0; i < 6; i++)
     {
@@ -321,8 +461,7 @@ void CosmoTool::writeGadget(const std::string& fname, SimuData *data, int Gadget
   f->endCheckpoint();
 
   float velmul = 1.0;
-  if (GadgetFormat == 1)
-    velmul = sqrt(data->time);
+  velmul = sqrt(data->time);
 
   f->beginCheckpoint();
   for(int n = 0; n < data->NumPart; n++) {
