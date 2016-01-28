@@ -79,6 +79,7 @@ int64_t UnformattedRead::position() const
 void UnformattedRead::seek(int64_t pos)
 {
   f->seekg(pos, istream::beg);
+  checkPointRef = checkPointAccum = 0;
 }
 
 // Todo implement primitive description
