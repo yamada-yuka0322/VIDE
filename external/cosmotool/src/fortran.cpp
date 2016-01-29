@@ -78,6 +78,7 @@ int64_t UnformattedRead::position() const
 
 void UnformattedRead::seek(int64_t pos)
 {
+  f->clear();
   f->seekg(pos, istream::beg);
   checkPointRef = checkPointAccum = 0;
 }
