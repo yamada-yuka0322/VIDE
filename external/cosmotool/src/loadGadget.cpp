@@ -146,7 +146,6 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
         f->endCheckpoint();
         blockTable[block] = f->position();
         f->skip(blocksize);
-        cout << "GADGET: Block '" << block << "', position is " << blockTable[block] << endl;
       }
     } catch (EndOfFileException&) {}
 
