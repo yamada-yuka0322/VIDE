@@ -92,6 +92,16 @@ T myRead64(UnformattedRead *f) { return f->readReal64(); }
 template<typename T>
 T myRead32(UnformattedRead *f) { return f->readReal32(); }
 
+template<typename T>
+T myReadI64(UnformattedRead *f) { return f->readInt64(); }
+
+template<typename T>
+T myReadI32(UnformattedRead *f) { return f->readInt32(); }
+
+struct BlockInfo {
+   int64_t position, size;
+};
+
 SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
 				     int loadflags, int GadgetFormat, 
 				     SimuFilter filter)
@@ -103,6 +113,7 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
   float velmul;
   boost::function0<double> readToDouble;
   boost::function0<float> readToSingle;
+  boost::function0<int64_t> readID;
   long float_size;
 
   if (GadgetFormat > 2) {
@@ -129,7 +140,7 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
 
   }
 
-  typedef std::map<std::string, int64_t> BlockMap;
+  typedef std::map<std::string, BlockInfo> BlockMap;
   BlockMap blockTable;
   
   if (GadgetFormat == 2) {
@@ -144,7 +155,8 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
         block[4] = 0;
         blocksize = f->readInt32();
         f->endCheckpoint();
-        blockTable[block] = f->position();
+        blockTable[block].position = f->position();
+        blockTable[block].size = blocksize;
         f->skip(blocksize);
       }
     } catch (EndOfFileException&) {}
@@ -159,19 +171,22 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
   }
 
   ssize_t NumPart = 0, NumPartTotal = 0;
-#define ENSURE(name) { \
+#define ENSURE2(name,out_sz) { \
     if (GadgetFormat == 2) { \
      BlockMap::iterator iter = blockTable.find(name); \
+     int64_t sz; \
      if (iter == blockTable.end()) { \
         std::cerr << "GADGET2: Cannot find block named '" << name << "'" << endl; \
         if (data) delete data; \
         delete f; \
         return 0; \
      } \
-     f->seek(iter->second); \
+     f->seek(iter->second.position); \
+     sz = iter->second.size; \
+     out_sz = sz;\
     } \
   } 
-
+#define ENSURE(name) ENSURE2(name,sz);
   
   try
     {
@@ -309,7 +324,18 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
   if (loadflags & NEED_GADGET_ID) {
     try
       {
-        ENSURE("ID  ");
+        int64_t idSize;
+        ENSURE2("ID  ", idSize);
+
+        if (idSize / data->NumPart == 8) {
+          readID = boost::bind(myReadI64<int64_t>, f);
+        } else
+        if (idSize / data->NumPart == 4) {
+          readID = boost::bind(myReadI32<int64_t>, f);
+        } else {
+          throw InvalidUnformattedAccess();
+        }
+
 	f->beginCheckpoint();
 	data->Id = new long[data->NumPart];
 	if (data->Id == 0)
@@ -323,7 +349,7 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
 	  {
 	    for(int n = 0; n < h.npart[k]; n++)
 	      {
-		data->Id[p] = f->readInt32();
+		data->Id[p] = readID();
 		p++;
 	      }
 	  }
