@@ -561,6 +561,8 @@ def launchVoidOverlap(sample1, sample2, sample1Dir, sample2Dir,
 
   if sample1.dataType == "observation" or sample2.dataType == "observation":
     observationLine = " --isObservation"
+  else:
+    observationLine = ""
 
   if not (continueRun and jobSuccessful(logFile, "Done!\n")):
     cmd = binPath
