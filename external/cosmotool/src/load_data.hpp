@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/load_data.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/load_data.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -55,7 +55,11 @@ namespace CosmoTool {
     double   Omega0;
     double   OmegaLambda;
     double   HubbleParam; 
-    char     fill[256- 6*4- 6*8- 2*8- 2*4- 6*4- 2*4 - 4*8];  /* fills to 256 Bytes */
+    int flag_doubleprecision;	
+    int flag_ic_info;            
+    float lpt_scalingfactor;
+    char fill[18];		/*!< fills to 256 Bytes */
+    char names[15][2];
   };
 
   struct ParticleState

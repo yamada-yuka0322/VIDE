@@ -36,12 +36,13 @@ private:
   bool onefile;
   int _num_files;
   double unitMpc;
+  int gadgetFormat;
   SimuData *gadget_header;
   string snapshot_name;
   SimulationPreprocessor *preproc;
 public:
-  GadgetLoader(const string& basename, SimuData *header, int flags, bool singleFile, int _num, double unit, SimulationPreprocessor *p)
-    : snapshot_name(basename), load_flags(flags), onefile(singleFile), _num_files(_num), unitMpc(1/unit), gadget_header(header), preproc(p)
+  GadgetLoader(const string& basename, SimuData *header, int flags, bool singleFile, int _num, double unit, int gadgetFormat, SimulationPreprocessor *p)
+    : snapshot_name(basename), load_flags(flags), onefile(singleFile), _num_files(_num), unitMpc(1/unit), gadget_header(header), gadgetFormat(gadgetFormat), preproc(p)
   {
   }
   
@@ -67,9 +68,9 @@ public:
       return 0;
 
     if (onefile)
-      d = loadGadgetMulti(snapshot_name.c_str(), -1, load_flags);
+      d = loadGadgetMulti(snapshot_name.c_str(), -1, load_flags, gadgetFormat);
     else
-      d = loadGadgetMulti(snapshot_name.c_str(), id, load_flags);
+      d = loadGadgetMulti(snapshot_name.c_str(), id, load_flags, gadgetFormat);
 
     if (d->Id != 0)
       {
@@ -99,7 +100,7 @@ public:
 };
 
 
-SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLength, int flags, SimulationPreprocessor *p)
+SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLength, int flags, int gadgetFormat, SimulationPreprocessor *p)
 {
   bool singleFile = false;
   int num_files;
@@ -109,7 +110,7 @@ SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLengt
 
   try
     {
-      d = loadGadgetMulti(snapshot.c_str(), -1, 0);
+      d = loadGadgetMulti(snapshot.c_str(), -1, 0, gadgetFormat);
       singleFile = true;
       num_files = 1;
     }
@@ -117,7 +118,7 @@ SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLengt
     {
       try
         {
-          d = loadGadgetMulti(snapshot.c_str(), 0, 0);
+          d = loadGadgetMulti(snapshot.c_str(), 0, 0, gadgetFormat);
 	  num_files = 0;
         }
       catch(const NoSuchFileException& e)
@@ -135,7 +136,7 @@ SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLengt
     {
       try
 	{
-	  while ((d = loadGadgetMulti(snapshot.c_str(), num_files, 0)) != 0)
+	  while ((d = loadGadgetMulti(snapshot.c_str(), num_files, 0, gadgetFormat)) != 0)
 	    {
 	      num_files++;
 	      delete d;
@@ -146,5 +147,5 @@ SimulationLoader *gadgetLoader(const std::string& snapshot, double Mpc_unitLengt
 	}
     }
     
-  return new GadgetLoader(snapshot, header, flags, singleFile, num_files, Mpc_unitLength, p);
+  return new GadgetLoader(snapshot, header, flags, singleFile, num_files, Mpc_unitLength, gadgetFormat, p);
 }

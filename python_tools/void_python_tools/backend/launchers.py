@@ -165,6 +165,8 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
         dataFileLine = "multidark " + datafile
       elif sample.dataFormat == "gadget":
         dataFileLine = "gadget " + datafile
+      elif sample.dataFormat == "gadget2":
+        dataFileLine = "gadget2 " + datafile
       elif sample.dataFormat == "ahf":
         dataFileLine = "gadget " + datafile
       elif sample.dataFormat == "sdf":

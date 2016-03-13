@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/fortran.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/fortran.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -73,6 +73,8 @@ namespace CosmoTool
     // Todo implement primitive description
     void setOrdering(Ordering o);
     void setCheckpointSize(CheckpointSize cs);
+
+    uint64_t getBlockSize() const { return checkPointRef; }
     
     void beginCheckpoint()
       throw (InvalidUnformattedAccess,EndOfFileException);
@@ -83,6 +85,8 @@ namespace CosmoTool
       throw (InvalidUnformattedAccess);
     float readReal32()
       throw (InvalidUnformattedAccess);
+    uint32_t readUint32()
+      throw (InvalidUnformattedAccess);
     int32_t readInt32()
       throw (InvalidUnformattedAccess);
     int64_t readInt64()
@@ -91,6 +95,11 @@ namespace CosmoTool
     void skip(int64_t off)
       throw (InvalidUnformattedAccess);
 
+    int64_t position() const;
+    void seek(int64_t pos);
+
+    void readOrderedBuffer(void *buffer, int size)
+      throw (InvalidUnformattedAccess);
   protected:
     bool swapOrdering;
     CheckpointSize cSize;
@@ -98,8 +107,6 @@ namespace CosmoTool
     uint64_t checkPointAccum;
     std::ifstream *f;
 
-    void readOrderedBuffer(void *buffer, int size)
-      throw (InvalidUnformattedAccess);
   };
 
  class UnformattedWrite: public FortranTypes

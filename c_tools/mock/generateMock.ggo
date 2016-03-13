@@ -8,6 +8,7 @@ option "ramsesBase" -	"Base directory for ramses" string optional
 option "ramsesId"   -   "Ramses snapshot id" int optional
 
 option "gadget"	    -	"Base name of gadget snapshot (without parallel writing extension)" string optional
+option "gadget2"	-	"Base name of gadget snapshot (version 2, without parallel writing extension)" string optional
 option "flash"	    -   "Base name for FLASH snapshot" string optional
 option "multidark"	    -   "Base name for multidark snapshot" string optional
 

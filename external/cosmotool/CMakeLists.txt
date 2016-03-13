@@ -47,6 +47,10 @@ if (ENABLE_SHARP)
 endif (ENABLE_SHARP)
 
 
+find_package(Boost 1.53)
+mark_as_advanced(Boost_INCLUDE_DIRS Boost_LIBRARIES)
+
+
 set(HDF5_FIND_COMPONENTS HL CXX)
 if(HDF5_ROOTDIR)
   SET(ENV{HDF5_ROOT} ${HDF5_ROOTDIR})

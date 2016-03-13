@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/fortran.cpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/fortran.cpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -71,6 +71,18 @@ UnformattedRead::~UnformattedRead()
   delete f;
 }
 
+int64_t UnformattedRead::position() const
+{
+ return f->tellg();
+}
+
+void UnformattedRead::seek(int64_t pos)
+{
+  f->clear();
+  f->seekg(pos, istream::beg);
+  checkPointRef = checkPointAccum = 0;
+}
+
 // Todo implement primitive description
 void UnformattedRead::setOrdering(Ordering o)
 {
@@ -112,7 +124,7 @@ void UnformattedRead::beginCheckpoint()
   checkPointRef = (cSize == Check_32bits) ? 4 : 8;
   checkPointAccum = 0;  
 
-  checkPointRef = (cSize == Check_32bits) ? readInt32() : readInt64();
+  checkPointRef = (cSize == Check_32bits) ? readUint32() : readInt64();
   checkPointAccum = 0;
 
   if (f->eof())
@@ -144,7 +156,7 @@ void UnformattedRead::endCheckpoint(bool autodrop)
 void UnformattedRead::readOrderedBuffer(void *buffer, int size)
       throw (InvalidUnformattedAccess)
 {
-  if ((checkPointAccum+size) > checkPointRef)
+  if ((checkPointAccum+(uint64_t)size) > checkPointRef)
        throw InvalidUnformattedAccess();
 
   f->read((char *)buffer, size);
@@ -184,6 +196,20 @@ float UnformattedRead::readReal32()
   readOrderedBuffer(&a, 4);
 
   return a.f;
+}
+
+uint32_t UnformattedRead::readUint32()
+  throw (InvalidUnformattedAccess)
+{
+  union
+  {
+    char b[4];
+    uint32_t i;
+  } a;
+
+  readOrderedBuffer(&a, 4);
+
+  return a.i;
 }
 
 int32_t UnformattedRead::readInt32()
