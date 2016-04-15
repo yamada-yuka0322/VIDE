@@ -15,3 +15,5 @@ option "output"	- "Filename of particle datafile" string required
 option "params" - "Output parameters of the datacube" string required
 
 option "useComoving" - "Convert to real space using LCDM cosmology" flag off
+
+option "omegaM" - "Omega Matter for fiducial cosmology" double optional default="0.27"

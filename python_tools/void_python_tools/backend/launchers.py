@@ -81,10 +81,11 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       density_fake %g
       %s
       %s
+      omegaM %g
       """ % (datafile, maskFile, outputFile,
              zobovDir+"/zobov_slice_"+sampleName+".par",
              sample.zBoundary[0], sample.zBoundary[1], sample.fakeDensity,
-             useComovingFlag, inputParameterFlag)
+             useComovingFlag, inputParameterFlag, sample.omegaM)
 
     parmFile = os.getcwd()+"/generate_"+sample.fullName+".par"
 

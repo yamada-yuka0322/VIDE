@@ -115,7 +115,7 @@ void loadData(const string& fname, NYU_VData & data)
 }
 
 void generateGalaxiesInCube(NYU_VData& data, ParticleData& output_data, 
-                            bool useComoving)
+                            bool useComoving, double omegaM)
 {
   double d2r = M_PI/180;
 
@@ -126,7 +126,7 @@ void generateGalaxiesInCube(NYU_VData& data, ParticleData& output_data,
   int numZ = 1000, iZ;
   size_t nEval;
 
-  expanParams.Om = 0.27;
+  expanParams.Om = omegaM;
   expanParams.w0 = -1.0;
   expanParams.wa = 0.0;
   expanF.params = &expanParams;
@@ -589,7 +589,7 @@ int main(int argc, char **argv)
   cout << "Placing galaxies..." << endl;
   generateGalaxiesInCube(data, output_data, args_info.useComoving_flag);
   generateSurfaceMask(args_info, mask, pixel_list, full_mask_list,
-                      data, output_data);
+                      data, output_data, args_info.omegaM);
   
   saveForZobov(output_data, args_info.output_arg, args_info.params_arg);
   //  saveData(output_data);
