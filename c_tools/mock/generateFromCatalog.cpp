@@ -587,9 +587,10 @@ int main(int argc, char **argv)
   // We compute a cube holding all the galaxies + the survey surface mask
 
   cout << "Placing galaxies..." << endl;
-  generateGalaxiesInCube(data, output_data, args_info.useComoving_flag);
+  generateGalaxiesInCube(data, output_data, args_info.useComoving_flag, 
+                         args_info.omegaM_arg);
   generateSurfaceMask(args_info, mask, pixel_list, full_mask_list,
-                      data, output_data, args_info.omegaM_arg);
+                      data, output_data);
   
   saveForZobov(output_data, args_info.output_arg, args_info.params_arg);
   //  saveData(output_data);
