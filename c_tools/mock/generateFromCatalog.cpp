@@ -589,7 +589,7 @@ int main(int argc, char **argv)
   cout << "Placing galaxies..." << endl;
   generateGalaxiesInCube(data, output_data, args_info.useComoving_flag);
   generateSurfaceMask(args_info, mask, pixel_list, full_mask_list,
-                      data, output_data, args_info.omegaM);
+                      data, output_data, args_info.omegaM_arg);
   
   saveForZobov(output_data, args_info.output_arg, args_info.params_arg);
   //  saveData(output_data);
