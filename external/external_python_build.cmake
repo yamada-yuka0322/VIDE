@@ -15,7 +15,7 @@ ELSE (PYTHON_VERSION_STRING VERSION_LESS 2.7)
 ENDIF (PYTHON_VERSION_STRING VERSION_LESS 2.7)
 
 IF(INTERNAL_CYTHON)
-  SET(CYTHON_URL "http://cython.org/release/Cython-0.17.1.tar.gz" CACHE STRING "URL to download Cython from")
+  SET(CYTHON_URL "https://pypi.python.org/packages/73/8c/0c7de501038e9aaa6128219bf28989e55f129b5b31c5a66a55f648289466/Cython-0.17.1.tar.gz" CACHE STRING "URL to download Cython from")
   mark_as_advanced(CYTHON_URL)
 ENDIF(INTERNAL_CYTHON)
 
@@ -40,7 +40,7 @@ IF(INTERNAL_ARGPARSE)
 ENDIF(INTERNAL_ARGPARSE)
 
 IF(INTERNAL_SCIPY)
-  SET(SCIPY_URL "http://downloads.sourceforge.net/project/scipy/scipy/0.13.3/scipy-0.13.3.tar.gz" CACHE STRING "URL to download scipy from")
+  SET(SCIPY_URL "https://pypi.python.org/packages/2f/12/565c08132db50a0ba34a33e0901f3d1d4d72e3b432ea828e4d87be5a4991/scipy-0.13.3.tar.gz" CACHE STRING "URL to download scipy from")
   mark_as_advanced(SCIPY_URL)
 ENDIF(INTERNAL_SCIPY)
 
@@ -77,6 +77,7 @@ IF(INTERNAL_CYTHON)
   ExternalProject_Add(cython
     DEPENDS ${PREV_PYTHON_BUILD}
     URL ${CYTHON_URL}
+    URL_HASH MD5=f0bd2494dbe080a1185b61fa358135f2
     PREFIX ${BUILD_PREFIX}/cython-prefix
     CONFIGURE_COMMAND echo "No configure"
     BUILD_IN_SOURCE 1
@@ -175,6 +176,7 @@ IF(INTERNAL_SCIPY)
   ExternalProject_Add(scipy
     DEPENDS ${PREV_PYTHON_BUILD}
     URL ${SCIPY_URL}
+    URL_HASH MD5=0547c1f8e8afad4009cc9b5ef17a2d4d
     PREFIX ${BUILD_PREFIX}/scipy-prefix
     CONFIGURE_COMMAND echo "No configure"
     BUILD_IN_SOURCE 1
