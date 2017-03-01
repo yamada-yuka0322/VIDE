@@ -58,10 +58,12 @@ SET(CosmoTool_SRCS ${CosmoTool_SRCS}
 include_directories(${Boost_INCLUDE_DIRS} ${GSL_INCLUDE_PATH} ${NETCDF_INCLUDE_PATH} ${NETCDFCPP_INCLUDE_PATH} ${CMAKE_BINARY_DIR}/src)
 
 set(CosmoTool_LIBS  ${NETCDFCPP_LIBRARY} ${NETCDF_LIBRARY} ${GSL_LIBRARIES})
+message("HDF5: ${HDF5_LIBRARIES} ${HDF5_INCLUDE_DIRS}")
 if (HDF5_FOUND)
-  set(CosmoTool_LIBS ${CosmoTool_LIBS} ${HDF5_CXX_LIBRARIES} ${HDF5_LIBRARIES})
+  set(CosmoTool_LIBS ${CosmoTool_LIBS} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} ${HDF5_LIBRARIES})
   include_directories(${HDF5_INCLUDE_DIRS})
 endif (HDF5_FOUND)
+set(CosmoTool_LIBS ${CosmoTool_LIBS} ${ZLIB} ${LDLIB})
 
 set(CosmoTool_LIBS ${CosmoTool_LIBS} PARENT_SCOPE)
 

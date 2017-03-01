@@ -30,6 +30,8 @@ find_library(NETCDF_LIBRARY netcdf)
 find_library(NETCDFCPP_LIBRARY NAMES netcdf_c++ netcdf_c++4)
 find_library(GSL_LIBRARY gsl)
 find_library(GSLCBLAS_LIBRARY gslcblas)
+find_library(ZLIB z)
+find_library(LDLIB dl)
 
 if (ENABLE_SHARP)
   SET(SHARP_SOURCE ${CMAKE_SOURCE_DIR}/external/sharp)
@@ -48,14 +50,14 @@ endif (ENABLE_SHARP)
 
 
 find_package(Boost 1.53)
+message("INC DIRS: ${Boost_INCLUDE_DIRS}")
 mark_as_advanced(Boost_INCLUDE_DIRS Boost_LIBRARIES)
 
 
-set(HDF5_FIND_COMPONENTS HL CXX)
 if(HDF5_ROOTDIR)
   SET(ENV{HDF5_ROOT} ${HDF5_ROOTDIR})
 endif(HDF5_ROOTDIR)
-include(FindHDF5)
+find_package(HDF5 REQUIRED COMPONENTS HL CXX)
 
 include(FindPkgConfig)
 

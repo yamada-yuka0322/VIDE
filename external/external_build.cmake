@@ -177,6 +177,7 @@ mark_as_advanced(NETCDF_LIBRARY NETCDFCPP_LIBRARY NETCDF_INCLUDE_PATH NETCDFCPP_
 
 if (INTERNAL_BOOST)
   SET(BOOST_SOURCE_DIR ${BUILD_PREFIX}/boost-prefix/src/boost)
+  SET(cosmotool_DEPS ${cosmotool_DEPS} boost)
   ExternalProject_Add(boost
     URL ${BOOST_URL}
     PREFIX ${BUILD_PREFIX}/boost-prefix
@@ -230,6 +231,8 @@ ExternalProject_Add(cosmotool
   PREFIX ${BUILD_PREFIX}/cosmotool-prefix
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/cosmotool
   CMAKE_ARGS 
+  -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+  -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
         -DHDF5_DIR=${HDF5_ROOTDIR}
 	-DHDF5_ROOTDIR=${HDF5_ROOTDIR}
 	-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/ext_build/cosmotool
@@ -241,7 +244,7 @@ ExternalProject_Add(cosmotool
 	-DNETCDF_LIBRARY=${NETCDF_LIBRARY}
 	-DNETCDFCPP_LIBRARY=${NETCDFCPP_LIBRARY}
   -DENABLE_SHARP=OFF
-  -DBOOST_INCLUDEDIR=${Boost_INCLUDE_DIRS}
+  -DBoost_INCLUDE_DIR=${Boost_INCLUDE_DIRS}
 
 )
 SET(COSMOTOOL_LIBRARY ${CMAKE_BINARY_DIR}/ext_build/cosmotool/lib/libCosmoTool.a)
