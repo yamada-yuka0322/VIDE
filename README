@@ -35,6 +35,13 @@ HOD halo population code provided by Jeremy Tinker.
 RAMSES module provided by Benjamin B. Thompson.
 
 
+Requirements
+------------
+
+The package swig needs to be installed and available in the PATH (http://www.swig.org/). It 
+is required by scipy and we have not decided to bundle it with VIDE at the moment.
+
+
 Quick Start Guide
 -----------------
 
