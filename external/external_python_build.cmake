@@ -126,7 +126,7 @@ IF(INTERNAL_HEALPY)
            "-P")
 
   ExternalProject_Add(healpy
-    DEPENDS ${PREV_PYTHON_BUILD}
+    DEPENDS cfitsio ${PREV_PYTHON_BUILD}
     URL ${HEALPY_URL}
     PREFIX ${BUILD_PREFIX}/healpy-prefix
     CONFIGURE_COMMAND echo "No configure"
