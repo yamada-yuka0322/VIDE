@@ -84,17 +84,19 @@ void buildZoneAdjacencies(PARTICLE *p, pid_t np,
 	zt[zonenum[jumped[i]]].nadj++;
     }
 
+  size_t nadjAlloced = 0;
   try
     {
       for (int h = 0; h < numZones; h++) {
         zt[h].adj = new pid_t[zt[h].nadj];
         zt[h].slv = new float[zt[h].nadj];
+        nadjAlloced += zt[h].nadj;
         zt[h].nadj = 0;
       }
     }
   catch(const std::bad_alloc& a)
     {
-      cout << "Could not allocate memory for zone adjacencies." << endl;
+      cout << "Could not allocate memory for zone adjacencies (nadj so far: " << nadjAlloced << ", memory needed: " << (nadjAlloced*(sizeof(pid_t)+sizeof(float))) << ")" << endl;
       throw a;
     }
 
