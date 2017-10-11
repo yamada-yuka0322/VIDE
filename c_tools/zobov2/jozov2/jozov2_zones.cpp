@@ -88,10 +88,15 @@ void buildZoneAdjacencies(PARTICLE *p, pid_t np,
   try
     {
       for (int h = 0; h < numZones; h++) {
-        zt[h].adj = new pid_t[zt[h].nadj];
-        zt[h].slv = new float[zt[h].nadj];
-        nadjAlloced += zt[h].nadj;
-        zt[h].nadj = 0;
+        if (zt[h].nadj > 0) {
+          zt[h].adj = new pid_t[zt[h].nadj];
+          zt[h].slv = new float[zt[h].nadj];
+          nadjAlloced += zt[h].nadj;
+          zt[h].nadj = 0;
+        } else {
+          zt[h].adj = 0;
+          zt[h].slv = 0;
+        }
       }
     }
   catch(const std::bad_alloc& a)
