@@ -30,7 +30,7 @@ IF (INTERNAL_HEALPY)
 ENDIF(INTERNAL_HEALPY)
 
 IF(INTERNAL_SETUPTOOLS)
-  SET(SETUPTOOLS_URL "http://pypi.python.org/packages/source/s/setuptools/setuptools-0.6c11.tar.gz" CACHE STRING "URL to download setuptools from")
+  SET(SETUPTOOLS_URL "https://pypi.python.org/packages/source/s/setuptools/setuptools-0.6c11.tar.gz" CACHE STRING "URL to download setuptools from")
   mark_as_advanced(SETUPTOOLS_URL)
 ENDIF(INTERNAL_SETUPTOOLS)
 

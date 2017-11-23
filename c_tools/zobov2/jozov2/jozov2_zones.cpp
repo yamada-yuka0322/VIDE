@@ -85,9 +85,11 @@ void buildZoneAdjacencies(PARTICLE *p, pid_t np,
     }
 
   size_t nadjAlloced = 0;
+  cout << "Total numZones = " << numZones << endl;
   try
     {
       for (int h = 0; h < numZones; h++) {
+        cout << "Zone " << h << " nadj = " << zt[h].nadj << endl;
         if (zt[h].nadj > 0) {
           zt[h].adj = new pid_t[zt[h].nadj];
           zt[h].slv = new float[zt[h].nadj];
@@ -162,14 +164,19 @@ void buildZoneAdjacencies(PARTICLE *p, pid_t np,
   /* Use z instead of zt */
   for (int h = 0; h < numZones; h++) {
     z[h].nadj = zt[h].nadj;
-    z[h].adj = new pid_t[zt[h].nadj];
-    z[h].slv = new float[zt[h].nadj];
-    for (int za = 0; za < zt[h].nadj; za++) {
-      z[h].adj[za] = zt[h].adj[za];
-      z[h].slv[za] = zt[h].slv[za];
+    if (zt[h].nadj > 0) {
+      z[h].adj = new pid_t[zt[h].nadj];
+      z[h].slv = new float[zt[h].nadj];
+      for (int za = 0; za < zt[h].nadj; za++) {
+        z[h].adj[za] = zt[h].adj[za];
+        z[h].slv[za] = zt[h].slv[za];
+      }
+      delete[] zt[h].adj;
+      delete[] zt[h].slv;
+    } else {
+      z[h].adj = 0;
+      z[h].slv = 0;
     }
-    delete[] zt[h].adj;
-    delete[] zt[h].slv;
     z[h].np = numinh[z[h].core];
   }
 }
@@ -216,9 +223,14 @@ void buildZones(PARTICLE *p, pid_t np, pid_t *&jumped,
         zonenum[i] = -1;
       }
     }
+  for (size_t z = 0; z < nzones; z++) {
+    zt[z].nadj = 0;
+    zt[z].adj = 0;
+    zt[z].slv = 0;
+  }
 
   buildZoneAdjacencies(p, np, z, zt,
-                       nzones, jumped, zonenum, numinh);
+                       h, jumped, zonenum, numinh);
 
   delete[] zt;
   delete[] numinh;
