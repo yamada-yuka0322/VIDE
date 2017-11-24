@@ -89,7 +89,6 @@ void buildZoneAdjacencies(PARTICLE *p, pid_t np,
   try
     {
       for (int h = 0; h < numZones; h++) {
-        cout << "Zone " << h << " nadj = " << zt[h].nadj << endl;
         if (zt[h].nadj > 0) {
           zt[h].adj = new pid_t[zt[h].nadj];
           zt[h].slv = new float[zt[h].nadj];
