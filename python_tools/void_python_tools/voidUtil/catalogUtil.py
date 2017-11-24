@@ -466,7 +466,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
                                        zoneIDs = []))
 
       for p in xrange(numZones):
-        zoneID = np.fromfile(File, dtype=np.int32,count=1)
+        zoneID = np.fromfile(File, dtype=np.int32,count=1)[0]
         catalog.void2Zones[iZ].zoneIDs.append(zoneID)
 
 
@@ -482,7 +482,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
                                        partIDs = []))
 
       for p in xrange(numPart):
-        partID = np.fromfile(File, dtype=np.int32,count=1)
+        partID = np.fromfile(File, dtype=np.int32,count=1)[0]
         catalog.zones2Parts[iZ].partIDs.append(partID)
 
   return catalog
