@@ -1,0 +1,94 @@
+diff -ur omptl.orig/omptl_algorithm omptl/omptl_algorithm
+--- omptl.orig/omptl_algorithm	2017-01-16 14:58:37.996690639 +0100
++++ omptl/omptl_algorithm	2017-01-16 15:00:26.678641720 +0100
+@@ -20,7 +20,7 @@
+ #define OMPTL_ALGORITHM 1
+ 
+ #include <algorithm>
+-#include <omptl/omptl>
++#include "omptl"
+ 
+ namespace omptl
+ {
+@@ -553,9 +553,9 @@
+ } // namespace omptl
+ 
+ #ifdef _OPENMP
+-  #include <omptl/omptl_algorithm_par.h>
++  #include "omptl_algorithm_par.h"
+ #else
+-  #include <omptl/omptl_algorithm_ser.h>
++  #include "omptl_algorithm_ser.h"
+ #endif
+ 
+ #endif /* OMPTL_ALGORITHM */
+diff -ur omptl.orig/omptl_algorithm_par.h omptl/omptl_algorithm_par.h
+--- omptl.orig/omptl_algorithm_par.h	2017-01-16 14:58:37.996690639 +0100
++++ omptl/omptl_algorithm_par.h	2017-01-16 14:59:57.974126410 +0100
+@@ -21,8 +21,8 @@
+ #include <cmath>
+ #include <cstdlib>
+ 
+-#include <omptl/omptl_tools.h>
+-#include <omptl/omptl_numeric>
++#include "omptl_tools.h"
++#include "omptl_numeric"
+ 
+ #include <iterator>
+ 
+diff -ur omptl.orig/omptl_numeric omptl/omptl_numeric
+--- omptl.orig/omptl_numeric	2017-01-16 14:58:37.996690639 +0100
++++ omptl/omptl_numeric	2017-01-16 15:00:57.051186974 +0100
+@@ -19,7 +19,7 @@
+ #define OMPTL_NUMERIC 1
+ 
+ #include <numeric>
+-#include <omptl/omptl>
++#include "omptl"
+ 
+ namespace omptl
+ {
+@@ -73,11 +73,11 @@
+ } // namespace omptl
+ 
+ #ifdef _OPENMP
+-  #include <omptl/omptl_numeric_par.h>
++  #include "omptl_numeric_par.h"
+ #else
+-  #include <omptl/omptl_numeric_ser.h>
++  #include "omptl_numeric_ser.h"
+ #endif
+ 
+-#include <omptl/omptl_numeric_extensions.h>
++#include "omptl_numeric_extensions.h"
+ 
+ #endif /* OMPTL_NUMERIC */
+diff -ur omptl.orig/omptl_numeric_extensions.h omptl/omptl_numeric_extensions.h
+--- omptl.orig/omptl_numeric_extensions.h	2017-01-16 14:58:37.996690639 +0100
++++ omptl/omptl_numeric_extensions.h	2017-01-16 14:59:21.549472508 +0100
+@@ -51,9 +51,9 @@
+ } // namespace
+ 
+ #ifdef _OPENMP
+-  #include <omptl/omptl_numeric_extensions_par.h>
++  #include "omptl_numeric_extensions_par.h"
+ #else
+-  #include <omptl/omptl_numeric_extensions_ser.h>
++  #include "omptl_numeric_extensions_ser.h"
+ #endif
+ 
+ namespace omptl
+diff -ur omptl.orig/omptl_numeric_par.h omptl/omptl_numeric_par.h
+--- omptl.orig/omptl_numeric_par.h	2017-01-16 14:58:37.996690639 +0100
++++ omptl/omptl_numeric_par.h	2017-01-16 14:59:36.397739066 +0100
+@@ -23,8 +23,8 @@
+ #include <functional>
+ #include <iterator>
+ 
+-#include <omptl/omptl_algorithm>
+-#include <omptl/omptl_tools.h>
++#include "omptl_algorithm"
++#include "omptl_tools.h"
+ 
+ namespace omptl
+ {
