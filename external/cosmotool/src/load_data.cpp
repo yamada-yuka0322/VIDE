@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/load_data.cpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/load_data.cpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -41,7 +41,7 @@ knowledge of the CeCILL license and that you accept its terms.
 using namespace CosmoTool;
 
 //#define LARGE_CONTROL
-#define LITTLE_ENDIAN
+//#define LITTLE_ENDIAN
 
 #define NEW(t,n)  ((t *)malloc(sizeof(t)*n))
 #define SKIP(f) fread(&dummy,sizeof(dummy),1,f);

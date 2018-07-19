@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./sample/test_fft_calls.cpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./sample/test_fft_calls.cpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -89,5 +89,6 @@ int main(int argc, char **argv)
   test_2d<float>(128,128);
   test_2d<float>(128,131);  
   test_2d<float>(128,130);  
+  test_2d<float>(131,128);  
   return 0;
 }

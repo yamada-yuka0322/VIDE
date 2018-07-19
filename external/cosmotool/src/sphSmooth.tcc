@@ -1,4 +1,5 @@
 #include <cmath>
+#include "algo.hpp"
 
 namespace CosmoTool {
 
@@ -7,29 +8,28 @@ SPHSmooth<ValType,Ndims>::SPHSmooth(SPHTree *tree, uint32_t Nsph)
 {
   this->Nsph = Nsph;
   this->tree = tree;
-  this->currentNgb = 0;
+  internal.currentNgb = 0;
 
   this->maxNgb = Nsph;
-  ngb = new SPHCell *[maxNgb];  
-  distances = new CoordType[maxNgb];
+  internal.ngb = boost::shared_ptr<SPHCell *[]>(new SPHCell *[maxNgb]);  
+  internal.distances = boost::shared_ptr<CoordType[]>(new CoordType[maxNgb]);
 }
 
 template<typename ValType, int Ndims>
 SPHSmooth<ValType,Ndims>::~SPHSmooth()
 {
-  delete[] ngb;
-  delete[] distances;
 }
 
 template<typename ValType, int Ndims>
+template<typename FuncT>
 ComputePrecision SPHSmooth<ValType,Ndims>::computeWValue(const typename SPHTree::coords& c,
 							 SPHCell& cell,
 							 CoordType d,
-							 computeParticleValue fun)
+							 FuncT fun, SPHState *state)
 {
   CoordType weight;
 
-  d /= smoothRadius;
+  d /= state->smoothRadius;
   weight = getKernel(d);
 
   if (cell.val.weight != 0)
@@ -47,86 +47,92 @@ SPHSmooth<ValType,Ndims>::fetchNeighbours(const typename SPHTree::coords& c, uin
 
   if (requested > maxNgb)
     {
-      delete[] ngb;
-      delete[] distances;
-
       maxNgb = requested;
-      ngb = new SPHCell *[maxNgb];
-      distances = new CoordType[maxNgb];
+      internal.ngb = boost::shared_ptr<P_SPHCell[]>(new P_SPHCell[maxNgb]);
+      internal.distances = boost::shared_ptr<CoordType[]>(new CoordType[maxNgb]);
     }
 
-  memcpy(currentCenter, c, sizeof(c));
-  tree->getNearestNeighbours(c, requested, ngb, distances);
+  memcpy(internal.currentCenter, c, sizeof(c));
+  tree->getNearestNeighbours(c, requested, (SPHCell **)internal.ngb.get(), (CoordType*)internal.distances.get());
 
-  currentNgb = 0;
-  for (uint32_t i = 0; i < requested && ngb[i] != 0; i++,currentNgb++)
+  internal.currentNgb = 0;
+  for (uint32_t i = 0; i < requested && (internal.ngb)[i] != 0; i++,internal.currentNgb++)
     {
-      distances[i] = sqrt(distances[i]);
-      d2 = distances[i];
+      internal.distances[i] = sqrt(internal.distances[i]);
+      d2 = internal.distances[i];
       if (d2 > max_dist)
         max_dist = d2;
     }
 
-  smoothRadius = max_dist / 2;  
+  internal.smoothRadius = max_dist / 2;  
 }
 
 template<typename ValType, int Ndims>
-void
-SPHSmooth<ValType,Ndims>::fetchNeighbours(const typename SPHTree::coords& c)
+void SPHSmooth<ValType,Ndims>::fetchNeighbours(const typename SPHTree::coords& c, SPHState *state)
 {
   ComputePrecision d2, max_dist = 0;
   uint32_t requested = Nsph;
 
-  memcpy(currentCenter, c, sizeof(c));
-  tree->getNearestNeighbours(c, requested, ngb, distances);
+  if (state != 0) {
+    state->distances = boost::shared_ptr<CoordType[]>(new CoordType[Nsph]);
+    state->ngb = boost::shared_ptr<SPHCell *[]>(new SPHCell *[Nsph]);
+  } else
+    state = &internal;
+    
+  memcpy(state->currentCenter, c, sizeof(c));
+  
+  tree->getNearestNeighbours(c, requested, state->ngb.get(), state->distances.get());
 
-  currentNgb = 0;
-  for (uint32_t i = 0; i < requested && ngb[i] != 0; i++,currentNgb++)
+  state->currentNgb = 0;
+  for (uint32_t i = 0; i < requested && state->ngb[i] != 0; i++,state->currentNgb++)
     {
-      distances[i] = sqrt(distances[i]);
-      d2 = distances[i];
+      d2 = internal.distances[i] = sqrt(internal.distances[i]);
       if (d2 > max_dist)
-	max_dist = d2;
+        max_dist = d2;
     }
 
-  smoothRadius = max_dist / 2;  
-}					
+  state->smoothRadius = max_dist / 2;  
+}
+
 
 template<typename ValType, int Ndims>
 void
 SPHSmooth<ValType,Ndims>::fetchNeighboursOnVolume(const typename SPHTree::coords& c,
-						  ComputePrecision radius)
+                                                  ComputePrecision radius)
 {
   uint32_t numPart;
   ComputePrecision d2, max_dist = 0;
 
-  memcpy(currentCenter, c, sizeof(c));
+  memcpy(internal.currentCenter, c, sizeof(c));
 
-  currentNgb = tree->getIntersection(c, radius, ngb, distances,
+  internal.currentNgb = tree->getIntersection(c, radius, internal.ngb, internal.distances,
 				  maxNgb);
 
-  for (uint32_t i = 0; i < currentNgb; i++)
+  for (uint32_t i = 0; i < internal.currentNgb; i++)
     {
-      distances[i] = sqrt(distances[i]);
-      d2 = distances[i];
+      d2 = internal.distances[i] = sqrt(internal.distances[i]);
       if (d2 > max_dist)
-	max_dist = d2;
+        max_dist = d2;
     }
-  smoothRadius = max_dist / 2;  
+  internal.smoothRadius = max_dist / 2;  
 }				
 
 template<typename ValType, int Ndims>
+template<typename FuncT>
 ComputePrecision 
 SPHSmooth<ValType,Ndims>::computeSmoothedValue(const typename SPHTree::coords& c,
-					       computeParticleValue fun)
+                                               FuncT fun, SPHState *state)
 {
+  if (state == 0)
+    state = &internal;
+    
   ComputePrecision outputValue = 0;
   ComputePrecision max_dist = 0;
-  ComputePrecision r3 = smoothRadius * smoothRadius * smoothRadius;
+  ComputePrecision r3 = cube(state->smoothRadius);
 
-  for (uint32_t i = 0; i < currentNgb; i++)
+  for (uint32_t i = 0; i < state->currentNgb; i++)
     {
-      outputValue += computeWValue(c, *ngb[i], distances[i], fun);
+      outputValue += computeWValue(c, *state->ngb[i], state->distances[i], fun, state);
     }
 
   return outputValue / r3;
@@ -140,28 +146,36 @@ ComputePrecision interpolateOne(const ValType& t)
 
 // WARNING ! Cell's weight must be 1 !!!
 template<typename ValType, int Ndims>
+template<typename FuncT>
 ComputePrecision SPHSmooth<ValType,Ndims>::computeInterpolatedValue(const typename SPHTree::coords& c,
-								    computeParticleValue fun)
+								    FuncT fun, SPHState *state)
 {
+  if (state == 0)
+    state = &internal;
+    
   ComputePrecision outputValue = 0;
   ComputePrecision max_dist = 0;
   ComputePrecision weight = 0;
 
-  for (uint32_t i = 0; i < currentNgb; i++)
+  for (uint32_t i = 0; i < state->currentNgb; i++)
     {
-      outputValue += computeWValue(c, *ngb[i], distances[i], fun);
-      weight += computeWValue(c, *ngb[i], distances[i], interpolateOne);
+      outputValue += computeWValue(c, *state->ngb[i], state->distances[i], fun);
+      weight += computeWValue(c, *state->ngb[i], state->distances[i], interpolateOne);
     }
 
   return (outputValue == 0) ? 0 : (outputValue / weight);  
 }
 
 template<typename ValType, int Ndims>
-void SPHSmooth<ValType,Ndims>::runForEachNeighbour(runParticleValue fun)
+template<typename FuncT>
+void SPHSmooth<ValType,Ndims>::runForEachNeighbour(FuncT fun, SPHState *state)
 {
-  for (uint32_t i = 0; i < currentNgb; i++)
+  if (state == 0)
+    state = &internal;
+    
+  for (uint32_t i = 0; i < state->currentNgb; i++)
     {
-      fun(ngb[i]);
+      fun(state->ngb[i]);
     }
 }
 
@@ -172,14 +186,13 @@ void SPHSmooth<ValType,Ndims>::addGridSite(const typename SPHTree::coords& c)
   ComputePrecision outputValue = 0;
   ComputePrecision max_dist = 0;
   
-  ComputePrecision r3 = smoothRadius * smoothRadius * smoothRadius;
+  ComputePrecision r3 = cube(internal.smoothRadius);
 
-  for (uint32_t i = 0; i < currentNgb; i++)
+  for (uint32_t i = 0; i < internal.currentNgb; i++)
     {
-      ComputePrecision d = distances[i];
-      SPHCell& cell = *ngb[i];
-      cell.val.weight += getKernel(d/smoothRadius) / r3;
-
+      ComputePrecision d = internal.distances[i];
+      SPHCell& cell = *(internal.ngb[i]);
+      cell.val.weight += getKernel(d/internal.smoothRadius) / r3;
     }
 }
 
@@ -202,7 +215,7 @@ SPHSmooth<ValType,Ndims>::getKernel(ComputePrecision x) const
 template<typename ValType, int Ndims>
 bool SPHSmooth<ValType,Ndims>::hasNeighbours() const
 {
-  return (currentNgb != 0);
+  return (internal.currentNgb != 0);
 }
 
 template<class ValType1, class ValType2, int Ndims>

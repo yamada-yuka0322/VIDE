@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/yorick_nc3.cpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/yorick_nc3.cpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -37,7 +37,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #include "config.hpp"
 #ifdef NETCDFCPP4
 #include <netcdf>
-using namespace netCDF
+using namespace netCDF;
 #else
 #include <netcdfcpp.h>
 #endif
@@ -235,7 +235,7 @@ namespace CosmoTool {
 
   template<typename T>
   void saveArray(const std::string& fname,
-		 T *array, uint32_t *dimList, uint32_t rank)
+		 const T *array, uint32_t *dimList, uint32_t rank)
   {
     NcFile f(fname.c_str(), NcFile::Replace, 0, 0, NcFile::Netcdf4);
     
@@ -300,10 +300,10 @@ namespace CosmoTool {
 				  double*& array, uint32_t *&dimList, uint32_t& rank);
 
   template void saveArray<int>(const std::string& fname,
-			       int *array, uint32_t *dimList, uint32_t rank);
+			       const int *array, uint32_t *dimList, uint32_t rank);
   template void saveArray<float>(const std::string& fname,
-				 float *array, uint32_t *dimList, uint32_t rank);
+				 const float *array, uint32_t *dimList, uint32_t rank);
   template void saveArray<double>(const std::string& fname,
-				  double *array, uint32_t *dimList, uint32_t rank);
+				  const double *array, uint32_t *dimList, uint32_t rank);
   
 }

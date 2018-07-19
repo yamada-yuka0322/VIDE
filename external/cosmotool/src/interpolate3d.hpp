@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/interpolate3d.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/interpolate3d.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -134,6 +134,12 @@ namespace CosmoTool
     SampledFunction& sampler;    
     int Nx, Ny, Nz;
   };
+
+
+  template<typename IType, typename ArrayType>
+  void singleInterpolation(IType *input_array, ArrayType *x, ArrayType *y, ArrayType *z, ArrayType *scalers)
+  {
+  }
 
 };
 

@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/cosmopower.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/cosmopower.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -38,6 +38,8 @@ knowledge of the CeCILL license and that you accept its terms.
 
 namespace CosmoTool {
 
+  struct TF_Transfer;
+    
   class CosmoPower
   {
   public:
@@ -63,28 +65,42 @@ namespace CosmoTool {
     double OmegaEff;
     double Gamma0;
     double normPower;
+    
+    struct EHuParams {
+      double k_silk;
+      double s;
+      double k_eq;
+      double alpha_b, beta_b;
+      double alpha_c, beta_c;
+      double beta_node;
+    };
+    
+    EHuParams ehu;
+    TF_Transfer *ehu_params;
 
-    enum CosmoFunction
-      {
-	POWER_EFSTATHIOU,
-	HU_WIGGLES,
-	HU_BARYON,
-	OLD_POWERSPECTRUM,
-	POWER_BARDEEN,
-	POWER_SUGIYAMA,
-	POWER_BDM,
-	POWER_TEST
-      };
+    enum CosmoFunction {
+      POWER_EFSTATHIOU,
+      HU_WIGGLES,
+      HU_BARYON,
+      OLD_POWERSPECTRUM,
+      POWER_BARDEEN,
+      POWER_SUGIYAMA,
+      POWER_BDM,
+      POWER_TEST,
+      HU_WIGGLES_ORIGINAL
+    };
 
     CosmoPower();
+    ~CosmoPower();
 
     void setFunction(CosmoFunction f);
 
     void updateCosmology();
     void updatePhysicalCosmology();
-    void normalize();
+    void normalize(double k_min = -1, double k_max = -1);
     void setNormalization(double A_K);
-
+    void updateHuWigglesConsts();
+    void updateHuWigglesOriginal();
  
     double eval_theta_theta(double k);
     double power(double k);
@@ -101,7 +117,7 @@ namespace CosmoTool {
     double powerSugiyama(double k);
     double powerBDM(double k);
     double powerTest(double k);
-
+    double powerHuWigglesOriginal(double k);
   };
 
 };

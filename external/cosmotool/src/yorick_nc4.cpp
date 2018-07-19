@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/yorick_nc4.cpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/yorick_nc4.cpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -131,9 +131,9 @@ public:
       {
 	if (curPos[i] == dimList[i].getSize())
 	  {
-	    curPos[i-1]++;
-	  curPos[i] = 0;
-	}
+            curPos[i-1]++;
+            curPos[i] = 0;
+	  }
       }    
   }
 };
@@ -174,7 +174,7 @@ namespace CosmoTool {
     vector<NcDim> ldimList;
 
     for (uint32_t i = 0; i < rank; i++)
-      ldimList.push_back(dimArray[rank-1-i]);
+      ldimList.push_back(dimArray[i]);
 
     OutputGenCDF<T> *impl = new OutputGenCDF<T>(f, v, ldimList, rank);
     return ProgressiveOutput<T>(impl);   
@@ -203,7 +203,7 @@ namespace CosmoTool {
 
   template<typename T>
   void saveArray(const std::string& fname,
-		 T *array, uint32_t *dimList, uint32_t rank)
+		 const T *array, uint32_t *dimList, uint32_t rank)
   {
     NcFile f(fname.c_str(), NcFile::replace);
     
@@ -263,10 +263,10 @@ namespace CosmoTool {
 				  double*& array, uint32_t *&dimList, uint32_t& rank);
 
   template void saveArray<int>(const std::string& fname,
-			       int *array, uint32_t *dimList, uint32_t rank);
+			       const int *array, uint32_t *dimList, uint32_t rank);
   template void saveArray<float>(const std::string& fname,
-				 float *array, uint32_t *dimList, uint32_t rank);
+				 const float *array, uint32_t *dimList, uint32_t rank);
   template void saveArray<double>(const std::string& fname,
-				  double *array, uint32_t *dimList, uint32_t rank);
+				  const double *array, uint32_t *dimList, uint32_t rank);
   
 }

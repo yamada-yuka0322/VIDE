@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/interpolate.cpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/interpolate.cpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -66,7 +66,6 @@ Interpolate::~Interpolate()
 }
 
 double Interpolate::compute(double x)
-  throw (InvalidRangeException)
 {
   double y;
   
@@ -85,7 +84,6 @@ double Interpolate::compute(double x)
 }
 
 double Interpolate::compute(double x) const
-  throw (InvalidRangeException)
 {
   double y;
 
@@ -107,7 +105,6 @@ double Interpolate::compute(double x) const
 
 
 double Interpolate::derivative(double x)
-  throw (InvalidRangeException)
 {
   double y, dy, x0 = x;
   
@@ -199,7 +196,6 @@ Interpolate CosmoTool::buildFromVector(const InterpolatePairs& v)
 }
 
 Interpolate CosmoTool::buildInterpolateFromFile(const char *fname)
-  throw (NoSuchFileException)
 {
   vector<MyPair> allData;
   ifstream f(fname);
@@ -239,7 +235,6 @@ Interpolate CosmoTool::buildInterpolateFromFile(const char *fname)
 
 Interpolate CosmoTool::buildInterpolateFromColumns(const char *fname, uint32_t col1, uint32_t col2, bool logx,
 						   bool logy)
-  throw (NoSuchFileException,InvalidRangeException)
 {
   vector<MyPair> allData;
   ifstream f(fname);

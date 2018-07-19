@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/cic.cpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/cic.cpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -32,11 +32,13 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL license and that you accept its terms.
 +*/
-
+#include "openmp.hpp"
 #include <assert.h>
 #include <math.h>
 #include <inttypes.h>
 #include "cic.hpp"
+
+using namespace CosmoTool;
 
 CICFilter::CICFilter(uint32_t N, double len)
 {
@@ -60,89 +62,29 @@ void CICFilter::resetMesh()
 
 void CICFilter::putParticles(CICParticles *particles, uint32_t N)
 {
-#if 0
-  uint32_t numCorners = 1 << NUMDIMS;
+  int threadUsed = smp_get_max_threads();
+  double *threadedDensity[threadUsed];
+  bool threadActivated[threadUsed];
+  uint32_t tUsedMin[threadUsed], tUsedMax[threadUsed];
 
-  for (uint32_t i = 0; i < N; i++)
-    {
-      Coordinates xyz;
-      int32_t ixyz[NUMDIMS];
-      int32_t rxyz[NUMDIMS];
-      CICType alpha[NUMDIMS];
-      CICType beta[NUMDIMS];
-      for (int j = 0; j < NUMDIMS; j++)
-	{
-	  xyz[j] = (particles[i].coords[j] / spatialLen * szGrid);
-	  ixyz[j] = (int32_t)floor(xyz[j] - 0.5);
-	  beta[j] = xyz[j] - ixyz[j] - 0.5;
-	  alpha[j] = 1 - beta[j];
-	  if (ixyz[j] < 0)
-	    ixyz[j] = szGrid-1;
-	}
+  for (int t = 0; t < threadUsed; t++)
+  {
+    threadedDensity[t] = new double[totalSize];
+    std::fill(threadedDensity[t], threadedDensity[t]+totalSize, 0);
+  }
 
-      CICType tot_mass = 0;
-      for (int j = 0; j < numCorners; j++)
-	{
-	  CICType rel_mass = 1;
-	  uint32_t idx = 0;
-	  uint32_t mul = 1;
-	  uint32_t mul2 = 1;
+  std::fill(threadActivated, threadActivated+threadUsed, false);
+  std::fill(tUsedMin, tUsedMin+threadUsed, totalSize);
+  std::fill(tUsedMax, tUsedMax+threadUsed, 0);
 
-	  for (int k = 0; k < NUMDIMS; k++)
-	    {
-	      uint32_t ipos = ((j & mul2) != 0);
+#pragma omp parallel
+  {
+    int thisThread = smp_get_thread_id();
+    double *dg = threadedDensity[thisThread];
 
-	      if (ipos == 1)
-		{
-		  rel_mass *= beta[k];
-		}
-	      else
-		{
-		  rel_mass *= alpha[k];
-		}
-
-	      rxyz[k] = ixyz[k] + ipos;
-	      
-	      if (rxyz[k] >= szGrid)
-		idx += (rxyz[k] - szGrid) * mul;
-	      else
-		idx += rxyz[k] * mul;
-
-	      mul2 *= 2;
-	      mul *= szGrid;
-	    }
-
-	  assert(rel_mass > 0);
-	  assert(rel_mass < 1);
-	  assert(idx < totalSize);
-	  densityGrid[idx] += rel_mass * particles[i].mass;
-	  tot_mass += rel_mass;
-	}
-      assert(tot_mass < 1.1);
-      assert(tot_mass > 0.9);
-    }
-#endif
-#if 0  
-  for (uint32_t i = 0; i < N; i++)
-    {
-      Coordinates xyz;
-      int32_t ixyz[NUMDIMS];
-      for (int j = 0; j < NUMDIMS; j++)
-	{
-	  xyz[j] = (particles[i].coords[j] / spatialLen * szGrid);
-	  ixyz[j] = (int32_t)round(xyz[j] - 0.5);
-	  if (ixyz[j] < 0)
-	    ixyz[j] = szGrid-1;
-	  else if (ixyz[j] >= szGrid)
-	    ixyz[j] = 0;
-	}
-
-      uint32_t idx = ixyz[0] + ixyz[1] * szGrid + ixyz[2] * szGrid * szGrid;
-      densityGrid[idx] += particles[i].mass;      
-    }
-
-#endif
-
+    threadActivated[thisThread] = true;
+  
+#pragma omp for schedule(static)
   for (uint32_t i = 0; i < N; i++)
     {
       CICType x, y, z;
@@ -193,44 +135,62 @@ void CICFilter::putParticles(CICParticles *particles, uint32_t N)
 
       // 000
       idx = ix + (iy + iz * szGrid) * szGrid;
-      densityGrid[idx] +=
+      dg[idx] +=
 	mass * beta_x * beta_y * beta_z;
       
       // 100
       idx = ix2 + (iy + iz * szGrid) * szGrid;
-      densityGrid[idx] +=
+      dg[idx] +=
 	mass * alpha_x * beta_y * beta_z;
       
       // 010
       idx = ix + (iy2 + iz * szGrid) * szGrid;
-      densityGrid[idx] +=
+      dg[idx] +=
 	mass * beta_x * alpha_y * beta_z;
       
       // 110
       idx = ix2 + (iy2 + iz * szGrid) * szGrid;
-      densityGrid[idx] +=
+      dg[idx] +=
 	mass * alpha_x * alpha_y * beta_z;
 
       // 001
       idx = ix + (iy + iz2 * szGrid) * szGrid;
-      densityGrid[idx] +=
+      dg[idx] +=
 	mass * beta_x * beta_y * alpha_z;
 
       // 101
       idx = ix2 + (iy + iz2 * szGrid) * szGrid;
-      densityGrid[idx] +=
+      dg[idx] +=
 	mass * alpha_x * beta_y * alpha_z;
 
       // 011
       idx = ix + (iy2 + iz2 * szGrid) * szGrid;
-      densityGrid[idx] +=
+      dg[idx] +=
 	mass * beta_x * alpha_y * alpha_z;
 
       // 111
       idx = ix2 + (iy2 + iz2 * szGrid) * szGrid;
-      densityGrid[idx] +=
+      dg[idx] +=
 	mass * alpha_x * alpha_y * alpha_z;
+
+      tUsedMin[thisThread] = std::min(tUsedMin[thisThread], idx);
+      tUsedMax[thisThread] = std::max(tUsedMax[thisThread], idx);
     }
+  }
+
+  for (int t = 0; t < threadUsed; t++)
+  {
+    if (!threadActivated[t])
+      continue;
+#pragma omp parallel for schedule(static)
+    for (long p = tUsedMin[t]; p < tUsedMax[t]; p++)
+      densityGrid[p] += threadedDensity[t][p];
+  }
+
+  for (int t = 0; t < threadUsed; t++)
+  {
+    delete[] threadedDensity[t];
+  }
 }
   
 void CICFilter::getDensityField(CICType*& field, uint32_t& res)
@@ -238,3 +198,4 @@ void CICFilter::getDensityField(CICType*& field, uint32_t& res)
   field = densityGrid;
   res = totalSize;
 }
+

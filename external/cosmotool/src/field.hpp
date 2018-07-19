@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/field.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/field.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 

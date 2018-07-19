@@ -46,6 +46,9 @@ namespace CosmoTool
 {
   class InvalidUnformattedAccess : public Exception
   {
+  public:
+    InvalidUnformattedAccess()
+       : Exception("Invalid unformatted fortran file format") {}
   };
 
   class FortranTypes
@@ -64,10 +67,8 @@ namespace CosmoTool
   {
   public:
 
-    UnformattedRead(const std::string& fname)
-      throw (NoSuchFileException);
-    UnformattedRead(const char *fname)
-      throw (NoSuchFileException);
+    UnformattedRead(const std::string& fname);
+    UnformattedRead(const char *fname);
     ~UnformattedRead();
 
     // Todo implement primitive description
@@ -76,36 +77,28 @@ namespace CosmoTool
 
     uint64_t getBlockSize() const { return checkPointRef; }
     
-    void beginCheckpoint()
-      throw (InvalidUnformattedAccess,EndOfFileException);
-    void endCheckpoint(bool autodrop = false)
-      throw (InvalidUnformattedAccess);
+    void beginCheckpoint(bool bufferRecord = false);
+    void endCheckpoint(bool autodrop = false);
     
-    double readReal64()
-      throw (InvalidUnformattedAccess);
-    float readReal32()
-      throw (InvalidUnformattedAccess);
-    uint32_t readUint32()
-      throw (InvalidUnformattedAccess);
-    int32_t readInt32()
-      throw (InvalidUnformattedAccess);
-    int64_t readInt64()
-      throw (InvalidUnformattedAccess);
+    double readReal64();
+    float readReal32();
+    uint32_t readUint32();
+    int32_t readInt32();
+    int64_t readInt64();
 
-    void skip(int64_t off)
-      throw (InvalidUnformattedAccess);
+    void skip(int64_t off);
 
     int64_t position() const;
     void seek(int64_t pos);
 
-    void readOrderedBuffer(void *buffer, int size)
-      throw (InvalidUnformattedAccess);
+    void readOrderedBuffer(void *buffer, int size);
   protected:
     bool swapOrdering;
     CheckpointSize cSize;
     uint64_t checkPointRef;
     uint64_t checkPointAccum;
     std::ifstream *f;
+    uint8_t *recordBuffer;
 
   };
 
@@ -113,34 +106,24 @@ namespace CosmoTool
   {
   public:
 
-    UnformattedWrite(const std::string& fname)
-      throw (NoSuchFileException);
-    UnformattedWrite(const char *fname)
-      throw (NoSuchFileException);
+    UnformattedWrite(const std::string& fname);
+    UnformattedWrite(const char *fname);
     ~UnformattedWrite();
 
     // Todo implement primitive description
     void setOrdering(Ordering o);
     void setCheckpointSize(CheckpointSize cs);
     
-    void beginCheckpoint()
-      throw (FilesystemFullException,InvalidUnformattedAccess);
-    void endCheckpoint()
-      throw (FilesystemFullException,InvalidUnformattedAccess);
+    void beginCheckpoint();
+    void endCheckpoint();
     
-    void writeReal64(double d)
-      throw (FilesystemFullException);
-    void writeReal32(float f)
-      throw (FilesystemFullException);
-    void writeInt32(int32_t i)
-      throw (FilesystemFullException);
-    void writeInt64(int64_t i)
-      throw (FilesystemFullException);
-    void writeInt8(int8_t c)
-      throw (FilesystemFullException);
+    void writeReal64(double d);
+    void writeReal32(float f);
+    void writeInt32(int32_t i);
+    void writeInt64(int64_t i);
+    void writeInt8(int8_t c);
 
-    void writeOrderedBuffer(void *buffer, int size)
-      throw(FilesystemFullException);
+    void writeOrderedBuffer(void *buffer, int size);
   protected:
     bool swapOrdering;
     CheckpointSize cSize;

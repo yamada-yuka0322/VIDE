@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/fourier/fft/fftw_calls.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/fourier/fft/fftw_calls.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -37,6 +37,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #define __FFTW_UNIFIED_CALLS_HPP
 
 #include <fftw3.h>
+#include <complex>
 
 namespace CosmoTool
 {
@@ -68,6 +69,10 @@ public: \
   static void free(void *p) { fftw_free(p); } \
 \
   static void execute(plan_type p) { prefix ## _execute(p); } \
+  static void execute_r2c(plan_type p, real_type *in, complex_type *out) { prefix ## _execute_dft_r2c(p, in, out); } \
+  static void execute_c2r(plan_type p, complex_type *in, real_type *out) { prefix ## _execute_dft_c2r(p, in, out); } \
+  static void execute_r2c(plan_type p, real_type *in, std::complex<real_type> *out) { prefix ## _execute_dft_r2c(p, in, (complex_type*)out); } \
+  static void execute_c2r(plan_type p, std::complex<real_type> *in, real_type *out) { prefix ## _execute_dft_c2r(p, (complex_type*) in, out); } \
   static plan_type plan_dft_r2c_2d(int Nx, int Ny,  \
 		       real_type *in, complex_type *out, \
 		       unsigned flags) \
@@ -88,6 +93,13 @@ public: \
   { \
     return prefix ## _plan_dft_r2c_3d(Nx, Ny, Nz, in, out, flags); \
   } \
+  static plan_type plan_dft_c2r_3d(int Nx, int Ny, int Nz, \
+                                   complex_type *in, real_type *out, \
+                                   unsigned flags) \
+  { \
+    return prefix ## _plan_dft_c2r_3d(Nx, Ny, Nz, in, out, flags); \
+  } \
+\
   static plan_type plan_dft_r2c(int rank, const int *n, real_type *in, \
                                 complex_type *out, unsigned flags) \
   { \
@@ -104,7 +116,7 @@ public: \
 
 FFTW_CALLS_BASE(double, fftw);
 FFTW_CALLS_BASE(float, fftwf);
-
+#undef FFTW_CALLS_BASE
 };
 
 #endif

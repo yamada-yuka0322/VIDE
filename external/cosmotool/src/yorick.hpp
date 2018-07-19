@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/yorick.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/yorick.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -218,7 +218,7 @@ namespace CosmoTool
 
   template<typename T>
   void saveArray(const std::string& fname,
-		 T *array, uint32_t *dimList, uint32_t rank);
+		 const T *array, uint32_t *dimList, uint32_t rank);
 
   template<typename T>
   void loadArray(const std::string& fname,

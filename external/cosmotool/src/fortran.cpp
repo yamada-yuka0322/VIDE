@@ -43,7 +43,6 @@ using namespace std;
 using namespace CosmoTool;
 
 UnformattedRead::UnformattedRead(const string& fname)
-  throw(NoSuchFileException)
 {
   f = new ifstream(fname.c_str());
   if (!*f)
@@ -52,10 +51,10 @@ UnformattedRead::UnformattedRead(const string& fname)
   swapOrdering = false;
   cSize = Check_32bits;
   checkPointRef = checkPointAccum = 0;
+  recordBuffer = 0;
 }
 
 UnformattedRead::UnformattedRead(const char *fname)
-  throw(NoSuchFileException)
 {
   f = new ifstream(fname);
   if (!*f)
@@ -63,11 +62,14 @@ UnformattedRead::UnformattedRead(const char *fname)
   swapOrdering = false;
   cSize = Check_32bits;
   checkPointRef = checkPointAccum = 0;
+  recordBuffer = 0;
 }
 
 
 UnformattedRead::~UnformattedRead()
 {
+  if (recordBuffer != 0)
+    delete[] recordBuffer;
   delete f;
 }
 
@@ -97,7 +99,6 @@ void UnformattedRead::setCheckpointSize(CheckpointSize cs)
 }
     
 void UnformattedRead::skip(int64_t off)
-  throw (InvalidUnformattedAccess)
 {
   if (checkPointAccum == 0 && checkPointRef == 0)
     {
@@ -115,8 +116,7 @@ void UnformattedRead::skip(int64_t off)
   checkPointAccum += off;
 }
 
-void UnformattedRead::beginCheckpoint()
-  throw (InvalidUnformattedAccess,EndOfFileException)
+void UnformattedRead::beginCheckpoint(bool bufferRecord)
 {
   if (checkPointAccum != 0)
     throw InvalidUnformattedAccess();
@@ -129,15 +129,26 @@ void UnformattedRead::beginCheckpoint()
 
   if (f->eof())
     throw EndOfFileException();
+
+  if (bufferRecord) {
+    std::cout << "Use fast I/O mode" << std::endl;
+    recordBuffer = new uint8_t[checkPointRef];
+    f->read(reinterpret_cast<char *>(recordBuffer), checkPointRef);
+  }
 }
 
 void UnformattedRead::endCheckpoint(bool autodrop)
-  throw (InvalidUnformattedAccess)
 {
+  if (recordBuffer != 0) {
+    delete[] recordBuffer;
+    recordBuffer = 0;
+  }
+
   if (checkPointRef != checkPointAccum)
     {
-      if (!autodrop || checkPointAccum > checkPointRef)
+      if (!autodrop || checkPointAccum > checkPointRef) {
 	throw InvalidUnformattedAccess();
+      }
       f->seekg(checkPointRef-checkPointAccum, ios::cur);
     }
 
@@ -145,21 +156,25 @@ void UnformattedRead::endCheckpoint(bool autodrop)
 
   checkPointRef = (cSize == Check_32bits) ? 4 : 8;
   checkPointAccum = 0;
-  checkPointRef = (cSize == Check_32bits) ? readInt32() : readInt64();
+  checkPointRef = (cSize == Check_32bits) ? readUint32() : readInt64();
   
-  if (oldCheckPoint != checkPointRef)
+  if (oldCheckPoint != checkPointRef) {
     throw InvalidUnformattedAccess();
+  }
 
   checkPointAccum = checkPointRef = 0;
 }
 
 void UnformattedRead::readOrderedBuffer(void *buffer, int size)
-      throw (InvalidUnformattedAccess)
 {
   if ((checkPointAccum+(uint64_t)size) > checkPointRef)
        throw InvalidUnformattedAccess();
 
-  f->read((char *)buffer, size);
+  if (recordBuffer != 0) {
+    memcpy(buffer, &recordBuffer[checkPointAccum], size);
+  } else {
+    f->read((char *)buffer, size);
+  }
   
   if (swapOrdering)
     {
@@ -171,7 +186,6 @@ void UnformattedRead::readOrderedBuffer(void *buffer, int size)
 }
   
 double UnformattedRead::readReal64()
-  throw (InvalidUnformattedAccess)
 {
   union
   {
@@ -185,7 +199,6 @@ double UnformattedRead::readReal64()
 }
 
 float UnformattedRead::readReal32()
-  throw (InvalidUnformattedAccess)
 {
   union
   {
@@ -199,7 +212,6 @@ float UnformattedRead::readReal32()
 }
 
 uint32_t UnformattedRead::readUint32()
-  throw (InvalidUnformattedAccess)
 {
   union
   {
@@ -213,7 +225,6 @@ uint32_t UnformattedRead::readUint32()
 }
 
 int32_t UnformattedRead::readInt32()
-  throw (InvalidUnformattedAccess)
 {
   union
   {
@@ -227,7 +238,6 @@ int32_t UnformattedRead::readInt32()
 }
 
 int64_t UnformattedRead::readInt64()
-  throw (InvalidUnformattedAccess)
 {
   union
   {
@@ -243,7 +253,6 @@ int64_t UnformattedRead::readInt64()
 //// UnformattedWrite
 
 UnformattedWrite::UnformattedWrite(const string& fname)
-  throw(NoSuchFileException)
 {
   f = new ofstream(fname.c_str());
   if (!*f)
@@ -255,7 +264,6 @@ UnformattedWrite::UnformattedWrite(const string& fname)
 }
 
 UnformattedWrite::UnformattedWrite(const char *fname)
-  throw(NoSuchFileException)
 {
   f = new ofstream(fname);
   if (!*f)
@@ -285,7 +293,6 @@ void UnformattedWrite::setCheckpointSize(CheckpointSize cs)
 }
     
 void UnformattedWrite::beginCheckpoint()
-  throw (InvalidUnformattedAccess,FilesystemFullException)
 {
   if (checkPointAccum != 0)
     throw InvalidUnformattedAccess();
@@ -303,7 +310,6 @@ void UnformattedWrite::beginCheckpoint()
 }
 
 void UnformattedWrite::endCheckpoint()
-  throw (InvalidUnformattedAccess,FilesystemFullException)
 {
   if (checkPointAccum == 0)
     throw InvalidUnformattedAccess();
@@ -335,7 +341,6 @@ void UnformattedWrite::endCheckpoint()
 }
 
 void UnformattedWrite::writeOrderedBuffer(void *buffer, int size)
-  throw (FilesystemFullException)
 {
   f->write((char *)buffer, size);
   
@@ -352,7 +357,6 @@ void UnformattedWrite::writeOrderedBuffer(void *buffer, int size)
 }
   
 void UnformattedWrite::writeReal64(double d)
-  throw (FilesystemFullException)
 {
   union
   {
@@ -366,7 +370,6 @@ void UnformattedWrite::writeReal64(double d)
 }
 
 void UnformattedWrite::writeReal32(float f)
-  throw (FilesystemFullException)
 {
   union
   {
@@ -380,7 +383,6 @@ void UnformattedWrite::writeReal32(float f)
 }
 
 void UnformattedWrite::writeInt32(int32_t i)
-  throw (FilesystemFullException)
 {
   union
   {
@@ -393,7 +395,6 @@ void UnformattedWrite::writeInt32(int32_t i)
 }
 
 void UnformattedWrite::writeInt64(int64_t i)
-  throw (FilesystemFullException)
 {
   union
   {
@@ -406,7 +407,6 @@ void UnformattedWrite::writeInt64(int64_t i)
 }
 
 void UnformattedWrite::writeInt8(int8_t i)
-  throw (FilesystemFullException)
 {
   union { char b; int8_t i; } a;
 

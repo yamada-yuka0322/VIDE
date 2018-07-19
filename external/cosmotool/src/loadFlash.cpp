@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/loadFlash.cpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/loadFlash.cpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -106,7 +106,7 @@ SimuData *CosmoTool::loadFlashMulti(const char *fname, int id, int loadflags)
     } }
  
     if (loadflags & NEED_GADGET_ID) {
-    data->Id = new long[data->NumPart];
+    data->Id = new int64_t[data->NumPart];
     if (data->Id == 0) {
       delete data;
       return 0;

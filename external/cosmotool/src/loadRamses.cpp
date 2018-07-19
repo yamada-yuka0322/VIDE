@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/loadRamses.cpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/loadRamses.cpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -34,7 +34,7 @@ knowledge of the CeCILL license and that you accept its terms.
 +*/
 
 #include <sys/types.h>
-#include <regex.h>
+#include "/usr/include/regex.h"
 #include <cmath>
 #include <cstring>
 #include <cstdlib>
@@ -252,7 +252,7 @@ int readInfoFile(const char *basename, int outputId, InfoData& info)
   const char *pattern = "^([A-Za-z_]+)[ ]*=[ ]*([0-9\\.E+\\-]+)";
 
   err = regcomp (&unit_l_rx, pattern, REG_EXTENDED);
-  cout << unit_l_rx.re_nsub << endl;
+//  cout << unit_l_rx.re_nsub << endl;
   if (err)
     {
       char errString[255];
@@ -309,7 +309,7 @@ CosmoTool::SimuData *CosmoTool::loadRamsesSimu(const char *basename, int outputI
 
   double hubble = info.aexp*info.aexp/info.unit_t / (1e5/CM_IN_MPC);
   double L0 = info.boxSize*info.unitLength*hubble/100/CM_IN_MPC/info.aexp;
-  double unit_vel = L0*hubble/info.aexp;
+  double unit_vel = L0*100/info.aexp;
   
   while (1)
     {
@@ -417,9 +417,12 @@ CosmoTool::SimuData *CosmoTool::loadRamsesSimu(const char *basename, int outputI
 	  data->Vel[1] = new float[nPar];
 	  data->Vel[2] = new float[nPar];
 	}
+      if (flags & NEED_MASS) {
+        data->Mass = new float[nPar];
+      }
       if (flags & NEED_GADGET_ID)
 	{
-	  data->Id = new long[nPar];
+	  data->Id = new int64_t[nPar];
 	}
 
       for (int k = 0; k < 3; k++)
@@ -455,9 +458,10 @@ CosmoTool::SimuData *CosmoTool::loadRamsesSimu(const char *basename, int outputI
       
       float minMass = INFINITY;
       infile.beginCheckpoint();
-      for (uint32_t i = nPar; i > 0; i--)
-	{
+      for (uint32_t i = 0; i < nPar; i++) {
 	  float dummyF = dp ? infile.readReal64() : infile.readReal32();
+          if (flags & NEED_MASS)
+            data->Mass[i] = dummyF;
 	  if (dummyF < minMass) minMass = dummyF;
 	}
       infile.endCheckpoint();
@@ -477,7 +481,7 @@ CosmoTool::SimuData *CosmoTool::loadRamsesSimu(const char *basename, int outputI
     }
   catch (const NoSuchFileException& e)  
     {
-	cerr << "No such file " << fname << endl;
+//	cerr << "No such file " << fname << endl;
       delete data;
       return 0;
     }

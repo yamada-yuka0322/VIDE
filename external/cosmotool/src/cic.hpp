@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/cic.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/cic.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -36,10 +36,10 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifndef __CICFILTER_HPP
 #define __CICFILTER_HPP
 
-#include "CosmoTool/config.hpp"
+#include "config.hpp"
 #include <inttypes.h>
 
-using namespace CosmoTool;
+namespace CosmoTool {
 
 typedef float CICType;
 
@@ -66,5 +66,7 @@ typedef float CICType;
     uint32_t totalSize;
     uint32_t szGrid;
   };
+
+};
 
 #endif

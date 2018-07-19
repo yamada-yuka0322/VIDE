@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/fourier/details/healpix_transform.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/fourier/details/healpix_transform.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -36,13 +36,15 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifndef __COSMOTOOL_FOURIER_HEALPIX_DETAILS_TRANSFORM_HPP
 #define __COSMOTOOL_FOURIER_HEALPIX_DETAILS_TRANSFORM_HPP
 
+#include <valarray>
+
 namespace CosmoTool
 {
 
   template<typename T> struct HealpixJobHelper__ {};
 
   template<> struct HealpixJobHelper__<double>
-    { enum {val=1}; };
+    { enum {val=SHARP_DP}; };
 
   template<> struct HealpixJobHelper__<float>
     { enum {val=0}; };
@@ -62,6 +64,13 @@ namespace CosmoTool
       : realMap(nSide), fourierMap(Lmax, Mmax), ainfo(0), ginfo(0), m_iterate(iterate)
     {
       sharp_make_healpix_geom_info (nSide, 1, &ginfo);
+      sharp_make_triangular_alm_info (Lmax, Mmax, 1, &ainfo);
+    }
+
+    HealpixFourierTransform(long nSide, long Lmax, long Mmax, int iterate, const std::valarray<double>& weights )
+      : realMap(nSide), fourierMap(Lmax, Mmax), ainfo(0), ginfo(0), m_iterate(iterate)
+    {
+      sharp_make_weighted_healpix_geom_info (nSide, 1, &weights[0], &ginfo);
       sharp_make_triangular_alm_info (Lmax, Mmax, 1, &ainfo);
     }
 
@@ -88,8 +97,8 @@ namespace CosmoTool
     {
       void *aptr=reinterpret_cast<void *>(fourierMap.data()), *mptr=reinterpret_cast<void *>(realMap.data());
 
-      sharp_execute (SHARP_MAP2ALM, 0, 0, &aptr, &mptr, ginfo, ainfo, 1,
-        HealpixJobHelper__<T>::val,0,0,0);
+      sharp_execute (SHARP_MAP2ALM, 0, &aptr, &mptr, ginfo, ainfo, 1,
+        HealpixJobHelper__<T>::val,0,0);
       for (int i = 0; i < m_iterate; i++)
         {
           HealpixFourierMap<T> tmp_map(realMap.Nside());          
@@ -97,11 +106,11 @@ namespace CosmoTool
           typename HealpixFourierMap<T>::MapType m0 = tmp_map.eigen();
           typename HealpixFourierMap<T>::MapType m1 = realMap.eigen();
 
-          sharp_execute (SHARP_ALM2MAP, 0, 0, &aptr, &tmp_ptr, ginfo, ainfo, 1,
-            HealpixJobHelper__<T>::val,0,0,0);
+          sharp_execute (SHARP_ALM2MAP, 0, &aptr, &tmp_ptr, ginfo, ainfo, 1,
+            HealpixJobHelper__<T>::val,0,0);
           m0 = m1 - m0;
-          sharp_execute (SHARP_MAP2ALM, 0, 1, &aptr, &tmp_ptr, ginfo, ainfo, 1,
-            HealpixJobHelper__<T>::val,0,0,0);
+          sharp_execute (SHARP_MAP2ALM, 0, &aptr, &tmp_ptr, ginfo, ainfo, 1,
+            HealpixJobHelper__<T>::val | SHARP_ADD,0,0);
         }
     }
 
@@ -109,8 +118,8 @@ namespace CosmoTool
     {
       void *aptr=reinterpret_cast<void *>(fourierMap.data()), *mptr=reinterpret_cast<void *>(realMap.data());
 
-      sharp_execute (SHARP_ALM2MAP, 0, 0, &aptr, &mptr, ginfo, ainfo, 1,
-        HealpixJobHelper__<T>::val,0,0,0);
+      sharp_execute (SHARP_ALM2MAP, 0, &aptr, &mptr, ginfo, ainfo, 1,
+        HealpixJobHelper__<T>::val,0,0);
     }
 
     virtual void analysis_conjugate()

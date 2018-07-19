@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/kdtree_splitters.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/kdtree_splitters.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -48,17 +48,17 @@ namespace CosmoTool
     typedef typename KDDef<N,CType>::CoordType ctype; 
 
 
-    void check_splitting(KDCell<N,ValType,CType> **cells, uint32_t Ncells, int axis, uint32_t split_index, ctype midCoord)
+    void check_splitting(KDCell<N,ValType,CType> **cells, NodeIntType Ncells, int axis, NodeIntType split_index, ctype midCoord)
     {
       ctype delta = std::numeric_limits<ctype>::max();
       assert(split_index < Ncells);
       assert(axis < N);
-      for (uint32_t i = 0; i < split_index; i++)
+      for (NodeIntType i = 0; i < split_index; i++)
 	{
 	  assert(cells[i]->coord[axis] <= midCoord);
 	  delta = min(midCoord-cells[i]->coord[axis], delta);
 	}
-      for (uint32_t i = split_index+1; i < Ncells; i++)
+      for (NodeIntType i = split_index+1; i < Ncells; i++)
 	{
 	  assert(cells[i]->coord[axis] > midCoord);
 	  delta = min(cells[i]->coord[axis]-midCoord, delta);
@@ -67,7 +67,7 @@ namespace CosmoTool
       assert (std::abs(cells[split_index]->coord[axis]-midCoord) <= delta);
     } 
     
-    void operator()(KDCell<N,ValType,CType> **cells, uint32_t Ncells, uint32_t& split_index, int axis, coords minBound, coords maxBound)
+    void operator()(KDCell<N,ValType,CType> **cells, NodeIntType Ncells, NodeIntType& split_index, int axis, coords minBound, coords maxBound)
     {
       if (Ncells == 1)
 	{
@@ -76,9 +76,9 @@ namespace CosmoTool
 	}
 
       ctype midCoord = 0.5*(maxBound[axis]+minBound[axis]);
-      uint32_t below = 0, above = Ncells-1;
+      NodeIntType below = 0, above = Ncells-1;
       ctype delta_min = std::numeric_limits<ctype>::max();
-      uint32_t idx_min = std::numeric_limits<uint32_t>::max();     
+      NodeIntType idx_min = std::numeric_limits<NodeIntType>::max();
 
       while (below < above)
 	{

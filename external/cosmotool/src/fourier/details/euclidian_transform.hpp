@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/fourier/details/euclidian_transform.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/fourier/details/euclidian_transform.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -56,10 +56,24 @@ namespace CosmoTool
   public:
     EuclidianFourierTransform(const DimArray& dims, const std::vector<double>& L)
     {
+      realMap = 0;
+      create_plan(dims, L);
+    }
+
+    void create_plan(const DimArray& dims, const std::vector<double>& L)
+    {
       assert(L.size() == dims.size());
       std::vector<double> dk(L.size());
       std::vector<int> swapped_dims(dims.size());
-      
+ 
+      if (realMap != 0)
+        {
+           delete realMap;
+           delete fourierMap;
+           calls::destroy_plan(m_synthesis);
+           calls::destroy_plan(m_analysis);
+        }
+ 
       m_dims = dims;
       m_dims_hc = dims;
       m_dims_hc[0] = dims[0]/2+1;
@@ -69,28 +83,34 @@ namespace CosmoTool
       Nc = 1;
       volume = 1;
       for (int i = 0; i < dims.size(); i++)
-	{
-	  N *= dims[i];
+        {
+          N *= dims[i];
           Nc *= m_dims_hc[i];
-	  volume *= L[i];
-	  dk[i] = 2*M_PI/L[i];
+          volume *= L[i];
+          dk[i] = 2*M_PI/L[i];
           swapped_dims[dims.size()-1-i] = dims[i];
-	}
+        }
 
       realMap = new EuclidianFourierMapReal<T>(
-		   boost::shared_ptr<T>(calls::alloc_real(N),
-					std::ptr_fun(calls::free)),
-		   m_dims);
+                boost::shared_ptr<T>(calls::alloc_real(N),
+                                    std::ptr_fun(calls::free)),
+                                    m_dims);
       fourierMap = new EuclidianFourierMapComplex<T>(
-		   boost::shared_ptr<std::complex<T> >((std::complex<T>*)calls::alloc_complex(Nc),
-						       std::ptr_fun(calls::free)), 
-		   dims[0], m_dims_hc, dk);
-      m_analysis = calls::plan_dft_r2c(dims.size(), &swapped_dims[0],
-				       realMap->data(), (typename calls::complex_type *)fourierMap->data(),
-				       FFTW_DESTROY_INPUT|FFTW_MEASURE);
-      m_synthesis = calls::plan_dft_c2r(dims.size(), &swapped_dims[0],
-					(typename calls::complex_type *)fourierMap->data(), realMap->data(),
-					FFTW_DESTROY_INPUT|FFTW_MEASURE);
+                boost::shared_ptr<std::complex<T> >(
+                  (std::complex<T>*)calls::alloc_complex(Nc),
+                  std::ptr_fun(calls::free)), 
+                dims[0], m_dims_hc, dk);
+      {
+        m_analysis = calls::plan_dft_r2c(
+              dims.size(), &swapped_dims[0],
+              realMap->data(), 
+              (typename calls::complex_type *)fourierMap->data(),
+              FFTW_DESTROY_INPUT|FFTW_MEASURE);
+        m_synthesis = calls::plan_dft_c2r(
+              dims.size(), &swapped_dims[0],
+              (typename calls::complex_type *)fourierMap->data(), realMap->data(),
+              FFTW_DESTROY_INPUT|FFTW_MEASURE);
+      }
     }
     
     virtual ~EuclidianFourierTransform()
@@ -106,11 +126,21 @@ namespace CosmoTool
       calls::execute(m_synthesis);
       realMap->scale(1/volume);
     }
+
+    void synthesis_unnormed()
+    {
+      calls::execute(m_synthesis);
+    }
     
     void analysis()
     {
       calls::execute(m_analysis);
       fourierMap->scale(volume/N);
+    }
+
+    void analysis_unnormed()
+    {
+      calls::execute(m_analysis);
     }
     
     void synthesis_conjugate()

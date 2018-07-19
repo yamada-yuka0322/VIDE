@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/fourier/details/healpix_spectrum.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/fourier/details/healpix_spectrum.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -100,8 +100,8 @@ namespace CosmoTool
         for (LType m = 1; m <= std::min(l,alms.Mmax()); m++)
           {
             std::complex<T>& c = new_data[alms.index(l,m)];
-            c.real() = gsl_ran_gaussian(rng, Al); 
-            c.imag() = gsl_ran_gaussian(rng, Al); 
+            c.real(gsl_ran_gaussian(rng, Al)); 
+            c.imag(gsl_ran_gaussian(rng, Al)); 
           }
       }
   } 

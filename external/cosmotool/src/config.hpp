@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/config.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/config.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -39,6 +39,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <string>
 #include <stdint.h>
 #include <exception>
+#include <stdexcept>
 #include <cstring>
 
 namespace CosmoTool
@@ -83,13 +84,13 @@ namespace CosmoTool
    * Base exception class for all exceptions handled by
    * this library.
    */
-  class Exception : public std::exception
+  class Exception : public std::runtime_error
   {
   public:
     Exception(const std::string& mess)
-      : msg(mess), msgok(true) {}
+      : std::runtime_error(mess), msg(mess), msgok(true) {}
     Exception()
-      : msgok(false) {}
+      : std::runtime_error("No message"), msgok(false) {}
 
     virtual ~Exception() throw () {}
 

@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/interpolate.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/interpolate.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -54,12 +54,9 @@ namespace CosmoTool
 		bool logx = false, bool logy = false);
     ~Interpolate();
 
-    double compute(double x)
-      throw (InvalidRangeException);
-    double compute(double x) const
-      throw (InvalidRangeException);
-    double derivative(double x)
-      throw (InvalidRangeException);
+    double compute(double x);
+    double compute(double x) const;
+    double derivative(double x);
 
     const Interpolate& operator=(const Interpolate& a);
 
@@ -77,10 +74,8 @@ namespace CosmoTool
 
   typedef std::vector< std::pair<double,double> > InterpolatePairs;
 
-  Interpolate buildInterpolateFromFile(const char *fname)
-    throw (NoSuchFileException);
-  Interpolate buildInterpolateFromColumns(const char *fname, uint32_t col1, uint32_t col2, bool logx = false, bool logy = false)
-    throw (NoSuchFileException,InvalidRangeException);
+  Interpolate buildInterpolateFromFile(const char *fname);
+  Interpolate buildInterpolateFromColumns(const char *fname, uint32_t col1, uint32_t col2, bool logx = false, bool logy = false);
   Interpolate buildFromVector(const InterpolatePairs& v);
 
 

@@ -146,14 +146,14 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
   if (GadgetFormat == 2) {
     int64_t startBlock = 0;
     char block[5];
-    int32_t blocksize;
+    uint32_t blocksize;
 
     try {
       while (true) {
         f->beginCheckpoint();
         f->readOrderedBuffer(block, 4);
         block[4] = 0;
-        blocksize = f->readInt32();
+        blocksize = f->readUint32();
         f->endCheckpoint();
         blockTable[block].position = f->position();
         blockTable[block].size = blocksize;
@@ -172,9 +172,9 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
 
   ssize_t NumPart = 0, NumPartTotal = 0;
 #define ENSURE2(name,out_sz) { \
+    int64_t sz; \
     if (GadgetFormat == 2) { \
      BlockMap::iterator iter = blockTable.find(name); \
-     int64_t sz; \
      if (iter == blockTable.end()) { \
         std::cerr << "GADGET2: Cannot find block named '" << name << "'" << endl; \
         if (data) delete data; \
@@ -184,7 +184,14 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
      f->seek(iter->second.position); \
      sz = iter->second.size; \
      out_sz = sz;\
+    } else if (GadgetFormat==1) { \
+      int64_t oldpos = f->position(); \
+      f->beginCheckpoint(); \
+      out_sz = f->getBlockSize(); \
+      f->endCheckpoint(true); \
+      f->seek(oldpos); \
     } \
+\
   } 
 #define ENSURE(name) ENSURE2(name,sz);
   
@@ -241,7 +248,7 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
     try
       {
         ENSURE("POS ");
-	f->beginCheckpoint();
+	f->beginCheckpoint(true); // Use more memory but faster I/O
         if (f->getBlockSize() != NumPart*float_size*3) {
           // Check that single would work
           if (f->getBlockSize() == NumPart*sizeof(float)*3) {
@@ -292,7 +299,7 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
     try
       {
         ENSURE("VEL ");
-	f->beginCheckpoint();
+	f->beginCheckpoint(true);
 	for(int k = 0, p = 0; k < 6; k++) {
 	  for(int n = 0; n < h.npart[k]; n++) {
 	    // THIS IS GADGET 1
@@ -336,8 +343,8 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
           throw InvalidUnformattedAccess();
         }
 
-	f->beginCheckpoint();
-	data->Id = new long[data->NumPart];
+	f->beginCheckpoint(true);
+	data->Id = new int64_t[data->NumPart];
 	if (data->Id == 0)
 	  {
 	    delete f;
@@ -395,7 +402,7 @@ SimuData *CosmoTool::loadGadgetMulti(const char *fname, int id,
             } else {
               for(int n = 0; n < h.npart[k]; n++)
 	        {
-            if ((n%1000000)==0) cout << n << endl;
+//            if ((n%1000000)==0) cout << n << endl;
                   data->Mass[l++] = h.mass[k];
                 }
             }

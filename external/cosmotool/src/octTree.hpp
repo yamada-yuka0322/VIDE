@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/octTree.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/octTree.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -55,12 +55,20 @@ namespace CosmoTool
 
   typedef octCoordType OctCoords[3];
 
+  template<class T = void>
   struct OctCell
   {
     octPtr numberLeaves;
     octPtr children[8];
+    T data;
   };
 
+  template<typename T>
+  struct OctTree_defaultUpdater {
+    void operator()(T& d) { }
+  };
+
+  template<typename T_dataUpdater = OctTree_defaultUpdater<void>, class T = void>
   class OctTree
   {
   public:
@@ -103,9 +111,10 @@ namespace CosmoTool
     
 
   protected:
+    T_dataUpdater updater;
     const FCoordinates *particles;
     octPtr numParticles;
-    OctCell *cells;
+    OctCell<T> *cells;
     float Lbox;
     octPtr lastNode;
     octPtr numCells;  
@@ -128,47 +137,47 @@ namespace CosmoTool
       FCoordinates center, realCenter;
 
       for (int j = 0; j < 3; j++)
-	{
-	  center[j] = icoord[j]/(2.*octCoordCenter);
-	  realCenter[j] = xMin[j] + center[j]*lenNorm;
-	}
+        {
+          center[j] = icoord[j]/(2.*octCoordCenter);
+          realCenter[j] = xMin[j] + center[j]*lenNorm;
+        }
 
       f(realCenter, cells[node].numberLeaves, lenNorm*halfNodeLength/(float)octCoordCenter,
-	cells[node].children[0] == invalidOctCell, // True if this is a meta-node
-	false);
+        cells[node].children[0] == invalidOctCell, // True if this is a meta-node
+        false);
      
       if (!condition(realCenter, cells[node].numberLeaves,
 		     lenNorm*halfNodeLength/(float)octCoordCenter,
 		     cells[node].children[0] == invalidOctCell))
-	return;
+        return;
        
       for (int i = 0; i < 8; i++)
-	{
-	  octPtr newNode = cells[node].children[i];
-	  int ipos[3] = { (i&1), (i&2)>>1, (i&4)>>2 };
-	  
-	  if (newNode == emptyOctCell || newNode == invalidOctCell)
-	    continue;
-	  	  
-	  for (int j = 0; j < 3; j++)
-	    newCoord[j] = icoord[j]+(2*ipos[j]-1)*halfNodeLength/2;
-	  
-	  if (newNode & octParticleMarker)
-	    {
-	      for (int j = 0; j < 3; j++)
-		{
-		  center[j] = newCoord[j]/(2.*octCoordCenter);
-		  realCenter[j] = xMin[j] + lenNorm*center[j];
-		}
+        {
+          octPtr newNode = cells[node].children[i];
+          int ipos[3] = { (i&1), (i&2)>>1, (i&4)>>2 };
+          
+          if (newNode == emptyOctCell || newNode == invalidOctCell)
+            continue;
+          	  
+          for (int j = 0; j < 3; j++)
+            newCoord[j] = icoord[j]+(2*ipos[j]-1)*halfNodeLength/2;
+          
+          if (newNode & octParticleMarker)
+            {
+              for (int j = 0; j < 3; j++)
+                {
+                  center[j] = newCoord[j]/(2.*octCoordCenter);
+                  realCenter[j] = xMin[j] + lenNorm*center[j];
+                }
 
-	      f(realCenter, 
-		1, lenNorm*halfNodeLength/(2.*octCoordCenter),
-		false, true);
-	      continue;
-	    }
+              f(realCenter, 
+                1, lenNorm*halfNodeLength/(2.*octCoordCenter),
+                false, true);
+              continue;
+            }
 
-	  walkTreeElements(f, condition, cells[node].children[i], newCoord, halfNodeLength/2);
-	}
+          walkTreeElements(f, condition, cells[node].children[i], newCoord, halfNodeLength/2);
+        }
       
     }
 
@@ -176,5 +185,7 @@ namespace CosmoTool
   
 };
 
+
+#include "octTree.tcc"
 
 #endif

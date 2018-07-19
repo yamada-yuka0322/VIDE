@@ -1,5 +1,6 @@
 #include "replicateGenerator.hpp"
 #include <cstring>
+#include "omptl/omptl_algorithm"
 #include <algorithm>
 #include <limits>
 #include <iostream>
@@ -30,7 +31,7 @@ namespace CosmoTool {
   }
 
   template<int N, typename ValType, typename CType, typename CellSplitter>
-  KDTree<N,ValType,CType,CellSplitter>::KDTree(Cell *cells, uint32_t Ncells)
+  KDTree<N,ValType,CType,CellSplitter>::KDTree(Cell *cells, NodeIntType Ncells)
   {
     periodic = false; 
 
@@ -39,7 +40,7 @@ namespace CosmoTool {
     nodes = new Node[numNodes];
 
     sortingHelper = new Cell *[Ncells];
-    for (uint32_t i = 0; i < Ncells; i++)
+    for (NodeIntType i = 0; i < Ncells; i++)
 	sortingHelper[i] = &cells[i];    
 
     optimize();
@@ -51,7 +52,7 @@ namespace CosmoTool {
     coords absoluteMin, absoluteMax;
 
     std::cout << "Optimizing the tree..." << std::endl;
-    uint32_t activeCells = gatherActiveCells(sortingHelper, numNodes);
+    NodeIntType activeCells = gatherActiveCells(sortingHelper, numNodes);
     std::cout << "  number of active cells = " << activeCells << std::endl;
 
     lastNode = 0;
@@ -61,7 +62,7 @@ namespace CosmoTool {
 	absoluteMax[i] = -std::numeric_limits<typeof (absoluteMax[0])>::max();
       }
     // Find min and max corner
-    for (uint32_t i = 0; i < activeCells; i++)
+    for (NodeIntType i = 0; i < activeCells; i++)
       {
         KDCell<N,ValType,CType> *cell = sortingHelper[i];
 
@@ -82,7 +83,6 @@ namespace CosmoTool {
   uint32_t KDTree<N,ValType,CType,CellSplitter>::getIntersection(const coords& x, CoordType r, 
 						    KDTree<N,ValType,CType,CellSplitter>::Cell **cells,
 						    uint32_t numCells)
-    throw (NotEnoughCells)
   {
     RecursionInfoCells<N,ValType,CType> info;
 
@@ -116,7 +116,6 @@ namespace CosmoTool {
 						    Cell **cells,
 						    CoordType *distances,
 						    uint32_t numCells)
-    throw (NotEnoughCells)
   {
     RecursionInfoCells<N,ValType> info;
 
@@ -179,12 +178,13 @@ namespace CosmoTool {
   void KDTree<N,ValType,CType,CellSplitter>::recursiveIntersectionCells(RecursionInfoCells<N,ValType,CType>& info, 
 							   Node *node,
 							   int level)
-    throw (NotEnoughCells)
   {
     int axis = level % N;
     CoordType d2 = 0;
 
+#if __KD_TREE_ACTIVE_CELLS == 1
     if (node->value->active) 
+#endif
       {
 	for (int j = 0; j < 3; j++)
 	  {
@@ -223,12 +223,13 @@ namespace CosmoTool {
   }
 
   template<int N, typename ValType, typename CType>
-  uint32_t gatherActiveCells(KDCell<N,ValType,CType> **cells,
-			     uint32_t Ncells)
+  NodeIntType gatherActiveCells(KDCell<N,ValType,CType> **cells,
+			        NodeIntType Ncells)
   {
-    uint32_t swapId = Ncells-1;
-    uint32_t i = 0;
+    NodeIntType swapId = Ncells-1;
+    NodeIntType i = 0;
 
+#if __KD_TREE_ACTIVE_CELLS == 1
     while (!cells[swapId]->active && swapId > 0)
       swapId--;
 
@@ -244,21 +245,25 @@ namespace CosmoTool {
 	  }
 	i++;
       }
+#endif
     return swapId+1;
   }
 
   template<int N, typename ValType, typename CType>
-  void  KD_default_cell_splitter<N,ValType,CType>::operator()(KDCell<N,ValType,CType> **cells, uint32_t Ncells, uint32_t& split_index, int axis, typename KDDef<N,CType>::KDCoordinates minBound, typename KDDef<N,CType>::KDCoordinates maxBound)
+  void KD_default_cell_splitter<N,ValType,CType>::operator()(KDCell<N,ValType,CType> **cells, NodeIntType Ncells, 
+                                                             NodeIntType& split_index, int axis,
+                                                             typename KDDef<N,CType>::KDCoordinates minBound, 
+                                                             typename KDDef<N,CType>::KDCoordinates maxBound)
   {
     CellCompare<N,ValType,CType> compare(axis);
-    std::sort(cells, cells+Ncells, compare);
+    omptl::sort(cells,cells+Ncells,compare); // std::sort(cells, cells+Ncells, compare);
     split_index = Ncells/2;
   }
 
 
   template<int N, typename ValType, typename CType, typename CellSplitter>
   KDTreeNode<N,ValType,CType> *KDTree<N,ValType,CType,CellSplitter>::buildTree(Cell **cell0,
-								  uint32_t Ncells,
+								  NodeIntType Ncells,
 								  uint32_t depth,
 								  coords minBound,
 								  coords maxBound)
@@ -266,10 +271,16 @@ namespace CosmoTool {
     if (Ncells == 0)
       return 0;
 
+    Node *node;
     int axis = depth % N;
-    Node *node = &nodes[lastNode++];
-    uint32_t mid;
+    NodeIntType mid;
     coords tmpBound;
+    NodeIntType nodeId;
+
+#pragma omp atomic capture
+    nodeId = (this->lastNode)++;
+    
+    node = &nodes[nodeId];
     
     // Isolate the environment
     splitter(cell0, Ncells, mid, axis, minBound, maxBound);
@@ -282,12 +293,20 @@ namespace CosmoTool {
     tmpBound[axis] = node->value->coord[axis];
 
     depth++;
-    node->children[0] = buildTree(cell0, mid, depth, minBound, tmpBound);
+#pragma omp task private(tmpBound)
+    {
+      node->children[0] = buildTree(cell0, mid, depth, minBound, tmpBound);
+    }
     
     memcpy(tmpBound, minBound, sizeof(coords));
     tmpBound[axis] = node->value->coord[axis];
-    node->children[1] = buildTree(cell0+mid+1, Ncells-mid-1, depth, 
+#pragma omp task private(tmpBound)
+    {
+      node->children[1] = buildTree(cell0+mid+1, Ncells-mid-1, depth, 
 				  tmpBound, maxBound);
+    }
+
+#pragma omp taskwait
 
 #ifdef __KD_TREE_NUMNODES
     node->numNodes = (node->children[0] != 0) ? node->children[0]->numNodes : 0;
@@ -299,12 +318,14 @@ namespace CosmoTool {
   }
 
   template<int N, typename ValType, typename CType, typename CellSplitter>
-  uint32_t KDTree<N,ValType,CType,CellSplitter>::countActives() const
+  NodeIntType KDTree<N,ValType,CType,CellSplitter>::countActives() const
   {
-    uint32_t numActive = 0;
-    for (uint32_t i = 0; i < lastNode; i++)
+    NodeIntType numActive = 0;
+    for (NodeIntType i = 0; i < lastNode; i++)
       {
+#if __KD_TREE_ACTIVE_CELLS == 1
 	if (nodes[i].value->active)
+#endif
 	  numActive++;
       }
     return numActive;
@@ -586,8 +607,7 @@ namespace CosmoTool {
   }
 
   template<int N, typename ValType, typename CType, typename CellSplitter>
-  KDTree<N,ValType,CType,CellSplitter>::KDTree(std::istream& in, Cell *cells, uint32_t Ncells)
-    throw (InvalidOnDiskKDTree)
+  KDTree<N,ValType,CType,CellSplitter>::KDTree(std::istream& in, Cell *cells, NodeIntType Ncells)
   {
     KDTreeHeader h;
 
@@ -665,7 +685,7 @@ namespace CosmoTool {
     root = &nodes[h.rootId];
     
     sortingHelper = new Cell *[Ncells];
-    for (uint32_t i = 0; i < Ncells; i++)
+    for (NodeIntType i = 0; i < Ncells; i++)
       sortingHelper[i] = &cells[i];    
   }
 #endif

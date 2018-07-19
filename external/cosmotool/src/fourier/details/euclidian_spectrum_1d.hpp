@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/fourier/details/euclidian_spectrum_1d.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/fourier/details/euclidian_spectrum_1d.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -115,7 +115,7 @@ namespace CosmoTool
 
     for (long p = 1; p < rand_map.size(); p++)
       {
-	double A_k = std::sqrt(0.5*V*f(rand_map.get_K(p)));
+	double A_k = std::sqrt(0.5*V*f(rand_map.get_K_p(p)));
 	d[p] = std::complex<T>(gsl_ran_gaussian(rng, A_k),
 			       gsl_ran_gaussian(rng, A_k));
       }
@@ -138,12 +138,19 @@ namespace CosmoTool
 	plane_size *= dims[q];
       }
 
-    for (long p = 1; p < plane_size/2; p++)
+    for (long p = 1; p < plane_size/2+1; p++)
       {
 	long q = (p+1)*dims[0]-1;
 	long q2 = (plane_size-p+1)*dims[0]-1;
 	assert(q < plane_size*dims[0]);
 	assert(q2 < plane_size*dims[0]);
+	d[q] = conj(d[q2]);
+      }
+
+    for (long p = 1; p < plane_size/2+1; p++)
+      {
+	long q = (p)*dims[0];
+	long q2 = (plane_size-p)*dims[0];
 	d[q] = conj(d[q2]);
       }
 
@@ -164,7 +171,7 @@ namespace CosmoTool
     std::complex<T> *d = m.data();
 
     for (long p = 0; p < m_c.size(); p++)
-      d[p] *= f(m_c.get_K(p));
+      d[p] *= f(m_c.get_K_p(p));
   }
 
   template<typename T>
@@ -174,7 +181,7 @@ namespace CosmoTool
     std::complex<T> *d = m.data();
 
     for (long p = 0; p < m_c.size(); p++)
-      d[p] *= std::sqrt(f(m_c.get_K(p)));
+      d[p] *= std::sqrt(f(m_c.get_K_p(p)));
   }
 
   template<typename T>
@@ -185,7 +192,7 @@ namespace CosmoTool
 
     for (long p = 0; p < m_c.size(); p++)
      {
-        T A = f(m_c.get_K(p));
+        T A = f(m_c.get_K_p(p));
         if (A==0)
           d[p] = 0;
         else
@@ -201,7 +208,7 @@ namespace CosmoTool
 
     for (long p = 0; p < m_c.size(); p++)
       {
-        T A = std::sqrt(f(m_c.get_K(p)));
+        T A = std::sqrt(f(m_c.get_K_p(p)));
         if (A == 0)
           d[p] = 0;
         else

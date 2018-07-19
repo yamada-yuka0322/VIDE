@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/fourier/base_types.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/fourier/base_types.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -55,6 +55,7 @@ namespace CosmoTool
   protected:
     SpectrumFunction() {}
   public:
+    typedef T type;
     typedef Eigen::Array<T, 1, Eigen::Dynamic> VecType;
     typedef Eigen::Map<VecType, Eigen::Aligned> MapType;
     typedef Eigen::Map<VecType const, Eigen::Aligned> ConstMapType;
@@ -88,6 +89,7 @@ namespace CosmoTool
     FourierMap() {}
     
   public:
+    typedef T type;
     typedef Eigen::Array<T, 1, Eigen::Dynamic> VecType;
     typedef Eigen::Map<VecType, Eigen::Aligned> MapType;
     typedef Eigen::Map<VecType const, Eigen::Aligned> ConstMapType;
@@ -168,6 +170,7 @@ namespace CosmoTool
   {
   protected:
     FourierTransform() {}
+    FourierTransform(const FourierTransform<T>& a) { abort(); }
   public:
     virtual ~FourierTransform() { }
     
@@ -189,6 +192,7 @@ namespace CosmoTool
   class MapUtilityFunction
   {
   public:
+    typedef T type;
     typedef SpectrumFunction<T> Spectrum;
     typedef boost::shared_ptr<Spectrum> Spectrum_ptr;
     typedef FourierMap<std::complex<T> > FMap;

@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/sphSmooth.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/sphSmooth.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -35,7 +35,7 @@ knowledge of the CeCILL license and that you accept its terms.
 
 #ifndef __COSMOTOOL_SPH_SMOOTH_HPP
 #define __COSMOTOOL_SPH_SMOOTH_HPP
-
+#include <boost/shared_ptr.hpp>
 #include "config.hpp"
 #include "mykdtree.hpp"
 
@@ -60,37 +60,54 @@ namespace CosmoTool
     typedef void (*runParticleValue)(ValType& t);
 
   public:
+    typedef SPHCell *P_SPHCell;
+    struct SPHState
+    {
+      boost::shared_ptr<P_SPHCell[]> ngb;
+      boost::shared_ptr<CoordType[]> distances;
+      typename SPHTree::coords currentCenter;
+      int currentNgb;
+      ComputePrecision smoothRadius;
+    };
+    
+  
     SPHSmooth(SPHTree *tree, uint32_t Nsph);
     virtual ~SPHSmooth();   
 
-    void fetchNeighbours(const typename SPHTree::coords& c);
+    void fetchNeighbours(const typename SPHTree::coords& c, SPHState *state = 0);
+    
     void fetchNeighbours(const typename SPHTree::coords& c, uint32_t newNsph);
     void fetchNeighboursOnVolume(const typename SPHTree::coords& c, ComputePrecision radius);
     const typename SPHTree::coords& getCurrentCenter() const
     {
-      return currentCenter;
+      return internal.currentCenter;
     }
 
+    template<typename FuncT>
     ComputePrecision computeSmoothedValue(const typename SPHTree::coords& c,
-					  computeParticleValue fun);    
+					  FuncT fun, SPHState *state = 0);    
+	
+	template<typename FuncT>
     ComputePrecision computeInterpolatedValue(const typename SPHTree::coords& c,
-					      computeParticleValue fun);    
+					      FuncT fun, SPHState *state = 0);
+					          
     ComputePrecision getMaxDistance(const typename SPHTree::coords& c, 
 				    SPHNode *node) const;
 
     ComputePrecision getSmoothingLen() const
     {
-      return smoothRadius;
+      return internal.smoothRadius;
     }
 
     // TO USE WITH EXTREME CARE !
     void setSmoothingLen(ComputePrecision len)
     {
-      smoothRadius = len;
+      internal.smoothRadius = len;
     }
     // END
 
-    void runForEachNeighbour(runParticleValue fun);
+    template<typename FuncT>
+    void runForEachNeighbour(FuncT fun, SPHState *state = 0);
     void addGridSite(const typename SPHTree::coords& c);
 
     bool hasNeighbours() const;
@@ -100,34 +117,31 @@ namespace CosmoTool
     SPHTree *getTree() { return tree; }
 
     void changeNgb(uint32_t newMax) {
-      delete[] ngb;
-      delete[] distances;
-      ngb = new SPHCell *[newMax];
-      distances = new CoordType[newMax];
+      internal.ngb = boost::shared_ptr<SPHCell *>(new SPHCell *[newMax]);
+      internal.distances = boost::shared_ptr<CoordType>(new CoordType[newMax]);
       maxNgb = newMax;
     }
 
-    uint32_t getCurrent() const { return currentNgb; }
+    uint32_t getCurrent() const { return internal.currentNgb; }
 
     uint32_t getNgb() const { return maxNgb; }
  
   protected:
-    SPHCell **ngb;
-    CoordType *distances;
+    SPHState internal;
     uint32_t Nsph;
     uint32_t deltaNsph;
     uint32_t maxNgb;
-    uint32_t currentNgb;
     SPHTree *tree;
-    ComputePrecision smoothRadius;
-    typename SPHTree::coords currentCenter;
     
+    template<typename FuncT>
     ComputePrecision computeWValue(const typename SPHTree::coords & c,
 				   SPHCell& cell,
 				   CoordType d,
-				   computeParticleValue fun);
+				   FuncT fun, SPHState *state);
+    
+    template<typename FuncT>
     void runUnrollNode(SPHNode *node,
-		       runParticleValue fun);
+		       FuncT fun);
   };
 
   template<class ValType1, class ValType2, int Ndims>

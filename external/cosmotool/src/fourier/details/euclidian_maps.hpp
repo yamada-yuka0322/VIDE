@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/fourier/details/euclidian_maps.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/fourier/details/euclidian_maps.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -36,9 +36,15 @@ knowledge of the CeCILL license and that you accept its terms.
 #ifndef __DETAILS_EUCLIDIAN_MAPS
 #define __DETAILS_EUCLIDIAN_MAPS
 
+#include <cmath>
+#include <boost/multi_array.hpp>
 
 namespace CosmoTool
 {
+  
+  namespace details {
+    static void no_free_euclidian_map(void *) {}
+  }
   
   template<typename T>
   class EuclidianFourierMapBase: public FourierMap<T>
@@ -57,8 +63,21 @@ namespace CosmoTool
       m_dims = indims;
       m_size = 1;
       for (int i = 0; i < m_dims.size(); i++)
-	m_size *= m_dims[i];
+        m_size *= m_dims[i];
     }
+
+    template<typename ArrayType>
+    EuclidianFourierMapBase(ArrayType& indata)
+    {
+      m_data = boost::shared_ptr<T>(
+            indata.origin(), 
+            std::ptr_fun(details::no_free_euclidian_map));
+      m_dims = DimArray(indata.num_dimensions());
+      m_size = indata.num_elements();
+      for (int i = 0; i < m_dims.size(); i++)
+        m_dims[i] = indata.shape()[i];
+    }
+
 
     virtual ~EuclidianFourierMapBase()
     {
@@ -69,6 +88,14 @@ namespace CosmoTool
     virtual const T *data() const { return m_data.get(); }
     virtual T *data() { return m_data.get(); }
     virtual long size() const  { return m_size; } 
+    
+    boost::multi_array_ref<T, 1>& array() { 
+      return boost::multi_array_ref<T, 1>(m_data.get(), boost::extents[size]);
+    }
+
+    boost::const_multi_array_ref<T, 1>& array() const { 
+      return boost::const_multi_array_ref<T, 1>(m_data.get(), boost::extents[size]);
+    }
     
     virtual FourierMap<T> *copy() const
     {
@@ -88,6 +115,12 @@ namespace CosmoTool
     EuclidianFourierMapReal(boost::shared_ptr<T> indata, const DimArray& indims)
       : EuclidianFourierMapBase<T>(indata, indims) 
     {}
+
+    template<typename ArrayType>
+    EuclidianFourierMapReal(ArrayType& indata) 
+      : EuclidianFourierMapBase<T>(indata) 
+    {}
+
 
     virtual FourierMap<T> *mimick() const
     {
@@ -124,16 +157,32 @@ namespace CosmoTool
 			       int dim0,
 			       const DimArray& indims, 
 			       const std::vector<double>& dk)
-      : EuclidianFourierMapBase<std::complex<T> >(indata, indims), delta_k(dk), m_dim0(dim0), even0((dim0 % 2)==0)
+      : EuclidianFourierMapBase<std::complex<T> >(indata, indims), 
+        delta_k(dk), m_dim0(dim0), even0((dim0 % 2)==0)
     {
       assert(dk.size() == indims.size()); 
       plane_size = 1;
       alleven = true;
-      for (int q = 1; q < indims.size(); q++)
-	{
-	  plane_size *= indims[q];
-	  alleven = alleven && ((indims[q]%2)==0);
-	}
+      for (int q = 1; q < indims.size(); q++) {
+        plane_size *= indims[q];
+        alleven = alleven && ((indims[q]%2)==0);
+      }
+    }
+
+    template<typename ArrayType>
+    EuclidianFourierMapComplex(ArrayType& indata, 
+                      	       int dim0,
+                               const std::vector<double>& dk) 
+      : EuclidianFourierMapBase<std::complex<T> >(indata),
+        delta_k(dk), m_dim0(dim0), even0((dim0 % 2)==0)
+    {
+      assert(dk.size() == indata.num_dimensions()); 
+      plane_size = 1;
+      alleven = true;
+      for (int q = 1; q < this->m_dims.size(); q++) {
+        plane_size *= this->m_dims[q];
+        alleven = alleven && ((this->m_dims[q]%2)==0);
+      }
     }
 
     virtual FourierMap<std::complex<T> > *mimick() const
@@ -161,18 +210,17 @@ namespace CosmoTool
       assert(kvec.size() == dims.size());
 
       kvec[0] = ik[0] * delta_k[0];
-      for (int q = 1; q < ik.size(); q++)
-	{
-	  int dk = ik[q];
-	  if (dk > dims[q]/2)
-	    dk = dk - dims[q];
+      for (int q = 1; q < ik.size(); q++) {
+        int dk = ik[q];
+        if (dk > dims[q]/2)
+          dk = dk - dims[q];
 
-          kvec[q] = dk*delta_k[q];
-        }
+        kvec[q] = dk*delta_k[q];
+      }
     }
 
     template<typename Array2>
-    void get_Kvec(long p, Array2& kvec) const
+    void get_Kvec_p(long p, Array2& kvec) const
     {
       const DimArray& dims = this->getDims();
       DimArray d(delta_k.size());
@@ -200,19 +248,18 @@ namespace CosmoTool
       double k2 = 0;
       k2 += CosmoTool::square(ik[0]*delta_k[0]);
 
-      for (int q = 1; q < ik.size(); q++)
-	{
-	  int dk = ik[q];
+      for (int q = 1; q < ik.size(); q++) {
+        int dk = ik[q];
 
-	  if (dk > dims[q]/2)
-	    dk = dk - dims[q];
-	  
-	  k2 += CosmoTool::square(delta_k[q]*dk);
-	}
+        if (dk > dims[q]/2)
+          dk = dk - dims[q];
+        
+        k2 += CosmoTool::square(delta_k[q]*dk);
+      }
       return std::sqrt(k2);
     }
 
-    double get_K(long p) const
+    double get_K_p(long p) const
     {
       const DimArray& dims = this->getDims();
       DimArray d(delta_k.size());
@@ -230,7 +277,8 @@ namespace CosmoTool
     virtual std::complex<T> dot_product(const FourierMap<std::complex<T> >& other) const
       throw(std::bad_cast)
     {
-      const EuclidianFourierMapComplex<T>& m2 = dynamic_cast<const EuclidianFourierMapComplex<T>&>(other);
+      const EuclidianFourierMapComplex<T>& m2 = 
+        dynamic_cast<const EuclidianFourierMapComplex<T>&>(other);
       if (this->size() != m2.size())
         throw std::bad_cast();
       
@@ -240,24 +288,21 @@ namespace CosmoTool
       int N0 = dims[0] + (even0 ? 0 : 1);
       std::complex<T> result = 0;
 
-      for (long q0 = 1; q0 < N0-1; q0++)
-	{
-	  for (long p = 0; p < plane_size; p++)
-	    {
-	      long idx = q0+dims[0]*p;
-	      assert(idx < this->size());
-	      result += 2*(conj(d1[idx]) * d2[idx]).real();
-	    }
-	}
-      if (even0)
-	{
-	  for (long p = 0; p < plane_size; p++)
-	    {
-	      long q0 = N0*p, q1 = (p+1)*N0-1;
-	      result += conj(d1[q0]) * d2[q0];
-	      result += conj(d1[q1]) * d2[q1];
-	    }
-	}
+      for (long q0 = 1; q0 < N0-1; q0++) {
+        for (long p = 0; p < plane_size; p++) {
+          long idx = q0+dims[0]*p;
+          assert(idx < this->size());
+          result += T(2)*(std::conj(d1[idx]) * d2[idx]).real();
+        }
+      }
+      if (even0) {
+        for (long p = 0; p < plane_size; p++)
+          {
+            long q0 = N0*p, q1 = (p+1)*N0-1;
+            result += T(2)*std::conj(d1[q0]) * d2[q0];
+            result += T(2)*std::conj(d1[q1]) * d2[q1];
+          }
+        }
       return result;
     }
 

@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/mykdtree.hpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/mykdtree.hpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -40,7 +40,13 @@ knowledge of the CeCILL license and that you accept its terms.
 #include "config.hpp"
 #include "bqueue.hpp"
 
+#ifndef __KD_TREE_ACTIVE_CELLS
+#define __KD_TREE_ACTIVE_CELLS 1
+#endif
+
 namespace CosmoTool {
+
+  typedef uint64_t NodeIntType;
 
   template<int N, typename CType = ComputePrecision> 
   struct KDDef
@@ -52,7 +58,9 @@ namespace CosmoTool {
   template<int N, typename ValType, typename CType = ComputePrecision>
   struct KDCell
   {
+#if __KD_TREE_ACTIVE_CELLS == 1
     bool active;
+#endif
     ValType val;
     typename KDDef<N,CType>::KDCoordinates coord;
   };
@@ -78,7 +86,7 @@ namespace CosmoTool {
     KDTreeNode<N,ValType,CType> *children[2];
     typename KDDef<N,CType>::KDCoordinates minBound, maxBound;
 #ifdef __KD_TREE_NUMNODES
-    uint32_t numNodes;
+    NodeIntType numNodes;
 #endif
   };
 
@@ -116,7 +124,7 @@ namespace CosmoTool {
   template<int N, typename ValType, typename CType = ComputePrecision> 
   struct KD_default_cell_splitter
   {
-    void operator()(KDCell<N,ValType,CType> **cells, uint32_t Ncells, uint32_t& split_index, int axis, typename KDDef<N,CType>::KDCoordinates minBound, typename KDDef<N,CType>::KDCoordinates maxBound);
+    void operator()(KDCell<N,ValType,CType> **cells, NodeIntType Ncells, NodeIntType& split_index, int axis, typename KDDef<N,CType>::KDCoordinates minBound, typename KDDef<N,CType>::KDCoordinates maxBound);
   };
 
   template<int N, typename ValType, typename CType = ComputePrecision, typename CellSplitter = KD_default_cell_splitter<N,ValType,CType> >
@@ -130,7 +138,7 @@ namespace CosmoTool {
     
     CellSplitter splitter;
 
-    KDTree(Cell *cells, uint32_t Ncells);
+    KDTree(Cell *cells, NodeIntType Ncells);
     ~KDTree();
 
     void setPeriodic(bool on, CoordType replicate)
@@ -147,13 +155,11 @@ namespace CosmoTool {
 
     uint32_t getIntersection(const coords& x, CoordType r, 
 			     Cell **cells,
-			     uint32_t numCells)
-      throw (NotEnoughCells);
+			     uint32_t numCells);
     uint32_t getIntersection(const coords& x, CoordType r, 
 			     Cell **cells,
 			     CoordType *distances,
-			     uint32_t numCells)
-      throw (NotEnoughCells);
+			     uint32_t numCells);
     uint32_t countCells(const coords& x, CoordType r);
 
     Cell *getNearestNeighbour(const coords& x);
@@ -169,14 +175,14 @@ namespace CosmoTool {
     void optimize();
 
     Node *getAllNodes() { return nodes; }
-    uint32_t getNumNodes() const { return lastNode; }
+    NodeIntType getNumNodes() const { return lastNode; }
 
-    uint32_t countActives() const;
+    NodeIntType countActives() const;
 
 #ifdef __KD_TREE_NUMNODES
-    uint32_t getNumberInNode(const Node *n) const { return n->numNodes; }
+    NodeIntType getNumberInNode(const Node *n) const { return n->numNodes; }
 #else
-    uint32_t getNumberInNode(const Node *n) const {
+    NodeIntType getNumberInNode(const Node *n) const {
       if (n == 0) 
         return 0;
       return 1+getNumberInNode(n->children[0])+getNumberInNode(n->children[1]);
@@ -184,15 +190,14 @@ namespace CosmoTool {
 #endif
 
 #ifdef __KD_TREE_SAVE_ON_DISK
-    KDTree(std::istream& i, Cell *cells, uint32_t Ncells)
-      throw (InvalidOnDiskKDTree);
+    KDTree(std::istream& i, Cell *cells, NodeIntType Ncells);
 
     void saveTree(std::ostream& o) const;
 #endif
   protected:
     Node *nodes;
-    uint32_t numNodes;
-    uint32_t lastNode;
+    NodeIntType numNodes;
+    NodeIntType lastNode;
 
     Node *root;
     Cell **sortingHelper;
@@ -202,7 +207,7 @@ namespace CosmoTool {
     coords replicate;
 
     Node *buildTree(Cell **cell0,
-		    uint32_t NumCells,
+		    NodeIntType NumCells,
 		    uint32_t depth,
 		    coords minBound,
 		    coords maxBound);
@@ -210,8 +215,7 @@ namespace CosmoTool {
     template<bool justCount>
     void recursiveIntersectionCells(RecursionInfoCells<N,ValType, CType>& info,
 				    Node *node,
-				    int level)
-      throw (NotEnoughCells);
+				    int level);
 
     CoordType computeDistance(const Cell *cell, const coords& x) const;
     void recursiveNearest(Node *node,
@@ -225,7 +229,7 @@ namespace CosmoTool {
   };
 
   template<int N, typename T, typename CType>
-  uint32_t gatherActiveCells(KDCell<N,T,CType> **cells, uint32_t numCells);
+  NodeIntType gatherActiveCells(KDCell<N,T,CType> **cells, NodeIntType numCells);
 
 };
 

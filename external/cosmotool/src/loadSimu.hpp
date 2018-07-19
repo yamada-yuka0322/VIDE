@@ -78,7 +78,7 @@ namespace CosmoTool
 
     ssize_t NumPart;
     ssize_t TotalNumPart;
-    long *Id;
+    int64_t *Id;
     float *Pos[3];
     float *Vel[3];
     float *Mass;

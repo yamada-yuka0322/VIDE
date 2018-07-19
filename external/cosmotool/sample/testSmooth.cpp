@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./sample/testSmooth.cpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./sample/testSmooth.cpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -75,7 +75,7 @@ int main()
       cout << "iy=" << iy << endl;
       for (uint32_t ix = 0; ix < NX; ix++)
         {
-           MyTree::coords c = { 1.0*ix/NX, 1.0*iy/NX };
+           MyTree::coords c = { 1.0f*ix/NX, 1.0f*iy/NX };
            smooth.fetchNeighbours(c);
            smooth.addGridSite(c);
         }
@@ -85,14 +85,16 @@ int main()
   uint32_t dims[] = { NX, NX };
   ProgressiveOutput<ComputePrecision> out = 
     ProgressiveOutput<ComputePrecision>::saveArrayProgressive("out.nc", dims, 2);
+//#pragma omp parallel for schedule(static)
   for (uint32_t iy = 0; iy < NX; iy++)
     {
+      MySmooth::SPHState state;
       cout << "iy=" << iy << endl;
       for (uint32_t ix = 0; ix < NX; ix++)
         {
-           MyTree::coords c = { 1.0*ix/NX, 1.0*iy/NX };
-           smooth.fetchNeighbours(c);
-           out.put(smooth.computeSmoothedValue(c, unit_fun));
+           MyTree::coords c = { 1.0f*ix/NX, 1.0f*iy/NX };
+           smooth.fetchNeighbours(c, &state);
+           out.put(smooth.computeSmoothedValue(c, unit_fun, &state));
 
 	  
         }

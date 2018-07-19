@@ -1,5 +1,5 @@
 /*+
-This is CosmoTool (./src/cosmopower.cpp) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (./src/cosmopower.cpp) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -41,6 +41,7 @@ knowledge of the CeCILL license and that you accept its terms.
 #include <fstream>
 #include <gsl/gsl_integration.h>
 #include "cosmopower.hpp"
+#include "tf_fit.hpp"
 
 using namespace std;
 using namespace CosmoTool;
@@ -69,7 +70,15 @@ CosmoPower::CosmoPower()
 
   Theta_27 = 2.728/2.7;
 
+  ehu_params = 0;
+  
   updateCosmology();
+}
+
+CosmoPower::~CosmoPower()
+{
+  if (ehu_params)
+    delete ehu_params;
 }
 
 /*
@@ -90,7 +99,8 @@ static double powC(double q, double alpha_c)
 
 static double T_tilde_0(double q, double alpha_c, double beta_c)
 {
-  double a = log(M_E + 1.8 * beta_c * q);
+  static const double c_E = M_E;
+  double a = log(c_E + 1.8 * beta_c * q);
   return a / ( a  + powC(q, alpha_c) * q * q);
 }
 
@@ -121,37 +131,81 @@ double CosmoPower::powerEfstathiou(double k)
   return normPower * pow(k,n) * pow(1+pow(f,nu),(-2/nu));
 }
 
+void CosmoPower::updateHuWigglesOriginal()
+{
+  if (ehu_params == 0)
+    ehu_params = new TF_Transfer();
+  
+  ehu_params->TFset_parameters( (OMEGA_C+OMEGA_B)*h*h,
+                     OMEGA_B/(OMEGA_C+OMEGA_B), Theta_27*2.7);
+}
+
+void CosmoPower::updateHuWigglesConsts()
+{
+  double f_b = OMEGA_B / OMEGA_0;
+  double f_c = OMEGA_C / OMEGA_0;
+
+  double k_silk = 1.6 * pow(OMEGA_B * h * h, 0.52) * pow(OmegaEff, 0.73) * (1 + pow(10.4 * OmegaEff, -0.95));
+  double z_eq = 2.50e4 * OmegaEff * pow(Theta_27, -4);
+  //double s = 44.5 * log(9.83 / OmegaEff) / (sqrt(1 + 10 * pow(OMEGA_B * h * h, 0.75)));
+  double k_eq = 7.46e-2 * OmegaEff * pow(Theta_27, -2);
+
+  double b1_zd = 0.313 * pow(OmegaEff, -0.419) * (1 + 0.607 * pow(OmegaEff, 0.674));
+  double b2_zd = 0.238 * pow(OmegaEff, 0.223);
+  double z_d = 1291 * pow(OmegaEff, 0.251) / (1 + 0.659 * pow(OmegaEff, 0.828)) * (1 + b1_zd * pow(OMEGA_B*h*h, b2_zd));
+
+  double R_d = 31.5 * OMEGA_B * h * h * pow(Theta_27, -4) * 1e3 / z_d;
+  double Req = 31.5 * OMEGA_B * h * h * pow(Theta_27, -4) * 1e3 / z_eq;
+
+  double s = 2./(3.*k_eq) * sqrt(6/Req) * log((sqrt(1 + R_d) + sqrt(R_d + Req))/(1 + sqrt(Req)));
+
+  double a1 = pow(46.9 * OmegaEff, 0.670) * (1 + pow(32.1 * OmegaEff, -0.532));
+  double a2 = pow(12.0 * OmegaEff, 0.424) * (1 + pow(45.0 * OmegaEff, -0.582));
+  double alpha_c = pow(a1, -f_b) * pow(a2, -pow(f_b, 3));  
+
+  double b1_betac = 0.944 * 1/(1 + pow(458 * OmegaEff, -0.708));
+  double b2_betac = pow(0.395 * OmegaEff, -0.0266);
+  double beta_c = 1/ ( 1 + b1_betac * (pow(f_c, b2_betac) - 1)   );
+
+  double alpha_b = 2.07 * k_eq * s * pow(1 + R_d, -0.75) * powG((1 + z_eq)/(1 + z_d));
+  double beta_b = 0.5 + f_b + (3 - 2 * f_b) * sqrt(pow(17.2 * OmegaEff, 2) + 1);
+  double beta_node = 8.41 * pow(OmegaEff, 0.435);
+  
+  ehu.k_silk = k_silk;
+  ehu.s = s;
+  ehu.k_eq = k_eq;
+  ehu.alpha_c = alpha_c;
+  ehu.beta_c = beta_c;
+  
+  ehu.alpha_b = alpha_b;
+  ehu.beta_b = beta_b;
+  ehu.beta_node = beta_node;
+}
+
 double CosmoPower::powerHuWiggles(double k)
 {
   // EISENSTEIN ET HU (1998)
   // FULL POWER SPECTRUM WITH BARYONS AND WIGGLES
 
-  double k_silk = 1.6 * pow(OMEGA_B * h * h, 0.52) * pow(OmegaEff, 0.73) * (1 + pow(10.4 * OmegaEff, -0.95));
-  double z_eq = 2.50e4 * OmegaEff * pow(Theta_27, -4);
-  double s = 44.5 * log(9.83 / OmegaEff) / (sqrt(1 + 10 * pow(OMEGA_B * h * h, 0.75)));
-  double f = 1 / (1 + pow(k * s / 5.4, 4));
-  double k_eq = 7.46e-2 * OmegaEff * pow(Theta_27, -2);
-  double a1 = pow(46.9 * OmegaEff, 0.670) * (1 + pow(32.1 * OmegaEff, -0.532));
-  double a2 = pow(12.0 * OmegaEff, 0.424) * (1 + pow(45.0 * OmegaEff, -0.582));
-  double alpha_c = pow(a1, -OMEGA_B/ OMEGA_0) * pow(a2, -pow(OMEGA_B / OMEGA_0, 3));  
+  double k_silk = ehu.k_silk;
+  double s = ehu.s;
+  double k_eq = ehu.k_eq;
+  double alpha_c = ehu.alpha_c;
+  double beta_c = ehu.beta_c;
+  double alpha_b = ehu.alpha_b;
+  double beta_b = ehu.beta_b;
+  double xx = k * s;  
 
+  double s_tilde = s * pow(1 + pow(ehu.beta_node / (xx), 3), -1./3);
+  
+  double f = 1 / (1 + pow(xx / 5.4, 4));
   double q = k / (13.41 * k_eq);
-  double b1_betac = 0.944 * 1/(1 + pow(458 * OmegaEff, -0.708));
-  double b2_betac = pow(0.395 * OmegaEff, -0.0266);
-  double beta_c = 1/ ( 1 + b1_betac * (pow(OMEGA_C / OMEGA_0, b2_betac) - 1)   );
   double T_c = f * T_tilde_0(q, 1, beta_c) + (1 - f) * T_tilde_0(q, alpha_c, beta_c);
 
-  double b1_zd = 0.313 * pow(OmegaEff, -0.419) * (1 + 0.607 * pow(OmegaEff, 0.674));
-  double b2_zd = 0.238 * pow(OmegaEff, 0.223);
-  double z_d = 1291 * pow(OmegaEff, 0.251) / (1 + 0.659 * pow(OmegaEff, 0.828)) * (1 + b1_zd * pow(OmegaEff, b2_zd));
-  double R_d = 31.5 * OMEGA_B * h * h * pow(Theta_27, -4) * 1e3 / z_d;
-
-  double alpha_b = 2.07 * k_eq * s * pow(1 + R_d, -0.75) * powG((1 + z_eq)/(1 + z_d));
-  double beta_b = 0.5 + OMEGA_B / OMEGA_0 + (3 - 2 * OMEGA_B / OMEGA_0) * sqrt(pow(17.2 * OmegaEff, 2) + 1);
-  double beta_node = 8.41 * pow(OmegaEff, 0.435);
-  double s_tilde = s * pow(1 + pow(beta_node / (k * s), 3), -1./3);
-
-  double T_b = (T_tilde_0(q, 1, 1) / (1 + pow(k * s / 5.2, 2)) + alpha_b / (1 + pow(beta_b / (k * s), 3)) * exp(-pow(k/k_silk, 1.4))) * j_0(k * s_tilde);  
+  double T_b = ( 
+     T_tilde_0(q, 1, 1) / (1 + pow(xx / 5.2, 2)) + 
+     alpha_b / (1 + pow(beta_b / xx, 3)) * exp(-pow(k/k_silk, 1.4))
+     ) * j_0(k * s_tilde);  
 
   double T_k = OMEGA_B/OMEGA_0 * T_b + OMEGA_C/OMEGA_0 * T_c;  
 
@@ -212,7 +266,7 @@ double CosmoPower::powerBDM(double k)
 
 double CosmoPower::powerTest(double k)
 {
-  return 1/(1+k*k);
+  return normPower;//1/(1+k*k);
 }
 
 /*
@@ -233,12 +287,18 @@ double CosmoPower::integrandNormalize(double x)
   return power(k)*k*k*f*f/(x*x);
 }
 
-void CosmoPower::normalize()
+void CosmoPower::normalize(double k_min, double k_max)
 {
   double normVal = 0;
   double abserr;
   gsl_integration_workspace *w = gsl_integration_workspace_alloc(NUM_ITERATION);
   gsl_function f;
+  double x_min = 0, x_max = 1;
+
+  if (k_max > 0)
+    x_min = 1/(1+k_max);
+  if (k_min > 0)
+    x_max = 1/(1+k_min);
 
   f.function = gslPowSpecNorm;
   f.params = this;
@@ -248,12 +308,12 @@ void CosmoPower::normalize()
   ofstream ff("PP_k.txt");
   for (int i = 0; i < 100; i++)
     {
-       double k = pow(10.0, 4.0*i/100.-2);
+       double k = pow(10.0, 8.0*i/100.-4);
        ff << k << " " << power(k) << endl;
     }
 
  // gsl_integration_qagiu(&f, 0, 0, TOLERANCE, NUM_ITERATION, w, &normVal, &abserr);
-  gsl_integration_qag(&f, 0, 1, 0, TOLERANCE, NUM_ITERATION, GSL_INTEG_GAUSS61, w, &normVal, &abserr);
+  gsl_integration_qag(&f, x_min, x_max, 0, TOLERANCE, NUM_ITERATION, GSL_INTEG_GAUSS61, w, &normVal, &abserr);
   gsl_integration_workspace_free(w);
 
   normVal /= (2*M_PI*M_PI);
@@ -301,6 +361,16 @@ double CosmoPower::power(double k)
   return (this->*eval)(k);
 }
 
+double CosmoPower::powerHuWigglesOriginal(double k)
+{
+  float tfb, tfc;
+  
+  ehu_params->TFfit_onek(k, &tfb, &tfc);
+
+  double T_k = OMEGA_B/OMEGA_0 * tfb + OMEGA_C/OMEGA_0 * tfc;  
+
+  return normPower * pow(k,n) * T_k * T_k;
+}
 
 void CosmoPower::setFunction(CosmoFunction f)
 {
@@ -310,7 +380,12 @@ void CosmoPower::setFunction(CosmoFunction f)
       eval = &CosmoPower::powerEfstathiou;
       break;
     case HU_WIGGLES:
+      updateHuWigglesConsts();
       eval = &CosmoPower::powerHuWiggles;
+      break;
+    case HU_WIGGLES_ORIGINAL:
+      updateHuWigglesOriginal();
+      eval = &CosmoPower::powerHuWigglesOriginal;
       break;
     case HU_BARYON:
       eval = &CosmoPower::powerHuBaryons;
@@ -337,5 +412,6 @@ void CosmoPower::setFunction(CosmoFunction f)
 
 void CosmoPower::setNormalization(double A_K)
 {
-  normPower = A_K/power(0.002);
+  normPower = A_K;///power(0.002);
 }
+

@@ -1,5 +1,5 @@
 #+
-# This is CosmoTool (./build_tools/gather_sources.py) -- Copyright (C) Guilhem Lavaux (2007-2013)
+# This is CosmoTool (./build_tools/gather_sources.py) -- Copyright (C) Guilhem Lavaux (2007-2014)
 #
 # guilhem.lavaux@gmail.com
 #
@@ -55,7 +55,7 @@ def apply_license(license, relimit, filename):
 
 def apply_python_license(filename):
   license="""#+
-# This is CosmoTool (@FILENAME@) -- Copyright (C) Guilhem Lavaux (2007-2013)
+# This is CosmoTool (@FILENAME@) -- Copyright (C) Guilhem Lavaux (2007-2014)
 #
 # guilhem.lavaux@gmail.com
 #
@@ -97,7 +97,7 @@ def apply_python_license(filename):
 
 def apply_cpp_license(filename):
   license="""/*+
-This is CosmoTool (@FILENAME@) -- Copyright (C) Guilhem Lavaux (2007-2013)
+This is CosmoTool (@FILENAME@) -- Copyright (C) Guilhem Lavaux (2007-2014)
 
 guilhem.lavaux@gmail.com
 
@@ -131,16 +131,19 @@ The fact that you are presently reading this means that you have had
 knowledge of the CeCILL license and that you accept its terms.
 +*/
 """
-  relimit = r'^(?s)/\*\+.*\+\*/'
+  relimit = r'^(?s)/\*\+.*\+\*/\n'
   print("C++ file: %s" % filename)
   apply_license(license, relimit, filename)
   
 
 def analyze_tree(prefix, t):
-  for ename,entry in t.items():
+  for entry in t:
+    ename = entry.name
     if ename == 'external' or ename == 'zobov':
       continue
-    if type(entry) == Tree:
+    if type(entry) == Submodule:
+      continue
+    elif type(entry) == Tree:
       analyze_tree(prefix + "/" + ename, entry)
     elif type(entry) == Blob:
       if ename == './src/hdf5_flash.h' or ename == './src/h5_readFlash.cpp' or ename == './src/h5_readFlash.hpp':
