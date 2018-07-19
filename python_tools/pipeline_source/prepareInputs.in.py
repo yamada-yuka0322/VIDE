@@ -54,7 +54,7 @@ parser.add_argument('--parm', dest='parm',
 args = parser.parse_args()
 
 
-defaultsFile = "@CMAKE_BINARY_DIR@/python_tools/pipeline_source/defaults.py"
+defaultsFile = "@CMAKE_SOURCE_DIR@/python_tools/pipeline_source/defaults.py"
 parms = imp.load_source("name", defaultsFile)
 globals().update(vars(parms))
 
