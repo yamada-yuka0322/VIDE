@@ -1,6 +1,7 @@
 *~
 *.o
 *.prog
+*.pyc
 .mydepend
 ./pipeline/miscTools/*.out
 
