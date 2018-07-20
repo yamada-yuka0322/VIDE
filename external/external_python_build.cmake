@@ -27,7 +27,7 @@ ELSE (PYTHON_VERSION_STRING VERSION_LESS 2.7)
 ENDIF (PYTHON_VERSION_STRING VERSION_LESS 2.7)
 
 IF(INTERNAL_CYTHON)
-  SET(CYTHON_URL "https://pypi.python.org/packages/73/8c/0c7de501038e9aaa6128219bf28989e55f129b5b31c5a66a55f648289466/Cython-0.17.1.tar.gz" CACHE STRING "URL to download Cython from")
+  SET(CYTHON_URL "https://files.pythonhosted.org/packages/d2/12/8ef44cede251b93322e8503fd6e1b25a0249fa498bebec191a5a06adbe51/Cython-0.28.4.tar.gz" CACHE STRING "URL to download Cython from")
   mark_as_advanced(CYTHON_URL)
 ENDIF(INTERNAL_CYTHON)
 
@@ -82,6 +82,7 @@ SET(BASIC_PYTHON_ENV "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} "
 
 
 IF(INTERNAL_CYTHON)
+  SET(cosmotool_DEPS ${cosmotool_DEPS} cython)
   SET(BUILD_ENVIRONMENT 
           ${CMAKE_COMMAND}
           ${BASIC_PYTHON_ENV}
@@ -89,7 +90,7 @@ IF(INTERNAL_CYTHON)
   ExternalProject_Add(cython
     DEPENDS ${PREV_PYTHON_BUILD}
     URL ${CYTHON_URL}
-    URL_HASH MD5=f0bd2494dbe080a1185b61fa358135f2
+    URL_HASH SHA256=76ac2b08d3d956d77b574bb43cbf1d37bd58b9d50c04ba281303e695854ebc46
     PREFIX ${BUILD_PREFIX}/cython-prefix
     CONFIGURE_COMMAND echo "No configure"
     BUILD_IN_SOURCE 1
@@ -97,6 +98,14 @@ IF(INTERNAL_CYTHON)
     INSTALL_COMMAND ${BUILD_ENVIRONMENT} ${CMAKE_SOURCE_DIR}/external/python_install.cmake
   ) 
   SET(PREV_PYTHON_BUILD ${PREV_PYTHON_BUILD} cython)
+  file(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/cython-wrap 
+       "#!/bin/sh\n${CMAKE_BINARY_DIR}/run_python.sh ${CMAKE_BINARY_DIR}/ext_build/python/bin/cython $@\n")
+  file(COPY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/cython-wrap 
+       DESTINATION ${CMAKE_BINARY_DIR}/ext_build/python/bin
+       FILE_PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
+  SET(CYTHON_OPTION -DCYTHON:FILEPATH=${CMAKE_BINARY_DIR}/ext_build/python/bin/cython-wrap)
+ELSE()
+  SET(CYTHON_OPTION )
 ENDIF(INTERNAL_CYTHON)
 
 
