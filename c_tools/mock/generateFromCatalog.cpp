@@ -104,11 +104,17 @@ double expanFun (double z, void * p) {
 void loadData(const string& fname, NYU_VData & data)
 {
   ifstream f(fname.c_str());
-
+  int lastidx = -1 ; 
   while (!f.eof())
     {
       NYU_Data d;
       f >> d.index >> d.sector >> d.region >> d.ra >> d.dec >> d.cz >> d.fgotten >> d.phi_z;
+      // Maubert - avoid double counting of last particle in array if EOF is after a blank line
+      if (d.index == lastidx ){
+         continue;
+      }
+      lastidx = d.index;
+      // End Maubert
       d.uniqueID = d.index;
       data.push_back(d);
     }
@@ -165,7 +171,8 @@ void generateGalaxiesInCube(NYU_VData& data, ParticleData& output_data,
 
       if (useComoving) {
         //double pos = gsl_interp_eval(interp, redshifts, dL, data[i].cz, acc);
-        gsl_integration_qng(&expanF, 1.e-6, data[i].cz/LIGHT_SPEED,
+        // Maubert - Lower boundary in redshift set to 0 to be consistent with pruneVoids (was 1.e-6 before).
+        gsl_integration_qng(&expanF, 0.0, data[i].cz/LIGHT_SPEED,
                                         1.e-6, 
                                         1.e-6, &result, &error, &nEval);
         double Dc = result*LIGHT_SPEED;
@@ -220,8 +227,24 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
 			 vector<int>& pixel_list, 
 			 vector<int>& full_mask_list, 
 			 NYU_VData& data, 
-			 ParticleData& output_data)
+			 ParticleData& output_data,
+			 bool useComoving, 
+			 double omegaM)
 {
+
+  //Maubert - Needed for comobile distance in mock_sphere
+  gsl_function expanF;
+  expanF.function = &expanFun;
+  struct my_expan_params expanParams;
+  expanParams.Om = omegaM;
+  expanParams.w0 = -1.0;
+  expanParams.wa = 0.0;
+  expanF.params = &expanParams;
+  
+  double result, error ;
+  size_t nEval;
+  //End Maubert - Needed for comobile distance in mock_sphere
+
   // Find the first free index
   int idx = -1;
   int insertion = 0;
@@ -367,17 +390,36 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
    // PMS
   // TEST - insert mock galaxies along spheres of survey redshift boundaries
   fp = fopen("mock_sphere.txt", "w");
-
+  //Maubert - insert mock galaxies according to useComoving specification
+  // Added & compute rmin & rmax out of loop
+  double rmin ;
+  double rmax ; 
+  if (useComoving) {
+        gsl_integration_qng(&expanF, 0.0, args.zMin_arg,
+                                        1.e-6, 
+                                        1.e-6, &result, &error, &nEval);
+        rmin = result* LIGHT_SPEED;
+        
+        gsl_integration_qng(&expanF, 0.0, args.zMax_arg,
+                                        1.e-6, 
+                                        1.e-6, &result, &error, &nEval);
+        rmax = result* LIGHT_SPEED;
+  } else {
+         rmin = args.zMin_arg * LIGHT_SPEED;
+         rmax = args.zMax_arg * LIGHT_SPEED;
+  }
+    
   //for (int q = 0; q < 0; q++) {
   for (int q = 0; q < full_mask_list.size(); q++) {
     vec3 v = mask.pix2vec(full_mask_list[q]);
 	  
     Position p;
-    double r = args.zMin_arg * LIGHT_SPEED;
-    if (r > 0.) {
-      p.xyz[0] = v.x * r;
-      p.xyz[1] = v.y * r;
-      p.xyz[2] = v.z * r;
+    //double r = args.zMin_arg * LIGHT_SPEED;
+
+    if (rmin > 0.) {
+      p.xyz[0] = v.x * rmin;
+      p.xyz[1] = v.y * rmin;
+      p.xyz[2] = v.z * rmin;
       output_data.pos.push_back(p);
       output_data.id_gal.push_back(idx);
       output_data.ra.push_back(-1);
@@ -391,10 +433,10 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
               (p.xyz[2]));
     }
 
-    r = args.zMax_arg * LIGHT_SPEED;
-    p.xyz[0] = v.x * r;
-    p.xyz[1] = v.y * r;
-    p.xyz[2] = v.z * r;
+    //r = args.zMax_arg * LIGHT_SPEED;
+    p.xyz[0] = v.x * rmax;
+    p.xyz[1] = v.y * rmax;
+    p.xyz[2] = v.z * rmax;
     output_data.pos.push_back(p);
     output_data.id_gal.push_back(idx);
     output_data.ra.push_back(-1);
@@ -590,7 +632,8 @@ int main(int argc, char **argv)
   generateGalaxiesInCube(data, output_data, args_info.useComoving_flag, 
                          args_info.omegaM_arg);
   generateSurfaceMask(args_info, mask, pixel_list, full_mask_list,
-                      data, output_data);
+                      data, output_data,args_info.useComoving_flag, 
+                         args_info.omegaM_arg);
   
   saveForZobov(output_data, args_info.output_arg, args_info.params_arg);
   //  saveData(output_data);
