@@ -921,7 +921,7 @@ int main(int argc, char **argv) {
   }
   voids.resize(iGood);
 
-/*
+  //Maubert - Uncommented this part : to be sure that voids to not cross maximum redshift asked for in zrange
   iGood = 0;
   for (iVoid = 0; iVoid < voids.size(); iVoid++) {
     // just in case
@@ -933,7 +933,8 @@ int main(int argc, char **argv) {
     }
   }
   voids.resize(iGood);
-*/
+  // Maubert - End of Uncommented part  
+
 
   printf("  4th filter: rejected %d outside redshift boundaries\n", numNearZ); 
 
