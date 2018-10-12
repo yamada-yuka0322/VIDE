@@ -104,16 +104,16 @@ double expanFun (double z, void * p) {
 void loadData(const string& fname, NYU_VData & data)
 {
   ifstream f(fname.c_str());
-  int lastidx = -1 ; 
+   
   while (!f.eof())
     {
       NYU_Data d;
       f >> d.index >> d.sector >> d.region >> d.ra >> d.dec >> d.cz >> d.fgotten >> d.phi_z;
       // Maubert - avoid double counting of last particle in array if EOF is after a blank line
-      if (d.index == lastidx ){
-         continue;
-      }
-      lastidx = d.index;
+      if (!f) 
+      { 
+      continue; 
+      } 
       // End Maubert
       d.uniqueID = d.index;
       data.push_back(d);
@@ -414,7 +414,7 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
     vec3 v = mask.pix2vec(full_mask_list[q]);
 	  
     Position p;
-    //double r = args.zMin_arg * LIGHT_SPEED;
+
 
     if (rmin > 0.) {
       p.xyz[0] = v.x * rmin;
@@ -433,7 +433,7 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
               (p.xyz[2]));
     }
 
-    //r = args.zMax_arg * LIGHT_SPEED;
+
     p.xyz[0] = v.x * rmax;
     p.xyz[1] = v.y * rmax;
     p.xyz[2] = v.z * rmax;
