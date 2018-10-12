@@ -49,9 +49,6 @@ figDir = os.getenv("PWD")+"/../figs/example_observation/"
 ZOBOV_PATH = os.getenv("PWD")+"/../zobov/"
 CTOOLS_PATH = os.getenv("PWD")+"/../c_tools/"
 
-# if true, convert to comoving space using LCDM cosmology
-useComoving = True
-
 # optimization: maximum number of parallel threads to use
 numZobovThreads = 2
 
@@ -97,6 +94,9 @@ newSample = Sample(
                    # density of mock particles in cubic Mpc/h
                    # (make this as high as you can afford)
                    fakeDensity = 0.05,
+                   
+                   # if true, convert to comoving space using LCDM cosmology
+                   useComoving = True
 
                    )
 dataSampleList.append(newSample)
