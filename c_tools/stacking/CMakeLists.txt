@@ -37,3 +37,5 @@ target_link_libraries(pruneVoids ${ZOB_LIBS})
 #add_genopt(makeAHFOutput_SRCS makeAHFOutput.ggo makeAHFOutput_conf STRUCTNAME makeAHFOutput_info)
 #add_executable(makeAHFOutput ${makeAHFOutput_SRCS})
 #target_link_libraries(makeAHFOutput ${ZOB_LIBS})
+
+install(TARGETS pruneVoids DESTINATION ${VIDE_BIN})

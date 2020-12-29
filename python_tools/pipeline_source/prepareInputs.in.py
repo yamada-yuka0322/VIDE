@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #+
-#   VIDE -- Void IDentification and Examination -- ./python_tools/pipeline_source/prepareCatalogs.in.py
+#   VIDE -- Void IDentification and Examination -- ./python_tools/pipeline_source/prepareInputs.in.py
 #   Copyright (C) 2010-2014 Guilhem Lavaux
 #   Copyright (C) 2011-2014 P. M. Sutter
 #
@@ -18,12 +18,11 @@
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #+
-#+
 
 import numpy as np
 import os
 import sys
-import void_python_tools as vp
+import vide as vp
 import argparse
 import imp
 import subprocess
@@ -59,9 +58,9 @@ parms = imp.load_source("name", defaultsFile)
 globals().update(vars(parms))
 
 filename = args.parm
-print " Loading parameters from", filename
+print(" Loading parameters from", filename)
 if not os.access(filename, os.F_OK):
-  print "  Cannot find parameter file %s!" % filename
+  print("  Cannot find parameter file %s!" % filename)
   exit(-1)
 parms = imp.load_source("name", filename)
 globals().update(vars(parms))
@@ -163,7 +162,7 @@ def writeScript(setName, dataFileNameBase, dataFormat,
 
   header = """#!/usr/bin/env/python
 import os
-from void_python_tools.backend.classes import *
+from vide.backend.classes import *
 
 continueRun = {continueRun} # set to True to enable restarting aborted jobs
 startCatalogStage = {startCatalogStage}
@@ -235,13 +234,13 @@ dataSampleList.append(newSample)
     # converter from redshift to comoving distance   
     zVsDY = np.linspace(0., zBox+8*lbox*100./LIGHT_SPEED, 10000)
     zVsDX = np.zeros(len(zVsDY))
-    for i in xrange(len(zVsDY)):
+    for i in range(len(zVsDY)):
       zVsDX[i] = vp.angularDiameter(zVsDY[i], Om=Om)
 
     boxWidthZ = np.interp(vp.angularDiameter(zBox,Om=Om)+100. / \
                 LIGHT_SPEED*lbox, zVsDX, zVsDY)-zBox
 
-    for iSlice in xrange(numSlices):
+    for iSlice in range(numSlices):
 
       if useLightCone:
         dzSafe = 0.03
@@ -277,8 +276,8 @@ dataSampleList.append(newSample)
       else:
         dataFileName = dataFileNameBase + fileNum + suffix
 
-      for iX in xrange(numSubvolumes):
-        for iY in xrange(numSubvolumes):
+      for iX in range(numSubvolumes):
+        for iY in range(numSubvolumes):
 
           mySubvolume = "%d%d" % (iX, iY)
 
@@ -322,7 +321,7 @@ if not os.access(catalogDir, os.F_OK): os.mkdir(catalogDir)
 baseResolution = float(numPart)/lbox/lbox/lbox # particles/Mpc^3
 prevSubSample = -1
 subSamples = sorted(subSamples, reverse=True)
-for iSubSample in xrange(len(subSamples)):
+for iSubSample in range(len(subSamples)):
 
   subSampleList = subSamples[0:iSubSample+1]
 
@@ -333,7 +332,7 @@ for iSubSample in xrange(len(subSamples)):
     elif subSampleMode == 'relative':
       keepFractionList.append(float(subSample))
     else:
-      print "Unrecognized subSampleMode = ", subSampleMode
+      print("Unrecognized subSampleMode = ", subSampleMode)
       exit(-1)
   thisSubSample = subSamples[iSubSample]
   maxKeep = keepFractionList[-1] * numPart
@@ -348,7 +347,7 @@ for iSubSample in xrange(len(subSamples)):
                                                    fileNums[iRedshift]))
 
   if args.script or args.all:
-    print " Doing subsample", thisSubSample, "scripts"
+    print(" Doing subsample", thisSubSample, "scripts")
     sys.stdout.flush()
     setName = prefix+"ss"+str(thisSubSample)
 
@@ -397,11 +396,11 @@ for iSubSample in xrange(len(subSamples)):
        
 
   if (args.subsample or args.all) and doSubSamplingInPrep:
-    print " Doing subsample", thisSubSample
+    print(" Doing subsample", thisSubSample)
     sys.stdout.flush()
 
     for (iRedshift, redshift) in enumerate(redshifts):
-      print "   redshift", redshift
+      print("   redshift", redshift)
       sys.stdout.flush()
   
       if dataFormat == "multidark" or dataFormat == "sdf":
@@ -500,7 +499,7 @@ for iSubSample in xrange(len(subSamples)):
         outFile.write("%s\n" %(redshift))
         outFile.write("%d\n" %(maxKeep))
 
-        for i in xrange(int(maxKeep)):
+        for i in range(int(maxKeep)):
           x  = np.random.uniform()*lbox
           y  = np.random.uniform()*lbox
           z  = np.random.uniform()*lbox
@@ -517,7 +516,7 @@ for iSubSample in xrange(len(subSamples)):
 if (args.script or args.all) and haloFileBase != "":
 
   for minHaloMass in minHaloMasses:
-    print " Doing halo script", minHaloMass
+    print(" Doing halo script", minHaloMass)
     sys.stdout.flush()
 
     # estimate number of halos to get density
@@ -580,15 +579,15 @@ if (args.script or args.all) and haloFileBase != "":
                   dataFileNameList = fileList)
 
 if (args.halos or args.all) and haloFileBase != "" and len(minHaloMasses) > 0:
-  print " Doing halos - mass"
+  print(" Doing halos - mass")
   sys.stdout.flush()
 
   for minHaloMass in minHaloMasses:
-    print "  min halo mass = ", minHaloMass
+    print("  min halo mass = ", minHaloMass)
     sys.stdout.flush()
 
     for (iRedshift, redshift) in enumerate(redshifts):
-      print "   z = ", redshift
+      print("   z = ", redshift)
       sys.stdout.flush()
 
       if haloFileDummy == '':
@@ -671,7 +670,7 @@ if (args.halos or args.all) and haloFileBase != "" and len(minHaloMasses) > 0:
 if (args.script or args.all) and haloFileBase != "":
 
   for haloDen in haloDenList:
-    print " Doing halo script", haloDen
+    print(" Doing halo script", haloDen)
     sys.stdout.flush()
 
     # estimate number of halos to get density
@@ -710,15 +709,15 @@ if (args.script or args.all) and haloFileBase != "":
                   dataFileNameList = fileList)
 
 if (args.halos or args.all) and haloFileBase != "":
-  print " Doing halos - density"
+  print(" Doing halos - density")
   sys.stdout.flush()
 
   for haloDen in haloDenList:
-    print "  halo density = ", haloDen
+    print("  halo density = ", haloDen)
     sys.stdout.flush()
 
     for (iRedshift, redshift) in enumerate(redshifts):
-      print "   z = ", redshift
+      print("   z = ", redshift)
       sys.stdout.flush()
 
       if haloFileDummy == '':
@@ -746,7 +745,7 @@ if (args.halos or args.all) and haloFileBase != "":
 
       numPartExpect = int(np.ceil(haloDen * lbox**3))
       if numPart < numPartExpect:
-        print " ERROR: not enough halos to support that density! Maximum is %g" % (1.*numPart / lbox**3)
+        print(" ERROR: not enough halos to support that density! Maximum is %g" % (1.*numPart / lbox**3))
         exit(-1)
 
 
@@ -779,7 +778,7 @@ if (args.halos or args.all) and haloFileBase != "":
         actualDen = 1.*numPart / lbox**3
         keepFraction = haloDen / actualDen
         if numPart < numPartExpect:
-          print " ERROR: not enough galaxies to support that density! Maximum is %g" % (1.*numPart / lbox**3)
+          print(" ERROR: not enough galaxies to support that density! Maximum is %g" % (1.*numPart / lbox**3))
           exit(-1)
 
         numKept = 0
@@ -861,7 +860,7 @@ root_filename {workDir}/hod_{sampleName}
                """
 
 if (args.script or args.all) and haloFileBase != "":
-  print " Doing HOD scripts"
+  print(" Doing HOD scripts")
   sys.stdout.flush()
 
   for thisHod in hodParmList:
@@ -871,7 +870,7 @@ if (args.script or args.all) and haloFileBase != "":
       outFileName = sampleName+".dat"
       fileList.append(outFileName) 
 
-    print "  ", thisHod['name']
+    print("  ", thisHod['name'])
 
     # estimate number of halos to get density
     numPart = thisHod['galDensFinal'] * lbox**3
@@ -893,10 +892,10 @@ if (args.script or args.all) and haloFileBase != "":
                   dataFileNameList = fileList)
 
 if (args.hod or args.all) and haloFileBase != "":
-  print " Doing HOD"
+  print(" Doing HOD")
   sys.stdout.flush()
   for (iRedshift, redshift) in enumerate(redshifts):
-    print "  z = ", redshift
+    print("  z = ", redshift)
     sys.stdout.flush()
 
     if haloFileDummy == '':
@@ -918,7 +917,7 @@ if (args.hod or args.all) and haloFileBase != "":
       haloFile = outFile
 
     for thisHod in hodParmList:
-      print "   ", thisHod['name']
+      print("   ", thisHod['name'])
       sys.stdout.flush()
 
       sampleName = getSampleName(prefix+"hod_"+thisHod['name'], redshift, False)
@@ -955,16 +954,16 @@ if (args.hod or args.all) and haloFileBase != "":
       hodWorked = False 
       for line in open(tempFile):
         if "MLO" in line:
-          print "     (minimum halo mass = ", line.split()[1], ")"
+          print("     (minimum halo mass = ", line.split()[1], ")")
           hodWorked = True 
           break
 
       if hodWorked:
         os.unlink(tempFile)
       else:
-        print "HOD Failed! Log follows:"
+        print("HOD Failed! Log follows:")
         for line in open(tempFile):
-          print line
+          print(line)
         exit(-1)
 
       # now randomly subsample the galaxies to get desired density
@@ -977,7 +976,7 @@ if (args.hod or args.all) and haloFileBase != "":
       inFile.close()
 
       if numPartActual < numPartExpect:
-        print " ERROR: not enough galaxies to support that density! Maximum is %g" % (1.*numPartActual / lbox**3)
+        print(" ERROR: not enough galaxies to support that density! Maximum is %g" % (1.*numPartActual / lbox**3))
         exit(-1)
 
       actualDen = 1.*numPartActual / lbox**3
@@ -1015,4 +1014,4 @@ if (args.hod or args.all) and haloFileBase != "":
 
     if dataFormat == "sdf": os.system("rm %s" % haloFile)
 
-print " Done!"
+print(" Done!")

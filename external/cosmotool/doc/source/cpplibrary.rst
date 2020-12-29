@@ -1,2 +1,0 @@
-The CosmoTool C++ library
-=========================

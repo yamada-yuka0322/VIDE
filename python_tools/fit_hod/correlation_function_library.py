@@ -1,3 +1,22 @@
+#+
+#   VIDE -- Void IDentification and Examination -- ./python_tools/fit_hod/correlation_function_library.py
+#   Copyright (C) 2010-2014 Guilhem Lavaux
+#   Copyright (C) 2011-2014 P. M. Sutter
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; version 2 of the License.
+# 
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#+
 #Version 1.1
 #LATEST MODIFICATION: 15/05/2013
 #This file contains the functions needed to compute:
@@ -69,15 +88,15 @@ def TPCF(pos_g,pos_r,BoxSize,DD_action,RR_action,DR_action,
             DD=DDR_pairs(bins,Rmin,Rmax,BoxSize,dims,indexes1=indexes_g,
                              indexes2=None,pos1=pos_g,pos2=None)
             if verbose:
-                print DD
-                print np.sum(DD)
+                print(DD)
+                print(np.sum(DD))
             #write results to a file
             write_results(DD_name,DD,bins,'radial')
         else:
             #read results from a file
             DD,bins_aux=read_results(DD_name,'radial')
             if bins_aux!=bins:
-                print 'Sizes are different!'
+                print('Sizes are different!')
                 sys.exit()
 
         #compute random-random pairs: RR
@@ -85,15 +104,15 @@ def TPCF(pos_g,pos_r,BoxSize,DD_action,RR_action,DR_action,
             RR=DDR_pairs(bins,Rmin,Rmax,BoxSize,dims,indexes1=indexes_r,
                              indexes2=None,pos1=pos_r,pos2=None)
             if verbose:
-                print RR
-                print np.sum(RR)
+                print(RR)
+                print(np.sum(RR))
             #write results to a file
             write_results(RR_name,RR,bins,'radial')
         else:
             #read results from a file
             RR,bins_aux=read_results(RR_name,'radial')
             if bins_aux!=bins:
-                print 'Sizes are different!'
+                print('Sizes are different!')
                 sys.exit()
 
         #compute galaxy-random pairs: DR
@@ -101,15 +120,15 @@ def TPCF(pos_g,pos_r,BoxSize,DD_action,RR_action,DR_action,
             DR=DDR_pairs(bins,Rmin,Rmax,BoxSize,dims,indexes1=indexes_g,
                          indexes2=indexes_r,pos1=pos_g,pos2=pos_r)
             if verbose:
-                print DR
-                print np.sum(DR)
+                print(DR)
+                print(np.sum(DR))
             #write results to a file
             write_results(DR_name,DR,bins,'radial')
         else:
             #read results from a file
             DR,bins_aux=read_results(DR_name,'radial')
             if bins_aux!=bins:
-                print 'Sizes are different!'
+                print('Sizes are different!')
                 sys.exit()
 
 
@@ -211,15 +230,15 @@ def TPCCF(pos_g1,pos_g2,pos_r,BoxSize,
             D1D2=DDR_pairs(bins,Rmin,Rmax,BoxSize,dims,indexes1=indexes_g1,
                            indexes2=indexes_g2,pos1=pos_g1,pos2=pos_g2)
             if verbose:
-                print D1D2
-                print np.sum(D1D2)
+                print(D1D2)
+                print(np.sum(D1D2))
             #write results to a file
             write_results(D1D2_name,D1D2,bins,'radial')
         else:
             #read results from a file
             D1D2,bins_aux=read_results(D1D2_name,'radial')
             if bins_aux!=bins:
-                print 'Sizes are different!'
+                print('Sizes are different!')
                 sys.exit()
 
         #compute galaxy1-random pairs: D1R
@@ -227,15 +246,15 @@ def TPCCF(pos_g1,pos_g2,pos_r,BoxSize,
             D1R=DDR_pairs(bins,Rmin,Rmax,BoxSize,dims,indexes1=indexes_g1,
                           indexes2=indexes_r,pos1=pos_g1,pos2=pos_r)
             if verbose:
-                print D1R
-                print np.sum(D1R)
+                print(D1R)
+                print(np.sum(D1R))
             #write results to a file
             write_results(D1R_name,D1R,bins,'radial')
         else:
             #read results from a file
             D1R,bins_aux=read_results(D1R_name,'radial')
             if bins_aux!=bins:
-                print 'Sizes are different!'
+                print('Sizes are different!')
                 sys.exit()
 
         #compute galaxy2-random pairs: D2R
@@ -243,15 +262,15 @@ def TPCCF(pos_g1,pos_g2,pos_r,BoxSize,
             D2R=DDR_pairs(bins,Rmin,Rmax,BoxSize,dims,indexes1=indexes_g2,
                           indexes2=indexes_r,pos1=pos_g2,pos2=pos_r)
             if verbose:
-                print D2R
-                print np.sum(D2R)
+                print(D2R)
+                print(np.sum(D2R))
             #write results to a file
             write_results(D2R_name,D2R,bins,'radial')
         else:
             #read results from a file
             D2R,bins_aux=read_results(D2R_name,'radial')
             if bins_aux!=bins:
-                print 'Sizes are different!'
+                print('Sizes are different!')
                 sys.exit()
 
         #compute random-random pairs: RR
@@ -259,15 +278,15 @@ def TPCCF(pos_g1,pos_g2,pos_r,BoxSize,
             RR=DDR_pairs(bins,Rmin,Rmax,BoxSize,dims,indexes1=indexes_r,
                          indexes2=None,pos1=pos_r,pos2=None)
             if verbose:
-                print RR
-                print np.sum(RR)
+                print(RR)
+                print(np.sum(RR))
             #write results to a file
             write_results(RR_name,RR,bins,'radial')
         else:
             #read results from a file
             RR,bins_aux=read_results(RR_name,'radial')
             if bins_aux!=bins:
-                print 'Sizes are different!'
+                print('Sizes are different!')
                 sys.exit()
 
 
@@ -341,8 +360,8 @@ def DD_file(pos_r,BoxSize,RR_name,bins,Rmin,Rmax):
         #compute random-random pairs: RR
         RR=DDR_pairs(bins,Rmin,Rmax,BoxSize,dims,indexes1=indexes_r,
                      indexes2=None,pos1=pos_r,pos2=None)
-        print RR
-        print np.sum(RR)
+        print(RR)
+        print(np.sum(RR))
         #write results to a file
         write_results(RR_name,RR,bins,'radial')
 
@@ -438,7 +457,7 @@ def DDR_pairs(bins,Rmin,Rmax,BoxSize,dims,indexes1,indexes2,pos1,pos2):
             comm.send(myrank,dest=0,tag=1)
             final=comm.recv(source=0,tag=2)
 
-        print 'cpu ',myrank,' finished: transfering data to master'
+        print('cpu ',myrank,' finished: transfering data to master')
         comm.send(pairs,dest=0,tag=10)
 ################################################################################
 
@@ -639,8 +658,8 @@ def write_results(fname,histogram,bins,case):
         for i in range(len(histogram)):
             f.write(str(i)+' '+str(histogram[i])+'\n')
     else:
-        print 'Error in the description of case:'
-        print 'Choose between: par-perp or radial'
+        print('Error in the description of case:')
+        print('Choose between: par-perp or radial')
     f.close()        
 ################################################################################
 #This functions reads partial results of a file
@@ -652,7 +671,7 @@ def read_results(fname,case):
         bins=np.around(np.sqrt(size)).astype(np.int64)
 
         if bins*bins!=size:
-            print 'Error finding the size of the matrix'
+            print('Error finding the size of the matrix')
             sys.exit()
 
         f=open(fname,'r')
@@ -671,8 +690,8 @@ def read_results(fname,case):
         histogram=np.array(histogram)
         return histogram,histogram.shape[0]
     else:
-        print 'Error in the description of case:'
-        print 'Choose between: par-perp or radial'
+        print('Error in the description of case:')
+        print('Choose between: par-perp or radial')
 ################################################################################
 
 

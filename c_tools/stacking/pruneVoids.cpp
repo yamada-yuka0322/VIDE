@@ -37,7 +37,7 @@
 #include "stdlib.h"
 #include <math.h>
 #include <stdio.h>
-#include <netcdfcpp.h>
+#include <netcdf>
 #include "pruneVoids_conf.h"
 #include <vector>
 #include "assert.h"
@@ -243,13 +243,13 @@ int main(int argc, char **argv) {
 
   // load box size
   printf("\n Getting info...\n");
-  NcFile f_info(args.extraInfo_arg);
-  ranges[0][0] = f_info.get_att("range_x_min")->as_double(0);
-  ranges[0][1] = f_info.get_att("range_x_max")->as_double(0);
-  ranges[1][0] = f_info.get_att("range_y_min")->as_double(0);
-  ranges[1][1] = f_info.get_att("range_y_max")->as_double(0);
-  ranges[2][0] = f_info.get_att("range_z_min")->as_double(0);
-  ranges[2][1] = f_info.get_att("range_z_max")->as_double(0);
+  netCDF::NcFile f_info(args.extraInfo_arg, netCDF::NcFile::read);
+  f_info.getAtt("range_x_min").getValues(&ranges[0][0]);
+  f_info.getAtt("range_x_max").getValues(&ranges[0][1]);
+  f_info.getAtt("range_y_min").getValues(&ranges[1][0]);
+  f_info.getAtt("range_y_max").getValues(&ranges[1][1]);
+  f_info.getAtt("range_z_min").getValues(&ranges[2][0]);
+  f_info.getAtt("range_z_max").getValues(&ranges[2][1]);
 
   printf(" Range xmin %e\n", ranges[0][0]);
   printf(" Range xmax %e\n", ranges[0][1]);

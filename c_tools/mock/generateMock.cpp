@@ -36,12 +36,13 @@
 #include <CosmoTool/algo.hpp>
 #include "generateMock_conf.h"
 #include "gslIntegrate.hpp"
-#include <netcdfcpp.h>
+#include <netcdf>
 #include "simulation_loader.hpp"
 
 using namespace std;
 using namespace CosmoTool;
 using boost::format;
+using namespace netCDF;
 
 #define LIGHT_SPEED 299792.458
 
@@ -426,7 +427,7 @@ void buildBox(SimuData *simu, long num_targets, long loaded,
 void saveBox(SimuData *&boxed, const std::string& outbox, generateMock_info& args_info)
 {
   double *ranges = boxed->as<double>("ranges");
-  NcFile f(outbox.c_str(), NcFile::Replace, 0, 0, NcFile::Netcdf4);
+  NcFile f(outbox.c_str(), NcFile::replace);
   long *particle_id = boxed->as<long>("particle_id");
   double *expansion_fac = boxed->as<double>("expansion_fac");
   long *snapshot_split = boxed->as<long>("snapshot_split");
@@ -436,56 +437,51 @@ void saveBox(SimuData *&boxed, const std::string& outbox, generateMock_info& arg
   float *velY = boxed->Vel[1];
   float *velZ = boxed->Vel[2];
 
-  if (!f.is_valid())
-    {
-      cerr << "Could not create parameter file '" << outbox << "'. Aborting." << endl;
-      exit(1);
-    }
-  f.add_att("range_x_min", ranges[0]);
-  f.add_att("range_x_max", ranges[1]);
-  f.add_att("range_y_min", ranges[2]);
-  f.add_att("range_y_max", ranges[3]);
-  f.add_att("range_z_min", ranges[4]);
-  f.add_att("range_z_max", ranges[5]);
-  f.add_att("mask_index", -1);
-  f.add_att("is_observation", 0);
-  f.add_att("data_subsampling", args_info.subsample_arg);
+  f.putAtt("range_x_min", ncDouble, ranges[0]);
+  f.putAtt("range_x_max", ncDouble, ranges[1]);
+  f.putAtt("range_y_min", ncDouble,  ranges[2]);
+  f.putAtt("range_y_max", ncDouble, ranges[3]);
+  f.putAtt("range_z_min", ncDouble, ranges[4]);
+  f.putAtt("range_z_max", ncDouble, ranges[5]);
+  f.putAtt("mask_index", ncInt, -1);
+  f.putAtt("is_observation", ncInt, 0);
+  f.putAtt("data_subsampling", ncInt, args_info.subsample_arg);
 
-  NcDim *NumPart_dim = f.add_dim("numpart_dim", boxed->NumPart);
-  NcDim *NumSnap_dim = f.add_dim("numsnap_dim", num_snapshots);
-  NcVar *v = f.add_var("particle_ids", ncLong, NumPart_dim);
-  NcVar *v2 = f.add_var("expansion", ncDouble, NumPart_dim);
-  NcVar *v3 = f.add_var("snapshot_split", ncLong, NumSnap_dim);
+  NcDim NumPart_dim = f.addDim("numpart_dim", boxed->NumPart);
+  NcDim NumSnap_dim = f.addDim("numsnap_dim", num_snapshots);
+  NcVar v = f.addVar("particle_ids", ncInt64, NumPart_dim);
+  NcVar v2 = f.addVar("expansion", ncDouble, NumPart_dim);
+  NcVar v3 = f.addVar("snapshot_split", ncInt64, NumSnap_dim);
 
-  v->put(particle_id, boxed->NumPart);
-  v2->put(expansion_fac, boxed->NumPart);  
-  v3->put(snapshot_split, num_snapshots);
+  v.putVar({0}, {size_t(boxed->NumPart)}, particle_id);
+  v2.putVar({0}, {size_t(boxed->NumPart)}, expansion_fac);  
+  v3.putVar({0}, {size_t(boxed->NumPart)}, snapshot_split);
   if (uniqueID != 0)
     {
-      NcVar *v4 = f.add_var("unique_ids_lsb", ncLong, NumPart_dim);
-      NcVar *v5 = f.add_var("unique_ids_msb", ncLong, NumPart_dim);
+      NcVar v4 = f.addVar("unique_ids_lsb", ncInt, NumPart_dim);
+      NcVar v5 = f.addVar("unique_ids_msb", ncInt, NumPart_dim);
 
       nclong *tmp_int = new nclong[boxed->NumPart];
       for (long i = 0; i < boxed->NumPart; i++)
          tmp_int[i] = (nclong)(((unsigned long)uniqueID[i]) & 0xffffffff);
-      v4->put(tmp_int, boxed->NumPart);
+      v4.putVar({0}, {size_t(boxed->NumPart)}, tmp_int);
       for (long i = 0; i < boxed->NumPart; i++)
          tmp_int[i] = (nclong)((((unsigned long)uniqueID[i]) & 0xffffffff) >> 32);
-      v5->put(tmp_int, boxed->NumPart);
+      v5.putVar({0}, {size_t(boxed->NumPart)}, tmp_int);
       delete[] tmp_int;
     }
 
-  NcVar *v6 = f.add_var("vel_x", ncFloat, NumPart_dim);
-  NcVar *v7 = f.add_var("vel_y", ncFloat, NumPart_dim);
-  NcVar *v8 = f.add_var("vel_z", ncFloat, NumPart_dim);
-  v6->put(velX, boxed->NumPart);
-  v7->put(velY, boxed->NumPart);
-  v8->put(velZ, boxed->NumPart);
+  NcVar v6 = f.addVar("vel_x", ncFloat, NumPart_dim);
+  NcVar v7 = f.addVar("vel_y", ncFloat, NumPart_dim);
+  NcVar v8 = f.addVar("vel_z", ncFloat, NumPart_dim);
+  v6.putVar({0}, {size_t(boxed->NumPart)}, velX);
+  v7.putVar({0}, {size_t(boxed->NumPart)}, velY);
+  v8.putVar({0}, {size_t(boxed->NumPart)}, velZ);
 }
 
 void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& args_info)
 {
-  NcFile f(args_info.inputParameter_arg);
+  NcFile f(args_info.inputParameter_arg, NcFile::read);
   NcVar *v;
   long *particle_id;
   double *expansion_fac;
@@ -500,29 +496,32 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
   boxed->time = simu->time;
   boxed->BoxSize = simu->BoxSize;
 
-  NcAtt *d_sub = f.get_att("data_subsampling");
-  if (d_sub == 0 || d_sub->as_double(0)/args_info.subsample_arg-1. > 1.e-5)
+  NcGroupAtt d_sub = f.getAtt("data_subsampling");
+  auto checkAtt = [&args_info](NcGroupAtt a) {
+    if (a.isNull())
+      return true;
+    double subsampling;
+    a.getValues(&subsampling);
+    return subsampling/args_info.subsample_arg - 1 > 1e-5;
+  };
+  if (checkAtt(d_sub))
    {
-     cerr << "Parameter file was not generated with the same simulation subsampling argument. Particles will be different. Stop here." << d_sub->as_double(0) << " " << args_info.subsample_arg <<endl;
+     cerr << "Parameter file was not generated with the same simulation subsampling argument. Particles will be different. Stop here." <<endl;
      exit(1);
    }
 
-  NcVar *v_id = f.get_var("particle_ids");
-  NcVar *v_snap = f.get_var("snapshot_split");
-  long *edges1;
-  long *dim_snap;
+  NcVar v_id = f.getVar("particle_ids");
+  NcVar v_snap = f.getVar("snapshot_split");
   double *ranges;
   double *mul;
 
-  edges1 = v_id->edges();
-  dim_snap = v_snap->edges();
-  assert(v_id->num_dims()==1);
-  assert(v_snap->num_dims()==1);
+  std::vector<NcDim> edges1 = v_id.getDims();
+  std::vector<NcDim> dim_snap = v_snap.getDims();
+  assert(edges1.size()==1);
+  assert(dim_snap.size()==1);
 
-  boxed->NumPart = edges1[0];
-  *num_snapshots = dim_snap[0];
-  delete[] dim_snap;
-  delete[] edges1;
+  boxed->NumPart = edges1[0].getSize();
+  *num_snapshots = dim_snap[0].getSize();
 
   particle_id = new long[boxed->NumPart];
   uniqueID = new long[boxed->NumPart];
@@ -540,15 +539,15 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
   boxed->new_attribute("snapshot_split", snapshot_split, delete_adaptor<long>);
   boxed->new_attribute("expansion_fac", expansion_fac, delete_adaptor<double>);
 
-  v_id->get(particle_id, boxed->NumPart);
-  v_snap->get(snapshot_split, *num_snapshots);
+  v_id.getVar(particle_id);
+  v_snap.getVar(snapshot_split);
 
-  ranges[0] = f.get_att("range_x_min")->as_double(0);
-  ranges[1] = f.get_att("range_x_max")->as_double(0);
-  ranges[2] = f.get_att("range_y_min")->as_double(0);
-  ranges[3] = f.get_att("range_y_max")->as_double(0);
-  ranges[4] = f.get_att("range_z_min")->as_double(0);
-  ranges[5] = f.get_att("range_z_max")->as_double(0);
+  f.getAtt("range_x_min").getValues(&ranges[0]);
+  f.getAtt("range_x_max").getValues(&ranges[1]);
+  f.getAtt("range_y_min").getValues(&ranges[2]);
+  f.getAtt("range_y_max").getValues(&ranges[3]);
+  f.getAtt("range_z_min").getValues(&ranges[4]);
+  f.getAtt("range_z_max").getValues(&ranges[5]);
 
   for (int j = 0; j < 3; j++)
     {
@@ -559,17 +558,17 @@ void makeBoxFromParameter(SimuData *simu, SimuData* &boxed, generateMock_info& a
     }
   
   uint32_t k = 0;
-  NcVar *v_uniq_lsb = f.get_var("unique_ids_lsb");
-  NcVar *v_uniq_msb = f.get_var("unique_ids_lsb");
+  NcVar v_uniq_lsb = f.getVar("unique_ids_lsb");
+  NcVar v_uniq_msb = f.getVar("unique_ids_lsb");
   nclong *tmp_int;
 
   tmp_int = new nclong[boxed->NumPart];
 
-  v_uniq_lsb->get(tmp_int, boxed->NumPart);
+  v_uniq_lsb.getVar(tmp_int);
   for (long i = 0; i < boxed->NumPart; i++)
     uniqueID[i] = tmp_int[i];
 
-  v_uniq_msb->get(tmp_int, boxed->NumPart);
+  v_uniq_msb.getVar(tmp_int);
   for (long i = 0; i < boxed->NumPart; i++)
     uniqueID[i] |= (unsigned long)(tmp_int[i]) << 32;
 

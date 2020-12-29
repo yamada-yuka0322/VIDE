@@ -94,3 +94,4 @@ struct perform_tasks Task;
 struct workspace Work;
 struct COLOR_DATA wp_color;
 struct m2n_workspace M2N;
+struct WP wp;

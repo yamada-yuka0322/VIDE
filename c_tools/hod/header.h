@@ -371,7 +371,7 @@ extern struct hod_parameters {
 /* Structure to keep information/data about fitting
  * color-defined samples.
  */
-struct COLOR_DATA {
+extern struct COLOR_DATA {
   int ON;
   double ngal_red;
   double ngal_blue;
@@ -383,8 +383,7 @@ struct COLOR_DATA {
   double *e_red,*e_blue,*e_full;
   double *x_red,*x_blue,*x_full;
   double **covar_red, **covar_blue, **covar_full;
-} wp_color;
-
+};
 
 /* This is to put the work done in xi_multipoles into 
  * a global space.
@@ -530,7 +529,7 @@ extern struct perform_tasks {
 
 /* Workspace for w_p minimzation.
  */
-struct WP {
+extern struct WP {
   double **covar;
   int np;
   int ncf;

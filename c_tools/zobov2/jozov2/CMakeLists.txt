@@ -22,3 +22,5 @@ if (ENABLE_OPENMP)
   omp_add_flags(jozov2 CXX)
   add_definitions(-DOPENMP)
 ENDIF(ENABLE_OPENMP)
+
+install(TARGETS jozov2 DESTINATION ${VIDE_BIN})

@@ -1,3 +1,22 @@
+#+
+#   VIDE -- Void IDentification and Examination -- ./python_tools/fit_hod/HOD_parameters.py
+#   Copyright (C) 2010-2014 Guilhem Lavaux
+#   Copyright (C) 2011-2014 P. M. Sutter
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; version 2 of the License.
+# 
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#+
 #LATEST MODIFICATION: 10/11/2013
 #This code computes the Xi^2 for a set of different HOD parameters
 
@@ -114,9 +133,9 @@ if myrank==0:
     #IDs should go from 0 to N-1, instead from 1 to N
     DM_ids=readsnap.read_block(snapshot_fname,"ID  ",parttype=-1)-1
     if np.min(DM_ids)!=0 or np.max(DM_ids)!=(len(DM_pos)-1):
-        print 'Error!!!!'
-        print 'IDs should go from 0 to N-1'
-    print len(DM_ids),np.min(DM_ids),np.max(DM_ids)
+        print('Error!!!!')
+        print('IDs should go from 0 to N-1')
+    print(len(DM_ids),np.min(DM_ids),np.max(DM_ids))
     sorted_ids=DM_ids.argsort(axis=0)
     del DM_ids
     #the particle whose ID is N is located in the position sorted_ids[N]
@@ -131,7 +150,7 @@ if myrank==0:
     IDs=halos_ID.SubIDs-1
     del halos_ID
 
-    print 'subhalos IDs=',np.min(IDs),np.max(IDs)
+    print('subhalos IDs=',np.min(IDs),np.max(IDs))
 
     #read CDM halos information
     halos=readsubf.subfind_catalog(groups_fname,groups_number,
@@ -147,7 +166,7 @@ if myrank==0:
         halos_mass=halos.group_m_crit200*1e10     #masses in Msun/h
         halos_radius=halos.group_r_crit200        #radius in kpc/h
     else:
-        print 'bad mass_criteria'
+        print('bad mass_criteria')
         sys.exit()
     halos_pos=halos.group_pos
     halos_len=halos.group_len
@@ -155,9 +174,9 @@ if myrank==0:
     halos_indexes=np.where((halos_mass>min_mass) & (halos_mass<max_mass))[0]
     del halos
     
-    print ' '
-    print 'total halos found=',len(halos_pos)
-    print 'halos number density=',len(halos_pos)/BoxSize**3
+    print(' ')
+    print('total halos found=',len(halos_pos))
+    print('halos number density=',len(halos_pos)/BoxSize**3)
 
     #keep only the halos in the given mass range 
     halo_mass=halos_mass[halos_indexes]
@@ -168,7 +187,7 @@ if myrank==0:
     del halos_indexes
 
     if np.any(halo_len==[]):
-        print 'something bad'
+        print('something bad')
 
     #read the random catalogue (new version)
     dt=np.dtype((np.float32,3))
@@ -190,7 +209,7 @@ if myrank==0:
             Cov.append(float(value))
     f.close(); Cov=np.array(Cov)
     if len(Cov)!=len(wp)**2:
-        print 'problem with point numbers in the covariance file'
+        print('problem with point numbers in the covariance file')
         sys.exit()
     Cov=np.reshape(Cov,(len(wp),len(wp)))
     Cov=np.matrix(Cov)
@@ -242,8 +261,8 @@ for g in range(100):
         wp_HOD=np.array(wp_HOD)
         f.close()
 
-        print 'M1=',M1
-        print 'alpha=',alpha
+        print('M1=',M1)
+        print('alpha=',alpha)
 
         chi2_bins=(wp_HOD-wp[:,1])**2/wp[:,2]**2
             
@@ -260,7 +279,7 @@ for g in range(100):
                 diff=np.matrix(wp_HOD_aux-wp_aux)
                 chi2=diff*Cov_aux.I*diff.T
 
-                print 'X2('+str(min_bin)+'-'+str(max_bin)+')=',chi2_nocov,chi2
+                print('X2('+str(min_bin)+'-'+str(max_bin)+')=',chi2_nocov,chi2)
                 g=open(results_file,'a')
                 g.write(str(M1)+ ' '+str(alpha)+' '+str(seed)+' '+str(chi2)+'\n')
                 g.close()

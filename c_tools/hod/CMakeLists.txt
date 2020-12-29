@@ -26,3 +26,4 @@ SET(hod_SRCS header.c main.c utility.c sigmac.c
 )
 add_executable(hod ${hod_SRCS})
 target_link_libraries(hod  -lm)
+install(TARGETS hod DESTINATION ${VIDE_BIN})

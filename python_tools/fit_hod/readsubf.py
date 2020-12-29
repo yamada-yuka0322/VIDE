@@ -1,3 +1,22 @@
+#+
+#   VIDE -- Void IDentification and Examination -- ./python_tools/fit_hod/readsubf.py
+#   Copyright (C) 2010-2014 Guilhem Lavaux
+#   Copyright (C) 2011-2014 P. M. Sutter
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; version 2 of the License.
+# 
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#+
 
 # code for reading Subfind's subhalo_tab files
 # usage e.g.:
@@ -32,7 +51,7 @@ class subfind_catalog:
       curfile = self.filebase + str(filenum)
       
       if (not os.path.exists(curfile)):
-        print "file not found:", curfile
+        print("file not found:", curfile)
         sys.exit()
       
       f = open(curfile,'rb')
@@ -140,7 +159,7 @@ class subfind_catalog:
 
       curpos = f.tell()
       f.seek(0,os.SEEK_END)
-      if curpos != f.tell(): print "Warning: finished reading before EOF for file",filenum
+      if curpos != f.tell(): print("Warning: finished reading before EOF for file",filenum)
       f.close()  
       #print 'finished with file number',filenum,"of",ntask
       filenum += 1
@@ -204,8 +223,8 @@ class subf_ids:
     self.filebase = basedir + "/groups_" + str(snapnum).zfill(3) + "/subhalo_ids_" + str(snapnum).zfill(3) + "."
 
     if (verbose):	 
-	    print
-	    print "reading subhalo IDs for snapshot",snapnum,"of",basedir
+	    print()
+	    print("reading subhalo IDs for snapshot",snapnum,"of",basedir)
  
     if long_ids: self.id_type = np.uint64
     else: self.id_type = np.uint32
@@ -221,7 +240,7 @@ class subf_ids:
       curfile = self.filebase + str(filenum)
       
       if (not os.path.exists(curfile)):
-        print "file not found:", curfile
+        print("file not found:", curfile)
         sys.exit()
       
       f = open(curfile,'rb')
@@ -246,12 +265,12 @@ class subf_ids:
 	      Offset = Offset.byteswap()
       if filenum == 0:
 	if (verbose):
-	        print "Ngroups    = ", Ngroups
-	        print "TotNgroups = ", Ngroups	
-	        print "NIds       = ", NIds
-        	print "TotNids    = ", TotNids
-	        print "NTask      = ", NTask	
-	        print "Offset     = ", Offset	
+	        print("Ngroups    = ", Ngroups)
+	        print("TotNgroups = ", Ngroups)	
+	        print("NIds       = ", NIds)
+        	print("TotNids    = ", TotNids)
+	        print("NTask      = ", NTask)	
+	        print("Offset     = ", Offset)	
 	self.nfiles = NTask
 	self.SubLen=sublen
         self.SubIDs = np.empty(sublen, dtype=self.id_type)
@@ -266,15 +285,15 @@ class subf_ids:
 		n_to_read = sublen		
 	if n_to_read > 0:
 		if (verbose):
-			print filenum, n_to_read
+			print(filenum, n_to_read)
 		if nskip > 0:
 			dummy=np.fromfile(f, dtype=self.id_type, count=nskip)
 			if (verbose):
-				print dummy
+				print(dummy)
 	        locs = slice(found, found + n_to_read)
 	        dummy2 = np.fromfile(f, dtype=self.id_type, count=n_to_read)
 		if (verbose):
-			print dummy2
+			print(dummy2)
 		self.SubIDs[locs]=dummy2
 		found += n_to_read
 	count += n_to_read

@@ -26,11 +26,11 @@ import os
 VOID_GSL=os.environ.get('VOID_GSL')
 
 setup(
-    name='void_python_tools',
+    name='vide',
     version='1.0',
     cmdclass = {'build_ext': build_ext},
     include_dirs = [np.get_include()],
     packages=
-       ['void_python_tools','void_python_tools.backend','void_python_tools.apTools', 'void_python_tools.voidUtil',
-        'void_python_tools.apTools.profiles','void_python_tools.apTools.chi2',],
+       ['vide','vide.backend','vide.apTools', 'vide.voidUtil',
+        'vide.apTools.profiles','vide.apTools.chi2',],
 )

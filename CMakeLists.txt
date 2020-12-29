@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.2)
+set(CMAKE_CXX_STANDARD 11)
 
 project(zobovPerso)
 
@@ -65,12 +66,22 @@ endmacro(configure_exec)
 
 include(${CMAKE_SOURCE_DIR}/external/base_external.cmake)
 include(${CMAKE_SOURCE_DIR}/external/external_build.cmake)
-include(${CMAKE_SOURCE_DIR}/external/external_python_build.cmake)
 include(${CMAKE_SOURCE_DIR}/external/external_cosmotool.cmake)
+include(${CMAKE_SOURCE_DIR}/external/external_python_build.cmake)
+
+option(INSTALL_PYTHON_LOCAL OFF)
+option(INSTALL_CTOOLS_IN_PYTHON OFF)
+IF(PYTHON_SITE_PACKAGES)
+  SET(PYTHON_LOCAL_SITE_PACKAGE ${PYTHON_SITE_PACKAGES})
+ELSE()
+  IF (INSTALL_PYTHON_LOCAL)
+    SET(PYTHON_LOCAL_SITE_PACKAGE ${USER_PYTHON_SITE_PACKAGES})
+  ELSE()
+    SET(PYTHON_LOCAL_SITE_PACKAGE ${SYSTEM_PYTHON_SITE_PACKAGES})
+  ENDIF()
+ENDIF()
 
 SET(PYTHONPATH ${PYTHON_LOCAL_SITE_PACKAGE})
-configure_exec(${CMAKE_SOURCE_DIR}/run_python.sh.in ${CMAKE_BINARY_DIR} run_python.sh)
-configure_exec(${CMAKE_SOURCE_DIR}/run_env.sh.in  ${CMAKE_BINARY_DIR} run_env.sh)
 configure_exec(${CMAKE_SOURCE_DIR}/python_tools/pipeline_source/prepareInputs.in.py
 ${CMAKE_BINARY_DIR}/pipeline prepareInputs.py)
 #configure_exec(${CMAKE_SOURCE_DIR}/python_tools/pipeline_source/applyMaskToMock.in.py
@@ -81,12 +92,19 @@ ${CMAKE_BINARY_DIR}/pipeline prepareInputs.py)
 SET(python_build_environment
   ${CMAKE_COMMAND} -DPYTHON_LOCAL_SITE_PACKAGE=${PYTHON_LOCAL_SITE_PACKAGE} -DVOID_GSL=${CMAKE_BINARY_DIR}/ext_build/gsl -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} -DTARGET_PATH=${CMAKE_BINARY_DIR}/ext_build/python -P)
 
-add_custom_target(python_pipeline ALL
-  COMMAND ${python_build_environment} ${CMAKE_SOURCE_DIR}/external/python_build.cmake
-  COMMAND ${python_build_environment} ${CMAKE_SOURCE_DIR}/external/python_install.cmake
-  DEPENDS gsl cython netcdf4-python ${PYTHON_AUXILIARY_DEPEND}
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/python_tools
-)
+if (INSTALL_CTOOLS_IN_PYTHON)
+  SET(VIDE_BIN ${PYTHON_LOCAL_SITE_PACKAGE}/void_python_tools/bin)
+else()
+  SET(VIDE_BIN ${CMAKE_INSTALL_PREFIX}/bin)
+endif()
+message(STATUS "Vide binary directory: ${VIDE_BIN}")
+
+#add_custom_target(python_pipeline ALL
+#  COMMAND ${python_build_environment} ${CMAKE_SOURCE_DIR}/external/python_build.cmake
+#  COMMAND ${python_build_environment} ${CMAKE_SOURCE_DIR}/external/python_install.cmake
+#  DEPENDS gsl cython netcdf4-python ${PYTHON_AUXILIARY_DEPEND}
+#  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/python_tools
+#)
 
 
 subdirs(zobov c_tools)

@@ -1,3 +1,22 @@
+#+
+#   VIDE -- Void IDentification and Examination -- ./python_tools/fit_hod/readsnap.py
+#   Copyright (C) 2010-2014 Guilhem Lavaux
+#   Copyright (C) 2011-2014 P. M. Sutter
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; version 2 of the License.
+# 
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#+
 # routines for reading headers and data blocks from Gadget snapshot files
 # usage e.g.:
 #
@@ -31,7 +50,7 @@ class snapshot_header:
     elif os.path.exists(filename+".0"):
       curfilename = filename+".0"
     else:
-      print "file not found:", filename
+      print("file not found:", filename)
       sys.exit()
       
     self.filename = filename  
@@ -52,7 +71,7 @@ class snapshot_header:
         swap = 1
         format = 1
       else:
-        print "incorrect file format encountered when reading header of", filename
+        print("incorrect file format encountered when reading header of", filename)
         sys.exit()
     
     self.format = format
@@ -96,7 +115,7 @@ class snapshot_header:
 
 def find_block(filename, format, swap, block, block_num, only_list_blocks=False):
   if (not os.path.exists(filename)):
-      print "file not found:", filename
+      print("file not found:", filename)
       sys.exit()
             
   f = open(filename,'rb')
@@ -129,9 +148,9 @@ def find_block(filename, format, swap, block, block_num, only_list_blocks=False)
     
     if only_list_blocks:
       if format==2:
-        print curblock_num,curblock,f.tell(),curblocksize
+        print(curblock_num,curblock,f.tell(),curblocksize)
       else:
-        print curblock_num,f.tell(),curblocksize
+        print(curblock_num,f.tell(),curblocksize)
       found = False
         
     
@@ -143,13 +162,13 @@ def find_block(filename, format, swap, block, block_num, only_list_blocks=False)
       blocksize_check = (np.fromfile(f,dtype=np.uint32,count=1))[0]
       if swap: blocksize_check = blocksize_check.byteswap()
       if (curblocksize != blocksize_check):
-        print "something wrong"
+        print("something wrong")
         sys.exit()
       curblock_num += 1
   f.close()
       
   if ((not found) and (not only_list_blocks)):
-    print "Error: block not found"
+    print("Error: block not found")
     sys.exit()
     
   if (not only_list_blocks):
@@ -160,30 +179,30 @@ def find_block(filename, format, swap, block, block_num, only_list_blocks=False)
 #for instance nall=np.array([0,2048**3,0,0,0,0]) 
 def read_block(filename, block, parttype=-1, physical_velocities=True, arepo=0, no_masses=False, verbose=False, nall=[0,0,0,0,0,0]):
   if (verbose):
-    print "reading block", block
+    print("reading block", block)
   
   blockadd=0
   blocksub=0
   
   if arepo==0:
     if (verbose):	
-      print "Gadget format"
+      print("Gadget format")
     blockadd=0
   if arepo==1:
     if (verbose):	
-      print "Arepo format"
+      print("Arepo format")
     blockadd=1	
   if arepo==2:
     if (verbose):
-      print "Arepo extended format"
+      print("Arepo extended format")
     blockadd=4	
   if no_masses==True:
     if (verbose):	
-      print "No mass block present"    
+      print("No mass block present")    
     blocksub=1
 		 
   if parttype not in [-1,0,1,2,3,4,5]:
-    print "wrong parttype given"
+    print("wrong parttype given")
     sys.exit()
   
   if os.path.exists(filename):
@@ -191,14 +210,14 @@ def read_block(filename, block, parttype=-1, physical_velocities=True, arepo=0, 
   elif os.path.exists(filename+".0"):
     curfilename = filename+".0"
   else:
-    print "file not found:", filename
-    print "and:", curfilename
+    print("file not found:", filename)
+    print("and:", curfilename)
     sys.exit()
   
   head = snapshot_header(curfilename)
   format = head.format
 
-  print "FORMAT=", format
+  print("FORMAT=", format)
   swap = head.swap
   npart = head.npart
   massarr = head.massarr
@@ -235,7 +254,7 @@ def read_block(filename, block, parttype=-1, physical_velocities=True, arepo=0, 
     block_num = 5
     if parttype>=0 and massarr[parttype]>0:   
       if (verbose):	
-	      print "filling masses according to massarr"   
+	      print("filling masses according to massarr")   
       return np.ones(nall[parttype],dtype=dt)*massarr[parttype]
   elif block=="U   ":
     data_for_type[0] = True
@@ -289,7 +308,7 @@ def read_block(filename, block, parttype=-1, physical_velocities=True, arepo=0, 
     data_for_type[5] = True
     block_num = 15+blockadd-blocksub
   else:
-    print "Sorry! Block type", block, "not known!"
+    print("Sorry! Block type", block, "not known!")
     sys.exit()
   # - end of block description -
   
@@ -298,7 +317,7 @@ def read_block(filename, block, parttype=-1, physical_velocities=True, arepo=0, 
     actual_data_for_type[:] = False
     actual_data_for_type[parttype] = True
     if data_for_type[parttype]==False:
-      print "Error: no data for specified particle type", parttype, "in the block", block   
+      print("Error: no data for specified particle type", parttype, "in the block", block)   
       sys.exit()
   elif block=="MASS":
     actual_data_for_type[:] = True  
@@ -341,7 +360,7 @@ def read_block(filename, block, parttype=-1, physical_velocities=True, arepo=0, 
           dt = np.uint64 
         
     if np.dtype(dt).itemsize*curpartnum != blocksize:
-      print "something wrong with blocksize! expected =",np.dtype(dt).itemsize*curpartnum,"actual =",blocksize
+      print("something wrong with blocksize! expected =",np.dtype(dt).itemsize*curpartnum,"actual =",blocksize)
       sys.exit()
     
     f = open(curfilename,'rb')
@@ -380,7 +399,7 @@ def list_format2_blocks(filename):
   elif os.path.exists(filename+".0"):
     curfilename = filename+".0"
   else:
-    print "file not found:", filename
+    print("file not found:", filename)
     sys.exit()
   
   head = snapshot_header(curfilename)
@@ -388,16 +407,16 @@ def list_format2_blocks(filename):
   swap = head.swap
   del head
   
-  print 'GADGET FORMAT ',format
+  print('GADGET FORMAT ',format)
   if (format != 2):
-    print "#   OFFSET   SIZE"
+    print("#   OFFSET   SIZE")
   else:            
-    print "#   BLOCK   OFFSET   SIZE"
-  print "-------------------------"
+    print("#   BLOCK   OFFSET   SIZE")
+  print("-------------------------")
   
   find_block(curfilename, format, swap, "XXXX", 0, only_list_blocks=True)
   
-  print "-------------------------"
+  print("-------------------------")
 
 def read_gadget_header(filename):
   if os.path.exists(filename):
@@ -405,27 +424,27 @@ def read_gadget_header(filename):
   elif os.path.exists(filename+".0"):
     curfilename = filename+".0"
   else:
-    print "file not found:", filename
+    print("file not found:", filename)
     sys.exit()
 
   head=snapshot_header(curfilename)
-  print 'npar=',head.npart
-  print 'nall=',head.nall
-  print 'a=',head.time
-  print 'z=',head.redshift
-  print 'masses=',head.massarr*1e10,'Msun/h'
-  print 'boxsize=',head.boxsize,'kpc/h'
-  print 'filenum=',head.filenum
-  print 'cooling=',head.cooling
-  print 'Omega_m,Omega_l=',head.omega_m,head.omega_l
-  print 'h=',head.hubble,'\n'
+  print('npar=',head.npart)
+  print('nall=',head.nall)
+  print('a=',head.time)
+  print('z=',head.redshift)
+  print('masses=',head.massarr*1e10,'Msun/h')
+  print('boxsize=',head.boxsize,'kpc/h')
+  print('filenum=',head.filenum)
+  print('cooling=',head.cooling)
+  print('Omega_m,Omega_l=',head.omega_m,head.omega_l)
+  print('h=',head.hubble,'\n')
   
   rhocrit=2.77536627e11 #h**2 M_sun/Mpc**3
   rhocrit=rhocrit/1e9 #h**2M_sun/kpc**3
   
   Omega_DM=head.nall[1]*head.massarr[1]*1e10/(head.boxsize**3*rhocrit)
-  print 'DM mass=',head.massarr[1]*1e10,'Omega_DM=',Omega_DM
+  print('DM mass=',head.massarr[1]*1e10,'Omega_DM=',Omega_DM)
   if head.nall[2]>0 and head.massarr[2]>0:
     Omega_NU=head.nall[2]*head.massarr[2]*1e10/(head.boxsize**3*rhocrit)
-    print 'NU mass=',head.massarr[2]*1e10,'Omega_NU=',Omega_NU
-    print 'Sum of neutrino masses=',Omega_NU*head.hubble**2*94.1745,'eV'
+    print('NU mass=',head.massarr[2]*1e10,'Omega_NU=',Omega_NU)
+    print('Sum of neutrino masses=',Omega_NU*head.hubble**2*94.1745,'eV')

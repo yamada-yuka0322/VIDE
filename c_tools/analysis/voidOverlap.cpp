@@ -36,7 +36,7 @@
 #include <math.h>
 #include "voidOverlap_conf.h"
 #include <vector>
-#include <netcdfcpp.h>
+#include <netcdf>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -546,13 +546,13 @@ void loadCatalog(const char *partFile, const char *volFile,
   float ranges[3][2];
 
   printf("Loading info...\n");
-  NcFile f_info(infoFile);
-  ranges[0][0] = f_info.get_att("range_x_min")->as_double(0);
-  ranges[0][1] = f_info.get_att("range_x_max")->as_double(0);
-  ranges[1][0] = f_info.get_att("range_y_min")->as_double(0);
-  ranges[1][1] = f_info.get_att("range_y_max")->as_double(0);
-  ranges[2][0] = f_info.get_att("range_z_min")->as_double(0);
-  ranges[2][1] = f_info.get_att("range_z_max")->as_double(0);
+  netCDF::NcFile f_info(infoFile, netCDF::NcFile::read);
+  f_info.getAtt("range_x_min").getValues(&ranges[0][0]);
+  f_info.getAtt("range_x_max").getValues(&ranges[0][1]);
+  f_info.getAtt("range_y_min").getValues(&ranges[1][0]);
+  f_info.getAtt("range_y_max").getValues(&ranges[1][1]);
+  f_info.getAtt("range_z_min").getValues(&ranges[2][0]);
+  f_info.getAtt("range_z_max").getValues(&ranges[2][1]);
 
   catalog.boxLen[0] = ranges[0][1] - ranges[0][0];
   catalog.boxLen[1] = ranges[1][1] - ranges[1][0];

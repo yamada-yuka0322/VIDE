@@ -148,4 +148,5 @@ zobov/CMakeFiles/
 zobov/Makefile
 zobov/cmake_install.cmake
 zobov/jozov_persistent
-
+container/vide_key*
+container/id_vide*

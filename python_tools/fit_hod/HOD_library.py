@@ -1,3 +1,22 @@
+#+
+#   VIDE -- Void IDentification and Examination -- ./python_tools/fit_hod/HOD_library.py
+#   Copyright (C) 2010-2014 Guilhem Lavaux
+#   Copyright (C) 2011-2014 P. M. Sutter
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; version 2 of the License.
+# 
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#+
 import numpy as np
 import readsnap
 import readsubf
@@ -54,7 +73,7 @@ def hod(snapshot_fname,groups_fname,groups_number,min_mass,max_mass,
         halos_mass=halos.group_m_crit200*1e10     #masses in Msun/h
         halos_radius=halos.group_r_crit200        #radius in kpc/h
     else:
-        print 'bad mass_criteria'
+        print('bad mass_criteria')
         sys.exit()
     halos_pos=halos.group_pos   #positions in kpc/h
     halos_len=halos.group_len
@@ -63,9 +82,9 @@ def hod(snapshot_fname,groups_fname,groups_number,min_mass,max_mass,
     del halos
     
     if verbose:
-        print ' '
-        print 'total halos found=',halos_pos.shape[0]
-        print 'halos number density=',len(halos_pos)/(BoxSize*1e-3)**3
+        print(' ')
+        print('total halos found=',halos_pos.shape[0])
+        print('halos number density=',len(halos_pos)/(BoxSize*1e-3)**3)
 
     #keep only the halos in the given mass range 
     halo_mass=halos_mass[halos_indexes]
@@ -97,10 +116,10 @@ def hod(snapshot_fname,groups_fname,groups_number,min_mass,max_mass,
         i+=1
 
     if verbose:
-        print ' '
-        print 'Mmin=',Mmin
-        print 'average number of galaxies=',total_galaxies
-        print 'average galaxy density=',mean_density
+        print(' ')
+        print('Mmin=',Mmin)
+        print('average number of galaxies=',total_galaxies)
+        print('average galaxy density=',mean_density)
     #########################################
 
     #just halos with M>Mmin; the rest do not host central/satellite galaxies
@@ -120,15 +139,15 @@ def hod(snapshot_fname,groups_fname,groups_number,min_mass,max_mass,
     N_tot=np.sum(N_sat)+len(halo_mass) #total number of galaxies in the catalogue
 
     if verbose:
-        print ' '
-        print np.min(halo_mass),'< M_halo <',np.max(halo_mass)
-        print 'total number of galaxies=',N_tot
-        print 'galaxy number density=',N_tot/(BoxSize*1e-3)**3
+        print(' ')
+        print(np.min(halo_mass),'< M_halo <',np.max(halo_mass))
+        print('total number of galaxies=',N_tot)
+        print('galaxy number density=',N_tot/(BoxSize*1e-3)**3)
 
     #put satellites following the distribution of dark matter in groups
     if verbose:
-        print ' '
-        print 'Creating mock catalogue ...',
+        print(' ')
+        print('Creating mock catalogue ...', end=' ')
 
     pos_galaxies=np.empty((N_tot,3),dtype=np.float32)
     #index: variable that go through halos (may be several galaxies in a halo)
@@ -196,9 +215,9 @@ def hod(snapshot_fname,groups_fname,groups_number,min_mass,max_mass,
                 posc[inside,2]+=BoxSize
             r_max=np.max(np.sqrt(posc[:,0]**2+posc[:,1]**2+posc[:,2]**2))
             if r_max>radius: #check no particles beyond Rv selected 
-                print position
-                print radius
-                print pos
+                print(position)
+                print(radius)
+                print(pos)
                 count+=1
 
             for j in range(Nsat):
@@ -206,13 +225,13 @@ def hod(snapshot_fname,groups_fname,groups_number,min_mass,max_mass,
         index+=1
 
     if verbose:
-        print 'done'
+        print('done')
     #some final checks
     if i!=N_tot:
-        print 'some galaxies missing:'
-        print 'register',i,'galaxies out of',N_tot
+        print('some galaxies missing:')
+        print('register',i,'galaxies out of',N_tot)
     if count>0:
-        print 'error:',count,'particles beyond the virial radius selected'
+        print('error:',count,'particles beyond the virial radius selected')
 
     return pos_galaxies
 ###############################################################################
@@ -266,10 +285,10 @@ def hod_fast(DM_pos,sorted_ids,IDs,halo_mass,halo_pos,halo_radius,halo_len,
         i+=1
 
     if verbose:
-        print ' '
-        print 'Mmin=',Mmin
-        print 'average number of galaxies=',total_galaxies
-        print 'average galaxy density=',mean_density
+        print(' ')
+        print('Mmin=',Mmin)
+        print('average number of galaxies=',total_galaxies)
+        print('average galaxy density=',mean_density)
     #########################################
 
     #just halos with M>Mmin; the rest do not host central/satellite galaxies
@@ -290,15 +309,15 @@ def hod_fast(DM_pos,sorted_ids,IDs,halo_mass,halo_pos,halo_radius,halo_len,
     N_tot=np.sum(N_sat)+len(halo_mass) #total number of galaxies in the catalogue
 
     if verbose:
-        print ' '
-        print np.min(halo_mass),'< M_halo <',np.max(halo_mass)
-        print 'total number of galaxies=',N_tot
-        print 'galaxy number density=',N_tot/BoxSize**3
+        print(' ')
+        print(np.min(halo_mass),'< M_halo <',np.max(halo_mass))
+        print('total number of galaxies=',N_tot)
+        print('galaxy number density=',N_tot/BoxSize**3)
 
     #put satellites following the distribution of dark matter in groups
     if verbose:
-        print ' '
-        print 'Creating mock catalogue ...',
+        print(' ')
+        print('Creating mock catalogue ...', end=' ')
 
     pos_galaxies=np.empty((N_tot,3),dtype=np.float32)
     #index: variable that go through halos (may be several galaxies in a halo)
@@ -347,7 +366,7 @@ def hod_fast(DM_pos,sorted_ids,IDs,halo_mass,halo_pos,halo_radius,halo_len,
             inside=np.where(radii<radius)[0]
             if len(inside)<Nsat:
                 problematic_cases+=1
-                print 'problematic case',len(inside),Nsat
+                print('problematic case',len(inside),Nsat)
             else:
                 selected=random.sample(inside,Nsat)
                 pos=pos[selected]
@@ -381,13 +400,13 @@ def hod_fast(DM_pos,sorted_ids,IDs,halo_mass,halo_pos,halo_radius,halo_len,
         index+=1
 
     if verbose:
-        print 'done'
+        print('done')
     #some final checks
     if i!=N_tot:
-        print 'some galaxies missing:'
-        print 'register',i,'galaxies out of',N_tot
+        print('some galaxies missing:')
+        print('register',i,'galaxies out of',N_tot)
     if count>0:
-        print 'error:',count,'particles beyond the virial radius selected'
+        print('error:',count,'particles beyond the virial radius selected')
 
     return pos_galaxies
 ###############################################################################

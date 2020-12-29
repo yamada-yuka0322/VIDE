@@ -25,14 +25,12 @@ from git import Repo,Tree,Blob
 def apply_license(license, relimit, filename):
   header = re.sub(r'@FILENAME@', filename, license)
 
-  f = file(filename)
-  lines = f.read()
-  f.close()
+  with open(filename) as f:
+    lines = f.read()
 
-  lines = re.sub(relimit, '', lines)
-  lines = header + lines
+  lines = re.sub(relimit, lambda x: (("" if x.group(1) is None else x.group(1)) + header), lines)
 
-  with tempfile.NamedTemporaryFile(delete=False) as tmp_sources:
+  with tempfile.NamedTemporaryFile(delete=False, mode="wt", encoding="UTF-8") as tmp_sources:
     tmp_sources.write(lines)
 
   shutil.move(tmp_sources.name, filename)
@@ -61,7 +59,7 @@ def apply_python_license(filename):
 """
    
   print("Shell/Python file: %s" % filename)
-  relimit=r'^#\+\n(#.*\n)*#\+\n'
+  relimit=r'^(#!.*\n)?#\+\n(#.*\n)*#\+\n'
   apply_license(license, relimit, filename)
 
 
@@ -85,8 +83,8 @@ def apply_cpp_license(filename):
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 +*/
 """
-  relimit = r'^(?s)/\*\+.*\+\*/\n'
   print("C++ file: %s" % filename)
+  relimit = r'(?s)^()/\*\+.*\+\*/\n'
   apply_license(license, relimit, filename)
   
 
@@ -107,6 +105,11 @@ def analyze_tree(prefix, t):
 
 
 if __name__=="__main__":
+  import sys
+  if len(sys.argv) >= 2:
+      apply_python_license(sys.argv[1])
+      sys.exit(0)
+
   repo = Repo(".")
   assert repo.bare == False
   t = repo.tree()

@@ -28,7 +28,7 @@
 #include <string>
 #include "generateFromCatalog_conf.h"
 #include "contour_pixels.hpp"
-#include <netcdfcpp.h>
+#include <netcdf>
 #include <CosmoTool/fortran.hpp>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_integration.h>
@@ -38,6 +38,7 @@
 using namespace std;
 using boost::format;
 using namespace CosmoTool;
+using namespace netCDF;
 
 struct NYU_Data
 {
@@ -457,13 +458,11 @@ void generateSurfaceMask(generateFromCatalog_info& args ,
 
 void saveData(ParticleData& pdata)
 {
-  NcFile f("particles.nc", NcFile::Replace);
-  
-  assert(f.is_valid());
+  NcFile f("particles.nc", NcFile::replace);
 
-  NcDim *d = f.add_dim("space", 3);
-  NcDim *p = f.add_dim("Np", pdata.pos.size());
-  NcVar *v = f.add_var("particles", ncDouble, d, p);
+  NcDim d = f.addDim("space", 3);
+  NcDim p = f.addDim("Np", pdata.pos.size());
+  NcVar v = f.addVar("particles", ncDouble, {d, p});
   double *x = new double[pdata.pos.size()];
 
   for (int j = 0; j < 3; j++)
@@ -472,11 +471,11 @@ void saveData(ParticleData& pdata)
       for (int i = 0; i < pdata.pos.size(); i++)
 	x[i] = pdata.pos[i].xyz[j];
 
-      v->put_rec(d, x, j);
+      v.putVar({size_t(j), 0}, {1, pdata.pos.size()}, x);
     }
 
-  v = f.add_var("id_gal", ncInt, p);
-  v->put(&pdata.id_gal[0], pdata.id_gal.size());
+  v = f.addVar("id_gal", ncInt, std::vector<NcDim>({p}));
+  v.putVar(&pdata.id_gal[0]);
 
   delete[] x;
   
@@ -533,30 +532,30 @@ void saveForZobov(ParticleData& pdata, const string& fname, const string& paramn
 	}
   f.endCheckpoint();
    
-  NcFile fp(paramname.c_str(), NcFile::Replace);
+  NcFile fp(paramname.c_str(), NcFile::replace);
 
-  fp.add_att("range_x_min", -Lmax/100.);
-  fp.add_att("range_x_max", Lmax/100.);
-  fp.add_att("range_y_min", -Lmax/100.);
-  fp.add_att("range_y_max", Lmax/100.);
-  fp.add_att("range_z_min", -Lmax/100.);
-  fp.add_att("range_z_max", Lmax/100.);
-  fp.add_att("mask_index", pdata.mask_index); // PMS
-  fp.add_att("is_observation", 1); // PMS
+  fp.putAtt("range_x_min", ncDouble, -Lmax/100.);
+  fp.putAtt("range_x_max", ncDouble, Lmax/100.);
+  fp.putAtt("range_y_min", ncDouble, -Lmax/100.);
+  fp.putAtt("range_y_max", ncDouble, Lmax/100.);
+  fp.putAtt("range_z_min", ncDouble, -Lmax/100.);
+  fp.putAtt("range_z_max", ncDouble, Lmax/100.);
+  fp.putAtt("mask_index", ncInt, pdata.mask_index); // PMS
+  fp.putAtt("is_observation", ncInt, 1); // PMS
 
   int nOutputPart = pdata.mask_index;
   //int nOutputPart = pdata.pos.size();
 
-  NcDim *NumPart_dim = fp.add_dim("numpart_dim", nOutputPart);
-  NcVar *v = fp.add_var("particle_ids", ncInt, NumPart_dim);
-  //NcVar *v2 = fp.add_var("expansion", ncDouble, NumPart_dim);
+  NcDim NumPart_dim = fp.addDim("numpart_dim", nOutputPart);
+  NcVar v = fp.addVar("particle_ids", ncInt, NumPart_dim);
+  //NcVar v2 = fp.addVar("expansion", ncDouble, NumPart_dim);
 
   //double *expansion_fac = new double[pdata.pos.size()];
 
   //for (int i = 0; i <  pdata.pos.size(); i++)
   //  expansion_fac[i] = 1.0;
 
-  v->put(&pdata.id_gal[0], nOutputPart);
+  v.putVar({0}, {size_t(nOutputPart)}, &pdata.id_gal[0]);
   //v2->put(expansion_fac, pdata.pos.size());
 
   //delete[] expansion_fac;

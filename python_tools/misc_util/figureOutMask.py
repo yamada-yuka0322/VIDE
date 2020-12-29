@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #+
-#   VIDE -- Void IDentification and Examination -- ./python_tools/setup.py
+#   VIDE -- Void IDentification and Examination -- ./python_tools/misc_util/figureOutMask.py
 #   Copyright (C) 2010-2014 Guilhem Lavaux
 #   Copyright (C) 2011-2014 P. M. Sutter
 #

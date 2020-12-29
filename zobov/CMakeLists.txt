@@ -13,4 +13,4 @@ target_link_libraries(vozinit ${MATH_LIB})
 add_executable(voztie voztie.c readfiles.c)
 target_link_libraries(voztie ${MATH_LIB})
 
-
+install(TARGETS voz1b1 vozinit voztie DESTINATION ${VIDE_BIN})
