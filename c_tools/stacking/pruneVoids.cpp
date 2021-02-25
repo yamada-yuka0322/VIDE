@@ -170,8 +170,8 @@ int main(int argc, char **argv) {
   double result, error;
   size_t nEval;
 
-  int iZ, numZ = 4000;
-  double maxZ = 5.0, z, *dL, *redshifts;
+  int iZ, numZ = 8000;
+  double maxZ = 10.0, z, *dL, *redshifts;
   dL = (double *) malloc(numZ * sizeof(double));  
   redshifts = (double *) malloc(numZ * sizeof(double));
   for (iZ = 0; iZ < numZ; iZ++) {
@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
     //printf("HERE %e %e\n", z, dL[iZ]);
     redshifts[iZ] = z;
   }
-  gsl_interp *interp = gsl_interp_alloc(gsl_interp_linear, 4000);
+  gsl_interp *interp = gsl_interp_alloc(gsl_interp_linear, numZ);
   gsl_interp_init(interp, dL, redshifts, numZ);
   gsl_interp_accel *acc = gsl_interp_accel_alloc();
 
