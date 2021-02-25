@@ -7,7 +7,7 @@
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
 #   the Free Software Foundation; version 2 of the License.
-# 
+#
 #
 #   This program is distributed in the hope that it will be useful,
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -29,7 +29,7 @@ continueRun = False
 # stages:
 #   1 : extract redshift slices from data
 #   2 : void extraction using zobov
-#   3 : removal of small voids and voids near the edge 
+#   3 : removal of small voids and voids near the edge
 startCatalogStage = 1
 endCatalogStage   = 3
 
@@ -90,17 +90,20 @@ newSample = Sample(
 
                    # max and min redshifts where you want to find voids
                    zRange = (0.1, 0.15),
- 
-                   # leave this at -1 for mean particle separation, 
+
+                   # leave this at -1 for mean particle separation,
                    # or specify your own in Mpc/h
                    minVoidRadius = -1,
 
                    # density of mock particles in cubic Mpc/h
                    # (make this as high as you can afford)
                    fakeDensity = 0.05,
-                   
+
                    # if true, convert to comoving space using LCDM cosmology
-                   useComoving = True
+                   useComoving = True,
+
+                   # cosmology
+                   omegaM = 0.3,
 
                    )
 dataSampleList.append(newSample)
