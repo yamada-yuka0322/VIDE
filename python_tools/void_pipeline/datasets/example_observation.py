@@ -54,6 +54,11 @@ numZobovThreads = 2
 # optimization: number of subdivisions of the box
 numZobovDivisions = 2
 
+# Maximum density for merging voids
+#   0 (equivalent to infinitely large value) -> Merge everything (no threshold)
+#   1e-9 (or smaller != 0) -> Do not merge anything
+mergingThreshold = 1e-9
+
 # don't change this
 dataSampleList = []
 

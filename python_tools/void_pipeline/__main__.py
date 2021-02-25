@@ -105,7 +105,7 @@ for sample in dataSampleList:
 
     launchZobov(sample, ZOBOV_PATH, zobovDir=zobovDir, logDir=logDir, 
                 continueRun=continueRun, numZobovDivisions=numZobovDivisions,
-                 numZobovThreads=numZobovThreads)
+                 numZobovThreads=numZobovThreads, mergingThreshold=mergingThreshold)
 
   # -------------------------------------------------------------------------
   if (startCatalogStage <= 3) and (endCatalogStage >= 3) and not sample.isCombo:
@@ -119,7 +119,7 @@ for sample in dataSampleList:
 
     launchPrune(sample, PRUNE_PATH, 
                 logFile=logFile, zobovDir=zobovDir, 
-                useComoving=sample.useComoving, continueRun=continueRun)
+                useComoving=sample.useComoving, continueRun=continueRun, mergingThreshold=mergingThreshold)
 
 # -------------------------------------------------------------------------
 if (startCatalogStage <= 4) and (endCatalogStage >= 4):

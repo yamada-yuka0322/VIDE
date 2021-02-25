@@ -323,7 +323,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
 # -----------------------------------------------------------------------------
 def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
-                 numZobovDivisions=None, numZobovThreads=None):
+                 numZobovDivisions=None, numZobovThreads=None, mergingThreshold=0.2):
 
   sampleName = sample.fullName
 
@@ -339,10 +339,10 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
   if sample.dataType == "observation":
     maskIndex = open(zobovDir+"/mask_index.txt", "r").read()
     totalPart = open(zobovDir+"/total_particles.txt", "r").read()
-    maxDen = 0.2*float(maskIndex)/float(totalPart)
+    maxDen = mergingThreshold*float(maskIndex)/float(totalPart)
   else:
     maskIndex = -1
-    maxDen = 0.2
+    maxDen = mergingThreshold
     if numZobovDivisions == 1:
       print("  WARNING! You are using a single ZOBOV division with a simulation. Periodic boundaries will not be respected!")
 
@@ -466,7 +466,7 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
 # -----------------------------------------------------------------------------
 def launchPrune(sample, binPath,
                 summaryFile=None, logFile=None, zobovDir=None,
-                continueRun=None, useComoving=False):
+                continueRun=None, useComoving=False, mergingThreshold=0.2):
 
   sampleName = sample.fullName
 
@@ -477,12 +477,12 @@ def launchPrune(sample, binPath,
   if sample.dataType == "observation":
     mockIndex = open(zobovDir+"/mask_index.txt", "r").read()
     totalPart = open(zobovDir+"/total_particles.txt", "r").read()
-    maxDen = 0.2*float(mockIndex)/float(totalPart)
+    maxDen = mergingThreshold*float(mockIndex)/float(totalPart)
     observationLine = " --isObservation"
     #periodicLine = " --periodic=''"
   else:
     mockIndex = -1
-    maxDen = 0.2
+    maxDen = mergingThreshold
     observationLine = ""
 
   periodicLine = " --periodic='" + getPeriodic(sample) + "'"
