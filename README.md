@@ -56,6 +56,26 @@ python3 -m void_pipeline  your_config_file.py
 The VIDE tools are all packaged in the `vide` package. 
 
 
+Running with simulation
+-----------------------
+
+!! Temporary measure !!
+
+After build the vide package and installing it with `python3 setup.py install` (for example), it is possible to find the
+script to build the pipeline for simulations in `build/temp.[SOMETHING]/pipeline/prepareInputs.py`. Just copy that script where
+you want the analysis and execute it directly with the parameter file as an argument.
+
+For example:
+```
+mkdir $HOME/my_vide_test
+cp build/temp.[SOMETHING]/pipeline/prepareInputs.py $HOME/my_vide_test
+cp python_tools/void_pipeline/datasets/example_simulation.py $HOME/my_vide_test
+mkdir $HOME/my_vide_test/examples
+cp examples/example_simulation_z0.0.dat $HOME/my_vide_test/examples
+cd $HOME/my_vide_test
+python3 prepareInputs.py --all --parm example_simulation.py
+python3 -m void_pipeline example_simulation/sim_ss1.0.py
+```
 
 Notes for CONDA
 ---------------
