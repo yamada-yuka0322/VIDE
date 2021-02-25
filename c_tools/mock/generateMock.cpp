@@ -455,7 +455,7 @@ void saveBox(SimuData *&boxed, const std::string& outbox, generateMock_info& arg
 
   v.putVar({0}, {size_t(boxed->NumPart)}, particle_id);
   v2.putVar({0}, {size_t(boxed->NumPart)}, expansion_fac);  
-  v3.putVar({0}, {size_t(boxed->NumPart)}, snapshot_split);
+  v3.putVar({0}, {size_t(num_snapshots)}, snapshot_split);
   if (uniqueID != 0)
     {
       NcVar v4 = f.addVar("unique_ids_lsb", ncInt, NumPart_dim);
