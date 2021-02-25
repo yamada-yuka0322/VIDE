@@ -169,8 +169,8 @@ startCatalogStage = {startCatalogStage}
 endCatalogStage   = {endCatalogStage}
                
 regenerateFlag = False
-ZOBOV_PATH = "@CMAKE_BINARY_DIR@/zobov/"
-CTOOLS_PATH = "@CMAKE_BINARY_DIR@/c_tools/"
+
+mergingThreshold = 1e-9
 
 dataSampleList = []
            """
