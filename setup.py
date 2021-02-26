@@ -22,8 +22,9 @@ import os
 import sys
 import shutil
 from distutils.command.install_data import install_data
+from distutils.command.build_scripts import build_scripts
 import pathlib
-from setuptools import find_packages, setup, Extension
+from setuptools import find_packages, setup, Extension, Command
 from setuptools.command.build_ext import build_ext
 from setuptools.command.install_lib import install_lib
 from setuptools.command.install_scripts import install_scripts
@@ -82,55 +83,9 @@ class InstallCMakeLibs(install_lib):
         """
 
         self.announce("Moving library files", level=3)
-#        print(self.build_temp)
-#
-#        self.distribution.bin_dir = CosmoTool_extension.bin_dir
-#
-#        # We have already built the libraries in the previous build_ext step
-#
-#        self.skip_build = True
-#
-#        # Depending on the files that are generated from your cmake
-#        # build chain, you may need to change the below code, such that
-#        # your files are moved to the appropriate location when the installation
-#        # is run
-#
-#        libs = [os.path.join(bin_dir, _lib) for _lib in 
-#                os.listdir(bin_dir) if 
-#                os.path.isfile(os.path.join(bin_dir, _lib)) and 
-#                os.path.splitext(_lib)[1] in [".dll", ".so"]
-#                and not (_lib.startswith("python") or _lib.startswith(PACKAGE_NAME))]
-#
-#        for lib in libs:
-#
-#            shutil.move(lib, os.path.join(self.build_dir,
-#                                          os.path.basename(lib)))
-#
-#        # Mark the libs for installation, adding them to 
-#        # distribution.data_files seems to ensure that setuptools' record 
-#        # writer appends them to installed-files.txt in the package's egg-info
-#        #
-#        # Also tried adding the libraries to the distribution.libraries list, 
-#        # but that never seemed to add them to the installed-files.txt in the 
-#        # egg-info, and the online recommendation seems to be adding libraries 
-#        # into eager_resources in the call to setup(), which I think puts them 
-#        # in data_files anyways. 
-#        # 
-#        # What is the best way?
-#
-#        # These are the additional installation files that should be
-#        # included in the package, but are resultant of the cmake build
-#        # step; depending on the files that are generated from your cmake
-#        # build chain, you may need to modify the below code
-#
-#        self.distribution.data_files = [os.path.join(self.install_dir, 
-#                                                     os.path.basename(lib))
-#                                        for lib in libs]
-#        print(self.distribution.data_files)
-#
-#        # Must be forced to run after adding the libs to data_files
 
         self.distribution.run_command("install_data")
+        self.distribution.run_command("install_scripts")
 
         super().run()
 
@@ -221,16 +176,28 @@ class BuildCMakeExt(build_ext):
         shutil.rmtree(target_dir, ignore_errors=True)
         shutil.move(f"{PYTHON_bin_package}/void_python_tools/bin", target_dir)
 
-#        for top,p in pyd_path:
-#           _,n = os.path.split(p)
-#           n,e = os.path.splitext(n)
-#           if n != "_cosmo_bispectrum" and n != 'config':
-#             new_p = pathlib.Path(self.get_ext_fullpath(n))
-#           else:
-#             print(f"package_dir is {package_dir}")
-#             new_p = pathlib.Path(os.path.join(package_dir,n+e))
-#           self.announce(f"Moving {p} to {new_p}", level=3)
-#           shutil.move(p, new_p)
+        shutil.copy(f"{self.build_temp}/pipeline/prepareInputs.py", f"{self.build_temp}/vide_prepare_simulation")
+
+class VideScripts(build_scripts):
+
+    user_options = build_scripts.user_options + [
+        ('build-temp=', 't', "temporary directory where scripts are stored"),
+    ]
+
+    vide_scripts = ["vide_prepare_simulation"]
+
+    def initialize_options(self):
+        super(VideScripts, self).initialize_options()
+        self.build_temp = None
+
+    def finalize_options(self):
+        super(VideScripts, self).finalize_options()
+        self.set_undefined_options('build_ext',
+                                   ('build_temp', 'build_temp'))
+        self.scripts = [os.path.join(self.build_temp, v) for v in self.vide_scripts]
+
+    def run(self):
+        self.copy_scripts()
 
 vide_extension = CMakeExtension(name="vide")
 
@@ -255,9 +222,12 @@ setup(name='vide',
                    "Programming Language :: Python :: 3",
                    "Programming Language :: Python :: Implementation :: CPython"],
       license='CeCILL-v2',
+      scripts=["vide_prepare_simulation"],
       cmdclass={
           'build_ext': BuildCMakeExt,
           'install_data': InstallCMakeLibsData,
           'install_lib': InstallCMakeLibs,
+          'build_scripts': VideScripts,
+          'install_scripts': install_scripts,
           }
 )
