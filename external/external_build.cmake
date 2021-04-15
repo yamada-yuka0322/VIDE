@@ -6,7 +6,8 @@ OPTION(SDF_SUPPORT "Set to Yes to activate support for SDF" ON)
 IF(ENABLE_OPENMP)
 
   IF (NOT OPENMP_FOUND)
-    MESSAGE(FATAL_ERROR "No known compiler option for enabling OpenMP")
+    MESSAGE(WARNING "No known compiler option for enabling OpenMP")
+    SET(ENABLE_OPENMP FALSE)
   ENDIF(NOT OPENMP_FOUND)
 
 ENDIF(ENABLE_OPENMP)
