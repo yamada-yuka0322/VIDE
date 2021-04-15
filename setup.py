@@ -41,7 +41,7 @@ class CMakeExtension(Extension):
     doesn't try to build your sources for you
     """
 
-    def __init__(self, name, sources=[]):
+    def __init__(self, name, sources=["dummy_extension/empty.c"]):
 
         super().__init__(name = name, sources = sources)
 

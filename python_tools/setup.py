@@ -28,7 +28,7 @@ VOID_GSL=os.environ.get('VOID_GSL')
 setup(
     name='vide',
     version='1.0',
-    cmdclass = {'build_ext': build_ext},
+#    cmdclass = {'build_ext': build_ext},
     include_dirs = [np.get_include()],
     packages=
        ['vide','vide.backend','vide.apTools', 'vide.voidUtil',
