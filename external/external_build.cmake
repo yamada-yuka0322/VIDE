@@ -47,7 +47,7 @@ ELSE(INTERNAL_BOOST)
 ENDIF(INTERNAL_BOOST)
 
 IF(INTERNAL_QHULL)
-  SET(QHULL_URL "http://www.qhull.org/download/qhull-2012.1-src.tgz" CACHE STRING "URL to download QHull from")
+  SET(QHULL_URL "${CMAKE_SOURCE_DIR}/external/qhull-2012.1-src.tgz" CACHE STRING "URL to download QHull from")
   mark_as_advanced(QHULL_URL)
 ENDIF(INTERNAL_QHULL)
 
