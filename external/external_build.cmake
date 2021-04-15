@@ -39,10 +39,10 @@ IF(INTERNAL_NETCDF)
 ENDIF(INTERNAL_NETCDF)
 
 IF(INTERNAL_BOOST)
-  SET(BOOST_URL "http://sourceforge.net/projects/boost/files/boost/1.69.0/boost_1_69_0.tar.gz/download" CACHE STRING "URL to download Boost from")
+  SET(BOOST_URL "https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.gz" CACHE STRING "URL to download Boost from")
   mark_as_advanced(BOOST_URL)
 ELSE(INTERNAL_BOOST)
-  find_package(Boost 1.69.0 COMPONENTS format spirit phoenix python FATAL_ERROR)
+  find_package(Boost 1.74.0 COMPONENTS format spirit phoenix python FATAL_ERROR)
 ENDIF(INTERNAL_BOOST)
 
 IF(INTERNAL_QHULL)
@@ -202,13 +202,44 @@ mark_as_advanced(NETCDF_LIBRARY NETCDFCPP_LIBRARY NETCDF_INCLUDE_PATH NETCDFCPP_
 if (INTERNAL_BOOST)
   SET(cosmotool_DEPS ${cosmotool_DEPS} boost)
   SET(BOOST_SOURCE_DIR ${BUILD_PREFIX}/boost-prefix/src/boost)
+
+  set(LINKER_EXTRA_FLAGS)
+  message(STATUS "Compiler version is ${CMAKE_CXX_COMPILER_VERSION}")
+  string(REGEX REPLACE "^([0-9]+\\.[0-9]+).*$" "\\1" ToolsetVer "${CMAKE_CXX_COMPILER_VERSION}")
+  IF(CMAKE_CXX_COMPILER_ID MATCHES "^Intel$")
+     SET(b2_toolset intel)
+     SET(COMPILER_EXTRA_FLAGS "-fPIC")
+  elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+       SET(b2_toolset darwin)
+     else()
+       SET(b2_toolset gcc)
+       SET(COMPILER_EXTRA_FLAGS "-fPIC -std=gnu++14")
+     endif()
+     add_definitions("-Wno-unused-local-typedefs")
+  elseif (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+     SET(b2_toolset darwin)
+  elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+     SET(b2_toolset clang)
+  endif()
+  SET(COMPILER_EXTRA_FLAGS "${COMPILER_EXTRA_FLAGS} -I${EXT_INSTALL}/include")
+  SET(LINKER_EXTRA_FLAGS "${LINKER_EXTRA_FLAGS} -L${EXT_INSTALL}/lib")
+
+  message(STATUS "Building boost with toolset ${b2_toolset}")
+  
+  SET(BOOST_LIBRARIES
+    ${EXT_INSTALL}/lib/libboost_exception.a
+  )
+
   ExternalProject_Add(boost
     URL ${BOOST_URL}
+    URL_HASH SHA1=107cebeec706988639cf2932fc0ce43200de4c0a
     PREFIX ${BUILD_PREFIX}/boost-prefix
-    CONFIGURE_COMMAND ${BOOST_SOURCE_DIR}/bootstrap.sh --prefix=${EXT_INSTALL}
+    CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DTOOLSET=${b2_toolset} "-DCOMPILER:STRING=${CMAKE_CXX_COMPILER}" "-DCOMPILER_EXTRA_FLAGS=${COMPILER_EXTRA_FLAGS}" "-DINSTALL_PATH:STRING=${EXT_INSTALL}" "-DLINKER_EXTRA_FLAGS=${LINKER_EXTRA_FLAGS}" "-DSRC_DIR:STRING=${BOOST_SOURCE_DIR}" -P ${CMAKE_SOURCE_DIR}/external/configure_boost.cmake
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND ${BOOST_SOURCE_DIR}/b2 --with-exception
-    INSTALL_COMMAND ${BOOST_SOURCE_DIR}/b2 install --with-exception
+    BUILD_COMMAND ${BOOST_SOURCE_DIR}/b2 --with-exception toolset=${b2_toolset}-cmake variant=release
+    INSTALL_COMMAND  ${BOOST_SOURCE_DIR}/b2 install --with-exception
+    BUILD_BYPRODUCTS ${BOOST_LIBRARIES}
   )
   set(Boost_INCLUDE_DIRS ${BOOST_SOURCE_DIR} CACHE STRING "Boost path" FORCE)
   set(Boost_INTERNAL_INSTALL ${EXT_INSTALL})
