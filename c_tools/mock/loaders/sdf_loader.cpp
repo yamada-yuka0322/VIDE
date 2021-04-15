@@ -203,7 +203,7 @@ public:
       }
     if (load_flags & NEED_GADGET_ID)
       {
-        d->Id = new long[numPartToLoad];
+        d->Id = new int64_t[numPartToLoad];
         SETUP_READ("ident", d->Id);
       }
 #undef SETUP_READ
