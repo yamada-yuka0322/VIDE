@@ -47,10 +47,43 @@ is required by scipy and we have not decided to bundle it with VIDE at the momen
 Quick Start Guide
 -----------------
 
-After installing the package with `python3 setup.py install --user`, you can execute
+It is generally advised to create a python3 virtual environment. This can be achieved as follows
+```
+python3 -m venv --system-site-packages $PLACE_OF_VENV
+source $PLACE_OF_VENV/bin/activate
+```
+where `$PLACE_OF_VENV` is where you decide to put your environment on your
+harddrive (e.g. `$HOME/my_venv`).
+
+Note: on OSX there are some difficulties to use the native clang compiler.
+Please use a brew installed compiler like GCC.
+```
+brew install gcc
+export CC=/usr/local/bin/gcc-10
+export CXX=/usr/local/bin/g++-10
+```
+The gcc-10 is of course dependent on the version that was installed by brew.
+
+After this step you may start the build process
+```
+python3 setup.py build
+```
+
+It will take a lot of time. It may also download python packages that you miss
+on your system.  On BigSur some of them fail to compile by default. 
+
+After installing the package with 
+```python3 setup.py install
+``` 
+
+To test that the package is indeed installed you can execute
 
 ```
-python3 -m void_pipeline  your_config_file.py
+python3 -m void_pipeline
+```
+which will state
+```
+Usage: ./generateCatalog.py parameter_file.py
 ```
 
 The VIDE tools are all packaged in the `vide` package. 

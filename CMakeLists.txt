@@ -64,7 +64,6 @@ macro(configure_exec _source _destdir _destfile)
  
 endmacro(configure_exec)
 
-include(${CMAKE_SOURCE_DIR}/external/base_external.cmake)
 include(${CMAKE_SOURCE_DIR}/external/external_build.cmake)
 include(${CMAKE_SOURCE_DIR}/external/external_cosmotool.cmake)
 include(${CMAKE_SOURCE_DIR}/external/external_python_build.cmake)

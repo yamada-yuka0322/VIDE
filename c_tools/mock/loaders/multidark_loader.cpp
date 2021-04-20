@@ -82,7 +82,7 @@ public:
       simu->Pos[k] = new float[allocated];
       simu->Vel[k] = new float[allocated];
     }
-    simu->Id = new long[allocated];
+    simu->Id = new int64_t[allocated];
     long *uniqueID = new long[allocated];
     long *index = new long[allocated];
 

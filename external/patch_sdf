@@ -62,3 +62,35 @@
  {
      int int_value;
      float float_value;
+--- SDF-parse.c.old	2021-04-15 15:44:40.000000000 +0200
++++ SDF-parse.c	2021-04-15 15:45:48.000000000 +0200
+@@ -87,8 +87,6 @@
+ #define LEXERROR 265
+ 
+ 
+-
+-
+ /* Copy the first part of user declarations.  */
+ #line 1 "SDF-parse.y"
+ 
+@@ -117,6 +115,9 @@
+ #define yydebug SDFyydebug
+ #define yynerrs SDFyynerrs
+ 
++extern int yylex(void);
++extern int Msg_on(int level);
++
+ #include <stdarg.h>
+ #include <inttypes.h>
+ #include <float.h>
+--- SDFfuncs.c.old	2014-06-04 07:22:26.000000000 +0200
++++ SDFfuncs.c	2021-04-15 15:46:29.000000000 +0200
+@@ -44,6 +44,8 @@
+ char SDFerrstring[256];
+ extern int SDFyyparse(void);
+ 
++extern void Msg_on(int);
++
+ int SDFdebug(int level)
+ {
+     sdf_debug = level;
