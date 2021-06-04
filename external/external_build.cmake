@@ -40,7 +40,7 @@ IF(INTERNAL_NETCDF)
 ENDIF(INTERNAL_NETCDF)
 
 IF(INTERNAL_BOOST)
-  SET(BOOST_URL "https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.gz" CACHE STRING "URL to download Boost from")
+  SET(BOOST_URL "https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.gz" CACHE STRING "URL to download Boost from")
   mark_as_advanced(BOOST_URL)
 ELSE(INTERNAL_BOOST)
   find_package(Boost 1.74.0 COMPONENTS format spirit phoenix python FATAL_ERROR)
@@ -76,11 +76,11 @@ if (INTERNAL_GENGETOPT)
   ExternalProject_Add(gengetopt
     PREFIX ${BUILD_PREFIX}/gengetopt-prefix
     URL ${GENGETOPT_URL}
-    CONFIGURE_COMMAND ${GENGETOPT_SOURCE_DIR}/configure 
-                --prefix=${GENGETOPT_BIN_DIR} 
+    CONFIGURE_COMMAND ${GENGETOPT_SOURCE_DIR}/configure
+                --prefix=${GENGETOPT_BIN_DIR}
 		CPPFLAGS=${CONFIGURE_CPP_FLAGS}
 		LDFLAGS=${CONFIGURE_LD_FLAGS}
-		CC=${CMAKE_C_COMPILER} 
+		CC=${CMAKE_C_COMPILER}
 		CXX=${CMAKE_CXX_COMPILER}
     INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
   )
@@ -150,15 +150,15 @@ if (INTERNAL_NETCDF)
     DEPENDS ${hdf5_built}
     PREFIX ${BUILD_PREFIX}/netcdf-prefix
     URL ${NETCDF_URL}
-    PATCH_COMMAND  ${CMAKE_COMMAND} 
+    PATCH_COMMAND  ${CMAKE_COMMAND}
       -DBUILD_PREFIX=${BUILD_PREFIX}/netcdf-prefix
       -DPATCH_FILE=${CMAKE_SOURCE_DIR}/external/patch_netcdf
       -DSOURCE_PREFIX=${BUILD_PREFIX}/netcdf-prefix/src/netcdf/ncgen3
       -P ${CMAKE_SOURCE_DIR}/external/check_and_apply_patch.cmake
       CONFIGURE_COMMAND env PATH=${EXT_INSTALL}/bin:$ENV{PATH} ${NETCDF_SOURCE_DIR}/configure
          --prefix=${NETCDF_BIN_DIR} --libdir=${NETCDF_BIN_DIR}/lib
-         --enable-netcdf-4  --with-pic --disable-shared --disable-dap 
-         --disable-cdmremote --disable-rpc 
+         --enable-netcdf-4  --with-pic --disable-shared --disable-dap
+         --disable-cdmremote --disable-rpc
          --disable-examples ${EXTRA_NC_FLAGS} CC=${CMAKE_C_COMPILER}
          CXX=${CMAKE_CXX_COMPILER}
     BUILD_IN_SOURCE 1
@@ -171,7 +171,7 @@ if (INTERNAL_NETCDF)
     URL ${NETCDFCXX_URL}
     CONFIGURE_COMMAND env PATH=${EXT_INSTALL}/bin:$ENV{PATH} ${NETCDF_CXX_SOURCE_DIR}/configure
       --prefix=${NETCDF_BIN_DIR} --libdir=${NETCDF_BIN_DIR}/lib
-      --with-pic --disable-shared  
+      --with-pic --disable-shared
       --disable-examples ${EXTRA_NC_FLAGS} CC=${CMAKE_C_COMPILER}
       CXX=${CMAKE_CXX_COMPILER}
     BUILD_IN_SOURCE 1
@@ -191,7 +191,7 @@ ELSE(INTERNAL_NETCDF)
   find_library(NETCDFCPP_LIBRARY netcdf_c++)
   find_path(NETCDF_INCLUDE_PATH NAMES netcdf.h)
   find_path(NETCDFCPP_INCLUDE_PATH NAMES netcdf)
-  SET(CONFIGURE_CPP_FLAGS ${CONFIGURE_CPP_FLAGS} 
+  SET(CONFIGURE_CPP_FLAGS ${CONFIGURE_CPP_FLAGS}
           -I${NETCDF_INCLUDE_PATH} -I${NETCDFCPP_INCLUDE_PATH})
 endif (INTERNAL_NETCDF)
 mark_as_advanced(NETCDF_LIBRARY NETCDFCPP_LIBRARY NETCDF_INCLUDE_PATH NETCDFCPP_INCLUDE_PATH)
@@ -227,14 +227,14 @@ if (INTERNAL_BOOST)
   SET(LINKER_EXTRA_FLAGS "${LINKER_EXTRA_FLAGS} -L${EXT_INSTALL}/lib")
 
   message(STATUS "Building boost with toolset ${b2_toolset}")
-  
+
   SET(BOOST_LIBRARIES
     ${EXT_INSTALL}/lib/libboost_exception.a
   )
 
   ExternalProject_Add(boost
     URL ${BOOST_URL}
-    URL_HASH SHA1=107cebeec706988639cf2932fc0ce43200de4c0a
+    URL_HASH SHA1=a5ab6eaf31d1ca181a17ecffef9d58d40d87c71d
     PREFIX ${BUILD_PREFIX}/boost-prefix
     CONFIGURE_COMMAND ${CMAKE_COMMAND}  -DTOOLSET=${b2_toolset} "-DCOMPILER:STRING=${CMAKE_CXX_COMPILER}" "-DCOMPILER_EXTRA_FLAGS=${COMPILER_EXTRA_FLAGS}" "-DINSTALL_PATH:STRING=${EXT_INSTALL}" "-DLINKER_EXTRA_FLAGS=${LINKER_EXTRA_FLAGS}" "-DSRC_DIR:STRING=${BOOST_SOURCE_DIR}" -P ${CMAKE_SOURCE_DIR}/external/configure_boost.cmake
     BUILD_IN_SOURCE 1
@@ -308,7 +308,7 @@ SET(CFITSIO_LIBRARY ${EXT_INSTALL}/lib/libcfitsio.a)
 SET(CFITSIO_INCLUDE_PATH ${EXT_INSTALL}/include)
 
 #################
-# Build Healpix 
+# Build Healpix
 #################
 SET(HEALPIX_BUILD ${BUILD_PREFIX}/healpix-prefix/src/healpix-build)
 SET(HEALPIX_DIR ${BUILD_PREFIX}/healpix-prefix/src/healpix)
@@ -341,11 +341,11 @@ if (INTERNAL_QHULL)
   ExternalProject_Add(qhull
     URL ${QHULL_URL}
     PREFIX ${BUILD_PREFIX}/qhull-prefix
-    CMAKE_ARGS 
+    CMAKE_ARGS
       -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/ext_build/qhull
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-      
+
   )
   SET(QHULL_DIR ${CMAKE_BINARY_DIR}/ext_build/qhull)
   SET(QHULL_LIBRARY ${QHULL_DIR}/lib/libqhullstatic_p.a)
@@ -376,9 +376,9 @@ IF(SDF_SUPPORT)
     BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -f Make.simple
     INSTALL_COMMAND ${CMAKE_COMMAND} -DDEST_DIR=${CMAKE_BINARY_DIR}/ext_build/sdf -DLIBSDF_ARCH=${LIBSDF_ARCH} -DLIBSDF_PATH=${BUILD_PREFIX}/libSDF-prefix/src/libSDF -P ${CMAKE_SOURCE_DIR}/external/install_sdf.cmake
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND  ${CMAKE_COMMAND} 
+    PATCH_COMMAND  ${CMAKE_COMMAND}
       -DBUILD_PREFIX=${BUILD_PREFIX}/libSDF-prefix
-      -DPATCH_FILE=${CMAKE_SOURCE_DIR}/external/patch_sdf 
+      -DPATCH_FILE=${CMAKE_SOURCE_DIR}/external/patch_sdf
       -DSOURCE_PREFIX=${BUILD_PREFIX}/libSDF-prefix/src/libSDF
       -P ${CMAKE_SOURCE_DIR}/external/check_and_apply_patch.cmake
   )
@@ -391,9 +391,9 @@ IF(SDF_SUPPORT)
   ENDIF (RT_LIBRARY)
 ENDIF(SDF_SUPPORT)
 
-include_directories(${CMAKE_BINARY_DIR}/src 
-                    ${NETCDF_INCLUDE_PATH} ${GSL_INCLUDE_PATH} 
-                    ${HDF5_INCLUDE_PATH} 
+include_directories(${CMAKE_BINARY_DIR}/src
+                    ${NETCDF_INCLUDE_PATH} ${GSL_INCLUDE_PATH}
+                    ${HDF5_INCLUDE_PATH}
                     ${Boost_INCLUDE_DIRS}
 		    ${QHULL_INCLUDE_PATH} ${LIBSDF_INCLUDE_PATH})
 

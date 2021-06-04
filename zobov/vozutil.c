@@ -15,7 +15,7 @@ int compar(const void * n1, const void * n2) {
 
 /* Finds Delaunay adjacencies of a set of points */
 int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs) {
-  
+
   int dim= 3;	            /* dimension of points */
   boolT ismalloc= False;    /* True if qhull should free points in qh_freeqhull() or reallocation */
   char flags[250];          /* option flags for qhull, see qh_opt.htm */
@@ -34,9 +34,9 @@ int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs) 
   facetT *facet, **facetp, *neighbor, **neighborp;
   pointT *point, **pointp;
   int numdiv;
-  
+
   PARTADJ adjst;
-  
+
   int errorReported = 0;
 
   adjst.adj = (int *)malloc(MAXVERVER*sizeof(int));
@@ -48,14 +48,14 @@ int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs) 
   /* Delaunay triangulation*/
   sprintf (flags, "qhull s d Qt");
   exitcode= qh_new_qhull (dim, nvpall, points, ismalloc,
-                      flags, outfile, errfile); 
-  
+                      flags, outfile, errfile);
+
 
   if (!exitcode) {                  /* if no error */
     /* 'qh facet_list' contains the convex hull */
-    
+
     /* From qh_printvneighbors */
-    qh_countfacets(qh facet_list, NULL, 0, &numfacets, &numsimplicial, 
+    qh_countfacets(qh facet_list, NULL, 0, &numfacets, &numsimplicial,
 		   &totneighbors, &numridges, &numcoplanars, &numtricoplanars);
     qh_vertexneighbors();
     vertices= qh_facetvertices (qh facet_list, NULL, 0);
@@ -72,7 +72,7 @@ int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs) 
     ver = 0;
     FOREACHvertex_i_(vertex_points) {
       (*adjs)[ver].nadj = 0;
-      if (vertex) { 
+      if (vertex) {
 	/* Count the neighboring vertices, check that all are real
 	   neighbors */
 	adjst.nadj = 0;
@@ -139,12 +139,12 @@ int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs) 
   }
   qh_freeqhull(!qh_ALL);                 /* free long memory */
   qh_memfreeshort (&curlong, &totlong);  /* free short memory and memory allocator */
-  if (curlong || totlong) 
+  if (curlong || totlong)
     fprintf (errfile, "qhull internal warning (delaunadj): did not free %d bytes of long memory (%d pieces)\n", totlong, curlong);
   free(adjst.adj);
   return exitcode;
 }
-  
+
 /* Calculates the Voronoi volume from a set of Delaunay adjacencies */
 int vorvol (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, float *vol) {
   int dim= 3;	            /* dimension of points */
@@ -164,7 +164,7 @@ int vorvol (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, f
   char region;
   /*coordT *points;
     pointT *intpoints;*/
-  
+
   /* make point array from adjacency coordinates (add offset)*/
   /*points = (coordT *)malloc(4*numpoints*sizeof(coordT));
   if (points == NULL) {
@@ -185,7 +185,7 @@ int vorvol (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, f
 
   exitcode= qh_new_qhull (4, numpoints, points, ismalloc,
 			  flags, outfile, errfile);
-  
+
   numpoints = 0;
   if (!exitcode) {                  /* if no error */
     FORALLfacets {
@@ -231,15 +231,15 @@ int vorvol (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, f
   sprintf (flags, "qhull FA");
   exitcode= qh_new_qhull (dim, numpoints, intpoints, ismalloc,
 			  flags, outfile, errfile);
-  
+
   qh_getarea(qh facet_list);
   *vol = qh totvol;
-  
+
   qh_freeqhull (!qh_ALL);
   qh_memfreeshort (&curlong, &totlong);
-  if (curlong || totlong) 
+  if (curlong || totlong)
     fprintf (errfile, "qhull internal warning (vorvol): did not free %d bytes of long memory (%d pieces)\n", totlong, curlong);
   /*free(points); free(intpoints);*/
-  
+
   return exitcode;
 }
