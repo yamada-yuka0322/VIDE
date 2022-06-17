@@ -21,6 +21,7 @@ import stat
 import os
 import sys
 import shutil
+from sysconfig import get_config_var
 from distutils.command.install_data import install_data
 from distutils.command.build_scripts import build_scripts
 import pathlib
