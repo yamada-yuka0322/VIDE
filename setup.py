@@ -6,7 +6,7 @@
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
 #   the Free Software Foundation; version 2 of the License.
-# 
+#
 #
 #   This program is distributed in the hope that it will be useful,
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -144,6 +144,9 @@ class BuildCMakeExt(build_ext):
 
         PYTHON_bin_package=f"{build_dir.absolute()}/private_install"
 
+        c_compiler=os.environ.get('CC', get_config_var("CC"))
+        cxx_compiler=os.environ.get('CXX', get_config_var("CXX"))
+
         self.spawn(['cmake', '-H'+SOURCE_DIR, '-B'+self.build_temp,
                     '-DENABLE_OPENMP=ON','-DINTERNAL_BOOST=ON','-DINTERNAL_EIGEN=ON',
                     '-DINTERNAL_HDF5=ON','-DINTERNAL_NETCDF=ON','-DINTERNAL_GSL=ON',
@@ -151,6 +154,7 @@ class BuildCMakeExt(build_ext):
                     '-DCOSMOTOOL_PYTHON_PACKAGING=ON',
                     f"-DCYTHON={cython_code}",
                     '-DINSTALL_CTOOLS_IN_PYTHON=ON',
+                    f"-DCMAKE_C_COMPILER={c_compiler}", f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
                     f"-DPYTHON_SITE_PACKAGES={PYTHON_bin_package}",
                     f"-DPYTHON_EXECUTABLE={sys.executable}"])
 
