@@ -10,7 +10,7 @@ ENDIF()
 
   #v1.0.0a7.tar.bz2
 ExternalProject_Add(cosmotool
-  URL https://bitbucket.org/glavaux/cosmotool/get/7e436bb.tar.gz
+  URL https://bitbucket.org/glavaux/cosmotool/get/59bb9e.tar.gz
   DEPENDS ${cosmotool_DEPS}
   SOURCE_DIR ${COSMOTOOL_DIR}
   PREFIX ${BUILD_PREFIX}/cosmotool-prefix
