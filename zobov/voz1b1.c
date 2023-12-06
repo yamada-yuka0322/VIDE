@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
   adjs = (PARTADJ *)malloc(np*sizeof(PARTADJ));
   if (adjs == NULL) {
     printf("Unable to allocate adjs\n");
-    exit(0);
+    exit(1);
   }
   
   DL c[d] = ((float)b[d])*width;
@@ -148,10 +148,12 @@ int main(int argc, char *argv[]) {
   if (parts == NULL) {
     printf("Unable to allocate parts\n");
     fflush(stdout);
+    exit(1);
   }
   if (orig == NULL) {
     printf("Unable to allocate orig\n");
     fflush(stdout);
+    exit(1);
   }
 
   nvp = 0; nvpall = 0; /* nvp = number of particles without buffer */
@@ -288,7 +290,7 @@ int main(int argc, char *argv[]) {
   vols = (float *)malloc(nvp*sizeof(float));
   if (vols == NULL) {
     printf("Unable to allocate vols\n");
-    exit(0);
+    exit(1);
   }
   
   for (i=0; i<nvp; i++) { /* Just the original particles
@@ -327,7 +329,7 @@ int main(int argc, char *argv[]) {
   out = fopen(outfile,"w");
   if (out == NULL) {
     printf("Unable to open %s\n",outfile);
-    exit(0);
+    exit(1);
   }
   fwrite(&np,1, sizeof(int),out);
   fwrite(&nvp,1, sizeof(int),out);
