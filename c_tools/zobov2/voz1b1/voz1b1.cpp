@@ -375,6 +375,11 @@ int main(int argc, char *argv[]) {
   /* Now calculate volumes*/
   printf("Now finding volumes ...\n"); fflush(stdout);
   vols = new float[boxdata.nvp];
+  if (vols == 0)
+   {
+      cout << "Unable to allocate vols" << endl;
+      return 0;
+   }
 
   for (pid_t i = 0; i < boxdata.nvp; i++)
     { /* Just the original particles
