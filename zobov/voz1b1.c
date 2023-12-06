@@ -286,6 +286,10 @@ int main(int argc, char *argv[]) {
   /* Now calculate volumes*/
   printf("Now finding volumes ...\n"); fflush(stdout);
   vols = (float *)malloc(nvp*sizeof(float));
+  if (vols == NULL) {
+    printf("Unable to allocate vols\n");
+    exit(0);
+  }
   
   for (i=0; i<nvp; i++) { /* Just the original particles
 			     Assign adjacency coordinate array*/
