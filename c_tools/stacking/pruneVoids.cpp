@@ -1195,13 +1195,13 @@ void outputVoids(string outputDir, string sampleName, string prefix,
              gsl_vector_get(outVoid.eval, 1),
              gsl_vector_get(outVoid.eval, 2),
              gsl_matrix_get(outVoid.evec, 0 ,0),
-             gsl_matrix_get(outVoid.evec, 0 ,1),
-             gsl_matrix_get(outVoid.evec, 0 ,2),
              gsl_matrix_get(outVoid.evec, 1 ,0),
-             gsl_matrix_get(outVoid.evec, 1 ,1),
-             gsl_matrix_get(outVoid.evec, 1 ,2),
              gsl_matrix_get(outVoid.evec, 2 ,0),
+             gsl_matrix_get(outVoid.evec, 0 ,1),
+             gsl_matrix_get(outVoid.evec, 1 ,1),
              gsl_matrix_get(outVoid.evec, 2 ,1),
+             gsl_matrix_get(outVoid.evec, 0 ,2),
+             gsl_matrix_get(outVoid.evec, 1 ,2),
              gsl_matrix_get(outVoid.evec, 2 ,2)
             );
 
