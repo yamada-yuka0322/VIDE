@@ -40,7 +40,7 @@ IF(INTERNAL_NETCDF)
 ENDIF(INTERNAL_NETCDF)
 
 IF(INTERNAL_BOOST)
-  SET(BOOST_URL "https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.gz" CACHE STRING "URL to download Boost from")
+  SET(BOOST_URL "https://archives.boost.io/release/1.76.0/source/boost_1_76_0.tar.gz" CACHE STRING "URL to download Boost from")
   mark_as_advanced(BOOST_URL)
 ELSE(INTERNAL_BOOST)
   find_package(Boost 1.74.0 COMPONENTS format spirit phoenix python FATAL_ERROR)
