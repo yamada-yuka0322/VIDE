@@ -356,7 +356,12 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
     if os.access(zobovDir+"/voidDesc_"+sampleName+".out", os.F_OK):
       os.unlink(zobovDir+"/voidDesc_"+sampleName+".out")
 
-    cmd = [binPath+"/vozinit", datafile, "0.1", "1.0", str(numZobovDivisions), \
+    if sample.dataType == "LIM":
+      cmd = [binPath+"/2Dvozinit", datafile, "0.1", "1.0", str(numZobovDivisions), \
+                      "_"+sampleName, str(numZobovThreads), \
+                      binPath, zobovDir, str(maskIndex)]
+    else:
+      cmd = [binPath+"/vozinit", datafile, "0.1", "1.0", str(numZobovDivisions), \
                       "_"+sampleName, str(numZobovThreads), \
                       binPath, zobovDir, str(maskIndex)]
     log = open(logFile, 'w')
