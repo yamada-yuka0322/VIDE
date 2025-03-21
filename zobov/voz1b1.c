@@ -308,7 +308,7 @@ int main(int argc, char *argv[]) {
     exitcode = vorvol(deladjs, points, intpoints, adjs[i].nadj, &(vols[i]));
     vols[i] *= (float)np;
     if (i % 1000 == 0)
-      printf("%d: %d, %f\n",i,adjs[i].nadj,vols[i]);
+      printf("%d: %d, volume: %f, weight: %f\n",i,adjs[i].nadj,vols[i],weight[i]);
   }
 
   /* Get the adjacencies back to their original values */
