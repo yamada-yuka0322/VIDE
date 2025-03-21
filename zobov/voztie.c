@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 
   FILE *part, *adj, *vol;
   char partfile[200], *suffix, adjfile[200], volfile[200], *outDir;
-  float *vols, volstemp;
+  float *vols, *weights, volstemp, weightstemp;
   int *cnt_adj;
   
   PARTADJ *adjs;
@@ -104,15 +104,18 @@ int main(int argc, char *argv[]) {
   if (adjs == NULL) printf("Couldn't allocate adjs.\n");
   vols = (float *)malloc(np*sizeof(float));
   if (vols == NULL) printf("Couldn't allocate vols.\n");
+  weights = (float *)malloc(np*sizeof(float));
+  if (weights == NULL) printf("Couldn't allocate weights.\n");
   orig = (pid_t *)malloc(nvpmax*sizeof(pid_t));
   if (orig == NULL) printf("Couldn't allocate orig.\n");
-  if ((cnt_adj==NULL) || (vols == NULL) || (orig == NULL) || (adjs == NULL)) {
+  if ((cnt_adj==NULL) || (vols == NULL) || (orig == NULL) || (adjs == NULL) || (weights == NULL)) {
     printf("Not enough memory to allocate. Exiting.\n");
     exit(0);
   }
   for (p=0;p<np;p++)
     {
       vols[p] = -1.;
+      weights[p] = -1.;
       adjs[p].nadj = 0;
       adjs[p].adj = 0;
     }
@@ -143,6 +146,18 @@ int main(int argc, char *argv[]) {
 	    //exit(0);
 	  }
 	vols[orig[p]] = volstemp;
+      }
+
+　　　　fread(orig,nvp,sizeof(pid_t),part);
+      for (p=0;p<nvp;p++) {
+	fread(&weightstemp,1,sizeof(float),part);
+	if (weights[orig[p]] > -1.)
+	  if (fabs(weights[orig[p]]-weightstemp)/weightstemp > 1.5e-3 && orig[p] < mockIndex) {
+	    printf("Inconsistent weights for p. %d: (%10g,%10g)!\n",
+		   orig[p],weights[orig[p]],weightstemp);
+	    //exit(0);
+	  }
+	weights[orig[p]] = weightstemp;
       }
       
       for (p=0;p<nvp;p++) {
@@ -185,6 +200,7 @@ int main(int argc, char *argv[]) {
   // completely unlink mock particles
   for (i = mockIndex; i < np; i++) {
     vols[i] = 1.e-29;
+    weights[i] = 1.e+29;
     adjs[i].nadj = 0;
   }
   
@@ -193,6 +209,7 @@ int main(int argc, char *argv[]) {
     for (j = 0; j < adjs[i].nadj; j++) {
       if (adjs[i].adj[j] > mockIndex) {
 //printf("KILLING %d\n", i);
+	weights[i] = 1.e+29;
         vols[i] = 1.e-29;
         adjs[i].nadj = 0;
         numRemoved++;
@@ -288,6 +305,7 @@ int main(int argc, char *argv[]) {
 // PMS
   fwrite(&mockIndex,1, sizeof(int),vol);
   fwrite(vols,sizeof(float),mockIndex,vol);
+  fwrite(weights,sizeof(float),mockIndex,vol);
   //fwrite(&np,1, sizeof(int),vol);
   //fwrite(vols,sizeof(float),np,vol);
 // END PMS
@@ -295,6 +313,7 @@ int main(int argc, char *argv[]) {
   fclose(vol);
 
   free(vols);
+  free(weights);
   free(cnt_adj);
   free(adjs);
   free(orig);
