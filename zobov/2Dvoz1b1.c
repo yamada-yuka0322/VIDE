@@ -6,8 +6,8 @@
 
 #define MAX(a,b) ( ((a) < (b)) ? (a) : (b) )
 
-int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs);
-int vorvol (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, float *vol);
+int 2Ddelaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs);
+int 2Dvorvol (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, float *vol);
 int posread(char *posfile, float ***p, float fact);
 int readPosAndIntensity(char *posfile, float ***p, float **intensity, float fact);
 
@@ -251,7 +251,7 @@ for (j = 0; j < NGUARD + 1; j++) {
   
   /* Do tesselation*/
   printf("File read.  Tessellating ...\n"); fflush(stdout);
-  exitcode = delaunadj(parts, nvp, nvpbuf, nvpall, &adjs);
+  exitcode = 2Ddelaunadj(parts, nvp, nvpbuf, nvpall, &adjs);
   if (exitcode != 0)
    {
      printf("Error while tesselating. Stopping here."); fflush(stdout);
@@ -276,7 +276,7 @@ for (j = 0; j < NGUARD + 1; j++) {
 	if (deladjs[2*j+d] > 0.5) deladjs[2*j+d]--;
       }
     
-    exitcode = vorvol(deladjs, points, intpoints, adjs[i].nadj, &(vols[i]));
+    exitcode = 2Dvorvol(deladjs, points, intpoints, adjs[i].nadj, &(vols[i]));
     vols[i] *= (float)np;
     if (i % 1000 == 0)
       printf("%d: %d, volume: %f, weight: %f\n",i,adjs[i].nadj,vols[i],weight[i]);
@@ -296,7 +296,7 @@ for (j = 0; j < NGUARD + 1; j++) {
  
   /* Now the output!
      First number of particles */
-  sprintf(outfile,"%s/part.%s.%02d.%02d.%02d",outDir,suffix,b[0],b[1],b[2]);
+  sprintf(outfile,"%s/part.%s.%02d.%02d",outDir,suffix,b[0],b[1]);
 
   printf("Output to %s\n\n",outfile);
   out = fopen(outfile,"w");
