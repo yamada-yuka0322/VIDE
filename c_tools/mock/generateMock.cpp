@@ -232,7 +232,7 @@ void generateOutput(SimuData *data, int axis,
   f.beginCheckpoint();
   for (uint32_t i = 0; i < data->NumPart; i++)
     {
-      f.writeReal32(data->Vos[0][i]);
+      f.writeReal32(data->Vel[0][i]);
     }
   f.endCheckpoint();
 
