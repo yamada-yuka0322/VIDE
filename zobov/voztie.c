@@ -148,7 +148,6 @@ int main(int argc, char *argv[]) {
 	vols[orig[p]] = volstemp;
       }
 	    
-      fread(orig,nvp,sizeof(pid_t),part);
       for (p=0;p<nvp;p++) {
 	fread(&weightstemp,1,sizeof(float),part);
 	if (weights[orig[p]] > -1.)
