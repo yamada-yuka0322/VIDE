@@ -74,75 +74,79 @@ int posread(char *posfile, float ***p, float fact) {
 }
 
 
-int readPosAndIntensity(const char* posfile, float*** pos, float** intensity, int* numElements) {
-    FILE* file = fopen(posfile, "rb");
-    if (file == NULL) {
-        fprintf(stderr, "Unable to open file %s\n", posfile);
-        return -1;
+int readPosAndIntensity(const char* posfile, float*** p, float** intensity, int* numElements) {
+  FILE *pos;
+  int np,dum,d,i;
+  float xmin,xmax,ymin,ymax,zmin,zmax, weightmin, weightmax;
+  float *ptemp;
+
+  pos = fopen(posfile, "r");
+  if (pos == NULL) {
+    printf("Unable to open position file %s\n\n",posfile);
+    exit(0);
+  }
+  /* Fortran77 4-byte headers and footers */
+  /* Delete "dum" statements if you don't need them */
+
+  /* Read number of particles */
+  fread(&dum,1,4,pos); fread(&np,1, sizeof(int),pos); fread(&dum,1,4,pos);
+
+  /* Allocate the arrays */
+  (*p) = (float **)malloc(np*sizeof(float *));
+  ptemp = (float *)malloc(np*sizeof(float));
+
+  printf("np = %d\n",np);
+
+  /* Fill the arrays */
+  fread(&dum,1,4,pos); 
+  fread(ptemp,np,4,pos);
+  for (i=0; i<np; i++) {
+    (*p)[i] = (float *)malloc(3*sizeof(float));
+    if ((*p)[i] == NULL) {
+      printf("Unable to allocate particle array in readfiles!\n");
+      fflush(stdout);
+      exit(0);
     }
+    (*p)[i][0] = ptemp[i];
+  }
+  fread(&dum,1,4,pos); 
+  fread(&dum,1,4,pos); 
+  fread(ptemp,np,4,pos);
+  for (i=0; i<np; i++) (*p)[i][1] = ptemp[i];
+  fread(&dum,1,4,pos); 
+  fread(&dum,1,4,pos); 
+  fread(ptemp,np,4,pos);
+  for (i=0; i<np; i++) (*p)[i][2] = ptemp[i];
+  fread(&dum,1,4,pos); 
+  fread(&dum,1,4,pos); 
+  fread(ptemp,np,4,pos);
+  for (i=0; i<np; i++) intensity[i] = ptemp[i];
+  fread(&dum,1,4,pos); 
 
-    // データの個数を読み取る
-    int np;
-    fread(&np, sizeof(int), 1, file);
-    *numElements = np; // データの個数をセット
+  fclose(pos);
+  free(ptemp);
 
-    // pos データのメモリを動的に確保
-    *pos = (float**)malloc(np * sizeof(float*));
-    if (*pos == NULL) {
-        fprintf(stderr, "Memory allocation failed for pos\n");
-        fclose(file);
-        return -1;
-    }
+  /* Get into physical units (Mpc/h) */
+  
 
-    float* temp = (float*)malloc(np * 3 * sizeof(float)); // 位置データを一時的に格納
-    float* _temp = (float*)malloc(np * sizeof(float)); // 位置データを一時的に格納
-    if (temp == NULL) {
-        fprintf(stderr, "Memory allocation failed for temp\n");
-        fclose(file);
-        free(*pos);
-        return -1;
-    }
+  printf("%f\n",fact);fflush(stdout);
+  for (i=0; i<np; i++) DL (*p)[i][d] *= fact;
 
-    // pos データの読み込み
-    fread(temp, sizeof(float), np * 3, file);
-    for (int i = 0; i < np; i++) {
-        (*pos)[i] = (float*)malloc(3 * sizeof(float));
-        if ((*pos)[i] == NULL) {
-            fprintf(stderr, "Memory allocation failed for pos[%d]\n", i);
-            fclose(file);
-            free(temp);
-            for (int j = 0; j < i; j++) {
-                free((*pos)[j]);
-            }
-            free(*pos);
-            return -1;
-        }
-        (*pos)[i][0] = temp[i];
-        (*pos)[i][1] = temp[np + i];
-        (*pos)[i][2] = temp[2 * np + i];
-    }
+  /* Test range -- can comment out */
+  xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
+  for (i=0; i<np;i++) {
+    if ((*p)[i][0]<xmin) xmin = (*p)[i][0]; if ((*p)[i][0]>xmax) xmax = (*p)[i][0];
+    if ((*p)[i][1]<ymin) ymin = (*p)[i][1]; if ((*p)[i][1]>ymax) ymax = (*p)[i][1];
+    if ((*p)[i][2]<zmin) zmin = (*p)[i][2]; if ((*p)[i][2]>zmax) zmax = (*p)[i][2];
+  }
 
-    free(temp); // temp メモリ解放
+  weightmin = BF; weightmax = -BF;
+  for (i=0; i<np;i++) {
+    if (intensity[i]<weightmin) weightmin = intensity[i]; if (intensity[i]>weightmax) weightmax = intensity[i];
+  }
+  printf("np: %d, weight: %f,%f;\n",np,weightmin,weightmax); fflush(stdout);
 
-    // intensity データのメモリを動的に確保
-    *intensity = (float*)malloc(np * sizeof(float));
-    fread(_temp, sizeof(float), np , file);
-    if (*intensity == NULL) {
-        fprintf(stderr, "Memory allocation failed for intensity\n");
-        fclose(file);
-        for (int i = 0; i < np; i++) {
-          intensity[i] = _temp[i];
-          free((*pos)[i]);
-        }
-        free(*pos);
-        return -1;
-    }
-
-    free(_temp);
-
-    fclose(file); // ファイルをクローズ
-
-    return 0; // 成功
+  return(np);
 }
 
 
