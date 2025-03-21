@@ -102,7 +102,7 @@ public:
       SingleParticle p;
 
       fp >> p.ID >> p.Pos[0] >> p.Pos[1]
-         >> p.Pos[2] >> p.Vel[2] >> p.Vel[1] >> p.Vel[0] >> tempData;
+         >> p.Pos[2] >> p.Vel[0] >> p.Vel[1] >> p.Vel[2] >> tempData;
 
       if (p.ID == -99 && 
           p.Pos[0] == -99 && p.Pos[1] == -99 && 
