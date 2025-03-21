@@ -256,7 +256,7 @@ void doWatershed(PARTICLE *p, pid_t np, ZONE *z, int numZones, float maxvol, flo
         z[h].zonelist = new int[save_nhl];
         z[h].numzones = save_nhl;
         for (int q = 0; q < save_nhl; q++) {
-          z[h].voljoin += z[zonelist[q]].vol;
+          z[h].voljoin += z[zonelist[q]].volume; /* voljoin should not be weighted */
           z[h].zonelist[q] = zonelist[q];
         }
         
