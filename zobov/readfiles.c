@@ -73,6 +73,77 @@ int posread(char *posfile, float ***p, float fact) {
   return(np);
 }
 
+
+int readPosAndIntensity(const char* posfile, float*** pos, float** intensity, int* numElements) {
+    FILE* file = fopen(posfile, "rb");
+    if (file == NULL) {
+        fprintf(stderr, "Unable to open file %s\n", posfile);
+        return -1;
+    }
+
+    // データの個数を読み取る
+    int np;
+    fread(&np, sizeof(int), 1, file);
+    *numElements = np; // データの個数をセット
+
+    // pos データのメモリを動的に確保
+    *pos = (float**)malloc(np * sizeof(float*));
+    if (*pos == NULL) {
+        fprintf(stderr, "Memory allocation failed for pos\n");
+        fclose(file);
+        return -1;
+    }
+
+    float* temp = (float*)malloc(np * 3 * sizeof(float)); // 位置データを一時的に格納
+    if (temp == NULL) {
+        fprintf(stderr, "Memory allocation failed for temp\n");
+        fclose(file);
+        free(*pos);
+        return -1;
+    }
+
+    // pos データの読み込み
+    fread(temp, sizeof(float), np * 3, file);
+    for (int i = 0; i < np; i++) {
+        (*pos)[i] = (float*)malloc(3 * sizeof(float));
+        if ((*pos)[i] == NULL) {
+            fprintf(stderr, "Memory allocation failed for pos[%d]\n", i);
+            fclose(file);
+            free(temp);
+            for (int j = 0; j < i; j++) {
+                free((*pos)[j]);
+            }
+            free(*pos);
+            return -1;
+        }
+        (*pos)[i][0] = temp[i];
+        (*pos)[i][1] = temp[np + i];
+        (*pos)[i][2] = temp[2 * np + i];
+    }
+
+    free(temp); // temp メモリ解放
+
+    // intensity データのメモリを動的に確保
+    *intensity = (float*)malloc(np * sizeof(float));
+    if (*intensity == NULL) {
+        fprintf(stderr, "Memory allocation failed for intensity\n");
+        fclose(file);
+        for (int i = 0; i < np; i++) {
+            free((*pos)[i]);
+        }
+        free(*pos);
+        return -1;
+    }
+
+    // intensity データの読み込み
+    fread(*intensity, sizeof(float), np, file);
+
+    fclose(file); // ファイルをクローズ
+
+    return 0; // 成功
+}
+
+
 /* Velocities */
 /* Returns number of particles read */
 /* Used in voboz, but not zobov, which doesn't use velocities */
