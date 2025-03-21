@@ -93,6 +93,7 @@ int readPosAndIntensity(const char* posfile, float*** p, float** intensity, int*
 
   /* Allocate the arrays */
   (*p) = (float **)malloc(np*sizeof(float *));
+  (*intensity) = (float *)malloc(np * sizeof(float));
   ptemp = (float *)malloc(np*sizeof(float));
 
   printf("np = %d\n",np);
@@ -118,10 +119,10 @@ int readPosAndIntensity(const char* posfile, float*** p, float** intensity, int*
   fread(ptemp,np,4,pos);
   for (i=0; i<np; i++) (*p)[i][2] = ptemp[i];
   fread(&dum,1,4,pos); 
-  fread(&dum,1,4,pos); 
-  fread(ptemp,np,4,pos);
-  for (i=0; i<np; i++) intensity[i] = ptemp[i];
-  fread(&dum,1,4,pos); 
+  /* Read intensity */
+  fread(&dum, 1, 4, pos);
+  fread((*intensity), np, sizeof(float), pos);  // 修正：正しくデータを読み込む
+  fread(&dum, 1, 4, pos); 
 
   fclose(pos);
   free(ptemp);
