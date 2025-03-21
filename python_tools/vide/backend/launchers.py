@@ -484,6 +484,8 @@ def launchPrune(sample, binPath,
   numVoids = sum(1 for line in \
                  open(zobovDir+"/voidDesc_"+sampleName+".out"))
   numVoids -= 2
+  if sample.dataType == "LIM":
+    binPath = binPath + "2D"
 
   # get the weighted average density of voronoi cells
   avefile = zobovDir+"/densAve_"+sampleName+".dat"
