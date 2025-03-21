@@ -51,7 +51,6 @@ void SimulationLoader::reallocSimu(SimuData *s, long newNumPart)
     }
   reallocArray(s->Id, newNumPart, to_copy);
   reallocArray(s->type, newNumPart, to_copy);
-  reallocArray(s->weight, newNumPart, to_copy)
 }
 
 void SimulationLoader::applyTransformations(SimuData *s)
@@ -84,7 +83,6 @@ void SimulationLoader::basicPreprocessing(SimuData *d,
           p.Vel[k] = (d->Vel[k]) ? 0 : d->Vel[k][i];
         }
       p.ID = (d->Id) ? 0 : d->Id[i];
-      p.weight = (d->weight) ? 0 : d->weight[i];
       
       accepted[i] = preproc->accept(p);
       numAccepted += accepted[i];
@@ -97,7 +95,6 @@ void SimulationLoader::basicPreprocessing(SimuData *d,
     }
   filteredCopy(d->Id, accepted, d->NumPart);
   filteredCopy(d->type, accepted, d->NumPart);
-  filteredCopy(d->weight, accepted, d->NumPart)
   
   filterAttribute<long>(d, "uniqueID", accepted, d->NumPart);
   

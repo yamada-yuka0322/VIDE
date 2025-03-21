@@ -89,7 +89,6 @@ protected:
     if (s->Vel[2])
       s->Vel[2][index] = p.Vel[2];
     s->Id[index] = p.ID;
-    s->weight[index] = p.weight;
   }
 public:
   virtual ~SimulationLoader() {}
