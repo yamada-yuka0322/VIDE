@@ -93,7 +93,6 @@ public:
     double rescale_velocity = one_kpc/one_Gyr;
 #define INFINITY std::numeric_limits<float>::max()
     float min_pos[3] = {INFINITY,INFINITY, INFINITY}, max_pos[3] = {-INFINITY,-INFINITY,-INFINITY};
-    float min_weight = INFINITY, max_weight = -INFINITY
 
     cout << "loading multidark particles" << endl;
     long actualNumPart = 0;
@@ -102,7 +101,7 @@ public:
       SingleParticle p;
 
       fp >> p.ID >> p.Pos[0] >> p.Pos[1]
-         >> p.Pos[2] >> p.Vel[2] >> p.Vel[1] >> p.Vel[0] >> tempData;
+         >> p.Pos[2] >> p.Vel[0] >> p.Vel[1] >> p.Vel[2] >> tempData;
 
       if (p.ID == -99 && 
           p.Pos[0] == -99 && p.Pos[1] == -99 && 
