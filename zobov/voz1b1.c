@@ -9,11 +9,12 @@
 int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs);
 int vorvol (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, float *vol);
 int posread(char *posfile, float ***p, float fact);
+int readPosAndIntensity(char *posfile, float ***p, float **intensity, float fact);
 
 int main(int argc, char *argv[]) {
   int exitcode;
   pid_t i, j, np;
-  float **r;
+  float **r, *weight;
   coordT rtemp[3], *parts;
   coordT deladjs[3*MAXVERVER], points[3*MAXVERVER];
   pointT intpoints[3*MAXVERVER];
@@ -81,6 +82,7 @@ int main(int argc, char *argv[]) {
   outDir = argv[9];
   
   /* Boxsize should be the range in r, yielding a range 0-1 */
+  np = readPosAndIntensity(posfile,&r,&weight,1./boxsize);
   np = posread(posfile,&r,1./boxsize);
   printf("%d particles\n",np);fflush(stdout);
 
