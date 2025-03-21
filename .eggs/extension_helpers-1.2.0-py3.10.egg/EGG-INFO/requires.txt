@@ -6,7 +6,7 @@ sphinx
 sphinx-automodapi
 
 [test]
-cython
+wheel
 pytest
 pytest-cov
-wheel
+cython

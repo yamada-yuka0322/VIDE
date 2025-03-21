@@ -1,5 +1,5 @@
-certifi
 cftime
+certifi
 numpy
 
 [tests]

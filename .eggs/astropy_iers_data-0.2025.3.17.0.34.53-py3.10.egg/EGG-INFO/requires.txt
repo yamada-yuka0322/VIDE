@@ -3,6 +3,6 @@
 pytest
 
 [test]
-hypothesis
 pytest
 pytest-remotedata
+hypothesis
