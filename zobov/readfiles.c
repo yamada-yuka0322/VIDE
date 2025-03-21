@@ -95,6 +95,7 @@ int readPosAndIntensity(const char* posfile, float*** pos, float** intensity, in
     }
 
     float* temp = (float*)malloc(np * 3 * sizeof(float)); // 位置データを一時的に格納
+    float* _temp = (float*)malloc(np * sizeof(float)); // 位置データを一時的に格納
     if (temp == NULL) {
         fprintf(stderr, "Memory allocation failed for temp\n");
         fclose(file);
@@ -125,18 +126,19 @@ int readPosAndIntensity(const char* posfile, float*** pos, float** intensity, in
 
     // intensity データのメモリを動的に確保
     *intensity = (float*)malloc(np * sizeof(float));
+    fread(_temp, sizeof(float), np , file);
     if (*intensity == NULL) {
         fprintf(stderr, "Memory allocation failed for intensity\n");
         fclose(file);
         for (int i = 0; i < np; i++) {
-            free((*pos)[i]);
+          intensity[i] = _temp[i];
+          free((*pos)[i]);
         }
         free(*pos);
         return -1;
     }
 
-    // intensity データの読み込み
-    fread(*intensity, sizeof(float), np, file);
+    free(_temp);
 
     fclose(file); // ファイルをクローズ
 
