@@ -146,10 +146,6 @@ int main(int argc, char *argv[]) {
 	    //exit(0);
 	  }
 	vols[orig[p]] = volstemp;
-	if(orig[p]%1000==0){
-		printf("volume for p. %d: (%10g)\n",
-		   orig[p],vols[orig[p]]);
-	}
       }
 	    
       for (p=0;p<nvp;p++) {
@@ -161,10 +157,6 @@ int main(int argc, char *argv[]) {
 	    //exit(0);
 	  }
 	weights[orig[p]] = weightstemp;
-	if(orig[p]%1000==0){
-		printf("weights for p. %d: (%10g)\n",
-		   orig[p],weights[orig[p]]);
-	}
       }
       
       for (p=0;p<nvp;p++) {
@@ -175,10 +167,6 @@ int main(int argc, char *argv[]) {
           assert(adjs[pid].nadj == 0 || adjs[pid].nadj == na);
 	  adjs[pid].nadj = na;
           adjs[pid].adj = (pid_t *)malloc(na*sizeof(pid_t));
-	  if(orig[p]%1000==0){
-		printf("number of adjacency for p. %d: (%10g)\n",
-		   pid,adjs[pid].nadj);
-	}
 	  if (adjs[pid].adj == 0) {
 	    printf("Couldn't allocate adjs[orig[%d]].adj.\n",p);
 	    exit(0);
@@ -196,6 +184,13 @@ int main(int argc, char *argv[]) {
            }
 	} else {
 	  printf("0"); fflush(stdout);
+	}
+      }
+
+      for (p=0; p<nvp; p++) {
+	if(p%1000==0){
+		printf("particle p. %d: volume %10g weight %10g num adj &d\n",
+		   p,vols[p], weights[p], adjs[p].nadj);
 	}
       }
       fclose(part);
