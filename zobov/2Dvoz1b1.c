@@ -219,59 +219,35 @@ int main(int argc, char *argv[]) {
   free(r);
   
   /* Add guard points */
-  for (i=0; i<NGUARD+1; i++) {
-    for (j=0; j<NGUARD+1; j++) {
-      /* Bottom */
-      parts[3*nvpall]   = -width2 + (realT)i * s;
-      parts[3*nvpall+1] = -width2 + (realT)j * s;
-      parts[3*nvpall+2] = -width2 - g;
-      nvpall++;
-      /* Top */
-      parts[3*nvpall]   = -width2 + (realT)i * s;
-      parts[3*nvpall+1] = -width2 + (realT)j * s;
-      parts[3*nvpall+2] = width2 + g;
-      nvpall++;
-    }
+  for (i = 0; i < NGUARD + 1; i++) {
+    parts[2 * nvpall]     = -width2 + (realT)i * s;
+    parts[2 * nvpall + 1] = -width2 - g;
+    nvpall++;
+    parts[2 * nvpall]     = -width2 + (realT)i * s;
+    parts[2 * nvpall + 1] = width2 + g;
+    nvpall++;
   }
-  for (i=0; i<NGUARD+1; i++) { /* Don't want to overdo the corners*/
-    for (j=0; j<NGUARD+1; j++) {
-      parts[3*nvpall]   = -width2 + (realT)i * s;
-      parts[3*nvpall+1] = -width2 - g;
-      parts[3*nvpall+2] = -width2 + (realT)j * s;
-      nvpall++;
-      
-      parts[3*nvpall]   = -width2 + (realT)i * s;
-      parts[3*nvpall+1] = width2 + g;
-      parts[3*nvpall+2] = -width2 + (realT)j * s;
-      nvpall++;
-    }
-  }
-  for (i=0; i<NGUARD+1; i++) {
-    for (j=0; j<NGUARD+1; j++) {
-      parts[3*nvpall]   = -width2 - g;
-      parts[3*nvpall+1] = -width2 + (realT)i * s;
-      parts[3*nvpall+2] = -width2 + (realT)j * s;
-      nvpall++;
-      
-      parts[3*nvpall]   = width2 + g;
-      parts[3*nvpall+1] = -width2 + (realT)i * s;
-      parts[3*nvpall+2] = -width2 + (realT)j * s;
-      nvpall++;
-    }
-  }
+
+for (j = 0; j < NGUARD + 1; j++) {
+    parts[2 * nvpall]     = -width2 - g;
+    parts[2 * nvpall + 1] = -width2 + (realT)j * s;
+    nvpall++;
+
+    parts[2 * nvpall]     = width2 + g;
+    parts[2 * nvpall + 1] = -width2 + (realT)j * s;
+    nvpall++;
+}
   xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
   for (i=nvpbuf;i<nvpall;i++) {
-    if (parts[3*i] < xmin) xmin = parts[3*i];
-    if (parts[3*i] > xmax) xmax = parts[3*i];
-    if (parts[3*i+1] < ymin) ymin = parts[3*i+1];
-    if (parts[3*i+1] > ymax) ymax = parts[3*i+1];
-    if (parts[3*i+2] < zmin) zmin = parts[3*i+2];
-    if (parts[3*i+2] > zmax) zmax = parts[3*i+2];
+    if (parts[2*i] < xmin) xmin = parts[2*i];
+    if (parts[2*i] > xmax) xmax = parts[2*i];
+    if (parts[2*i+1] < ymin) ymin = parts[2*i+1];
+    if (parts[2*i+1] > ymax) ymax = parts[2*i+1];
   }
   
   printf("Added guard points to total %d points (should be %d)\n",nvpall,
-	 nvpbuf + 6*(NGUARD+1)*(NGUARD+1));
-  printf("x: %f,%f; y: %f,%f; z:%f,%f\n",xmin,xmax,ymin,ymax,zmin,zmax);
+	 nvpbuf + 4*(NGUARD+1)*);
+  printf("x: %f,%f; y: %f,%f\n",xmin,xmax,ymin,ymax);
   
   /* Do tesselation*/
   printf("File read.  Tessellating ...\n"); fflush(stdout);
@@ -295,9 +271,9 @@ int main(int argc, char *argv[]) {
     /* Volumes */
     for (j = 0; j < adjs[i].nadj; j++)
       DL {
-	deladjs[3*j + d] = parts[3*adjs[i].adj[j]+d] - parts[3*i+d];
-	if (deladjs[3*j+d] < -0.5) deladjs[3*j+d]++;
-	if (deladjs[3*j+d] > 0.5) deladjs[3*j+d]--;
+	deladjs[2*j + d] = parts[2*adjs[i].adj[j]+d] - parts[2*i+d];
+	if (deladjs[2*j+d] < -0.5) deladjs[2*j+d]++;
+	if (deladjs[2*j+d] > 0.5) deladjs[2*j+d]--;
       }
     
     exitcode = vorvol(deladjs, points, intpoints, adjs[i].nadj, &(vols[i]));
