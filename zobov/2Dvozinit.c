@@ -8,10 +8,11 @@
 #define QHULL_MAX_PARTICLES ((1L<<24)-1)
 
 int posread(char *posfile, float ***p, float fact);
+int readPosAndIntensity(char *posfile, float ***p, float **intensity, float fact);
 
 int main(int argc, char *argv[]) {
   int i, np;
-  float **rfloat, rtemp[2];
+  float **rfloat, rtemp[2], *weight;
   FILE *pos, *scr;
   char *posfile, scrfile[200], systemstr[90], *suffix, *outDir, *vobozPath;
   float xmin,xmax,ymin,ymax,zmin,zmax;
@@ -79,6 +80,7 @@ int main(int argc, char *argv[]) {
 
 
   /* Read the position file */
+  np = readPosAndIntensity(posfile,&rfloat, &weight,1./boxsize);
   np = posread(posfile,&rfloat,1./boxsize);
   /* Boxsize should be the range in r, yielding a range 0-1 */
 
@@ -107,29 +109,31 @@ int main(int argc, char *argv[]) {
   for (b[0] = 0; b[0] < numdiv; b[0]++) {
    c[0] = ((float)b[0]+0.5)*width;
    for (b[1] = 0; b[1] < numdiv; b[1]++) {
-    c[1] = ((float)b[1]+0.5)*width;
-    nvp = 0; /* Number of particles excluding buffer */
-    nvpbuf = 0; /* Number of particles to tesselate, includingbuffer */
-    xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF;
-    for (i=0; i<np; i++) {
-      isitinbuf = 1; isitinmain = 1;
-      for (d=0; d<2; d++) {
-        rtemp[d] = rfloat[i][d] - c[d];
-        if (rtemp[d] > 0.5) rtemp[d] --;
-        if (rtemp[d] < -0.5) rtemp[d] ++;
-        isitinbuf = isitinbuf && (fabs(rtemp[d]) < totwidth2);
-        isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
-      }
-      if (isitinbuf) {
-        nvpbuf++;
-      }
-      if (isitinmain) {
-        nvp++;
-        if (rtemp[0] < xmin) xmin = rtemp[0];
-        if (rtemp[0] > xmax) xmax = rtemp[0];
-        if (rtemp[1] < ymin) ymin = rtemp[1];
-        if (rtemp[1] > ymax) ymax = rtemp[1];
-      }
+      c[1] = ((float)b[1]+0.5)*width;
+
+      nvp = 0; /* Number of particles excluding buffer */
+      nvpbuf = 0; /* Number of particles to tesselate, including
+		     buffer */
+      xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
+      for (i=0; i<np; i++) {
+	isitinbuf = 1; isitinmain = 1;
+	for (d=0; d<2; d++) {
+	  rtemp[d] = rfloat[i][d] - c[d];
+	  if (rtemp[d] > 0.5) rtemp[d] --;
+	  if (rtemp[d] < -0.5) rtemp[d] ++;
+	  isitinbuf = isitinbuf && (fabs(rtemp[d]) < totwidth2);
+	  isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
+	}
+	if (isitinbuf) {
+	  nvpbuf++;
+	}
+	if (isitinmain) {
+	  nvp++;
+	  if (rtemp[0] < xmin) xmin = rtemp[0];
+	  if (rtemp[0] > xmax) xmax = rtemp[0];
+	  if (rtemp[1] < ymin) ymin = rtemp[1];
+	  if (rtemp[1] > ymax) ymax = rtemp[1];
+	}
       }
       if (nvp > nvpmax) nvpmax = nvp;
       if (nvpbuf > nvpbufmax) nvpbufmax = nvpbuf;
@@ -140,10 +144,11 @@ int main(int argc, char *argv[]) {
 	     b[0],b[1],c[0],c[1],nvp,nvpbuf);
     }
    }
+  }
   printf("Nvp range: %d,%d\n",nvpmin,nvpmax);
   printf("Nvpbuf range: %d,%d\n",nvpbufmin,nvpbufmax);
 
-  numGuards = 6*(NGUARD+1)*(NGUARD+1);
+  numGuards = 4*(NGUARD+1);
   printf("Total max particles: %d\n" , nvpbufmax+numGuards);
   if (nvpbufmax+numGuards >= QHULL_MAX_PARTICLES)
     {
@@ -169,12 +174,13 @@ int main(int argc, char *argv[]) {
      //   vobozPath,
      //   posfile,border,boxsize,boxsize,boxsize,suffix,numdiv,numdiv, numdiv,b[0],b[1],b[2],
      //   outDir);
-      fprintf(scr,"%s/2Dvoz1b1 %s %f %f %s %d %d %d %s&\n",
+      fprintf(scr,"%s/voz1b1 %s %f %f %s %d %d %d %s&\n",
               vobozPath,
-              posfile,border,boxsize,suffix,numdiv,b[0],b[1],
+              posfile,border,boxsize,suffix,numdiv,b[0],b[1], 
               outDir);
       p++;
       if ((p == numThreads)) { fprintf(scr, "wait\n"); p = 0; }
+    }
    }
   }
   fprintf(scr,"wait\n");
