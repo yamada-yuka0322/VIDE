@@ -157,6 +157,10 @@ int main(int argc, char *argv[]) {
 	    //exit(0);
 	  }
 	weights[orig[p]] = weightstemp;
+	if(p%1000==0){
+		printf("weights for p. %d: (%10)\n",
+		   orig[p],weights[orig[p]]);
+	}
       }
       
       for (p=0;p<nvp;p++) {
@@ -167,6 +171,10 @@ int main(int argc, char *argv[]) {
           assert(adjs[pid].nadj == 0 || adjs[pid].nadj == na);
 	  adjs[pid].nadj = na;
           adjs[pid].adj = (pid_t *)malloc(na*sizeof(pid_t));
+	  if(p%1000==0){
+		printf("number of adjacency for p. %d: (%10)\n",
+		   pid,adjs[pid].nadj);
+	}
 	  if (adjs[pid].adj == 0) {
 	    printf("Couldn't allocate adjs[orig[%d]].adj.\n",p);
 	    exit(0);
