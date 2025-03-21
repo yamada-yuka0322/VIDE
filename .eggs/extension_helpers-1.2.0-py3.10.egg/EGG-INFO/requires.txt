@@ -1,0 +1,12 @@
+setuptools>=40.2
+tomli>=1.0.0
+
+[docs]
+sphinx
+sphinx-automodapi
+
+[test]
+cython
+pytest
+pytest-cov
+wheel

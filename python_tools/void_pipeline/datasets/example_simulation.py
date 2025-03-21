@@ -36,19 +36,19 @@ startCatalogStage = 1
 endCatalogStage   = 3
 
 # directory for the input simulation files
-catalogDir = PWD+"/examples/"
+catalogDir = "/mnt/data/yuka/dataset/vide_data/"
 
 # void catalog output directory
-voidOutputDir = PWD+"/examples/example_simulation/"
+voidOutputDir = "/mnt/data/yuka/output/vide/example_simulation/"
 
 # output directory for log files
-logDir = PWD+"/logs/example_simulation/"
+logDir = voidOutputDir+"logs/"
 
 # output directory for figures
-figDir = PWD+"/figs/example_simulation/"
+figDir = voidOutputDir+"figs/"
 
 # where to place the pipeline scripts
-scriptDir = PWD+"/example_simulation/"
+scriptDir = voidOutputDir
 
 # don't change
 dataType = "simulation"
@@ -91,7 +91,7 @@ numSubvolumes = 1
 # Particles
 
 # common filename of particle files
-particleFileBase = "example_simulation_NNNN.dat"
+particleFileBase = "example_simulation.dat"
 
 # this flag will be replaced by values in fileNums list below
 particleFileDummy = 'NNNN'

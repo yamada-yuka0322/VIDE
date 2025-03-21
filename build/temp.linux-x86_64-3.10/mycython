@@ -1,0 +1,3 @@
+#!/usr/bin/python3
+from Cython.Compiler.Main import setuptools_main
+setuptools_main()

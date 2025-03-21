@@ -36,17 +36,18 @@ endCatalogStage   = 3
 basePath = os.path.dirname(os.path.abspath(__file__))
 basePath = os.path.abspath(os.path.join(basePath,"..","..","..","examples"))
 
+outputPath = "/mnt/data/yuka/output/vide"
 # directory for input data files
-inputDataDir = basePath
+inputDataDir = "/mnt/data/yuka/dataset/vide_data/"
 
 # void catalog output directory
-workDir = os.path.join(basePath,"example_observation")
+workDir = os.path.join(outputPath,"example_observation")
 
 # output directory for log files
-logDir = os.path.join(basePath,"logs","example_observation")
+logDir = os.path.join(outputPath,"example_observation", "logs")
 
 # output directory for figures
-figDir = os.path.join(basePath,"figs","example_observation")
+figDir = os.path.join(basePath,"example_observation", "figs")
 
 # optimization: maximum number of parallel threads to use
 numZobovThreads = 2

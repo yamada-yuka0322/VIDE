@@ -1,0 +1,166 @@
+Metadata-Version: 2.4
+Name: vide
+Version: 2.0
+Summary: The VIDE pipeline analysis for Cosmic Voids
+License: CeCILL-v2
+Keywords: cosmology,interpolation,cmake,extension
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)
+Classifier: Natural Language :: English
+Classifier: Programming Language :: C
+Classifier: Programming Language :: C++
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Description-Content-Type: text/markdown
+Requires-Dist: argparse
+Requires-Dist: scipy
+Requires-Dist: astropy
+Requires-Dist: extension-helpers
+Requires-Dist: netCDF4
+Requires-Dist: healpy
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: keywords
+Dynamic: license
+Dynamic: requires-dist
+Dynamic: summary
+
+```
+\        /   /   |-\    -----
+ \      /    |   |  \   |
+  \    /    /    |   |  |--
+   \  /     |    |  /   |
+    \/      /    |-/    -----
+
+*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+```
+
+This is VIDE, the Void IDentification and Examination toolkit.
+
+For more information, see http://www.cosmicvoids.net
+
+Please cite arXiv:1406.1191 and arXiv:0712.0349 if you use this software, 
+using the following suggested sentence:
+
+"This work uses voids identified with VIDE\footnote{\url{http:www.cosmicvoids.net}} (Sutter et al. 2014), 
+which implements an enhanced version of ZOBOV (Neyrinck 2008) to construct 
+voids with a watershed algorithm."
+
+
+License/Copyright information
+-----------------------------
+
+Copyright (C) 2010-2020 Guilhem Lavaux, 2011-2014 P.M. Sutter.
+This software is put under the GNU Public License. 
+Please see LICENSE for further information.
+
+Mainline VIDE contributions from Ben Wandelt, Nico Hamaus, Alice Pisani, 
+Paul Zivick, and Qingqing Mao.
+This toolkit includes ZOBOV, originally developed by Mark Neyrinck. 
+See `zobov/zobov_readme.txt` for copyright/license information. 
+SDF library provided by Michael S. Warren and John Salmon. 
+HOD fitting code provided by Francisco Navarro. 
+HOD halo population code provided by Jeremy Tinker.
+RAMSES module provided by Benjamin B. Thompson.
+
+
+Requirements
+------------
+
+The package swig needs to be installed and available in the PATH (http://www.swig.org/). It 
+is required by scipy and we have not decided to bundle it with VIDE at the moment.
+
+
+Quick Start Guide
+-----------------
+
+It is generally advised to create a python3 virtual environment. This can be achieved as follows
+```
+python3 -m venv --system-site-packages $PLACE_OF_VENV
+source $PLACE_OF_VENV/bin/activate
+```
+where `$PLACE_OF_VENV` is where you decide to put your environment on your
+harddrive (e.g. `$HOME/my_venv`).
+
+Note: on OSX there are some difficulties to use the native clang compiler.
+Please use a brew installed compiler like GCC.
+```
+brew install gcc
+export CC=/usr/local/bin/gcc-10
+export CXX=/usr/local/bin/g++-10
+```
+The gcc-10 is of course dependent on the version that was installed by brew.
+
+After this step you may start the build process
+```
+python3 setup.py build
+```
+
+It will take a lot of time. It may also download python packages that you miss
+on your system.  On BigSur some of them fail to compile by default. 
+
+After installing the package with 
+```python3 setup.py install
+``` 
+
+To test that the package is indeed installed you can execute
+
+```
+python3 -m void_pipeline
+```
+which will state
+```
+Usage: ./generateCatalog.py parameter_file.py
+```
+
+The VIDE tools are all packaged in the `vide` package. 
+
+
+Running with simulation
+-----------------------
+
+Using simulation requires a preliminary step, consisting in using the script
+`vide_prepare_simulation` which is installed during the installation procedure.
+The script generates mock catalog and a default pipeline to handle simulations.
+An example of the complete procedure is given here-below:
+```
+mkdir $HOME/my_vide_test
+cp python_tools/void_pipeline/datasets/example_simulation.py $HOME/my_vide_test
+mkdir $HOME/my_vide_test/examples
+cp examples/example_simulation_z0.0.dat $HOME/my_vide_test/examples
+cd $HOME/my_vide_test
+vide_prepare_simulation   --all --parm example_simulation.py
+python3 -m void_pipeline example_simulation/sim_ss1.0.py
+```
+
+The example copies the required data in a separate directory. Then, we execute
+the `vide_prepare_simulation` script to generate the auxiliary pipeline.  The
+`void_pipeline` is finally executed on this generated script.
+
+Notes for CONDA
+---------------
+
+
+If you use a conda installation, you have to be sure to use all the building tools that 
+are consistent. On linux that means for example installing the conda packages `gcc_linux-64`
+ and `gxx_linux-64`. In addition to that it is recommended to define the environment variable 
+`LIBRARY_PATH=the_path_of_your_conda_environment_with_/lib`. For example if your environment
+is in '/home/user/conda' you should define
+
+```
+export LIBRARY_PATH=/home/user/conda/lib
+```
+
+You can then initiate the construction with
+
+```
+python3 setup.py build
+```
+
+Version Summary
+-----------------
+
+v1.0 - Initial Release
+v2.0 - Ported to python3, revisited build system

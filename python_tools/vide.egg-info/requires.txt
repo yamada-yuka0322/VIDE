@@ -1,0 +1,6 @@
+argparse
+scipy
+astropy
+extension-helpers
+netCDF4
+healpy
