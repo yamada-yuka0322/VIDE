@@ -228,6 +228,14 @@ void generateOutput(SimuData *data, int axis,
     }
   f.endCheckpoint();
 
+  cout <<"Writing weight..." << endl;
+  f.beginCheckpoint();
+  for (uint32_t i = 0; i < data->NumPart; i++)
+    {
+      f.writeReal32(data->Vos[0][i]);
+    }
+  f.endCheckpoint();
+
   cout << "Writing RA..." << endl;
   f.beginCheckpoint();
   for (uint32_t i = 0; i < data->NumPart; i++)
@@ -263,13 +271,6 @@ void generateOutput(SimuData *data, int axis,
 	}
       f.endCheckpoint();
     }
-  cout <<"Writing weight..." << endl;
-  f.beginCheckpoint();
-  for (uint32_t i = 0; i < data->NumPart; i++)
-    {
-      f.writeReal32(data->Vos[0][i]);
-    }
-  f.endCheckpoint();
 }
 
 // This function prepares the list of targets for the specified snapshot. The target list is not
