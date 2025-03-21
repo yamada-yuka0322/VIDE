@@ -131,6 +131,14 @@ void readVolumeFile(const std::string& volfile, PARTICLE *p, pid_t np,
     }
     p[i].dens = 1./p[i].dens; /* Get density from volume */
   }
+//Weight here
+  for (pid_t i = 0; i < np; i++) {
+    vol.read((char*)&p[i].weight, sizeof(float));
+    if (((p[i].weight < 1e-30) || (p[i].weight > 1e30)) && (i < mockIndex)) {
+      cout << format("Whacked-out weight found, of particle %d: %f") % i % p[i].weight << endl;
+    }
+    p[i].dens = p[i].dens*p[i].weight; /* Get density from volume */
+  }
 }
 
 void writeZoneFile(const std::string& zonfile, PARTICLE* p, pid_t np,
