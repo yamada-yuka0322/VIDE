@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
      //   vobozPath,
      //   posfile,border,boxsize,boxsize,boxsize,suffix,numdiv,numdiv, numdiv,b[0],b[1],b[2],
      //   outDir);
-      fprintf(scr,"%s/voz1b1 %s %f %f %s %d %d %d %s&\n",
+      fprintf(scr,"%s/2Dvoz1b1 %s %f %f %s %d %d %d %s&\n",
               vobozPath,
               posfile,border,boxsize,suffix,numdiv,b[0],b[1], 
               outDir);
@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
    }
   }
   fprintf(scr,"wait\n");
-  fprintf(scr,"%s/voztie %d %s %s %d\n", vobozPath, numdiv,suffix, outDir, mockIndex);
+  fprintf(scr,"%s/2Dvoztie %d %s %s %d\n", vobozPath, numdiv,suffix, outDir, mockIndex);
   fclose(scr);
 
   sprintf(systemstr,"chmod u+x %s",scrfile);
