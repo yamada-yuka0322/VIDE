@@ -369,9 +369,9 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
     log.close()
 
     # get the weighted average density of voronoi cells
-    avefile = zobovDir+"/volAve_"+sampleName+".dat"
+    avefile = zobovDir+"/densAve_"+sampleName+".dat"
     with open(aveFile, mode="rb") as File:
-        volume_ave = np.fromfile(File, dtype=np.float32,count=1)
+        density_ave = np.fromfile(File, dtype=np.float32,count=1)
       
     # re-weight the volumes based on selection function
     if sample.dataType == "observation" and \
@@ -441,7 +441,7 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
       volFileToUse = zobovDir+"/vol_"+sampleName+".dat"
 
 
-    maxDen *= volume_ave
+    maxDen *= density_ave
     cmd = [binPath+"/jozov2", \
            zobovDir+"/adj_"+sampleName+".dat", \
            volFileToUse, \
@@ -481,19 +481,19 @@ def launchPrune(sample, binPath,
   numVoids -= 2
 
   # get the weighted average density of voronoi cells
-  avefile = zobovDir+"/volAve_"+sampleName+".dat"
+  avefile = zobovDir+"/densAve_"+sampleName+".dat"
   with open(aveFile, mode="rb") as File:
-    volume_ave = np.fromfile(File, dtype=np.float32,count=1)
+    density_ave = np.fromfile(File, dtype=np.float32,count=1)
 
   if sample.dataType == "observation":
     mockIndex = open(zobovDir+"/mask_index.txt", "r").read()
     totalPart = open(zobovDir+"/total_particles.txt", "r").read()
-    maxDen = mergingThreshold*float(mockIndex)/float(totalPart)*volume_ave
+    maxDen = mergingThreshold*float(mockIndex)/float(totalPart)*density_ave
     observationLine = " --isObservation"
     #periodicLine = " --periodic=''"
   else:
     mockIndex = -1
-    maxDen = mergingThreshold*volume_ave
+    maxDen = mergingThreshold*density_ave
     observationLine = ""
 
   periodicLine = " --periodic='" + getPeriodic(sample) + "'"
