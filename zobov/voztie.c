@@ -146,6 +146,10 @@ int main(int argc, char *argv[]) {
 	    //exit(0);
 	  }
 	vols[orig[p]] = volstemp;
+	if(orig[p]%1000==0){
+		printf("volume for p. %d: (%10g)\n",
+		   orig[p],vols[orig[p]]);
+	}
       }
 	    
       for (p=0;p<nvp;p++) {
@@ -157,7 +161,7 @@ int main(int argc, char *argv[]) {
 	    //exit(0);
 	  }
 	weights[orig[p]] = weightstemp;
-	if(p%1000==0){
+	if(orig[p]%1000==0){
 		printf("weights for p. %d: (%10g)\n",
 		   orig[p],weights[orig[p]]);
 	}
@@ -171,7 +175,7 @@ int main(int argc, char *argv[]) {
           assert(adjs[pid].nadj == 0 || adjs[pid].nadj == na);
 	  adjs[pid].nadj = na;
           adjs[pid].adj = (pid_t *)malloc(na*sizeof(pid_t));
-	  if(p%1000==0){
+	  if(orig[p]%1000==0){
 		printf("number of adjacency for p. %d: (%10g)\n",
 		   pid,adjs[pid].nadj);
 	}
