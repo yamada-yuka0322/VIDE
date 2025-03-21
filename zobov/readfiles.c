@@ -74,7 +74,7 @@ int posread(char *posfile, float ***p, float fact) {
 }
 
 
-int readPosAndIntensity(const char* posfile, float*** p, float** intensity, int* numElements) {
+int readPosAndIntensity(const char* posfile, float*** p, float** intensity, float fact) {
   FILE *pos;
   int np,dum,d,i;
   float xmin,xmax,ymin,ymax,zmin,zmax, weightmin, weightmax;
@@ -135,16 +135,16 @@ int readPosAndIntensity(const char* posfile, float*** p, float** intensity, int*
 
   /* Test range -- can comment out */
   xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
+  weightmin = BF; weightmax = -BF;
   for (i=0; i<np;i++) {
     if ((*p)[i][0]<xmin) xmin = (*p)[i][0]; if ((*p)[i][0]>xmax) xmax = (*p)[i][0];
     if ((*p)[i][1]<ymin) ymin = (*p)[i][1]; if ((*p)[i][1]>ymax) ymax = (*p)[i][1];
     if ((*p)[i][2]<zmin) zmin = (*p)[i][2]; if ((*p)[i][2]>zmax) zmax = (*p)[i][2];
+    if ((*intensity)[i] < weightmin) weightmin = (*intensity)[i];
+    if ((*intensity)[i] > weightmax) weightmax = (*intensity)[i];
   }
 
-  weightmin = BF; weightmax = -BF;
-  for (i=0; i<np;i++) {
-    if (intensity[i]<weightmin) weightmin = intensity[i]; if (intensity[i]>weightmax) weightmax = intensity[i];
-  }
+  printf("x: %f,%f; y: %f,%f; z: %f,%f\n",xmin,xmax, ymin,ymax, zmin,zmax);
   printf("np: %d, weight: %f,%f;\n",np,weightmin,weightmax); fflush(stdout);
 
   return(np);
