@@ -33,9 +33,14 @@ add_genopt(pruneVoids_SRCS pruneVoids.ggo pruneVoids_conf STRUCTNAME pruneVoids_
 add_executable(pruneVoids ${pruneVoids_SRCS})
 target_link_libraries(pruneVoids ${ZOB_LIBS})
 
+SET(pruneVoids2D_SRCS pruneVoids2D.cpp)
+add_genopt(pruneVoids2D_SRCS pruneVoids.ggo pruneVoids_conf STRUCTNAME pruneVoids_info)
+add_executable(pruneVoids2D ${pruneVoids2D_SRCS})
+target_link_libraries(pruneVoids2D ${ZOB_LIBS})
+
 #SET(makeAHFOutput_SRCS makeAHFOutput.cpp)
 #add_genopt(makeAHFOutput_SRCS makeAHFOutput.ggo makeAHFOutput_conf STRUCTNAME makeAHFOutput_info)
 #add_executable(makeAHFOutput ${makeAHFOutput_SRCS})
 #target_link_libraries(makeAHFOutput ${ZOB_LIBS})
 
-install(TARGETS pruneVoids DESTINATION ${VIDE_BIN})
+install(TARGETS pruneVoids pruneVoids2D DESTINATION ${VIDE_BIN})
