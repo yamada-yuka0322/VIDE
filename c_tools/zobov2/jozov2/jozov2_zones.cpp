@@ -210,6 +210,7 @@ void buildZones(PARTICLE *p, pid_t np, pid_t *&jumped,
       if (numinh[i] > 0) {
         z[h].core = i;
         z[h].vol = 0;
+	z[h].volume = 0;
         z[h].np = z[h].npjoin = z[h].nadj = z[h].nhl = 0;
         z[h].leak = 0;
         z[h].adj = 0;
@@ -237,6 +238,7 @@ void buildZones(PARTICLE *p, pid_t np, pid_t *&jumped,
   for (pid_t i=0; i < np; i++) {
     int h = zonenum[jumped[i]];
     z[h].vol += 1.0/(double)p[i].dens;
+    z[h].volume += (double)p[i].weight/(double)p[i].dens;
     z[h].numzones = 0;
     z[h].zonelist = 0;
   }
