@@ -203,12 +203,12 @@ int main(int argc, char **argv) {
   char line[500], junkStr[10];
   string outputDir, sampleName, dataPortion, prefix;
   int mask_index;
-  double ranges[2][2], boxLen[2], mul; 
+  double ranges[3][3], boxLen[3], mul; 
   double volNorm, radius;
   int clock1, clock2, clock3, clock4;
   double interval;
-  int periodicX=0, periodicY=0;
-  string dataPortions[2];
+  int periodicX=0, periodicY=0, periodicZ=0;
+  string dataPortions[3];
 
   gsl_eigen_symmv_workspace *eigw = gsl_eigen_symmv_alloc(2);
 
@@ -248,11 +248,15 @@ int main(int argc, char **argv) {
   f_info.getAtt("range_x_max").getValues(&ranges[0][1]);
   f_info.getAtt("range_y_min").getValues(&ranges[1][0]);
   f_info.getAtt("range_y_max").getValues(&ranges[1][1]);
+  f_info.getAtt("range_z_min").getValues(&ranges[2][0]);
+  f_info.getAtt("range_z_max").getValues(&ranges[2][1]);
 
   printf(" Range xmin %e\n", ranges[0][0]);
   printf(" Range xmax %e\n", ranges[0][1]);
   printf(" Range ymin %e\n", ranges[1][0]);
   printf(" Range ymax %e\n", ranges[1][1]);
+  printf(" Range zmin %e\n", ranges[2][0]);
+  printf(" Range zmax %e\n", ranges[2][1]);
 
   boxLen[0] = ranges[0][1] - ranges[0][0];
   boxLen[1] = ranges[1][1] - ranges[1][0];
@@ -285,6 +289,10 @@ int main(int argc, char **argv) {
   mul = ranges[1][1] - ranges[1][0];
   for (p = 0; p < numPartTot; p++) 
     part[p].y = mul*temp[p];
+  fread(&dummy, 1, 4, fp);
+  fread(temp, numPartTot, 4, fp);
+  for (p = 0; p < numPartTot; p++) 
+    part[p].z = mul*temp[p];
 
   if (!args.isObservation_flag) {
     for (p = 0; p < numPartTot; p++)  {
@@ -501,6 +509,7 @@ int main(int argc, char **argv) {
 
     voids[iVoid].center[0] = part[voids[iVoid].coreParticle].x;
     voids[iVoid].center[1] = part[voids[iVoid].coreParticle].y;
+    voids[iVoid].center[2] = part[voids[iVoid].coreParticle].z;
  
     // first load up particles into a buffer 
     clock3 = clock();
@@ -565,6 +574,7 @@ int main(int argc, char **argv) {
     voids[iVoid].macrocenter[1] /= weight;
     voids[iVoid].macrocenter[0] += voids[iVoid].center[0];
     voids[iVoid].macrocenter[1] += voids[iVoid].center[1];
+    voids[iVoid].macrocenter[2] = voids[iVoid].center[2];
 
     if (periodicX) {
       if (voids[iVoid].macrocenter[0] > ranges[0][1])
@@ -1076,7 +1086,7 @@ void outputVoids(string outputDir, string sampleName, string prefix,
              outVoid.vol,
              outVoid.radius,
              outVoid.redshift, 
-             4./3.*M_PI*pow(outVoid.radius, 3),
+             M_PI*pow(outVoid.radius, 2),
              outVoid.voidID,
              outVoid.densCon,
              outVoid.numPart,
@@ -1086,11 +1096,11 @@ void outputVoids(string outputDir, string sampleName, string prefix,
              outVoid.centralDen);
 
      double phi = atan2(outVoid.macrocenter[1]-boxLen[1]/2.,
-                        outVoid.macrocenter[2]-boxLen[2]/2.);
+                        outVoid.macrocenter[2]);
      if (phi < 0) phi += 2.*M_PI;
      double RA = phi * 180./M_PI;
 
-     outVoid.redshiftInMpc = 
+     outVoid.redshiftInMpc = outVoid.macrocenter[2]
            
      double theta = acos((outVoid.macrocenter[0]-boxLen[0]/2.) / 
                           outVoid.redshiftInMpc);
@@ -1103,21 +1113,15 @@ void outputVoids(string outputDir, string sampleName, string prefix,
              outVoid.radius,
              outVoid.voidID);
 
-     fprintf(fpShapes, "%d %.6f %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e\n", 
+     fprintf(fpShapes, "%d %.6f %.2e %.2e %.2e %.2e %.2e %.2e\n", 
              outVoid.voidID,
              outVoid.ellip,
              gsl_vector_get(outVoid.eval, 0),
              gsl_vector_get(outVoid.eval, 1),
-             gsl_vector_get(outVoid.eval, 2),
              gsl_matrix_get(outVoid.evec, 0 ,0),
              gsl_matrix_get(outVoid.evec, 1 ,0),
-             gsl_matrix_get(outVoid.evec, 2 ,0),
              gsl_matrix_get(outVoid.evec, 0 ,1),
              gsl_matrix_get(outVoid.evec, 1 ,1),
-             gsl_matrix_get(outVoid.evec, 2 ,1),
-             gsl_matrix_get(outVoid.evec, 0 ,2),
-             gsl_matrix_get(outVoid.evec, 1 ,2),
-             gsl_matrix_get(outVoid.evec, 2 ,2)
             );
 
   } // end iVoid
