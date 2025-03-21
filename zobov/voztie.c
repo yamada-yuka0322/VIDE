@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
 	  }
 	weights[orig[p]] = weightstemp;
 	if(p%1000==0){
-		printf("weights for p. %d: (%10)\n",
+		printf("weights for p. %d: (%10g)\n",
 		   orig[p],weights[orig[p]]);
 	}
       }
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
 	  adjs[pid].nadj = na;
           adjs[pid].adj = (pid_t *)malloc(na*sizeof(pid_t));
 	  if(p%1000==0){
-		printf("number of adjacency for p. %d: (%10)\n",
+		printf("number of adjacency for p. %d: (%10g)\n",
 		   pid,adjs[pid].nadj);
 	}
 	  if (adjs[pid].adj == 0) {
