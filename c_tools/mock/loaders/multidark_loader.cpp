@@ -83,7 +83,6 @@ public:
       simu->Vel[k] = new float[allocated];
     }
     simu->Id = new int64_t[allocated];
-    simu->weight = new float[allocated];
     long *uniqueID = new long[allocated];
     long *index = new long[allocated];
 
@@ -103,7 +102,7 @@ public:
       SingleParticle p;
 
       fp >> p.ID >> p.Pos[0] >> p.Pos[1]
-         >> p.Pos[2] >> p.Vel[2] >> p.Vel[1] >> p.Vel[0] >> p.weight;
+         >> p.Pos[2] >> p.Vel[2] >> p.Vel[1] >> p.Vel[0] >> tempData;
 
       if (p.ID == -99 && 
           p.Pos[0] == -99 && p.Pos[1] == -99 && 
@@ -140,11 +139,8 @@ public:
          min_pos[k] = std::min(min_pos[k], p.Pos[k]);
          max_pos[k] = std::max(max_pos[k], p.Pos[k]);
        }
-       min_weight = std::min(min_weight, p.weight);
-       max_weight = std::max(max_weight, p.weight);
     }
     for (int k = 0; k < 3; k++) cout << boost::format("min[%d] = %g, max[%d] = %g") % k % min_pos[k] % k %max_pos[k] << endl;
-    cout << boost::format("min weight = %g, max weight = %g") % min_weight % max_weight << endl;
 
     applyTransformations(simu);
     simu->NumPart = actualNumPart;
