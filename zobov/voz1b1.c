@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
   char *posfile, outfile[200], *suffix, *outDir;
   PARTADJ *adjs;
   float *vols;
-  realT predict, xmin,xmax,ymin,ymax,zmin,zmax;
+  realT predict, xmin,xmax,ymin,ymax,zmin,zmax, weightmin, weightmax;
   pid_t *orig;
   
   int isitinbuf;
@@ -86,13 +86,15 @@ int main(int argc, char *argv[]) {
   np = posread(posfile,&r,1./boxsize);
   printf("%d particles\n",np);fflush(stdout);
 
-  xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF;
+  xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF; weightmin = BF; weightmax = BF;
   for (i=0; i<np;i++) {
     if (r[i][0]<xmin) xmin = r[i][0]; if (r[i][0]>xmax) xmax = r[i][0];
     if (r[i][1]<ymin) ymin = r[i][1]; if (r[i][1]>ymax) ymax = r[i][1];
     if (r[i][2]<zmin) zmin = r[i][2]; if (r[i][2]>zmax) zmax = r[i][2];
+    if (weight[i]<weightmin) weightmin = weight[i]; if (weight[i]>weightmax) weightmax = weight[i];
   }
   printf("np: %d, x: %f,%f; y: %f,%f; z: %f,%f\n",np,xmin,xmax, ymin,ymax, zmin,zmax); fflush(stdout);
+  printf("np: %d, weight: %f,%f;\n",np,weightmin,weightmax); fflush(stdout);
 
   width = 1./(float)numdiv;
   width2 = 0.5*width;
@@ -341,6 +343,8 @@ int main(int argc, char *argv[]) {
   fwrite(orig,sizeof(pid_t),nvp,out);
   /* Volumes*/
   fwrite(vols,sizeof(float),nvp,out);
+  /* Weights*/
+  fwrite(weight,sizeof(float),nvp,out);
   /* Adjacencies */
   for (i=0;i<nvp;i++) {
     fwrite(&(adjs[i].nadj),1,sizeof(pid_t),out);
