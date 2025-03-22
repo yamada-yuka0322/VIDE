@@ -765,24 +765,24 @@ int main(int argc, char **argv) {
     clock4 = clock();
     interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
     //printf("   %.2f for ellipticity\n", interval);
-  } // iVoid
+   // iVoid
 
-  gsl_eigen_symmv_free(eigw);
+    gsl_eigen_symmv_free(eigw);
     
-  int numWrong = 0;
-  int numHighDen = 0;
-  int numCentral = 0;
-  int numEdge = 0;
-  int numNearZ = 0;
-  int numAreParents = 0;
-  int numTooSmall = 0;
+    int numWrong = 0;
+    int numHighDen = 0;
+    int numCentral = 0;
+    int numEdge = 0;
+    int numNearZ = 0;
+    int numAreParents = 0;
+    int numTooSmall = 0;
 
-  printf(" Picking winners and losers...\n");
-  printf("  Starting with %d voids\n", (int) voids.size());
+    printf(" Picking winners and losers...\n");
+    printf("  Starting with %d voids\n", (int) voids.size());
 
-  for (iVoid = 0; iVoid < voids.size(); iVoid++) {
-    voids[iVoid].accepted = 1;
-  }
+    for (iVoid = 0; iVoid < voids.size(); iVoid++) {
+        voids[iVoid].accepted = 1;
+    }
 
 /*
   int j = 0;
