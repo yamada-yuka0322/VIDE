@@ -145,120 +145,134 @@ int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs) 
   return exitcode;
 }
 
-/* Finds Delaunay adjacencies for 2D point distribution */
+/* Finds Delaunay adjacencies of a set of points */
 int delaunadj_2D (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs) {
-  int dim = 2;               /* 2Dに変更 */
-  boolT ismalloc = False;
-  char flags[250];
-  FILE *outfile = stdout;
-  FILE *errfile = stderr;
-  int exitcode;
-  int curlong, totlong;
+
+  int dim= 2;	            /* dimension of points */
+  boolT ismalloc= False;    /* True if qhull should free points in qh_freeqhull() or reallocation */
+  char flags[250];          /* option flags for qhull, see qh_opt.htm */
+  FILE *outfile= stdout;    /* output from qh_produce_output()
+			       use NULL to skip qh_produce_output() */
+  FILE *errfile= stderr;    /* error messages from qhull code */
+  int exitcode;             /* 0 if no error from qhull */
+  int curlong, totlong;	    /* memory remaining after qh_memfreeshort */
   int i, ver, count;
   int numfacets, numsimplicial, numridges, totneighbors, numneighbors,
-      numcoplanars, numtricoplanars;
+    numcoplanars, numtricoplanars;
   setT *vertices, *vertices2, *vertex_points, *coplanar_points;
   vertexT *vertex, **vertexp;
   vertexT *vertex2, **vertex2p;
   int vertex_i, vertex_n;
   facetT *facet, **facetp, *neighbor, **neighborp;
   pointT *point, **pointp;
+  int numdiv;
+
   PARTADJ adjst;
+
   int errorReported = 0;
 
-  adjst.adj = (int *)malloc(MAXVERVER * sizeof(int));
+  adjst.adj = (int *)malloc(MAXVERVER*sizeof(int));
   if (adjst.adj == NULL) {
     printf("Unable to allocate adjst.adj\n");
     exit(0);
   }
 
-  /* 2D Delaunay triangulation */
-  sprintf(flags, "qhull s Qt");  // 2D用に修正
-  exitcode = qh_new_qhull(dim, nvpall, points, ismalloc, flags, outfile, errfile);
+  /* Delaunay triangulation*/
+  sprintf (flags, "qhull s d Qz");
+  exitcode= qh_new_qhull (dim, nvpall, points, ismalloc,
+                      flags, outfile, errfile);
 
-  if (!exitcode) {
+
+  if (!exitcode) {                  /* if no error */
+    /* 'qh facet_list' contains the convex hull */
+
+    /* From qh_printvneighbors */
     qh_countfacets(qh facet_list, NULL, 0, &numfacets, &numsimplicial,
-                   &totneighbors, &numridges, &numcoplanars, &numtricoplanars);
+		   &totneighbors, &numridges, &numcoplanars, &numtricoplanars);
     qh_vertexneighbors();
-    vertices = qh_facetvertices(qh facet_list, NULL, 0);
-    vertex_points = qh_settemp(nvpall);
-    coplanar_points = qh_settemp(nvpall);
-    qh_setzero(vertex_points, 0, nvpall);
-    qh_setzero(coplanar_points, 0, nvpall);
+    vertices= qh_facetvertices (qh facet_list, NULL, 0);
+    vertex_points= qh_settemp (nvpall);
+    coplanar_points= qh_settemp (nvpall);
+    qh_setzero (vertex_points, 0, nvpall);
+    qh_setzero (coplanar_points, 0, nvpall);
     FOREACHvertex_(vertices)
-      qh_point_add(vertex_points, vertex->point, vertex);
+      qh_point_add (vertex_points, vertex->point, vertex);
     FORALLfacet_(qh facet_list) {
       FOREACHpoint_(facet->coplanarset)
-        qh_point_add(coplanar_points, point, facet);
+	qh_point_add (coplanar_points, point, facet);
     }
     ver = 0;
     FOREACHvertex_i_(vertex_points) {
       (*adjs)[ver].nadj = 0;
       if (vertex) {
-        adjst.nadj = 0;
-        FOREACHneighbor_(vertex) {
-          if ((*adjs)[ver].nadj > -1) {
-            if (neighbor->visitid) {
-              vertices2 = neighbor->vertices;
-              FOREACHvertex2_(vertices2) {
-                if (ver != qh_pointid(vertex2->point)) {
-                  adjst.adj[adjst.nadj] = (int)qh_pointid(vertex2->point);
-                  adjst.nadj++;
-                  if (adjst.nadj > MAXVERVER) {
-                    printf("Increase MAXVERVER to at least %d!\n", adjst.nadj);
-                    exit(0);
-                  }
-                }
-              }
-            } else {
-              printf(" %d", ver);
-              (*adjs)[ver].nadj = -1;
-            }
-          }
-        }
+	/* Count the neighboring vertices, check that all are real
+	   neighbors */
+	adjst.nadj = 0;
+	FOREACHneighbor_(vertex) {
+	  if ((*adjs)[ver].nadj > -1) {
+	    if (neighbor->visitid) {
+	      vertices2 = neighbor->vertices;
+	      FOREACHvertex2_(vertices2) {
+		if (ver != qh_pointid(vertex2->point)) {
+		  adjst.adj[adjst.nadj] = (int)qh_pointid(vertex2->point);
+		  adjst.nadj ++;
+		  if (adjst.nadj > MAXVERVER) {
+		    printf("Increase MAXVERVER to at least %d!\n",adjst.nadj);
+		    exit(0);
+		  }
+		}
+	      }
+	    } else {
+	      printf(" %d",ver);
+	      (*adjs)[ver].nadj = -1; /* There are unreal vertices here */
+	    }
+	  }
+	}
       } else (*adjs)[ver].nadj = -2;
 
-      if (adjst.nadj >= 3) { // 2Dでは3以上に変更
-        qsort((void *)adjst.adj, adjst.nadj, sizeof(int), &compar);
-        count = 1;
-        for (i = 1; i < adjst.nadj; i++)
-          if (adjst.adj[i] != adjst.adj[i - 1]) {
-            if (adjst.adj[i] >= nvpbuf && !errorReported) {
-              errorReported = 1;
-              printf("Guard point encountered. Increase border and/or nguard.\n");
-              printf("P:(%f,%f), G: (%f,%f)\n", points[2 * ver], points[2 * ver + 1],
-                     points[2 * adjst.adj[i]], points[2 * adjst.adj[i] + 1]);
-            }
-            count++;
-          }
-        (*adjs)[ver].adj = (int *)malloc(count * sizeof(int));
-        if ((*adjs)[ver].adj == NULL) {
-          printf("Unable to allocate (*adjs)[ver].adj\n");
-          exit(0);
-        }
-        (*adjs)[ver].adj[0] = adjst.adj[0];
-        count = 1;
-        for (i = 1; i < adjst.nadj; i++)
-          if (adjst.adj[i] != adjst.adj[i - 1]) {
-            (*adjs)[ver].adj[count] = adjst.adj[i];
-            count++;
-          }
-        (*adjs)[ver].nadj = count;
+      /* Enumerate the unique adjacencies*/
+      if (adjst.nadj >= 3) {
+	qsort((void *)adjst.adj, adjst.nadj, sizeof(int), &compar);
+	count = 1;
+
+	for (i=1; i<adjst.nadj; i++)
+	  if (adjst.adj[i] != adjst.adj[i-1]) {
+	    if (adjst.adj[i] >= nvpbuf && !errorReported) {
+        errorReported = 1;
+	      printf("Guard point encountered.  Increase border and/or nguard.\n");
+	      printf("P:(%f,%f), G: (%f,%f)\n",points[2*ver],points[2*ver+1],
+		     points[2*adjst.adj[i]],points[2*adjst.adj[i]+1]);
+	    }
+	    count++;
+	  }
+	(*adjs)[ver].adj = (int *)malloc(count*sizeof(int));
+	if ((*adjs)[ver].adj == NULL) {
+	  printf("Unable to allocate (*adjs)[ver].adj\n");
+	  exit(0);
+	}
+	(*adjs)[ver].adj[0] = adjst.adj[0];
+	count = 1;
+	for (i=1; i<adjst.nadj; i++)
+	  if (adjst.adj[i] != adjst.adj[i-1]) {
+	    (*adjs)[ver].adj[count] = adjst.adj[i];
+	    count++;
+	  }
+	(*adjs)[ver].nadj = count;
       } else {
-        printf("Number of adjacencies %d < 3, particle %d -> %d\n", adjst.nadj, ver, ver);
-        exit(0);
+	printf("Number of adjacencies %d < 4, particle %d -> %d\n",adjst.nadj,ver,ver);
+	exit(0);
       }
       ver++;
       if (ver == nvp) break;
     }
-    qh_settempfree(&coplanar_points);
-    qh_settempfree(&vertex_points);
-    qh_settempfree(&vertices);
+    qh_settempfree (&coplanar_points);
+    qh_settempfree (&vertex_points);
+    qh_settempfree (&vertices);
   }
-  qh_freeqhull(!qh_ALL);
-  qh_memfreeshort(&curlong, &totlong);
+  qh_freeqhull(!qh_ALL);                 /* free long memory */
+  qh_memfreeshort (&curlong, &totlong);  /* free short memory and memory allocator */
   if (curlong || totlong)
-    fprintf(errfile, "qhull internal warning (delaunadj_2D): did not free %d bytes of long memory (%d pieces)\n", totlong, curlong);
+    fprintf (errfile, "qhull internal warning (delaunadj): did not free %d bytes of long memory (%d pieces)\n", totlong, curlong);
   free(adjst.adj);
   return exitcode;
 }
