@@ -297,7 +297,7 @@ class Catalog:
 
 # -----------------------------------------------------------------------------
 def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
-                    untrimmed=False):
+                    untrimmed=False, dim=3):
 
 # loads a void catalog
 # by default, loads parent-level voids with central densities greater than 0.2*mean
@@ -305,7 +305,6 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
 #   dataPortion: "central" or "all"
 #   loadParticles: if True, also load particle information
 #   untrimmed: if True, catalog contains all voids, regardless of density or hierarchy level
-
   sys.stdout.flush()
 
   catalog = Catalog()
@@ -363,8 +362,8 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
                                numChildren = 0,
                                centralDen = 0.,
                                ellipticity = 0.,
-                               eigenVals = np.zeros((3)),
-                               eigenVecs = np.zeros((3,3)),
+                               eigenVals = np.zeros((dim)),
+                               eigenVecs = np.zeros((dim,dim)),
                                ))
 
   catalog.numVoids = len(catalog.voids)
@@ -405,22 +404,11 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
   catData = np.loadtxt(fileName, comments="#")
   for (iLine,line) in enumerate(catData):
     catalog.voids[iLine].ellipticity = float(line[1])
-
-    catalog.voids[iLine].eigenVals[0] = float(line[2])
-    catalog.voids[iLine].eigenVals[1] = float(line[3])
-    catalog.voids[iLine].eigenVals[2] = float(line[4])
-
-    catalog.voids[iLine].eigenVecs[0][0] = float(line[5])
-    catalog.voids[iLine].eigenVecs[0][1] = float(line[6])
-    catalog.voids[iLine].eigenVecs[0][2] = float(line[7])
-
-    catalog.voids[iLine].eigenVecs[1][0] = float(line[8])
-    catalog.voids[iLine].eigenVecs[1][1] = float(line[9])
-    catalog.voids[iLine].eigenVecs[1][2] = float(line[10])
-
-    catalog.voids[iLine].eigenVecs[2][0] = float(line[11])
-    catalog.voids[iLine].eigenVecs[2][1] = float(line[12])
-    catalog.voids[iLine].eigenVecs[2][2] = float(line[13])
+    
+    for j in range(dim):
+      catalog.voids[iLine].eigenVals[j] = float(line[j+2])
+      for k in range(dim):
+        catalog.voids[iLine].eigenVecs[j][k] = float(line[(j+1)*dim+k+2])
 
     iLine += 1
 
