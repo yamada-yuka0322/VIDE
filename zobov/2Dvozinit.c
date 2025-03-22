@@ -143,7 +143,6 @@ int main(int argc, char *argv[]) {
       printf("b=(%d,%d), c=(%f,%f), nvp=%d, nvpbuf=%d\n",
 	     b[0],b[1],c[0],c[1],nvp,nvpbuf);
     }
-   }
   }
   printf("Nvp range: %d,%d\n",nvpmin,nvpmax);
   printf("Nvpbuf range: %d,%d\n",nvpbufmin,nvpbufmax);
@@ -181,7 +180,6 @@ int main(int argc, char *argv[]) {
       p++;
       if ((p == numThreads)) { fprintf(scr, "wait\n"); p = 0; }
     }
-   }
   }
   fprintf(scr,"wait\n");
   fprintf(scr,"%s/2Dvoztie %d %s %s %d\n", vobozPath, numdiv,suffix, outDir, mockIndex);
