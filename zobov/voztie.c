@@ -189,7 +189,7 @@ int main(int argc, char *argv[]) {
 
       for (p=0; p<nvp; p++) {
 	if(p%1000==0){
-		printf("particle p. %d: volume %10g weight %10g num adj &d\n",
+		printf("particle p. %d: volume %10g weight %10g num adj %d\n",
 		   p,vols[p], weights[p], adjs[p].nadj);
 	}
       }
@@ -265,6 +265,7 @@ int main(int argc, char *argv[]) {
   printf("Average # adjacencies = %lf (%f for Poisson)\n",avgnadj,
 	 48.*3.141593*3.141593/35.+2.);
   printf("Average volume = %lf\n",avgvol);
+  printf("Average weighted density = %lf\n",avgdens_weight);
     
   /* Now the output! */
 
