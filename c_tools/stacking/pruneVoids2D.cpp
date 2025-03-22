@@ -1100,7 +1100,7 @@ void outputVoids(string outputDir, string sampleName, string prefix,
      if (phi < 0) phi += 2.*M_PI;
      double RA = phi * 180./M_PI;
 
-     outVoid.redshiftInMpc = outVoid.macrocenter[2]
+     outVoid.redshiftInMpc = outVoid.macrocenter[2];
            
      double theta = acos((outVoid.macrocenter[0]-boxLen[0]/2.) / 
                           outVoid.redshiftInMpc);
