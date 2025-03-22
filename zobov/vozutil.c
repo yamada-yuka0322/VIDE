@@ -178,7 +178,7 @@ int delaunadj_2D (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adj
   }
 
   /* Delaunay triangulation*/
-  sprintf (flags, "qhull s d Qz");
+  sprintf (flags, "qhull d Qz");
   exitcode= qh_new_qhull (dim, nvpall, points, ismalloc,
                       flags, outfile, errfile);
 
