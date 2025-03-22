@@ -339,10 +339,10 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
   if sample.dataType == "observation":
     maskIndex = open(zobovDir+"/mask_index.txt", "r").read()
     totalPart = open(zobovDir+"/total_particles.txt", "r").read()
-    maxDen = mergingThreshold*float(maskIndex)/float(totalPart)
+    maxDen = float(mergingThreshold)*float(maskIndex)/float(totalPart)
   else:
     maskIndex = -1
-    maxDen = mergingThreshold
+    maxDen = float(mergingThreshold)
     if numZobovDivisions == 1:
       print("  WARNING! You are using a single ZOBOV division with a simulation. Periodic boundaries will not be respected!")
 
@@ -446,8 +446,9 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
       volFileToUse = zobovDir+"/vol_"+sampleName+".dat"
 
 
+    print(f"average density : {density_ave}, merging threshold: {mergingThreshold}\n")
     maxDen *= density_ave
-    print(f"density threshold is {maxDen}")
+    print(maxDen)
     cmd = [binPath+"/jozov2", \
            zobovDir+"/adj_"+sampleName+".dat", \
            volFileToUse, \
