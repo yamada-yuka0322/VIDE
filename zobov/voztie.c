@@ -325,7 +325,7 @@ int main(int argc, char *argv[]) {
   fclose(vol);
 
   /*(Weighted) average Density*/
-  densAve = fopen(densAvefile,"w");
+  densAve = fopen(densAvefile,"wb");
   if (densAve == NULL) {
     printf("Unable to open %s\n",densAvefile);
     exit(0);
