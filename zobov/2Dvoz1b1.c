@@ -82,10 +82,11 @@ int main(int argc, char *argv[]) {
   np = posread(posfile,&r,1./boxsize);
   printf("%d particles\n",np);fflush(stdout);
 
-  xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF; weightmin = BF; weightmax = BF;
+  xmin = BF; xmax = -BF; ymin = BF; ymax = -BF; zmin = BF; zmax = -BF; weightmin = BF; weightmax = -BF;
   for (i=0; i<np;i++) {
     if (r[i][0]<xmin) xmin = r[i][0]; if (r[i][0]>xmax) xmax = r[i][0];
     if (r[i][1]<ymin) ymin = r[i][1]; if (r[i][1]>ymax) ymax = r[i][1];
+    if (r[i][2]<zmin) zmin = r[i][2]; if (r[i][2]>zmax) zmax = r[i][2];
     if (weight[i]<weightmin) weightmin = weight[i]; if (weight[i]>weightmax) weightmax = weight[i];
   }
   printf("np: %d, x: %f,%f; y: %f,%f; z: %f,%f\n",np,xmin,xmax, ymin,ymax, zmin,zmax); fflush(stdout);
@@ -177,7 +178,7 @@ int main(int argc, char *argv[]) {
     }
   }
   printf("nvp = %d\n",nvp);
-  printf("x: %f,%f; y: %f,%f; z:%f,%f\n",xmin,xmax,ymin,ymax,zmin,zmax);
+  printf("x: %f,%f; y: %f,%f\n",xmin,xmax,ymin,ymax);
   nvpbuf = nvp;
   for (i=0; i<np; i++) {
     isitinbuf = 1;
@@ -206,7 +207,7 @@ int main(int argc, char *argv[]) {
     }
   }
   printf("nvpbuf = %d\n",nvpbuf);
-  printf("x: %f,%f; y: %f,%f; z:%f,%f\n",xmin,xmax,ymin,ymax,zmin,zmax);
+  printf("x: %f,%f; y: %f,%f\n",xmin,xmax,ymin,ymax);
   nvpall = nvpbuf;
   predict = pow(width+2.*bf,3)*(float)np;
   printf("There should be ~ %f points; there are %d\n",predict,nvpbuf);
