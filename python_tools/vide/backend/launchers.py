@@ -446,8 +446,8 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
       volFileToUse = zobovDir+"/vol_"+sampleName+".dat"
 
 
-    print(f"average density : {density_ave}, merging threshold: {mergingThreshold}\n")
-    maxDen *= density_ave
+    print(f"average density : {density_ave[0]}, merging threshold: {mergingThreshold}\n")
+    maxDen *= density_ave[0]
     print(maxDen)
     cmd = [binPath+"/jozov2", \
            zobovDir+"/adj_"+sampleName+".dat", \
@@ -497,12 +497,12 @@ def launchPrune(sample, binPath,
   if sample.dataType == "observation":
     mockIndex = open(zobovDir+"/mask_index.txt", "r").read()
     totalPart = open(zobovDir+"/total_particles.txt", "r").read()
-    maxDen = mergingThreshold*float(mockIndex)/float(totalPart)*density_ave
+    maxDen = mergingThreshold*float(mockIndex)/float(totalPart)*density_ave[0]
     observationLine = " --isObservation"
     #periodicLine = " --periodic=''"
   else:
     mockIndex = -1
-    maxDen = mergingThreshold*density_ave
+    maxDen = mergingThreshold*density_ave[0]
     observationLine = ""
 
   periodicLine = " --periodic='" + getPeriodic(sample) + "'"
