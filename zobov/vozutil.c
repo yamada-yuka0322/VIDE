@@ -376,35 +376,35 @@ int vorvol (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, f
   return exitcode;
 }
 
-int vorvol_2D (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, float *vol) {
-  int dim= 2;               /* 2D の場合の次元 */
-  boolT ismalloc= False;    /* qhull がポイントを解放するか */
-  char flags[250];          /* qhull のオプション */
-  FILE *outfile= NULL;    /* qh_produce_output() の出力 */
-  FILE *errfile= stderr;    /* エラーメッセージ用ファイル */
-  int exitcode;             /* qhull の実行結果 */
-  facetT *facet;            /* FORALLfacets で使用 */
-  int curlong, totlong;     /* メモリ解放チェック */
-
-  coordT *point, *normp, *coordp, *feasiblep, *deladj;
-  int i, j, k;
-  boolT zerodiv;
+int vorvol_2D (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, float *area) {
+  int dim = 2;              /* 2D */
+  boolT ismalloc = False;
+  char flags[250];
+  FILE *outfile = NULL;
+  FILE *errfile = stderr;
+  int exitcode;
+  facetT *facet;
+  int curlong, totlong;
+  
+  coordT *point, *deladj;
+  int i, j;
   float runsum;
 
-  /* points 配列の作成 (2D 用) */
-  for (i=0; i<numpoints; i++) {
+  /* Adjacency coordinates を2次元に変換 */
+  for (i = 0; i < numpoints; i++) {
     runsum = 0.;
-    deladj = deladjs + 2*i;
-    point = points + 3*i;
-    for (j=0; j<2; j++) {
-      runsum += deladj[j]*deladj[j];
+    deladj = deladjs + 2 * i;
+    point = points + 3 * i;  /* Homogeneous座標系を考慮 */
+    for (j = 0; j < 2; j++) {
+      runsum += deladj[j] * deladj[j];
       point[j] = deladj[j];
     }
-    point[2] = -0.5*runsum;
+    point[2] = -0.5 * runsum; /* Homogeneous座標 */
   }
-  sprintf (flags, "qhull QJ");
+  
+  sprintf(flags, "qhull H0");
 
-  exitcode= qh_new_qhull (3, numpoints, points, ismalloc, flags, outfile, errfile);
+  exitcode = qh_new_qhull(3, numpoints, points, ismalloc, flags, outfile, errfile);
 
   numpoints = 0;
   if (!exitcode) {
@@ -414,44 +414,28 @@ int vorvol_2D (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints
 
     j = 0;
     FORALLfacets {
-      if (!qh feasible_point) {
-        fprintf (stdout, "qhull input error: option 'Fp' needs qh feasible_point\n");
-        qh_errexit(qh_ERRinput, NULL, NULL);
-      }
-      point= coordp= intpoints + j*2;
+      point = intpoints + j * 2;
       j++;
-      normp= facet->normal;
-      feasiblep= qh feasible_point;
-      if (facet->offset < -qh MINdenom) {
-        for (k= qh hull_dim; k--; )
-          *(coordp++)= (*(normp++) / - facet->offset) + *(feasiblep++);
-      } else {
-        for (k= qh hull_dim; k--; ) {
-          *(coordp++)= qh_divzero (*(normp++), facet->offset, qh MINdenom_1, &zerodiv) + *(feasiblep++);
-          if (zerodiv) {
-            qh_memfree (point, qh normal_size);
-            printf("LABELprintinfinite\n");
-            exit(0);
-          }
-        }
+      for (i = 0; i < 2; i++) {
+        point[i] = facet->normal[i] / -facet->offset;
       }
     }
   }
-  qh_freeqhull (!qh_ALL);
-  qh_memfreeshort (&curlong, &totlong);
 
-  /* 面積計算（体積の代わり） */
-  sprintf (flags, "qhull FA");
-  exitcode= qh_new_qhull (dim, numpoints, intpoints, ismalloc, flags, outfile, errfile);
+  qh_freeqhull(!qh_ALL);
+  qh_memfreeshort(&curlong, &totlong);
+
+  /* 面積計算 */
+  sprintf(flags, "qhull FA");
+  exitcode = qh_new_qhull(dim, numpoints, intpoints, ismalloc, flags, outfile, errfile);
 
   qh_getarea(qh facet_list);
-  *vol = qh totarea;
+  *area = qh totarea;
 
-  qh_freeqhull (!qh_ALL);
-  qh_memfreeshort (&curlong, &totlong);
+  qh_freeqhull(!qh_ALL);
+  qh_memfreeshort(&curlong, &totlong);
   if (curlong || totlong)
-    fprintf (errfile, "qhull internal warning (vorvol): did not free %d bytes of long memory (%d pieces)\n", totlong, curlong);
+    fprintf(errfile, "qhull internal warning (vorarea): did not free %d bytes of long memory (%d pieces)\n", totlong, curlong);
 
   return exitcode;
 }
-
