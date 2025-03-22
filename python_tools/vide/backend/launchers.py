@@ -376,7 +376,7 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
     # get the weighted average density of voronoi cells
     aveFile = zobovDir+"/densAve_"+sampleName+".dat"
     with open(aveFile, mode="rb") as File:
-        density_ave = np.fromfile(File, dtype=np.float32,count=1)
+        density_ave = np.fromfile(File, dtype=np.float64,count=1)
       
     # re-weight the volumes based on selection function
     if sample.dataType == "observation" and \
@@ -490,7 +490,7 @@ def launchPrune(sample, binPath,
   # get the weighted average density of voronoi cells
   avefile = zobovDir+"/densAve_"+sampleName+".dat"
   with open(aveFile, mode="rb") as File:
-    density_ave = np.fromfile(File, dtype=np.float32,count=1)
+    density_ave = np.fromfile(File, dtype=np.float64,count=1)
 
   if sample.dataType == "observation":
     mockIndex = open(zobovDir+"/mask_index.txt", "r").read()
