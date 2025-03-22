@@ -447,6 +447,7 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
 
 
     maxDen *= density_ave
+    print(f"density threshold is {maxDen}")
     cmd = [binPath+"/jozov2", \
            zobovDir+"/adj_"+sampleName+".dat", \
            volFileToUse, \
