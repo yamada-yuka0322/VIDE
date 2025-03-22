@@ -35,15 +35,15 @@ int main(int argc, char *argv[]) {
   int b[2];
   double totalvol;
 
-  if (argc != 10) {
+  if (argc != 9) {
     printf("Wrong number of arguments.\n");
     printf("arg1: position file\n");
     printf("arg2: border size\n");
     printf("arg3: boxsize\n");
     printf("arg4: suffix\n");
     printf("arg5: number of divisions\n");
-    printf("arg6-8: b[0-2]\n\n");
-    printf("arg9: output directory\n");
+    printf("arg6-7: b[0-1]\n\n");
+    printf("arg8: output directory\n");
     exit(0);
   }
   posfile = argv[1];
@@ -75,11 +75,7 @@ int main(int argc, char *argv[]) {
     printf("That's no b index; try again.\n");
     exit(0);
   }
-  if (sscanf(argv[8],"%d",&b[2]) != 1) {
-    printf("That's no b index; try again.\n");
-    exit(0);
-  }
-  outDir = argv[9];
+  outDir = argv[8];
   
   /* Boxsize should be the range in r, yielding a range 0-1 */
   np = readPosAndIntensity(posfile,&r,&weight,1./boxsize);
