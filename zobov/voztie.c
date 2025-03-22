@@ -30,7 +30,8 @@ int main(int argc, char *argv[]) {
 
   pid_t i,j,k,p,nout;
   pid_t nvp,npnotdone,nvpmax, nvpsum, *orig;
-  double avgnadj, avgvol, avgdens_weight;
+  double avgnadj, avgvol;
+  float avgdens_weight;
 
   int numRemoved = 0;
   
@@ -245,7 +246,7 @@ int main(int argc, char *argv[]) {
 
   // END PMS
 
-  npnotdone = 0; avgnadj = 0.; avgvol = 0.;
+  npnotdone = 0; avgnadj = 0.; avgvol = 0., avgdens_weight = 0.;
   for (p=0;p<np;p++) {
     // PMS
     if (vols[p] == 1.e-29) continue;
@@ -265,7 +266,7 @@ int main(int argc, char *argv[]) {
   printf("Average # adjacencies = %lf (%f for Poisson)\n",avgnadj,
 	 48.*3.141593*3.141593/35.+2.);
   printf("Average volume = %lf\n",avgvol);
-  printf("Average weighted density = %lf\n",avgdens_weight);
+  printf("Average weighted density = %f\n",avgdens_weight);
     
   /* Now the output! */
 
