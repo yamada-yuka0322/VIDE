@@ -1121,8 +1121,7 @@ void outputVoids(string outputDir, string sampleName, string prefix,
              gsl_matrix_get(outVoid.evec, 0 ,0),
              gsl_matrix_get(outVoid.evec, 1 ,0),
              gsl_matrix_get(outVoid.evec, 0 ,1),
-             gsl_matrix_get(outVoid.evec, 1 ,1),
-            );
+             gsl_matrix_get(outVoid.evec, 1 ,1));
 
   } // end iVoid
 
