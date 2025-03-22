@@ -374,7 +374,7 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
     log.close()
 
     # get the weighted average density of voronoi cells
-    avefile = zobovDir+"/densAve_"+sampleName+".dat"
+    aveFile = zobovDir+"/densAve_"+sampleName+".dat"
     with open(aveFile, mode="rb") as File:
         density_ave = np.fromfile(File, dtype=np.float32,count=1)
       
