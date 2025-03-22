@@ -7,7 +7,7 @@
 #define MAX(a,b) ( ((a) < (b)) ? (a) : (b) )
 
 int delaunadj_2D (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs);
-int vorvol_2D (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, float *vol);
+int vorvol_2D (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, float *area);
 int posread(char *posfile, float ***p, float fact);
 int readPosAndIntensity(char *posfile, float ***p, float **intensity, float fact);
 
