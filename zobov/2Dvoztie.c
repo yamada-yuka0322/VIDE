@@ -242,7 +242,7 @@ int main(int argc, char *argv[]) {
 
   // END PMS
 
-  npnotdone = 0; avgnadj = 0.; avgvol = 0.;
+  npnotdone = 0; avgnadj = 0.; avgvol = 0.; avgdens_weight = 0.;
   for (p=0;p<np;p++) {
     // PMS
     if (vols[p] == 1.e-29) continue;
