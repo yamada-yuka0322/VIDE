@@ -328,7 +328,7 @@ int main(int argc, char *argv[]) {
     printf("Unable to open %s\n",densAvefile);
     exit(0);
   }
-  fwrite(avgdens_weight,1, sizeof(float),densAve);
+  fwrite(avgdens_weight,1, sizeof(double),densAve);
 
   fclose(densAve);
 
