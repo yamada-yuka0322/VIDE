@@ -246,7 +246,7 @@ for (j = 0; j < NGUARD + 1; j++) {
   }
   
   printf("Added guard points to total %d points (should be %d)\n",nvpall,
-	 nvpbuf + 4*(NGUARD+1)*);
+	 nvpbuf + 4*(NGUARD+1);
   printf("x: %f,%f; y: %f,%f\n",xmin,xmax,ymin,ymax);
   
   /* Do tesselation*/
