@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
   nvpbuf += 4*(NGUARD+1); /* number of guard
 					points */
 
-  parts = (coordT *)malloc(3*nvpbuf*sizeof(coordT));
+  parts = (coordT *)malloc(2*nvpbuf*sizeof(coordT));
   orig = (pid_t *)malloc(nvpbuf*sizeof(pid_t));
 
   if (parts == NULL) {
