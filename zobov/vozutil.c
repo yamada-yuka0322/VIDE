@@ -157,8 +157,10 @@ int delaunadj_2D (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adj
   int i, ver, count;
   int numfacets, numsimplicial, numridges, totneighbors, numneighbors,
       numcoplanars, numtricoplanars;
-  setT *vertices, *vertex_points, *coplanar_points;
+  setT *vertices, *vertices2, *vertex_points, *coplanar_points;
   vertexT *vertex, **vertexp;
+  vertexT *vertex2, **vertex2p;
+  int vertex_i, vertex_n;
   facetT *facet, **facetp, *neighbor, **neighborp;
   pointT *point, **pointp;
   PARTADJ adjst;
