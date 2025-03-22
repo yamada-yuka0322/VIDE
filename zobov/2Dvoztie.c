@@ -30,7 +30,8 @@ int main(int argc, char *argv[]) {
 
   pid_t i,j,k,p,nout;
   pid_t nvp,npnotdone,nvpmax, nvpsum, *orig;
-  double avgnadj, avgvol, avgdens_weight;
+  double avgnadj, avgvol;
+  float avgdens_weight;
 
   int numRemoved = 0;
   
@@ -186,7 +187,7 @@ int main(int argc, char *argv[]) {
 
       for (p=0; p<nvp; p++) {
 	if(p%1000==0){
-		printf("particle p. %d: volume %10g weight %10g num adj &d\n",
+		printf("particle p. %d: volume %10g weight %10g num adj %d\n",
 		   p,vols[p], weights[p], adjs[p].nadj);
 	}
       }
@@ -250,17 +251,18 @@ int main(int argc, char *argv[]) {
     avgnadj += (double)(adjs[p].nadj);
     avgvol += (double)(vols[p]);
     //weighted average density
-    avgdens_weight += (double)(weights[p])/(double)(vols[p]);
+    avgdens_weight += (float)(weights[p])/(float)(vols[p]);
   }
   if (npnotdone > 0)
     printf("%d particles not done!\n", npnotdone);
   printf("%d particles done more than once.\n",nvpsum-np);
   avgnadj /= (double)np;
   avgvol /= (double)np;
-  avgdens_weight /= (double)np;
+  avgdens_weight /= (float)np;
   printf("Average # adjacencies = %lf (%f for Poisson)\n",avgnadj,
 	 48.*3.141593*3.141593/35.+2.);
   printf("Average volume = %lf\n",avgvol);
+  printf("weighted Average volume = %f\n",avgdens_weight);
     
   /* Now the output! */
 
@@ -319,12 +321,12 @@ int main(int argc, char *argv[]) {
   fclose(vol);
 
   /*(Weighted) average Density*/
-  densAve = fopen(densAvefile,"w");
+  densAve = fopen(densAvefile,"wb");
   if (densAve == NULL) {
     printf("Unable to open %s\n",densAvefile);
     exit(0);
   }
-  fwrite(&avgdens_weight, sizeof(double), 1, densAve);
+  fwrite(&avgdens_weight, sizeof(float), 1, densAve);
 
   fclose(densAve);
 
