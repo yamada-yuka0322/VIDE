@@ -1,0 +1,13 @@
+prefix=/mnt/data/yuka/repository/vide_public/build/temp.linux-x86_64-cpython-310/ext_install
+exec_prefix=${prefix}
+libdir=/mnt/data/yuka/repository/vide_public/build/temp.linux-x86_64-cpython-310/ext_install/lib
+includedir=${prefix}/include
+ccompiler=/usr/bin/gcc-11
+
+Name: netcdf-c
+Description: NetCDF Client Library for C
+URL: http://www.unidata.ucar.edu/netcdf
+Version: 4.7.3
+Libs: -L${libdir}  -L/mnt/data/yuka/repository/vide_public/build/temp.linux-x86_64-cpython-310/ext_install/lib -lnetcdf -lhdf5_hl -lhdf5 -lm -lz /usr/lib/x86_64-linux-gnu/libdl.a
+Libs.private: -lhdf5_hl -lhdf5 -lm -lz /usr/lib/x86_64-linux-gnu/libdl.a
+Cflags: -I${includedir}

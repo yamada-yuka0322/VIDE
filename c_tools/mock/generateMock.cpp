@@ -292,8 +292,9 @@ void selectBox(SimuData *simu, std::vector<long>& targets, generateMock_info& ar
       for (int j = 0; j < 3; j++) {
 	acceptance = 
 	  acceptance &&
-	  (simu->Pos[j][i] > ranges[j][0]) && 
-	  (simu->Pos[j][i] <= ranges[j][1]);	
+	  ((simu->Pos[0][i] > ranges[0][0]) && 
+	  (simu->Pos[0][i] <= ranges[0][1]))||((simu->Pos[1][i] > ranges[1][0]) &&
+          (simu->Pos[1][i] <= ranges[1][1]));	
         p.Pos[j] = simu->Pos[j][i];
         p.Vel[j] = (simu->Vel[j] != 0) ? simu->Vel[j][i] : 0;
       }
@@ -422,7 +423,8 @@ void buildBox(SimuData *simu, long num_targets, long loaded,
       
       for (int j = 0; j < 3; j++)
 	{
-	  boxed->Pos[j][loaded] = max(min((simu->Pos[j][pid]-ranges[j*2])*mul[j], double(1)), double(0));
+	  //boxed->Pos[j][loaded] = max(min((simu->Pos[j][pid]-ranges[j*2])*mul[j], double(1)), double(0));
+	  boxed->Pos[j][loaded] = max(min((simu->Pos[j][pid]-ranges[j*2])*mul[0], double(1)), double(0));
 	  boxed->Vel[j][loaded] = simu->Vel[j][pid];
 	  assert(boxed->Pos[j][loaded] >= 0);
 	  assert(boxed->Pos[j][loaded] <= 1);

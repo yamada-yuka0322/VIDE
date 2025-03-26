@@ -245,9 +245,10 @@ int main(int argc, char *argv[]) {
   npnotdone = 0; avgnadj = 0.; avgvol = 0.; avgdens_weight = 0.;
   for (p=0;p<np;p++) {
     // PMS
-    if (vols[p] == 1.e-29) continue;
+    if ((vols[p] == 1.e-29)||(weights[p]>1.e+28)) continue;
     // END PMS
     if (vols[p] == -1.) npnotdone++;
+    //printf("volume: %f weight %f \n", vols[p], weights[p]);
     avgnadj += (double)(adjs[p].nadj);
     avgvol += (double)(vols[p]);
     //weighted average density

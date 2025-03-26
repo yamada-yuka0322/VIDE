@@ -269,6 +269,18 @@ int delaunadj_2D (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adj
     qh_settempfree (&vertex_points);
     qh_settempfree (&vertices);
   }
+
+  /* 隣接点とその座標を表示 */
+  printf("\n--- Delaunay Neighbors ---\n");
+  for (int ver = 0; ver < nvp; ver++) {
+    printf("Point %d (%.6f, %.6f): ", ver, points[2*ver], points[2*ver+1]);
+    for (int i = 0; i < (*adjs)[ver].nadj; i++) {
+      int adj_index = (*adjs)[ver].adj[i];
+      printf("[%d: (%.6f, %.6f)] ", adj_index, points[2*adj_index], points[2*adj_index+1]);
+    }
+    printf("\n");
+  }
+
   qh_freeqhull(!qh_ALL);                 /* free long memory */
   qh_memfreeshort (&curlong, &totlong);  /* free short memory and memory allocator */
   if (curlong || totlong)
@@ -419,7 +431,11 @@ int vorvol_2D (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints
       for (i = 0; i < 2; i++) {
         point[i] = facet->normal[i] / -facet->offset;
       }
+
+      printf("nx %f, ny %f, nz %f, offset %f\n" , facet->normal[0], facet->normal[1], facet->normal[2], -facet->offset);
+      // 正規化 (オプション: 法線ベクトルが単位ベクトルでない場合)
     }
+  //}
   }
 
   qh_freeqhull(!qh_ALL);
@@ -439,3 +455,74 @@ int vorvol_2D (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints
 
   return exitcode;
 }
+
+int old_vorvol_2D(coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, float *area) {
+  int dim = 2; // 2Dに変更
+  boolT ismalloc = False;
+  char flags[250];
+  FILE *outfile = NULL;
+  FILE *errfile = stderr;
+  int exitcode;
+  facetT *facet;
+  int curlong, totlong;
+  coordT *point, *deladj;
+  int i, j;
+  float runsum;
+  int num_facets = 0;  // 修正点
+
+  // Adjacency coordinates を2次元に変換
+  for (i = 0; i < numpoints; i++) {
+    runsum = 0.;
+    deladj = deladjs + 2 * i;
+    point = points + 2 * i;  // 3Dではなく2D
+
+    for (j = 0; j < 2; j++) {
+      runsum += deladj[j] * deladj[j];
+      point[j] = deladj[j];
+    }
+  }
+
+  // Qhull 実行
+  sprintf(flags, "qhull v Qbb Qx FA");
+  exitcode = qh_new_qhull(dim, numpoints, points, ismalloc, flags, outfile, errfile);
+  
+  if (!exitcode) {
+    FORALLfacets {
+      num_facets++;
+    }
+    j = 0;
+    FORALLfacets {
+      point = intpoints + j * 2;
+      j++;
+      for (i = 0; i < 2; i++) {
+        point[i] = facet->normal[i] / -facet->offset;
+      }
+    }
+  }
+
+  qh_freeqhull(!qh_ALL);
+  qh_memfreeshort(&curlong, &totlong);
+
+  // 面積計算
+  if (num_facets == 0) {
+    fprintf(errfile, "qhull error: no Voronoi facets found\n");
+    return -1;
+  }
+
+  sprintf(flags, "qhull v Qx Qz FA");
+  exitcode = qh_new_qhull(dim, num_facets, intpoints, ismalloc, flags, outfile, errfile);
+
+  if (!exitcode) {
+    qh_getarea(qh facet_list);
+    *area = qh totarea;
+  }
+
+  qh_freeqhull(!qh_ALL);
+  qh_memfreeshort(&curlong, &totlong);
+
+  if (curlong || totlong)
+    fprintf(errfile, "qhull internal warning (vorarea): did not free %d bytes of long memory (%d pieces)\n", totlong, curlong);
+
+  return exitcode;
+}
+

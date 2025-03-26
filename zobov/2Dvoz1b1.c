@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 #include "libqhull/qhull_a.h"
 #include "voz.h"
 
@@ -10,6 +13,32 @@ int delaunadj_2D (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adj
 int vorvol_2D (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, float *area);
 int posread(char *posfile, float ***p, float fact);
 int readPosAndIntensity(char *posfile, float ***p, float **intensity, float fact);
+
+// 座標構造体
+typedef struct {
+    float x, y;
+} Point;
+
+// 二等分線の交点を計算する関数
+void bisector(Point p1, Point p2, Point *midpoint, Point *perpendicular) {
+    midpoint->x = (p1.x + p2.x) / 2;
+    midpoint->y = (p1.y + p2.y) / 2;
+    
+    // 垂直方向のベクトルを計算
+    perpendicular->x = p2.y - p1.y;
+    perpendicular->y = p1.x - p2.x;
+}
+
+// Shoelace Theorem を使用して面積を計算する関数
+float shoelace_theorem(Point *vertices, int num_vertices) {
+    float area = 0;
+    for (int i = 0; i < num_vertices; i++) {
+        int j = (i + 1) % num_vertices;
+        area += vertices[i].x * vertices[j].y - vertices[j].x * vertices[i].y;
+    }
+    return fabs(area) / 2.0;
+}
+
 
 int main(int argc, char *argv[]) {
   int exitcode;
@@ -191,6 +220,7 @@ int main(int argc, char *argv[]) {
       isitinbuf = isitinbuf && (fabs(rtemp[d])<totwidth2);
       isitinmain = isitinmain && (fabs(rtemp[d]) <= width2);
     }
+    //printf("for particle %d, x: %f, y:%f \n", i, rtemp[0], rtemp[1]);
     if (isitinbuf && !isitinmain) {
       /*printf("%3.3f ",sqrt(rtemp[0]*rtemp[0] + rtemp[1]*rtemp[1] +
 	rtemp[2]*rtemp[2]));
@@ -265,18 +295,18 @@ for (j = 0; j < NGUARD + 1; j++) {
   
   for (i=0; i<nvp; i++) { /* Just the original particles
 			     Assign adjacency coordinate array*/
-    /* Volumes */
+
     for (j = 0; j < adjs[i].nadj; j++)
       DL {
 	deladjs[2*j + d] = parts[2*adjs[i].adj[j]+d] - parts[2*i+d];
 	if (deladjs[2*j+d] < -0.5) deladjs[2*j+d]++;
 	if (deladjs[2*j+d] > 0.5) deladjs[2*j+d]--;
       }
+
     
     exitcode = vorvol_2D(deladjs, points, intpoints, adjs[i].nadj, &(vols[i]));
     vols[i] *= (float)np;
-    if (i % 1000 == 0)
-      printf("%d: %d, volume: %f, weight: %f\n",i,adjs[i].nadj,vols[i],weight[i]);
+    printf("%d: %d, volume: %f, weight: %f\n",i,adjs[i].nadj,vols[i],weight[i]);
   }
 
   /* Get the adjacencies back to their original values */

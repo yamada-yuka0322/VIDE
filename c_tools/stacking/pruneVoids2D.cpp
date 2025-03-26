@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
       periodicY = 1;
       printf("Will assume y-direction is periodic.\n");
     }
-    if ( strchr(args.periodic_arg, 'z') != NULL) {
+    if (strchr(args.periodic_arg, 'z') != NULL) {
       periodicZ = 1;
       printf("Will assume z-direction is periodic.\n");
     }
@@ -286,7 +286,7 @@ int main(int argc, char **argv) {
   fread(&dummy, 1, 4, fp);
   fread(&dummy, 1, 4, fp);
   fread(temp, numPartTot, 4, fp);
-  mul = ranges[1][1] - ranges[1][0];
+  //mul = ranges[1][1] - ranges[1][0];
   for (p = 0; p < numPartTot; p++) 
     part[p].y = mul*temp[p];
   fread(&dummy, 1, 4, fp);
@@ -298,6 +298,7 @@ int main(int argc, char **argv) {
     for (p = 0; p < numPartTot; p++)  {
       part[p].x += ranges[0][0];
       part[p].y += ranges[1][0];
+      part[p].z += ranges[2][0];
     }
   }
   fclose(fp); 
@@ -466,29 +467,68 @@ int main(int argc, char **argv) {
        printf("Error loading catalog!\n");
        return -1;
     }
+
+    printf("zobovCat.allZones の内容:\n");
+    for (size_t i = 0; i < zobovCat.allZones.size(); ++i) {
+        printf("Zone %zu: ", i);
+        for (int id : zobovCat.allZones[i].pId) {
+            printf("%d ", id);
+        }
+        printf("\n");
+    }
+
+    printf("zobovCat.allVoids の内容:\n");
+    for (size_t i = 0; i < zobovCat.allVoids.size(); ++i) {
+        printf("Void %zu: ", i);
+        for (int id : zobovCat.allVoids[i].zId) {
+            printf("%d ", id);
+        }
+        printf("\n");
+    }
+
     VoidTree *tree;
+    printf("Creating VoidTree\n");
     tree = new VoidTree(zobovCat);
+    if (tree == nullptr) {
+	    std::cerr << "Error: VoidTree creation failed!" << std::endl;
+    } else {
+	    std::cout << "VoidTree created successfully" << std::endl;
+    }
+
+    if (zobovCat.allZones.empty()) {
+	    std::cerr << "Error: allZones is empty in ZobovCatalog!" << std::endl;
+    } else {
+	    std::cout << "allZones size: " << zobovCat.allZones.size() << std::endl;
+    }
+
     zobovCat.allZones.erase(zobovCat.allZones.begin(), zobovCat.allZones.end());
- 
-    // copy tree information to our own data structures
+    printf("Cleared allZones\n");
+
     for (iVoid = 0; iVoid < numVoids; iVoid++) {
       voidID = voids[iVoid].voidID;
-      voids[iVoid].parentID = tree->getParent(voidID);
-      voids[iVoid].numChildren = tree->getChildren(voidID).size();
+      int parentID = tree->getParent(voidID);
+      int children = tree->getChildren(voidID).size();
+      std::cout << "Children of void " << voidID << ": "<< children << std::endl;
+      //voids[iVoid].parentID = tree->getParent(voidID);
+      voids[iVoid].parentID = parentID;
+      voids[iVoid].numChildren = children;
+      //voids[iVoid].numChildren = tree->getChildren(voidID).size();
+      std::cout << "parent of " << voidID << " is " << parentID <<std::endl;
 
       // compute level in tree
       int level = 0;
-      int parentID = tree->getParent(voidID);
       while (parentID != -1) {
         level++;
         parentID = tree->getParent(parentID);
+	std::cout << "parent of " << voidID << " is " << parentID <<std::endl;
       }
       voids[iVoid].level = level;
     }
+  std::cout << "finished copying void data"<<std::endl;
   //} // end re-load
   clock4 = clock();
   interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
-  printf(" Re-read voids (%.2f sec)...\n", interval);
+  //printf(" Re-read voids (%.2f sec)...\n", interval);
 
   // check boundaries
   printf(" Computing void properties...\n");
@@ -503,15 +543,12 @@ int main(int argc, char **argv) {
   for (iVoid = 0; iVoid < numVoids; iVoid++) {
 
     voidID = voids[iVoid].voidID;
-    printf("  DOING %d (of %d) %d %d %f\n", iVoid, numVoids, voidID, 
-                                           voids[iVoid].numPart, 
-                                           voids[iVoid].radius);
+    std::cout <<"  DOING " <<  iVoid << " of " << numVoids<< " particle number: " << voids[iVoid].numPart<< " radius: " << voids[iVoid].radius <<std::endl;
 
     voids[iVoid].center[0] = part[voids[iVoid].coreParticle].x;
     voids[iVoid].center[1] = part[voids[iVoid].coreParticle].y;
     voids[iVoid].center[2] = part[voids[iVoid].coreParticle].z;
  
-    // first load up particles into a buffer 
     clock3 = clock();
     i = 0;
     for (iZ = 0; iZ < void2Zones[voidID].numZones; iZ++) {
@@ -529,29 +566,13 @@ int main(int argc, char **argv) {
         voidPart[i].x = part[partID].x;
         voidPart[i].y = part[partID].y;
         voidPart[i].vol = part[partID].vol;
-
-/*
-        // testing for edge contamination
-        if (part[partID].vol < 1.e-27)  {
-           printf("CONTAMINATED!! %d %d\n", iVoid, partID);
-        } else {
-           //printf("NORMAL!! %d %d %e\n", iVoid, partID, part[partID].vol);
-        }
-        for (int iAdj = 0; iAdj < part[partID].ncnt; iAdj++) {
-          if (part[partID].adj[iAdj] > mockIndex) {
-            printf("CONTAMINATED!! %d %d %d\n", iVoid, partID, iAdj);
-          } 
-        }
-*/
         i++;
       }
     }
 
     clock4 = clock();
     interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
-    //printf("   %.2f for buffer\n", interval);
 
-    // compute macrocenters
     clock3 = clock();
     double weight = 0.;
     voids[iVoid].macrocenter[0] = 0.;
@@ -590,9 +611,7 @@ int main(int argc, char **argv) {
     }
     clock4 = clock();
     interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
-    //printf("   %.2f for macrocenter\n", interval);
-
-    // compute central density
+   
     clock3 = clock();
     centralRad = voids[iVoid].radius/args.centralRadFrac_arg;
     centralDen = 0.;
@@ -607,58 +626,11 @@ int main(int argc, char **argv) {
       dist2 = pow(dist[0],2) + pow(dist[1],2);
       if (sqrt(dist2) < centralRad) numCentral += 1;
     }
-    voids[iVoid].centralDen = numCentral / (volNorm*4./3. * M_PI * 
-                                            pow(centralRad, 3.));
+    voids[iVoid].centralDen = numCentral / (volNorm*4.* M_PI * 
+                                            pow(centralRad, 2.));
 
     clock4 = clock();
     interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
-    //printf("   %.2f for central density\n", interval);
-
-    //coreParticle = voids[iVoid].coreParticle;
-    //voids[iVoid].rescaledCoreDens = voids[iVoid].coreDens*(pow(1.*mockIndex/numPartTot,3));
-    //  // compute distance from core to nearest mock
-    //  minDist = 1.e99;
-    //  for (p = mockIndex; p < numPartTot; p++) {
-    //    dist[0] = part[coreParticle].x - part[p].x;
-    //    dist[1] = part[coreParticle].y - part[p].y;
-    //    dist[2] = part[coreParticle].z - part[p].z;
-    //
-    //    dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
-    //    if (dist2 < minDist) minDist = dist2;
-    //  }
-    //  voids[iVoid].nearestMockFromCore = sqrt(minDist);
-    // 
-    //  // compute distance from core to nearest mock
-    //  minDist = 1.e99;
-    //  for (p = 0; p < mockIndex; p++) {
-    //    dist[0] = part[coreParticle].x - part[p].x;
-    //    dist[1] = part[coreParticle].y - part[p].y;
-    //    dist[2] = part[coreParticle].z - part[p].z;
-    //
-    //    dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
-    //    if (dist2 < minDist && dist2 > 1.e-10) minDist = dist2;
-    //  }
-    //  voids[iVoid].nearestGalFromCore = sqrt(minDist);
-
-    // compute maximum extent
-/*
-    if (args.isObservation_flag) {
-      maxDist = 0.;
-      for (p = 0; p < voids[iVoid].numPart; p++) {
-      for (p2 = p; p2 < voids[iVoid].numPart; p2++) {
-  
-        dist[0] = voidPart[p].x - voidPart[p2].x;
-        dist[1] = voidPart[p].y - voidPart[p2].y;
-        dist[2] = voidPart[p].z - voidPart[p2].z;
-
-        dist2 = pow(dist[0],2) + pow(dist[1],2) + pow(dist[2],2);
-        if (dist2 > maxDist) maxDist = dist2;
-      }
-      }
-      voids[iVoid].maxRadius = sqrt(maxDist)/2.;
-    } else {
-*/
-
       clock3 = clock();
       maxDist = 0.;
       for (p = 0; p < voids[iVoid].numPart; p++) {
@@ -675,12 +647,9 @@ int main(int argc, char **argv) {
       voids[iVoid].maxRadius = sqrt(maxDist);
       clock4 = clock();
       interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
-      //printf("   %.2f for maximum extent\n", interval);
-//    }
    
     clock3 = clock(); 
     if (args.isObservation_flag) {
-      // compute distance from center to nearest mock
       minDist = 1.e99;
       for (p = mockIndex; p < numPartTot; p++) {
         dist[0] = voids[iVoid].macrocenter[0] - part[p].x;
@@ -693,10 +662,8 @@ int main(int argc, char **argv) {
     
     } else {
       voids[iVoid].nearestMock = 1.e99;
-    }
-
       nearestEdge = 1.e99;
-     
+
       if (!periodicX) {
         nearestEdge = fmin(nearestEdge,
                            fabs(voids[iVoid].macrocenter[0] - ranges[0][0]));
@@ -709,15 +676,13 @@ int main(int argc, char **argv) {
         nearestEdge = fmin(nearestEdge,
                            fabs(voids[iVoid].macrocenter[1] - ranges[1][1]));
       }
+
     }
 
     voids[iVoid].nearestEdge = nearestEdge;
 
     clock4 = clock();
     interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
-    //printf("   %.2f for nearest edge\n", interval);
-
-    // compute eigenvalues and vectors for orientation and shape
     clock3 = clock();
     double inertia[4];
     for (int i = 0; i < 4; i++) inertia[i] = 0.;
@@ -751,21 +716,12 @@ int main(int argc, char **argv) {
       if (gsl_vector_get(voids[iVoid].eval,i) > largest) 
         largest = gsl_vector_get(voids[iVoid].eval,i);
     }
-    // TEST
     voids[iVoid].ellip = sqrt(1.0 - fabs(smallest/largest)*fabs(smallest/largest));
 
-    //if (a < c)  ca = a/c;
-    //if (a >= c) ca = c/a;
-    //voids[iVoid].ellip = fabs(1.0 - ca);
-
-    //if (a < c)  ca = a*a/(c*c);
-    //if (a >= c) ca = (c*c)/(a*a);
-    //voids[iVoid].ellip = sqrt(fabs(1.0 - ca));
 
     clock4 = clock();
     interval = 1.*(clock4 - clock3)/CLOCKS_PER_SEC;
-    //printf("   %.2f for ellipticity\n", interval);
-   // iVoid
+    } // iVoid
 
     gsl_eigen_symmv_free(eigw);
     

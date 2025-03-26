@@ -1,0 +1,42 @@
+# NetCDF C Configuration Summary
+==============================
+
+# General
+-------
+NetCDF Version:		4.7.3
+Dispatch Version:       1
+Configured On:		Tue Mar 25 21:14:15 JST 2025
+Host System:		x86_64-pc-linux-gnu
+Build Directory: 	/mnt/data/yuka/repository/vide_public/build/temp.linux-x86_64-cpython-310/ep_build/netcdf-prefix/src/netcdf
+Install Prefix:         /mnt/data/yuka/repository/vide_public/build/temp.linux-x86_64-cpython-310/ext_install
+
+# Compiling Options
+-----------------
+C Compiler:		/usr/bin/gcc-11
+CFLAGS:			
+CPPFLAGS:		 -I/mnt/data/yuka/repository/vide_public/build/temp.linux-x86_64-cpython-310/ext_install/include -I/mnt/data/yuka/repository/vide_public/build/temp.linux-x86_64-cpython-310/ext_install/include
+LDFLAGS:		 -L/mnt/data/yuka/repository/vide_public/build/temp.linux-x86_64-cpython-310/ext_install/lib
+AM_CFLAGS:		
+AM_CPPFLAGS:		
+AM_LDFLAGS:		
+Shared Library:		no
+Static Library:		yes
+Extra libraries:	-lhdf5_hl -lhdf5 -lm -lz /usr/lib/x86_64-linux-gnu/libdl.a
+
+# Features
+--------
+NetCDF-2 API:		yes
+HDF4 Support:		no
+HDF5 Support:		yes
+NetCDF-4 API:		yes
+NC-4 Parallel Support:	no
+PnetCDF Support:	no
+DAP2 Support:		no
+DAP4 Support:		no
+Byte-Range Support:	no
+Diskless Support:	yes
+MMap Support:		no
+JNA Support:		no
+CDF5 Support:		yes
+ERANGE Fill Support:	no
+Relaxed Boundary Check:	yes
