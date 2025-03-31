@@ -7,12 +7,12 @@ import sys
 def main():
     h = sys.argv[1] if len(sys.argv) > 1 else 0.015
     #sample_path = "/mnt/data/yuka/output/vide/example_simulation/sim_ss1.0/sample_sim_ss1.0_z0.00_d00"
-    sample_path = f"/mnt/data/yuka/output/vide/SIDES/SIDES_{h}_weight/sample_SIDES_{h}_z0.8_weight"
+    sample_path = f"/mnt/data/yuka/output/vide/SIDES/SIDES_{h}/sample_SIDES_{h}_z0.8"
     #catalog = vu.loadVoidCatalog(sample_path, dataPortion="central")
     #Scatter(catalog, "/mnt/data/yuka/output/vide/SIDES/figs/trimmed_scatter.png")
 
     catalog = vu.loadVoidCatalog(sample_path, dataPortion="central", untrimmed=True, dim=2)
-    Scatter2D(catalog, f"/mnt/data/yuka/output/vide/SIDES/figs/untrimmed_scatter_{h}_weight.png")
+    Scatter2D(catalog, f"/mnt/data/yuka/output/vide/SIDES/figs/untrimmed_scatter_{h}.png")
     vu.plotNumberFunction(catalog,
                    figDir="/mnt/data/yuka/output/vide/SIDES/figs/",
                    plotName=f"untrimmed_numberfunc_{h}_weight",
@@ -57,11 +57,12 @@ def Scatter2D(catalog, filename):
         voidID = catalog.voids[i].voidID
         macrocenter = catalog.voids[i].macrocenter
         print(f"z coordinate is {macrocenter[2]}")
-        volume =  catalog.voids[i].volume
+        radius =  catalog.voids[i].radius
+        print(f"volume of void {voidID} is {radius} Mpc/h")
         voidPart = vu.getVoidPart(catalog, voidID)
         X, Y, Z = [], [], []
         plt.scatter(macrocenter[0], macrocenter[1], marker="x", c="k", s=10.0)
-        #plt.text(macrocenter[0], macrocenter[1], str(volume), fontsize=10, color="black")
+        plt.text(macrocenter[0], macrocenter[1], str(radius), fontsize=10, color="black")
         for part in voidPart:
             X.append(part.x)
             Y.append(part.y)
@@ -70,6 +71,7 @@ def Scatter2D(catalog, filename):
         Y = np.array(Y)
         Z = np.array(Z)
         plt.scatter(X, Y, color=cm.tab20(i % 20), s=2.0)
+    plt.grid()
     plt.savefig(filename)
     plt.show()
     plt.clf()

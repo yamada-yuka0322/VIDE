@@ -508,19 +508,15 @@ int main(int argc, char **argv) {
       voidID = voids[iVoid].voidID;
       int parentID = tree->getParent(voidID);
       int children = tree->getChildren(voidID).size();
-      std::cout << "Children of void " << voidID << ": "<< children << std::endl;
       //voids[iVoid].parentID = tree->getParent(voidID);
       voids[iVoid].parentID = parentID;
       voids[iVoid].numChildren = children;
       //voids[iVoid].numChildren = tree->getChildren(voidID).size();
-      std::cout << "parent of " << voidID << " is " << parentID <<std::endl;
-
       // compute level in tree
       int level = 0;
       while (parentID != -1) {
         level++;
         parentID = tree->getParent(parentID);
-	std::cout << "parent of " << voidID << " is " << parentID <<std::endl;
       }
       voids[iVoid].level = level;
     }

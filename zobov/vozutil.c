@@ -1,9 +1,32 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 #include "libqhull/qhull_a.h"
 #include "voz.h"
 
 #define FOREACHvertex2_(vertices) FOREACHsetelement_(vertexT, vertices2,vertex2)
 
-/*char qh_version[] = "user_eg 3.1 2001/10/04";  */
+typedef struct {
+  double x, y;
+  double angle; // 角度を格納
+} Point;
+
+/* Shoelaceの公式で凸包の面積を計算 */
+double polygon_area(Point *points, int n) {
+  double area = 0.0;
+  for (int i = 0; i < n; i++) {
+      int j = (i + 1) % n;
+      area += points[i].x * points[j].y - points[i].y * points[j].x;
+  }
+  return fabs(area) / 2.0;
+}
+
+/* 角度に基づいてソートするための比較関数 */
+int compare_angles(const void *a, const void *b) {
+  double angle_a = ((Point *)a)->angle;
+  double angle_b = ((Point *)b)->angle;
+  return (angle_a > angle_b) - (angle_a < angle_b);  // 昇順ソート
+}
 
 int compar(const void * n1, const void * n2) {
   int i1,i2;
@@ -12,6 +35,7 @@ int compar(const void * n1, const void * n2) {
   i2 = *(int *)n2;
   return 2*(i1 > i2) - 1 + (i1 == i2);
 }
+
 
 /* Finds Delaunay adjacencies of a set of points */
 int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs) {
@@ -137,6 +161,18 @@ int delaunadj (coordT *points, int nvp, int nvpbuf, int nvpall, PARTADJ **adjs) 
     qh_settempfree (&vertex_points);
     qh_settempfree (&vertices);
   }
+
+   /* 隣接点とその座標を表示 */
+  printf("\n--- Delaunay Neighbors ---\n");
+  for (int ver = 0; ver < nvp; ver++) {
+    printf("Point %d (%.6f, %.6f): ", ver, points[2*ver], points[2*ver+1]);
+    for (int i = 0; i < (*adjs)[ver].nadj; i++) {
+      int adj_index = (*adjs)[ver].adj[i];
+      printf("[%d: (%.6f, %.6f)] ", adj_index, points[2*adj_index], points[2*adj_index+1]);
+    }
+    printf("\n");
+  }
+
   qh_freeqhull(!qh_ALL);                 /* free long memory */
   qh_memfreeshort (&curlong, &totlong);  /* free short memory and memory allocator */
   if (curlong || totlong)
@@ -355,6 +391,7 @@ int vorvol (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints, f
       if (facet->offset < -qh MINdenom) {
 	for (k= qh hull_dim; k--; )
 	  *(coordp++)= (*(normp++) / - facet->offset) + *(feasiblep++);
+    printf("nx %f, ny %f, nz %f, nw %f, offset %f\n" , facet->normal[0], facet->normal[1], facet->normal[2], facet->normal[3], -facet->offset);
       }else {
 	for (k= qh hull_dim; k--; ) {
 	  *(coordp++)= qh_divzero (*(normp++), facet->offset, qh MINdenom_1,
@@ -398,8 +435,9 @@ int vorvol_2D (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints
   facetT *facet;
   int curlong, totlong;
   
-  coordT *point, *deladj;
-  int i, j;
+  coordT *point, *deladj, *coordp, *feasiblep, *normp;
+  boolT zerodiv;
+  int i, j, k;
   float runsum;
 
   /* Adjacency coordinates を2次元に変換 */
@@ -408,12 +446,18 @@ int vorvol_2D (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints
     deladj = deladjs + 2 * i;
     point = points + 3 * i;  /* Homogeneous座標系を考慮 */
     for (j = 0; j < 2; j++) {
-      runsum += deladj[j] * deladj[j];
-      point[j] = deladj[j];
+      runsum += (deladj[j]*100.0) * (deladj[j]*100.0);
+      point[j] = deladj[j]*100.0;
     }
     point[2] = -0.5 * runsum; /* Homogeneous座標 */
   }
-  
+
+  printf("-------------print points--------------------------\n");
+
+  for (i = 0; i < numpoints; i++) {
+    printf("[%f, %f],\n", points[3*i], points[3*i+1]);
+  }
+
   sprintf(flags, "qhull H0");
 
   exitcode = qh_new_qhull(3, numpoints, points, ismalloc, flags, outfile, errfile);
@@ -425,15 +469,31 @@ int vorvol_2D (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints
     }
 
     j = 0;
+    printf("--------------normal--------------------------\n");
     FORALLfacets {
-      point = intpoints + j * 2;
-      j++;
-      for (i = 0; i < 2; i++) {
-        point[i] = facet->normal[i] / -facet->offset;
-      }
-
-      printf("nx %f, ny %f, nz %f, offset %f\n" , facet->normal[0], facet->normal[1], facet->normal[2], -facet->offset);
-      // 正規化 (オプション: 法線ベクトルが単位ベクトルでない場合)
+      if (!qh feasible_point) {
+        fprintf (stdout, "qhull input error (qh_printafacet): option 'Fp' needs qh feasible_point\n");
+        qh_errexit( qh_ERRinput, NULL, NULL);
+            }
+            point= coordp= intpoints + j*2;
+            j++;
+            normp= facet->normal;
+            feasiblep= qh feasible_point;
+            if (facet->offset < -qh MINdenom) {
+        for (k= qh hull_dim; k--; )
+          *(coordp++)= (*(normp++)/ - facet->offset) + *(feasiblep++);
+            }else {
+        for (k= qh hull_dim; k--; ) {
+          *(coordp++)= qh_divzero (*(normp++), facet->offset, qh MINdenom_1,
+                 &zerodiv) + *(feasiblep++);
+          if (zerodiv) {
+            qh_memfree (point, qh normal_size);
+            printf("LABELprintinfinite\n");
+            exit(0);
+          }
+        }
+            }
+      printf("[%f, %f],\n" , intpoints[2*(j-1)+0], intpoints[2*(j-1)+1]);
     }
   //}
   }
@@ -445,9 +505,51 @@ int vorvol_2D (coordT *deladjs, coordT *points, pointT *intpoints, int numpoints
   sprintf(flags, "qhull FA");
   exitcode = qh_new_qhull(dim, numpoints, intpoints, ismalloc, flags, outfile, errfile);
 
-  qh_getarea(qh facet_list);
-  *area = qh totarea;
+  //qh_getarea(qh facet_list);
+  //*area = qh totarea/10000.0/2.0;
 
+  /* 凸包の頂点を取得 */
+  int num_hull_points = qh num_vertices;
+  Point *hull_points = malloc(num_hull_points * sizeof(Point));
+  double centroid_x = 0, centroid_y = 0;
+  
+  vertexT *vertex;
+  i=0;
+  FORALLvertices {
+      hull_points[i].x = vertex->point[0];
+      hull_points[i].y = vertex->point[1];
+      centroid_x += hull_points[i].x;
+      centroid_y += hull_points[i].y;
+      i++;
+  }
+
+  /* 重心を求める */
+  centroid_x /= num_hull_points;
+  centroid_y /= num_hull_points;
+
+  /* 各点の角度を計算 */
+  for (int i = 0; i < num_hull_points; i++) {
+      hull_points[i].angle = atan2(hull_points[i].y - centroid_y, hull_points[i].x - centroid_x);
+  }
+
+  /* 角度でソート（反時計回りに並び替え） */
+  qsort(hull_points, num_hull_points, sizeof(Point), compare_angles);
+
+  /* 並び替えた凸包の点を表示 */
+  printf("Sorted Convex Hull Points:\n");
+  for (int i = 0; i < num_hull_points; i++) {
+      printf("(%f, %f)\n", hull_points[i].x, hull_points[i].y);
+  }
+
+  /* 面積計算 */
+
+  *area = polygon_area(hull_points, num_hull_points)/10000.0;
+  printf("Convex Hull Area: %f\n", *area*10000.0);
+
+  //printf("volume %f\n" , *area*10000.0);
+
+   /* メモリ解放 */
+  free(hull_points);
   qh_freeqhull(!qh_ALL);
   qh_memfreeshort(&curlong, &totlong);
   if (curlong || totlong)
