@@ -368,7 +368,7 @@ class PeriodicCKDTree(cKDTree):
         save substantial amounts of time by putting them in a
         PeriodicCKDTree and using query_ball_tree.
         """
-        x = np.asarray(x).astype(np.float)
+        x = np.asarray(x).astype(float)
         if x.shape[-1] != self.m:
             raise ValueError("Searching for a %d-dimensional point in a " \
                              "%d-dimensional KDTree" % (x.shape[-1], self.m))

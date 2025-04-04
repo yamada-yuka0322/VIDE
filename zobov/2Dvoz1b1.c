@@ -295,7 +295,7 @@ for (j = 0; j < NGUARD + 1; j++) {
   
   for (i=0; i<nvp; i++) { /* Just the original particles
 			     Assign adjacency coordinate array*/
-    printf("Point %d (%.6f, %.6f): ", i, parts[2*i], parts[2*i+1]);       
+    //printf("Point %d (%.6f, %.6f): ", i, parts[2*i], parts[2*i+1]);       
     for (j = 0; j < adjs[i].nadj; j++)
       DL {
 	deladjs[2*j + d] = parts[2*adjs[i].adj[j]+d] - parts[2*i+d];
@@ -303,10 +303,10 @@ for (j = 0; j < NGUARD + 1; j++) {
 	if (deladjs[2*j+d] > 0.5) deladjs[2*j+d]--;
       }
 
-    for (k=0; k < adjs[i].nadj; k++){
-      printf("[%d: (%.6f, %.6f)] ", adjs[i].adj[k], deladjs[2*k], deladjs[2*k+1]);
-    }
-    printf("\n");
+    //for (k=0; k < adjs[i].nadj; k++){
+      //printf("[%d: (%.6f, %.6f)] ", adjs[i].adj[k], deladjs[2*k], deladjs[2*k+1]);
+    //}
+    //printf("\n");
 
     
     exitcode = vorvol_2D(deladjs, points, intpoints, adjs[i].nadj, &(vols[i]));

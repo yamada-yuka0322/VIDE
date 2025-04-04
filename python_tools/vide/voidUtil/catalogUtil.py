@@ -84,6 +84,10 @@ def loadPart(sampleDir):
       if isObservation != 1:
         z += ranges[2][0]
       chk = np.fromfile(File, dtype=np.int32,count=1)
+      
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+      weight = np.fromfile(File, dtype=np.float32,count=Np)
+      chk = np.fromfile(File, dtype=np.int32,count=1)
 
       chk = np.fromfile(File, dtype=np.int32,count=1)
       RA = np.fromfile(File, dtype=np.float32,count=Np)
@@ -112,7 +116,7 @@ def loadPart(sampleDir):
 
     partData = np.column_stack((x,y,z))
 
-    extraData = np.column_stack((RA,Dec,redshift,uniqueID))
+    extraData = np.column_stack((RA,Dec,redshift,uniqueID, weight))
 
     boxLen = mul
 
@@ -158,6 +162,55 @@ def getVolNorm(sampleDir):
     File.close()
     mul = np.zeros((3))
     mul[:] = ranges[:,1] - ranges[:,0]
+
+    partFile = sampleDir+"/zobov_slice_"+sample.fullName
+    with open(partFile, mode="rb") as File:
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+      Np = np.fromfile(File, dtype=np.int32,count=1)[0]
+
+    boxLen = mul
+
+    #if isObservation == 1:
+    #  # look for the mask file
+    #  if os.access(sample.maskFile, os.F_OK):
+    #    maskFile = sample.maskFile
+    #  else:
+    #    maskFile = sampleDir+"/"+os.path.basename(sample.maskFile)
+    #    print "Using maskfile found in:", maskFile
+    #  props = vp.getSurveyProps(maskFile, sample.zBoundary[0],
+    #                            sample.zBoundary[1],
+    #                            sample.zBoundary[0],
+    #                            sample.zBoundary[1], "all",
+    #                            selectionFuncFile=sample.selFunFile,
+    #                            useComoving=sample.useComoving)
+    #  boxVol = props[0]
+    #  volNorm = maskIndex/boxVol
+    #else:
+    boxVol = np.prod(boxLen)
+    volNorm = Np/boxVol
+
+    return volNorm
+
+
+# -----------------------------------------------------------------------------
+def getVolNorm2D(sampleDir):
+    with open(sampleDir+"/sample_info.dat", 'rb') as input:
+      sample = pickle.load(input)
+
+    infoFile = sampleDir+"/zobov_slice_"+sample.fullName+".par"
+    File = NetCDFFile(infoFile, 'r')
+    ranges = np.zeros((3,2))
+    ranges[0][0] = getattr(File, 'range_x_min')
+    ranges[0][1] = getattr(File, 'range_x_max')
+    ranges[1][0] = getattr(File, 'range_y_min')
+    ranges[1][1] = getattr(File, 'range_y_max')
+    ranges[2][0] = getattr(File, 'range_z_min')
+    ranges[2][1] = getattr(File, 'range_z_max')
+    isObservation = getattr(File, 'is_observation')
+    maskIndex = getattr(File, 'mask_index')
+    File.close()
+    mul = np.zeros((2))
+    mul[:] = ranges[0:2,1] - ranges[0:2,0]
 
     partFile = sampleDir+"/zobov_slice_"+sample.fullName
     with open(partFile, mode="rb") as File:
@@ -328,7 +381,10 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
   catalog.ranges = ranges
   File.close()
 
-  volNorm = getVolNorm(sampleDir)
+  if sample.dataType == "LIM":
+    volNorm = getVolNorm2D(sampleDir)
+  else:
+    volNorm = getVolNorm(sampleDir)
   catalog.volNorm = volNorm
 
   if untrimmed:
@@ -425,6 +481,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
       catalog.part.append(Bunch(x = partData[i][0],
                                 y = partData[i][1],
                                 z = partData[i][2],
+                                weight = extraData[i][4],
                                 volume = 0,
                                 ra = extraData[i][0],
                                 dec = extraData[i][1],

@@ -17,7 +17,7 @@
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #+
-__all__=['buildProfile','fitHSWProfile','getHSWProfile',]
+__all__=['buildProfile','fitHSWProfile','getHSWProfile','multiProfile', 'multiLuminosity']
 
 from vide.backend.classes import *
 from vide.voidUtil import *
@@ -37,7 +37,7 @@ def HSWProfile(r, rs, dc):
   return dc * (1 - (r/rs)**alpha) / (1+ (r)**beta) + 1
 
 # -----------------------------------------------------------------------------
-def buildProfile(catalog, rMin, rMax, nBins=10):
+def buildProfile(catalog, rMin, rMax, nBins=10, dim=3):
 
 # builds a stacked radial density profile from the given catalog
 #   catalog: void catalog
@@ -50,7 +50,7 @@ def buildProfile(catalog, rMin, rMax, nBins=10):
 #   stackedProfile: the stacked density profile
 #   sigmas: 1-sigma uncertainty in each bin
 
-  rMaxProfile = rMin*3 + 2
+  rMaxProfile = rMin*2
   periodicLine = getPeriodic(catalog.sampleInfo)
 
   print("  Building particle tree...")
@@ -71,13 +71,23 @@ def buildProfile(catalog, rMin, rMax, nBins=10):
     localPart = catalog.partPos[ getBall(partTree, center, rMaxProfile) ]
     shiftedPart = shiftPart(localPart, center, periodicLine, catalog.ranges)
 
-    dist = np.sqrt(np.sum(shiftedPart[:,:]**2, axis=1))
-    thisProfile, radii = np.histogram(dist, bins=nBins, range=(0,rMaxProfile))
-    deltaV = 4*np.pi/3*(radii[1:]**3-radii[0:(radii.size-1)]**3)
-    thisProfile = np.float32(thisProfile)
-    thisProfile /= deltaV
-    thisProfile /= catalog.volNorm
-    allProfiles.append(thisProfile)
+    if(dim==3):
+      dist = np.sqrt(np.sum(shiftedPart[:,:]**2, axis=1))
+      thisProfile, radii = np.histogram(dist, bins=nBins, range=(0,rMaxProfile))
+      deltaV = 4*np.pi/3*(radii[1:]**3-radii[0:(radii.size-1)]**3)
+      thisProfile = np.float32(thisProfile)
+      thisProfile /= deltaV
+      thisProfile /= catalog.volNorm
+      allProfiles.append(thisProfile)
+    else:
+      dist = np.sqrt(np.sum(shiftedPart[:,0:2]**2, axis=1))
+      thisProfile, radii = np.histogram(dist, bins=nBins, range=(0,rMaxProfile))
+      deltaV = np.pi*(radii[1:]**2-radii[0:(radii.size-1)]**2)
+      thisProfile = np.float32(thisProfile)
+      thisProfile /= deltaV
+      thisProfile /= catalog.volNorm
+      allProfiles.append(thisProfile)
+    
     binCenters = 0.5*(radii[1:] + radii[:-1])
 
   nVoids = len(voidsToStack)
@@ -210,4 +220,143 @@ def getHSWProfile(density, radius):
   # return best-fits
   rVals = np.linspace(0.0, 3*radius, 100) / radius
   return (rs,dc), rVals*radius, HSWProfile(rVals,rs,dc)
+
+def multiProfile(catalogdict, rMin, rMax, nBins=10):
+
+# builds a stacked radial density profile from the given catalog
+#   catalog: void catalog
+#   rMin: minimum void radius, in Mpc/h
+#   rMax: maximum void radius, in Mpc/h
+#   nBins: number of bins in profile (detaulf 10)
+#
+# returns:
+#   binCenters: array of radii in binned profile
+#   stackedProfile: the stacked density profile
+#   sigmas: 1-sigma uncertainty in each bin
+
+  rMaxProfile = rMin*2
+  meandict = {}
+  STDdict = {}
   
+  for name, catalogList in catalogdict.items():
+    catalogList = np.atleast_1d(catalogList)
+    allProfiles = []
+    numVoids = 0.0
+    for catalog in catalogList:
+      sample = catalog.sampleInfo
+      periodicLine = getPeriodic(catalog.sampleInfo)
+      print("  Building particle tree...")
+      partTree = getPartTree(catalog)
+      print("  Selecting voids to stack...")
+      voidsToStack = [v for v in catalog.voids if (v.radius > rMin and v.radius < rMax)]
+      numVoids += len(voidsToStack)
+      
+      if len(voidsToStack) == 0:
+        print("  No voids to stack!")
+        #return -1, -1, -1
+      
+      print("  Stacking voids...")
+      for void in voidsToStack:
+        center = void.macrocenter
+        localPart = catalog.partPos[ getBall(partTree, center, rMaxProfile) ]
+        shiftedPart = shiftPart(localPart, center, periodicLine, catalog.ranges)
+        
+        if(sample.dataType == "simulation"):
+          dist = np.sqrt(np.sum(shiftedPart[:,:]**2, axis=1))
+          thisProfile, radii = np.histogram(dist, bins=nBins, range=(0,rMaxProfile))
+          deltaV = 4*np.pi/3*(radii[1:]**3-radii[0:(radii.size-1)]**3)
+          thisProfile = np.float32(thisProfile)
+          thisProfile /= deltaV
+          thisProfile /= catalog.volNorm
+          allProfiles.append(thisProfile)
+        else:
+          dist = np.sqrt(np.sum(shiftedPart[:,0:2]**2, axis=1))
+          thisProfile, radii = np.histogram(dist, bins=nBins, range=(0,rMaxProfile))
+          deltaV = np.pi*(radii[1:]**2-radii[0:(radii.size-1)]**2)
+          thisProfile = np.float32(thisProfile)
+          thisProfile /= deltaV
+          thisProfile /= catalog.volNorm
+          allProfiles.append(thisProfile)
+    
+    binCenters = 0.5*(radii[1:] + radii[:-1])
+    nVoids = numVoids
+    stackedProfile = np.mean(allProfiles, axis=0) 
+    sigmas = np.std(allProfiles, axis=0) / np.sqrt(nVoids)
+    
+    meandict[name] = stackedProfile
+    STDdict[name] = sigmas
+  
+  return binCenters, meandict, STDdict
+
+def multiLuminosity(catalogdict, nBins=10):
+
+# builds a stacked radial density profile from the given catalog
+#   catalog: void catalog
+#   rMin: minimum void radius, in Mpc/h
+#   rMax: maximum void radius, in Mpc/h
+#   nBins: number of bins in profile (detaulf 10)
+#
+# returns:
+#   binCenters: array of radii in binned profile
+#   stackedProfile: the stacked density profile
+#   sigmas: 1-sigma uncertainty in each bin
+  meandict = {}
+  STDdict = {}
+  
+  # ビンの境界を定義（例として等間隔のビンを作成）
+  bins = np.linspace(0.0, 2.0, nBins + 1)
+  dist_all = []
+  weight_all = np.array([])
+  
+  for name, catalogList in catalogdict.items():
+    catalogList = np.atleast_1d(catalogList)
+    allProfiles = []
+    numVoids = 0.0
+    for catalog in catalogList:
+      sample = catalog.sampleInfo
+      periodicLine = getPeriodic(catalog.sampleInfo)
+      print("  Building particle tree...")
+      partTree = getPartTree(catalog)
+      print("  Selecting voids to stack...")
+
+      voidsToStack = [v for v in catalog.voids]
+      numVoids += len(voidsToStack)
+      
+      weight_list = np.array([obj.weight for obj in catalog.part])
+      
+      if len(voidsToStack) == 0:
+        print("  No voids to stack!")
+        #return -1, -1, -1
+      
+      print("  Stacking voids...")
+      for void in voidsToStack:
+        center = void.macrocenter
+        rMaxProfile = void.radius*2.0
+        localPart = catalog.partPos[ getBall(partTree, center, rMaxProfile) ]
+        weight =  weight_list[getBall(partTree, center, rMaxProfile)]
+        weight_all = np.append(weight_all, weight)
+        shiftedPart = shiftPart(localPart, center, periodicLine, catalog.ranges)
+        norm_dist = shiftedPart/void.radius
+        
+        if(sample.dataType == "simulation"):
+          dist = np.sqrt(np.sum(norm_dist[:,:]**2, axis=1))
+          dist_all.extend(dist)
+          
+        else:
+          dist = np.sqrt(np.sum(norm_dist[:,0:2]**2, axis=1))
+          dist_all.extend(dist)
+
+    bin_indices = np.digitize(dist_all, bins)
+    # 各ビン内でyの平均値と標準偏差を計算
+    
+    bin_means = np.array([weight_all[bin_indices == i].mean() for i in range(1, len(bins))])
+    bin_stds = np.array([weight_all[bin_indices == i].std()/np.sqrt(len(weight_all[bin_indices == i])) for i in range(1, len(bins))])
+    
+    binCenters = 0.5*(bins[1:] + bins[:-1])
+
+    meandict[name] = bin_means
+    STDdict[name] = bin_stds
+  
+  return binCenters, meandict, STDdict
+  
+
