@@ -185,6 +185,7 @@ public:
     
     computeMaxDepth();
     computeChildrenByNode();
+
   }
   
   VoidTree(ZobovRep& rep)
@@ -219,10 +220,12 @@ public:
         if (rep.allVoids[i].volume < volMin) continue;
 
 	int p = lookupParent(i, voids_for_zones);
+	std::cout << "parent of " << i << " is " << p <<std::endl;
         if ((i % 1000) == 0) std::cout << i << std::endl;
 
 	if (p >= 0)
 	  {
+	    std::cout << "added void " << i << " in children list of " << p <<std::endl;
 	    nodes[p].children.push_back(&nodes[i]);
 	    nodes[i].parent = &nodes[p];
 	  }
@@ -245,6 +248,7 @@ public:
     
     computeMaxDepth();
     computeChildrenByNode();
+    std::cout << "Done creating void tree" << std::endl;
   }
 
   ~VoidTree()

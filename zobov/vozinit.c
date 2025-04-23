@@ -8,10 +8,11 @@
 #define QHULL_MAX_PARTICLES ((1L<<24)-1)
 
 int posread(char *posfile, float ***p, float fact);
+int readPosAndIntensity(char *posfile, float ***p, float **intensity, float fact);
 
 int main(int argc, char *argv[]) {
   int i, np;
-  float **rfloat, rtemp[3];
+  float **rfloat, rtemp[3], *weight;
   FILE *pos, *scr;
   char *posfile, scrfile[200], systemstr[90], *suffix, *outDir, *vobozPath;
   float xmin,xmax,ymin,ymax,zmin,zmax;
@@ -79,6 +80,7 @@ int main(int argc, char *argv[]) {
 
 
   /* Read the position file */
+  np = readPosAndIntensity(posfile,&rfloat, &weight,1./boxsize);
   np = posread(posfile,&rfloat,1./boxsize);
   /* Boxsize should be the range in r, yielding a range 0-1 */
 

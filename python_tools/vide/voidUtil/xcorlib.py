@@ -71,7 +71,7 @@ def powcor(d1, d2, Lbox, Nbin = 10, scale = 'lin', cor = False, cic = True, dim 
   dx = Lbox/Nmesh
   Xr = np.fft.irfftn(Pk)*(Nmesh/Lbox)**3
 
-  (Nmx, rm, Xrm, SXrm) = shellavg(np.real(Xr), dx, Nmesh, Nbin = Nbin/2, xmin = dx, xmax = 140., scale = scale, dim = dim)
+  (Nmx, rm, Xrm, SXrm) = shellavg(np.real(Xr), dx, Nmesh, Nbin = Nbin//2, xmin = dx, xmax = 140., scale = scale, dim = dim)
   
   return ((Nm, km, Pkm, SPkm),(Nmx, rm, Xrm, SXrm))
  

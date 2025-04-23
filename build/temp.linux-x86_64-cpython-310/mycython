@@ -1,3 +1,0 @@
-#!/mnt/data/yuka/venv/vide/bin/python
-from Cython.Compiler.Main import setuptools_main
-setuptools_main()

@@ -17,7 +17,7 @@
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #+
-__all__=['plotNumberFunction','plotEllipDist','plotVoidCells']
+__all__=['plotNumberFunction','plotEllipDist','plotVoidCells', 'multiNumberFunction', 'fill_between']
 
 from vide.backend.classes import *
 from .plotDefs import *
@@ -64,15 +64,20 @@ def plotNumberFunction(catalogList,
   plt.xlabel("$R_{eff}$ [$h^{-1}Mpc$]", fontsize=14)
   
   if cumulative:
-    plt.ylabel(r"log ($n$ (> R) [$h^3$ Gpc$^{-3}$])", fontsize=14)
+    plt.ylabel(r"log ($n$ (> R) [$h^2$ Gpc$^{-2}$])", fontsize=14)
   else:
-    plt.ylabel(r"log ($dn/dR$ [$h^3$ Gpc$^{-3}$])", fontsize=14)
+    plt.ylabel(r"log ($dn/dR$ [$h^2$ Gpc$^{-2}$])", fontsize=14)
  
   ellipDistList = [] 
+  histlist = []
+  full_volume = 0.0
+  nvoids = 0.0
 
   for (iSample,catalog) in enumerate(catalogList):
     sample = catalog.sampleInfo
     data = getArray(catalog.voids, 'radius')
+    nvoids += len(data)
+    
   
     if sample.dataType == "observation":
       maskFile = sample.maskFile
@@ -81,15 +86,20 @@ def plotNumberFunction(catalogList,
                                  sample.zBoundary[0], sample.zBoundary[1],
                                  sample.zRange[0], sample.zRange[1], "all",
                                  selectionFuncFile=sample.selFunFile)[0]
-    else:
-      boxVol = sample.boxLen*sample.boxLen*(sample.zBoundaryMpc[1] -
-                                            sample.zBoundaryMpc[0])
-  
-    boxVol *= 1.e-9 # Mpc->Gpc
+    elif sample.dataType == "LIM":
+      boxVol = sample.boxLen*sample.boxLen
+      boxVol *= 1.e-6 # Mpc->Gpc
+    elif sample.dataType == "simulation":
+      boxVol = sample.boxLen*sample.boxLen*sample.boxLen
+      boxVol *= 1.e-9 # Mpc->Gpc
+      
+    full_volume += boxVol
   
     bins = 100./binWidth
-    hist, binEdges = np.histogram(data, bins=bins, range=(0., 100.))
+    hist, binEdges = np.histogram(data, bins=int(bins), range=(0., 100.))
     binCenters = 0.5*(binEdges[1:] + binEdges[:-1])
+    
+    histlist.append(hist)
 
     if cumulative:
       foundStart = False
@@ -99,38 +109,38 @@ def plotNumberFunction(catalogList,
         foundStart = True
         hist[iBin] = np.sum(hist[iBin:])
   
-    nvoids = len(data)
-    var = hist * (1. - hist/nvoids)
-    sig = np.sqrt(var)
+  hist_all = np.sum(histlist, axis=0)
+  var = hist_all * (1. - hist_all/nvoids)
+  sig = np.sqrt(var)
   
-    lowerbound = hist - sig
-    upperbound = hist + sig
+  lowerbound = hist_all - sig
+  upperbound = hist_all + sig
   
-    mean = np.log10(hist/boxVol)
-    lowerbound = np.log10(lowerbound/boxVol)
-    upperbound = np.log10(upperbound/boxVol)
+  mean = np.log10(hist_all/full_volume)
+  lowerbound = np.log10(lowerbound/full_volume)
+  upperbound = np.log10(upperbound/full_volume)
   
-    lineColor = colorList[iSample]
-    lineTitle = sample.fullName
+  lineColor = "black"
+  lineTitle = "DESI"
     
-    trim = (lowerbound > .01)
-    mean = mean[trim]
-    binCentersToUse = binCenters[trim]
-    lower = lowerbound[trim]
-    upper = upperbound[trim]
+  trim = (lowerbound > .01)
+  mean = mean[trim]
+  binCentersToUse = binCenters[trim]
+  lower = lowerbound[trim]
+  upper = upperbound[trim]
   
-    alpha = 0.55
-    fill_between(binCentersToUse, lower, upper,
-               label=lineTitle, color=lineColor,
-               alpha=alpha,
-               )
+  alpha = 0.55
+  fill_between(binCentersToUse, lower, upper,
+               color=lineColor,
+              alpha=alpha,
+              )
   
-    lineStyle = '-'
-    plt.plot(binCentersToUse, mean, lineStyle,
-                color=lineColor,
-                linewidth=3)
+  lineStyle = '-'
+  plt.plot(binCentersToUse, mean, lineStyle,
+           label=lineTitle, color=lineColor,
+           linewidth=3)
     
-    ellipDistList.append((binCentersToUse, mean, lower, upper))
+  ellipDistList.append((binCentersToUse, mean, lower, upper))
   
   plt.legend(loc = "upper right", fancybox=True, prop={'size':14})
   
@@ -296,3 +306,120 @@ def plotVoidCells(catalog,
   plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")
 
   return
+
+def multiNumberFunction(catalogdict,
+                        colordict,
+                        figDir="./", 
+                        plotName="numberfunc",
+                        cumulative=True,
+                        binWidth=1):
+
+# plots a cumulative number function
+#   catalogList: list of void catalogs to plot
+#   figDir: output directory for figures
+#   plotName: name to prefix to all outputs
+#   cumulative: if True, plots cumulative number function
+#   binWidth: width of histogram bins in Mpc/h
+# returns:
+#   ellipDistList: array of len(catalogList), 
+#                   each element has array of size bins, number, +/- 1 sigma
+
+  print("Plotting number function")
+  
+
+  plt.clf()
+  plt.xlabel("$R_{eff}$ [$h^{-1}Mpc$]", fontsize=14)
+
+  ellipDistList = [] 
+  full_volume = 0.0
+  nvoids = 0.0
+  
+  for name, catalogList in catalogdict.items():
+    catalogList = np.atleast_1d(catalogList)
+    histlist = []
+    for (iSample,catalog) in enumerate(catalogList):
+      sample = catalog.sampleInfo
+      data = getArray(catalog.voids, 'radius')
+      nvoids += len(data)
+      if sample.dataType == "observation":
+        if cumulative:
+          plt.ylabel(r"log ($n$ (> R) [$h^3$ Gpc$^{-3}$])", fontsize=14)
+        else:
+          plt.ylabel(r"log ($dn/dR$ [$h^3$ Gpc$^{-3}$])", fontsize=14)
+        maskFile = sample.maskFile
+        boxVol = vp.getSurveyProps(maskFile,
+                                   sample.zBoundary[0], sample.zBoundary[1],
+                                   sample.zRange[0], sample.zRange[1], "all",
+                                   selectionFuncFile=sample.selFunFile)[0]
+      elif sample.dataType == "simulation":
+        boxVol = sample.boxLen*sample.boxLen*sample.boxLen
+        boxVol *= 1.e-9 # Mpc->Gpc
+        if cumulative:
+          plt.ylabel(r"log ($n$ (> R) [$h^3$ Gpc$^{-3}$])", fontsize=14)
+        else:
+          plt.ylabel(r"log ($dn/dR$ [$h^3$ Gpc$^{-3}$])", fontsize=14)
+      elif sample.dataType == "LIM":
+        boxVol = sample.boxLen*sample.boxLen
+        boxVol *= 1.e-6 # Mpc->Gpc
+        if cumulative:
+          plt.ylabel(r"log ($n$ (> R) [$h^2$ Gpc$^{-2}$])", fontsize=14)
+        else:
+          plt.ylabel(r"log ($dn/dR$ [$h^2$ Gpc$^{-2}$])", fontsize=14)
+      full_volume += boxVol
+  
+      bins = 100./binWidth
+      hist, binEdges = np.histogram(data, bins=int(bins), range=(0., 55.))
+      binCenters = 0.5*(binEdges[1:] + binEdges[:-1])
+    
+      histlist.append(hist)
+
+      if cumulative:
+        foundStart = False
+        for iBin in range(len(hist)):
+          if not foundStart and hist[iBin] == 0:
+            continue
+          foundStart = True
+          hist[iBin] = np.sum(hist[iBin:])
+  
+    hist_all = np.sum(histlist, axis=0)
+    var = hist_all * (1. - hist_all/nvoids)
+    sig = np.sqrt(var)
+  
+    lowerbound = hist_all - sig
+    upperbound = hist_all + sig
+  
+    mean = np.log10(hist_all/full_volume)
+    lowerbound = np.log10(lowerbound/full_volume)
+    upperbound = np.log10(upperbound/full_volume)
+  
+    linecolor = colordict[name]
+    lineTitle = name
+    
+    trim = (lowerbound > .01)
+    mean = mean[trim]
+    binCentersToUse = binCenters[trim]
+    lower = lowerbound[trim]
+    upper = upperbound[trim]
+  
+    alpha = 0.55
+    fill_between(binCentersToUse, lower, upper,
+                 color=linecolor,
+                 alpha=alpha,
+                 )
+    lineStyle = '-'
+    plt.plot(binCentersToUse, mean, lineStyle,
+            label=lineTitle, color=linecolor,
+            linewidth=3)
+    
+    plt.xlim(0.0, 55.0)
+    plt.ylim(0.0, 6.0)
+    
+    ellipDistList.append((binCentersToUse, mean, lower, upper))
+  
+  plt.legend(loc = "upper right", fancybox=True, prop={'size':14})
+  
+  plt.savefig(figDir+"/fig_"+plotName+".pdf", bbox_inches="tight")
+  plt.savefig(figDir+"/fig_"+plotName+".eps", bbox_inches="tight")
+  plt.savefig(figDir+"/fig_"+plotName+".png", bbox_inches="tight")
+
+  return ellipDistList 

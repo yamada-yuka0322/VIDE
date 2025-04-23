@@ -1,8 +1,0 @@
-
-[docs]
-pytest
-
-[test]
-hypothesis
-pytest
-pytest-remotedata

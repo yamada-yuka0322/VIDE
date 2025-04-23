@@ -1,8 +1,0 @@
-certifi
-cftime
-numpy
-
-[tests]
-Cython
-packaging
-pytest

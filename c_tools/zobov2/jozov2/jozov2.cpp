@@ -149,18 +149,18 @@ int main(int argc,char **argv)
 
   txt.open(txtfile.c_str());
   txt << format("%d particles, %d voids.") % np % nzones << endl;
-  txt << "Void# FileVoid# CoreParticle CoreDens ZoneVol Zone#Part Void#Zones VoidVol Void#Part VoidDensContrast VoidProb" << endl;
+  txt << "Void# FileVoid# CoreParticle CoreDens ZoneVol Zone#Part Void#Zones VoidVol Void#Part" << endl;
   for (int h=0; h<nzones; h++)
     {
       int i = iord[h];
       prob = exp(-5.12*(z[i].denscontrast-1.) - 0.8*pow(z[i].denscontrast-1.,2.8));
-      if (z[i].np == 1) 
+      if ((z[i].np == 1)||(isinf(z[i].denscontrast))||(isinf(p[z[i].core].dens))) 
 	continue;
       
       txt << format("%d %d %d %e %e %d %d %e %d %f %6.2e")
 	   % (h+1) % i % z[i].core % p[z[i].core].dens % z[i].vol
-           % z[i].np % z[i].nhl % z[i].voljoin % z[i].npjoin
-	   % z[i].denscontrast % prob << endl;
+           % z[i].np % z[i].nhl % z[i].voljoin % z[i].npjoin 
+	   % z[i].denscontrast % prob<< endl;
 
     } /* h+1 to start from 1, not zero */
   txt.close();

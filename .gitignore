@@ -4,6 +4,9 @@
 *.pyc
 .mydepend
 ./pipeline/miscTools/*.out
+.eggs
+.vscode
+build
 
 output_*
 pipeline/ramses_simulation.py

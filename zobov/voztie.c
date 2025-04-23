@@ -19,9 +19,9 @@ int compare_int(const void *a, const void *b)
 
 int main(int argc, char *argv[]) {
 
-  FILE *part, *adj, *vol;
-  char partfile[200], *suffix, adjfile[200], volfile[200], *outDir;
-  float *vols, volstemp;
+  FILE *part, *adj, *vol, *densAve;
+  char partfile[200], *suffix, adjfile[200], volfile[200], *outDir, densAvefile[200];
+  float *vols, *weights, volstemp, weightstemp;
   int *cnt_adj;
   
   PARTADJ *adjs;
@@ -31,6 +31,7 @@ int main(int argc, char *argv[]) {
   pid_t i,j,k,p,nout;
   pid_t nvp,npnotdone,nvpmax, nvpsum, *orig;
   double avgnadj, avgvol;
+  float avgdens_weight;
 
   int numRemoved = 0;
   
@@ -104,15 +105,18 @@ int main(int argc, char *argv[]) {
   if (adjs == NULL) printf("Couldn't allocate adjs.\n");
   vols = (float *)malloc(np*sizeof(float));
   if (vols == NULL) printf("Couldn't allocate vols.\n");
+  weights = (float *)malloc(np*sizeof(float));
+  if (weights == NULL) printf("Couldn't allocate weights.\n");
   orig = (pid_t *)malloc(nvpmax*sizeof(pid_t));
   if (orig == NULL) printf("Couldn't allocate orig.\n");
-  if ((cnt_adj==NULL) || (vols == NULL) || (orig == NULL) || (adjs == NULL)) {
+  if ((cnt_adj==NULL) || (vols == NULL) || (orig == NULL) || (adjs == NULL) || (weights == NULL)) {
     printf("Not enough memory to allocate. Exiting.\n");
     exit(0);
   }
   for (p=0;p<np;p++)
     {
       vols[p] = -1.;
+      weights[p] = -1.;
       adjs[p].nadj = 0;
       adjs[p].adj = 0;
     }
@@ -144,6 +148,17 @@ int main(int argc, char *argv[]) {
 	  }
 	vols[orig[p]] = volstemp;
       }
+	    
+      for (p=0;p<nvp;p++) {
+	fread(&weightstemp,1,sizeof(float),part);
+	if (weights[orig[p]] > -1.)
+	  if (fabs(weights[orig[p]]-weightstemp)/weightstemp > 1.5e-3 && orig[p] < mockIndex) {
+	    printf("Inconsistent weights for p. %d: (%10g,%10g)!\n",
+		   orig[p],weights[orig[p]],weightstemp);
+	    //exit(0);
+	  }
+	weights[orig[p]] = weightstemp;
+      }
       
       for (p=0;p<nvp;p++) {
 	fread(&na,1,sizeof(int),part);
@@ -172,6 +187,13 @@ int main(int argc, char *argv[]) {
 	  printf("0"); fflush(stdout);
 	}
       }
+
+      for (p=0; p<nvp; p++) {
+	if(p%1000==0){
+		printf("particle p. %d: volume %10g weight %10g num adj %d\n",
+		   p,vols[p], weights[p], adjs[p].nadj);
+	}
+      }
       fclose(part);
       printf("%d ",k);
     }
@@ -185,6 +207,7 @@ int main(int argc, char *argv[]) {
   // completely unlink mock particles
   for (i = mockIndex; i < np; i++) {
     vols[i] = 1.e-29;
+    weights[i] = 1.e+29;
     adjs[i].nadj = 0;
   }
   
@@ -193,6 +216,7 @@ int main(int argc, char *argv[]) {
     for (j = 0; j < adjs[i].nadj; j++) {
       if (adjs[i].adj[j] > mockIndex) {
 //printf("KILLING %d\n", i);
+	weights[i] = 1.e+29;
         vols[i] = 1.e-29;
         adjs[i].nadj = 0;
         numRemoved++;
@@ -222,7 +246,7 @@ int main(int argc, char *argv[]) {
 
   // END PMS
 
-  npnotdone = 0; avgnadj = 0.; avgvol = 0.;
+  npnotdone = 0; avgnadj = 0.; avgvol = 0., avgdens_weight = 0.;
   for (p=0;p<np;p++) {
     // PMS
     if (vols[p] == 1.e-29) continue;
@@ -230,20 +254,25 @@ int main(int argc, char *argv[]) {
     if (vols[p] == -1.) npnotdone++;
     avgnadj += (double)(adjs[p].nadj);
     avgvol += (double)(vols[p]);
+    //weighted average density
+    avgdens_weight += (float)(weights[p])/(float)(vols[p]);
   }
   if (npnotdone > 0)
     printf("%d particles not done!\n", npnotdone);
   printf("%d particles done more than once.\n",nvpsum-np);
   avgnadj /= (double)np;
   avgvol /= (double)np;
+  avgdens_weight /= (float)np;
   printf("Average # adjacencies = %lf (%f for Poisson)\n",avgnadj,
 	 48.*3.141593*3.141593/35.+2.);
   printf("Average volume = %lf\n",avgvol);
+  printf("Average weighted density = %f\n",avgdens_weight);
     
   /* Now the output! */
 
   sprintf(adjfile,"%s/adj%s.dat",outDir,suffix);
   sprintf(volfile,"%s/vol%s.dat",outDir,suffix);
+  sprintf(densAvefile,"%s/densAve%s.dat",outDir,suffix);
 
   printf("Outputting to%s, %s\n\n", adjfile, volfile);
 
@@ -288,13 +317,25 @@ int main(int argc, char *argv[]) {
 // PMS
   fwrite(&mockIndex,1, sizeof(int),vol);
   fwrite(vols,sizeof(float),mockIndex,vol);
+  fwrite(weights,sizeof(float),mockIndex,vol);
   //fwrite(&np,1, sizeof(int),vol);
   //fwrite(vols,sizeof(float),np,vol);
 // END PMS
 
   fclose(vol);
 
+  /*(Weighted) average Density*/
+  densAve = fopen(densAvefile,"wb");
+  if (densAve == NULL) {
+    printf("Unable to open %s\n",densAvefile);
+    exit(0);
+  }
+  fwrite(&avgdens_weight, sizeof(float), 1, densAve);
+
+  fclose(densAve);
+
   free(vols);
+  free(weights);
   free(cnt_adj);
   free(adjs);
   free(orig);

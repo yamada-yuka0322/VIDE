@@ -84,6 +84,10 @@ def loadPart(sampleDir):
       if isObservation != 1:
         z += ranges[2][0]
       chk = np.fromfile(File, dtype=np.int32,count=1)
+      
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+      weight = np.fromfile(File, dtype=np.float32,count=Np)
+      chk = np.fromfile(File, dtype=np.int32,count=1)
 
       chk = np.fromfile(File, dtype=np.int32,count=1)
       RA = np.fromfile(File, dtype=np.float32,count=Np)
@@ -112,7 +116,7 @@ def loadPart(sampleDir):
 
     partData = np.column_stack((x,y,z))
 
-    extraData = np.column_stack((RA,Dec,redshift,uniqueID))
+    extraData = np.column_stack((RA,Dec,redshift,uniqueID, weight))
 
     boxLen = mul
 
@@ -158,6 +162,55 @@ def getVolNorm(sampleDir):
     File.close()
     mul = np.zeros((3))
     mul[:] = ranges[:,1] - ranges[:,0]
+
+    partFile = sampleDir+"/zobov_slice_"+sample.fullName
+    with open(partFile, mode="rb") as File:
+      chk = np.fromfile(File, dtype=np.int32,count=1)
+      Np = np.fromfile(File, dtype=np.int32,count=1)[0]
+
+    boxLen = mul
+
+    #if isObservation == 1:
+    #  # look for the mask file
+    #  if os.access(sample.maskFile, os.F_OK):
+    #    maskFile = sample.maskFile
+    #  else:
+    #    maskFile = sampleDir+"/"+os.path.basename(sample.maskFile)
+    #    print "Using maskfile found in:", maskFile
+    #  props = vp.getSurveyProps(maskFile, sample.zBoundary[0],
+    #                            sample.zBoundary[1],
+    #                            sample.zBoundary[0],
+    #                            sample.zBoundary[1], "all",
+    #                            selectionFuncFile=sample.selFunFile,
+    #                            useComoving=sample.useComoving)
+    #  boxVol = props[0]
+    #  volNorm = maskIndex/boxVol
+    #else:
+    boxVol = np.prod(boxLen)
+    volNorm = Np/boxVol
+
+    return volNorm
+
+
+# -----------------------------------------------------------------------------
+def getVolNorm2D(sampleDir):
+    with open(sampleDir+"/sample_info.dat", 'rb') as input:
+      sample = pickle.load(input)
+
+    infoFile = sampleDir+"/zobov_slice_"+sample.fullName+".par"
+    File = NetCDFFile(infoFile, 'r')
+    ranges = np.zeros((3,2))
+    ranges[0][0] = getattr(File, 'range_x_min')
+    ranges[0][1] = getattr(File, 'range_x_max')
+    ranges[1][0] = getattr(File, 'range_y_min')
+    ranges[1][1] = getattr(File, 'range_y_max')
+    ranges[2][0] = getattr(File, 'range_z_min')
+    ranges[2][1] = getattr(File, 'range_z_max')
+    isObservation = getattr(File, 'is_observation')
+    maskIndex = getattr(File, 'mask_index')
+    File.close()
+    mul = np.zeros((2))
+    mul[:] = ranges[0:2,1] - ranges[0:2,0]
 
     partFile = sampleDir+"/zobov_slice_"+sample.fullName
     with open(partFile, mode="rb") as File:
@@ -297,7 +350,7 @@ class Catalog:
 
 # -----------------------------------------------------------------------------
 def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
-                    untrimmed=False):
+                    untrimmed=False, dim=3):
 
 # loads a void catalog
 # by default, loads parent-level voids with central densities greater than 0.2*mean
@@ -305,7 +358,6 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
 #   dataPortion: "central" or "all"
 #   loadParticles: if True, also load particle information
 #   untrimmed: if True, catalog contains all voids, regardless of density or hierarchy level
-
   sys.stdout.flush()
 
   catalog = Catalog()
@@ -329,7 +381,10 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
   catalog.ranges = ranges
   File.close()
 
-  volNorm = getVolNorm(sampleDir)
+  if sample.dataType == "LIM":
+    volNorm = getVolNorm2D(sampleDir)
+  else:
+    volNorm = getVolNorm(sampleDir)
   catalog.volNorm = volNorm
 
   if untrimmed:
@@ -363,8 +418,8 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
                                numChildren = 0,
                                centralDen = 0.,
                                ellipticity = 0.,
-                               eigenVals = np.zeros((3)),
-                               eigenVecs = np.zeros((3,3)),
+                               eigenVals = np.zeros((dim)),
+                               eigenVecs = np.zeros((dim,dim)),
                                ))
 
   catalog.numVoids = len(catalog.voids)
@@ -391,6 +446,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
   print("Loading derived void information...")
   fileName = sampleDir+"/"+prefix+"centers_"+dataPortion+"_"+sample.fullName+".out"
   catData = np.loadtxt(fileName, comments="#")
+  print(f"reading from {fileName}")
   for (iLine,line) in enumerate(catData):
     catalog.voids[iLine].volume = float(line[6])
     catalog.voids[iLine].radius = float(line[4])
@@ -400,27 +456,17 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
     catalog.voids[iLine].numChildren = float(line[12])
     catalog.voids[iLine].centralDen = float(line[13])
     iLine += 1
+    print(f"radius is {float(line[4])}")
 
   fileName = sampleDir+"/"+prefix+"shapes_"+dataPortion+"_"+sample.fullName+".out"
   catData = np.loadtxt(fileName, comments="#")
   for (iLine,line) in enumerate(catData):
     catalog.voids[iLine].ellipticity = float(line[1])
-
-    catalog.voids[iLine].eigenVals[0] = float(line[2])
-    catalog.voids[iLine].eigenVals[1] = float(line[3])
-    catalog.voids[iLine].eigenVals[2] = float(line[4])
-
-    catalog.voids[iLine].eigenVecs[0][0] = float(line[5])
-    catalog.voids[iLine].eigenVecs[0][1] = float(line[6])
-    catalog.voids[iLine].eigenVecs[0][2] = float(line[7])
-
-    catalog.voids[iLine].eigenVecs[1][0] = float(line[8])
-    catalog.voids[iLine].eigenVecs[1][1] = float(line[9])
-    catalog.voids[iLine].eigenVecs[1][2] = float(line[10])
-
-    catalog.voids[iLine].eigenVecs[2][0] = float(line[11])
-    catalog.voids[iLine].eigenVecs[2][1] = float(line[12])
-    catalog.voids[iLine].eigenVecs[2][2] = float(line[13])
+    
+    for j in range(dim):
+      catalog.voids[iLine].eigenVals[j] = float(line[j+2])
+      for k in range(dim):
+        catalog.voids[iLine].eigenVecs[j][k] = float(line[(j+1)*dim+k+2])
 
     iLine += 1
 
@@ -435,6 +481,7 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
       catalog.part.append(Bunch(x = partData[i][0],
                                 y = partData[i][1],
                                 z = partData[i][2],
+                                weight = extraData[i][4],
                                 volume = 0,
                                 ra = extraData[i][0],
                                 dec = extraData[i][1],

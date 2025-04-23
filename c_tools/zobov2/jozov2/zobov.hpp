@@ -21,6 +21,7 @@
 
 typedef struct Particle {
   float dens;
+  float weight;
   int nadj;
   int ncnt;
   int *adj;
@@ -36,7 +37,8 @@ typedef struct Zone {
   int *adj; /* Each adjacent zone, with ... */
   float *slv; /* Smallest Linking Volume */
   float denscontrast; /* density contrast */
-  double vol; /* Total volume of all particles in the zone */
+  double vol; /* Total weighted volume of all particles in the zone */
+  double volume; /* Total volume of all particles in the zone */
   double voljoin; /* Total volume of all particles in the joined void */
 
   int *zonelist; /* Zones bound to the void. */

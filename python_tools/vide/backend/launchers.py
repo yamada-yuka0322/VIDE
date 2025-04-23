@@ -181,6 +181,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
       iX = float(sample.mySubvolume[0])
       iY = float(sample.mySubvolume[1])
 
+
       xMin = iX/sample.numSubvolumes * sample.boxLen
       yMin = iY/sample.numSubvolumes * sample.boxLen
       xMax = (iX+1)/sample.numSubvolumes * sample.boxLen
@@ -276,7 +277,7 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
     (boxVol, nbar) = vp.getSurveyProps(sample.maskFile, sample.zRange[0],
      sample.zRange[1], sample.zRange[0], sample.zRange[1], "all",
      useComoving=useComoving)
-  else:
+  elif sample.dataType == "simulation":
     iX = float(sample.mySubvolume[0])
     iY = float(sample.mySubvolume[1])
     xMin = iX/sample.numSubvolumes * sample.boxLen
@@ -288,11 +289,22 @@ def launchGenerate(sample, binPath, workDir=None, inputDataDir=None,
 
     boxVol = (xMax-xMin)*(yMax-yMin)*(zMax-zMin)
     nbar = 1.0
+  elif sample.dataType == "LIM":
+    iX = float(sample.mySubvolume[0])
+    iY = float(sample.mySubvolume[1])
+    xMin = iX/sample.numSubvolumes * sample.boxLen
+    yMin = iY/sample.numSubvolumes * sample.boxLen
+    xMax = (iX+1)/sample.numSubvolumes * sample.boxLen
+    yMax = (iY+1)/sample.numSubvolumes * sample.boxLen
+    boxVol = (xMax-xMin)*(yMax-yMin)
+    nbar = 1.0
 
   numTracers = int(open(zobovDir+"/mask_index.txt", "r").read())
   numTotal = int(open(zobovDir+"/total_particles.txt", "r").read())
 
   meanSep = (1.*numTracers/boxVol/nbar)**(-1/3.)
+  if sample.dataType == 'LIM':
+      meanSep = (1.*numTracers/boxVol/nbar)**(-1/2.)
 
   # save this sample's information
   with open(zobovDir+"/sample_info.dat", mode='wb') as output:
@@ -339,10 +351,10 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
   if sample.dataType == "observation":
     maskIndex = open(zobovDir+"/mask_index.txt", "r").read()
     totalPart = open(zobovDir+"/total_particles.txt", "r").read()
-    maxDen = mergingThreshold*float(maskIndex)/float(totalPart)
+    maxDen = float(mergingThreshold)*float(maskIndex)/float(totalPart)
   else:
     maskIndex = -1
-    maxDen = mergingThreshold
+    maxDen = float(mergingThreshold)
     if numZobovDivisions == 1:
       print("  WARNING! You are using a single ZOBOV division with a simulation. Periodic boundaries will not be respected!")
 
@@ -356,7 +368,12 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
     if os.access(zobovDir+"/voidDesc_"+sampleName+".out", os.F_OK):
       os.unlink(zobovDir+"/voidDesc_"+sampleName+".out")
 
-    cmd = [binPath+"/vozinit", datafile, "0.1", "1.0", str(numZobovDivisions), \
+    if sample.dataType == "LIM":
+      cmd = [binPath+"/2Dvozinit", datafile, "0.1", "1.0", str(numZobovDivisions), \
+                      "_"+sampleName, str(numZobovThreads), \
+                      binPath, zobovDir, str(maskIndex)]
+    else:
+      cmd = [binPath+"/vozinit", datafile, "0.1", "1.0", str(numZobovDivisions), \
                       "_"+sampleName, str(numZobovThreads), \
                       binPath, zobovDir, str(maskIndex)]
     log = open(logFile, 'w')
@@ -368,6 +385,11 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
     subprocess.call(cmd, stdout=log, stderr=log)
     log.close()
 
+    # get the weighted average density of voronoi cells
+    aveFile = zobovDir+"/densAve_"+sampleName+".dat"
+    with open(aveFile, mode="rb") as File:
+        density_ave = np.fromfile(File, dtype=np.float32,count=1)
+      
     # re-weight the volumes based on selection function
     if sample.dataType == "observation" and \
        sample.selFunFile != None:
@@ -436,6 +458,9 @@ def launchZobov(sample, binPath, zobovDir=None, logDir=None, continueRun=None,
       volFileToUse = zobovDir+"/vol_"+sampleName+".dat"
 
 
+    print(f"average density : {density_ave[0]}, merging threshold: {mergingThreshold}\n")
+    maxDen *= density_ave[0]
+    print(maxDen)
     cmd = [binPath+"/jozov2", \
            zobovDir+"/adj_"+sampleName+".dat", \
            volFileToUse, \
@@ -473,16 +498,23 @@ def launchPrune(sample, binPath,
   numVoids = sum(1 for line in \
                  open(zobovDir+"/voidDesc_"+sampleName+".out"))
   numVoids -= 2
+  if sample.dataType == "LIM":
+    binPath = binPath + "2D"
+
+  # get the weighted average density of voronoi cells
+  aveFile = zobovDir+"/densAve_"+sampleName+".dat"
+  with open(aveFile, mode="rb") as File:
+    density_ave = np.fromfile(File, dtype=np.float32,count=1)
 
   if sample.dataType == "observation":
     mockIndex = open(zobovDir+"/mask_index.txt", "r").read()
     totalPart = open(zobovDir+"/total_particles.txt", "r").read()
-    maxDen = mergingThreshold*float(mockIndex)/float(totalPart)
+    maxDen = mergingThreshold*float(mockIndex)/float(totalPart)*density_ave[0]
     observationLine = " --isObservation"
     #periodicLine = " --periodic=''"
   else:
     mockIndex = -1
-    maxDen = mergingThreshold
+    maxDen = mergingThreshold*density_ave[0]
     observationLine = ""
 
   periodicLine = " --periodic='" + getPeriodic(sample) + "'"
