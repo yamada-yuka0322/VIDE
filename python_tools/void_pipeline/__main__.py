@@ -122,10 +122,12 @@ for sample in dataSampleList:
                 useComoving=sample.useComoving, continueRun=continueRun, mergingThreshold=mergingThreshold)
 
 # -------------------------------------------------------------------------
-if (startCatalogStage <= 4) and (endCatalogStage >= 4):
+  if (startCatalogStage <= 4) and (endCatalogStage >= 4) and not sample.isCombo:
 
-  print("  Plotting...", end=' ')
-  sys.stdout.flush()
+    print("  Cleaning voids...", end=' ')
+    sys.stdout.flush()
+
+    Output(zobovdir=zobovDir, samplename=sampleName)
 
   #for thisDataPortion in dataPortions:
     #plotRedshiftDistribution(workDir, dataSampleList, figDir, showPlot=False, 

@@ -14,6 +14,7 @@ python_tools/vide/apTools/profiles/__init__.py
 python_tools/vide/apTools/profiles/getSurveyProps.py
 python_tools/vide/backend/__init__.py
 python_tools/vide/backend/classes.py
+python_tools/vide/backend/cleaning.py
 python_tools/vide/backend/launchers.py
 python_tools/vide/voidUtil/__init__.py
 python_tools/vide/voidUtil/catalogUtil.py

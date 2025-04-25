@@ -456,7 +456,6 @@ def loadVoidCatalog(sampleDir, dataPortion="central", loadParticles=True,
     catalog.voids[iLine].numChildren = float(line[12])
     catalog.voids[iLine].centralDen = float(line[13])
     iLine += 1
-    print(f"radius is {float(line[4])}")
 
   fileName = sampleDir+"/"+prefix+"shapes_"+dataPortion+"_"+sample.fullName+".out"
   catData = np.loadtxt(fileName, comments="#")
